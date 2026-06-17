@@ -6,14 +6,13 @@ export default async function DashboardPage() {
 
   const totalClients = clients.length;
   const totalOrders = clients.reduce((sum, c) => sum + c.orders.length, 0);
-  const totalSale = clients.reduce(
-    (sum, c) => sum + c.orders.reduce((s, o) => s + o.saleAmount, 0),
-    0
-  );
-  const totalPurchase = clients.reduce(
-    (sum, c) => sum + c.orders.reduce((s, o) => s + o.purchaseAmount, 0),
-    0
-  );
+  const allOrders = clients.flatMap((c) => c.orders);
+  const paidOrders = allOrders.filter((o) => o.paymentStatus === "PAID");
+  const totalSale = paidOrders.reduce((s, o) => s + o.saleAmount, 0);
+  const pendingSale = allOrders
+    .filter((o) => o.paymentStatus !== "PAID")
+    .reduce((s, o) => s + o.saleAmount, 0);
+  const totalPurchase = paidOrders.reduce((s, o) => s + o.purchaseAmount, 0);
   const totalProfit = totalSale - totalPurchase;
 
   const byCity = new Map<
@@ -43,10 +42,11 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         <StatCard label="Clients" value={totalClients} />
         <StatCard label="Orders" value={totalOrders} />
-        <StatCard label="Total Sales" value={fmt(totalSale)} />
+        <StatCard label="Total Sales (Paid)" value={fmt(totalSale)} />
+        <StatCard label="Pending Payments" value={fmt(pendingSale)} />
         <StatCard label="Total Profit" value={fmt(totalProfit)} dark />
       </div>
 

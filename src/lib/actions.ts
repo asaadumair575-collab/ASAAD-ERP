@@ -107,6 +107,90 @@ export async function deleteOrder(orderId: number, clientId: number) {
   revalidatePath("/");
 }
 
+export async function createInvoice(formData: FormData) {
+  const clientId = parseInt(String(formData.get("clientId") ?? ""), 10);
+  const purchaseAmount = parseFloat(String(formData.get("purchaseAmount") ?? "0"));
+  const dateRaw = String(formData.get("date") ?? "");
+  const date = dateRaw ? new Date(dateRaw) : new Date();
+
+  if (Number.isNaN(clientId)) {
+    throw new Error("Please select a customer");
+  }
+  if (Number.isNaN(purchaseAmount)) {
+    throw new Error("Purchase amount must be a number");
+  }
+
+  const productIds = formData.getAll("itemProductId").map((v) => String(v));
+  const descriptions = formData.getAll("itemDescription").map((v) => String(v).trim());
+  const quantities = formData.getAll("itemQuantity").map((v) => parseFloat(String(v)));
+  const rates = formData.getAll("itemRate").map((v) => parseFloat(String(v)));
+
+  const items = descriptions
+    .map((description, i) => ({
+      productId: productIds[i] ? parseInt(productIds[i], 10) : null,
+      description,
+      quantity: quantities[i],
+      rate: rates[i],
+    }))
+    .filter(
+      (item) =>
+        item.description &&
+        !Number.isNaN(item.quantity) &&
+        !Number.isNaN(item.rate)
+    );
+
+  if (items.length === 0) {
+    throw new Error("At least one valid item is required");
+  }
+
+  const saleAmount = items.reduce((s, i) => s + i.quantity * i.rate, 0);
+
+  const order = await prisma.order.create({
+    data: {
+      clientId,
+      purchaseAmount,
+      saleAmount,
+      date,
+      items: { create: items },
+    },
+  });
+
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/clients");
+  revalidatePath("/sales/invoices");
+  revalidatePath("/");
+  redirect(`/clients/${clientId}/orders/${order.id}`);
+}
+
+export async function markPaymentReceived(orderId: number, clientId: number) {
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { paymentStatus: "PAID" },
+  });
+  revalidatePath(`/clients/${clientId}/orders/${orderId}`);
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/sales/invoices");
+  revalidatePath("/");
+}
+
+export async function createProduct(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  const rate = parseFloat(String(formData.get("rate") ?? "0"));
+
+  if (!name || Number.isNaN(rate)) {
+    throw new Error("Name and rate are required");
+  }
+
+  await prisma.product.create({ data: { name, rate } });
+  revalidatePath("/sales/products");
+  redirect("/sales/products");
+}
+
+export async function deleteProduct(id: number) {
+  await prisma.product.delete({ where: { id } });
+  revalidatePath("/sales/products");
+}
+
 export async function saveBusinessProfile(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim() || null;

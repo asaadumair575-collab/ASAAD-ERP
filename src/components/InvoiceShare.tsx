@@ -3,9 +3,13 @@
 export default function InvoiceShare({
   message,
   email,
+  markPaymentReceivedAction,
+  isPaid,
 }: {
   message: string;
   email?: string | null;
+  markPaymentReceivedAction?: () => void;
+  isPaid?: boolean;
 }) {
   const waHref = `https://wa.me/?text=${encodeURIComponent(message)}`;
   const mailHref = `mailto:${email ?? ""}?subject=${encodeURIComponent(
@@ -13,7 +17,7 @@ export default function InvoiceShare({
   )}&body=${encodeURIComponent(message)}`;
 
   return (
-    <div className="flex gap-3 print:hidden">
+    <div className="flex flex-wrap gap-3 print:hidden">
       <a
         href={waHref}
         target="_blank"
@@ -30,10 +34,25 @@ export default function InvoiceShare({
       </a>
       <button
         onClick={() => window.print()}
-        className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+        className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
       >
-        Print
+        Download PDF
       </button>
+      {markPaymentReceivedAction && !isPaid && (
+        <form action={markPaymentReceivedAction}>
+          <button
+            type="submit"
+            className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            Mark Payment Received
+          </button>
+        </form>
+      )}
+      {isPaid && (
+        <span className="text-sm font-medium px-4 py-2 rounded-lg bg-gray-100 text-gray-600">
+          Payment Received
+        </span>
+      )}
     </div>
   );
 }

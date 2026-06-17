@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import InvoiceShare from "@/components/InvoiceShare";
+import { markPaymentReceived } from "@/lib/actions";
 
 export default async function InvoicePage({
   params,
@@ -25,9 +26,19 @@ export default async function InvoicePage({
     .toISOString()
     .slice(0, 10)}\nTotal: ${order.saleAmount.toLocaleString()}`;
 
+  const markPaymentReceivedBound = markPaymentReceived.bind(
+    null,
+    order.id,
+    clientId
+  );
+
   return (
     <div className="max-w-2xl space-y-8">
-      <InvoiceShare message={message} />
+      <InvoiceShare
+        message={message}
+        markPaymentReceivedAction={markPaymentReceivedBound}
+        isPaid={order.paymentStatus === "PAID"}
+      />
 
       <div className="border border-gray-200 rounded-2xl p-8 space-y-8">
         <div className="flex items-start justify-between">
