@@ -4,8 +4,6 @@ import fs from "fs";
 import path from "path";
 
 function resolveDatabaseUrl(): string {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-
   if (process.env.VERCEL) {
     // Vercel's deployment bundle is read-only, so copy the empty seed
     // database into /tmp (writable, but ephemeral per instance) on cold start.
@@ -17,7 +15,7 @@ function resolveDatabaseUrl(): string {
     return `file:${dest}`;
   }
 
-  return "file:./dev.db";
+  return process.env.DATABASE_URL ?? "file:./dev.db";
 }
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
