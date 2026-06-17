@@ -38,6 +38,7 @@ export default function RootLayout({
           <nav className="flex-1 px-3 py-4 space-y-1">
             <NavLink href="/">Dashboard</NavLink>
             <NavLink href="/clients">Clients</NavLink>
+            <NavLink href="/settings">Settings</NavLink>
           </nav>
           <div className="px-3 py-4 border-t border-white/10">
             <Link

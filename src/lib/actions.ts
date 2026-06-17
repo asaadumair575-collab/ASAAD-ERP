@@ -54,18 +54,45 @@ export async function deleteClient(id: number) {
 }
 
 export async function createOrder(clientId: number, formData: FormData) {
-  const description = String(formData.get("description") ?? "").trim() || null;
   const purchaseAmount = parseFloat(String(formData.get("purchaseAmount") ?? "0"));
-  const saleAmount = parseFloat(String(formData.get("saleAmount") ?? "0"));
   const dateRaw = String(formData.get("date") ?? "");
   const date = dateRaw ? new Date(dateRaw) : new Date();
 
-  if (Number.isNaN(purchaseAmount) || Number.isNaN(saleAmount)) {
-    throw new Error("Purchase and sale amounts must be numbers");
+  if (Number.isNaN(purchaseAmount)) {
+    throw new Error("Purchase amount must be a number");
   }
 
+  const descriptions = formData.getAll("itemDescription").map((v) => String(v).trim());
+  const quantities = formData.getAll("itemQuantity").map((v) => parseFloat(String(v)));
+  const rates = formData.getAll("itemRate").map((v) => parseFloat(String(v)));
+
+  const items = descriptions
+    .map((description, i) => ({
+      description,
+      quantity: quantities[i],
+      rate: rates[i],
+    }))
+    .filter(
+      (item) =>
+        item.description &&
+        !Number.isNaN(item.quantity) &&
+        !Number.isNaN(item.rate)
+    );
+
+  if (items.length === 0) {
+    throw new Error("At least one valid item is required");
+  }
+
+  const saleAmount = items.reduce((s, i) => s + i.quantity * i.rate, 0);
+
   await prisma.order.create({
-    data: { clientId, description, purchaseAmount, saleAmount, date },
+    data: {
+      clientId,
+      purchaseAmount,
+      saleAmount,
+      date,
+      items: { create: items },
+    },
   });
 
   revalidatePath(`/clients/${clientId}`);
@@ -78,4 +105,26 @@ export async function deleteOrder(orderId: number, clientId: number) {
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/clients");
   revalidatePath("/");
+}
+
+export async function saveBusinessProfile(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim() || null;
+  const address = String(formData.get("address") ?? "").trim() || null;
+
+  if (!name) {
+    throw new Error("Business name is required");
+  }
+
+  const existing = await prisma.businessProfile.findFirst();
+  if (existing) {
+    await prisma.businessProfile.update({
+      where: { id: existing.id },
+      data: { name, phone, address },
+    });
+  } else {
+    await prisma.businessProfile.create({ data: { name, phone, address } });
+  }
+
+  revalidatePath("/settings");
 }

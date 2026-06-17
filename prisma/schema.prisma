@@ -25,12 +25,29 @@ model Client {
 }
 
 model Order {
-  id             Int      @id @default(autoincrement())
-  client         Client   @relation(fields: [clientId], references: [id])
+  id             Int        @id @default(autoincrement())
+  client         Client     @relation(fields: [clientId], references: [id])
   clientId       Int
-  date           DateTime @default(now())
+  date           DateTime   @default(now())
   description    String?
   purchaseAmount Float
   saleAmount     Float
-  createdAt      DateTime @default(now())
+  createdAt      DateTime   @default(now())
+  items          OrderItem[]
+}
+
+model OrderItem {
+  id          Int    @id @default(autoincrement())
+  order       Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId     Int
+  description String
+  quantity    Float
+  rate        Float
+}
+
+model BusinessProfile {
+  id      Int     @id @default(autoincrement())
+  name    String
+  phone   String?
+  address String?
 }
