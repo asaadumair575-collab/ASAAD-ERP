@@ -35,7 +35,7 @@ yarn-error.log*
 !.env
 
 # sqlite database
-*.db
+/dev.db
 *.db-journal
 
 # vercel
