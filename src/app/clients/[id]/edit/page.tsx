@@ -24,6 +24,11 @@ export default async function EditClientPage({
       </div>
       <form action={updateClientForId} className="space-y-4">
         <Field label="Name" name="name" defaultValue={client.name} required />
+        <Field
+          label="Business / Shop Name"
+          name="businessName"
+          defaultValue={client.businessName ?? ""}
+        />
         <Field label="City" name="city" defaultValue={client.city} required />
         <Field label="Phone" name="phone" defaultValue={client.phone ?? ""} />
         <Field

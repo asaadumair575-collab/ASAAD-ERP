@@ -12,7 +12,12 @@ export default async function ClientsPage({
     where: {
       ...(city ? { city } : {}),
       ...(q
-        ? { name: { contains: q } }
+        ? {
+            OR: [
+              { name: { contains: q } },
+              { businessName: { contains: q } },
+            ],
+          }
         : {}),
     },
     include: { orders: true },
@@ -45,7 +50,7 @@ export default async function ClientsPage({
       <form className="flex flex-wrap gap-3 items-end" method="get">
         <div>
           <label className="block text-xs text-gray-500 mb-1.5">
-            Search name
+            Search name or business
           </label>
           <input
             type="text"
@@ -96,6 +101,7 @@ export default async function ClientsPage({
             <thead>
               <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
                 <th className="py-3 px-5 font-medium">Name</th>
+                <th className="py-3 px-5 font-medium">Business</th>
                 <th className="py-3 px-5 font-medium">City</th>
                 <th className="py-3 px-5 font-medium">Phone</th>
                 <th className="py-3 px-5 font-medium">Orders</th>
@@ -119,6 +125,9 @@ export default async function ClientsPage({
                       >
                         {c.name}
                       </Link>
+                    </td>
+                    <td className="py-3 px-5 text-gray-600">
+                      {c.businessName ?? "-"}
                     </td>
                     <td className="py-3 px-5 text-gray-600">{c.city}</td>
                     <td className="py-3 px-5 text-gray-600">

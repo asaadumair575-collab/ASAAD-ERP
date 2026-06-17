@@ -11,6 +11,7 @@ export default function NewClientPage() {
       </div>
       <form action={createClient} className="space-y-4">
         <Field label="Name" name="name" required />
+        <Field label="Business / Shop Name" name="businessName" />
         <Field label="City" name="city" required />
         <Field label="Phone" name="phone" />
         <Field label="Address" name="address" />

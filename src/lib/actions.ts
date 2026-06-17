@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 
 export async function createClient(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
+  const businessName = String(formData.get("businessName") ?? "").trim() || null;
   const city = String(formData.get("city") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const address = String(formData.get("address") ?? "").trim() || null;
@@ -16,7 +17,7 @@ export async function createClient(formData: FormData) {
   }
 
   const client = await prisma.client.create({
-    data: { name, city, phone, address, notes },
+    data: { name, businessName, city, phone, address, notes },
   });
 
   revalidatePath("/clients");
@@ -25,6 +26,7 @@ export async function createClient(formData: FormData) {
 
 export async function updateClient(id: number, formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
+  const businessName = String(formData.get("businessName") ?? "").trim() || null;
   const city = String(formData.get("city") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const address = String(formData.get("address") ?? "").trim() || null;
@@ -36,7 +38,7 @@ export async function updateClient(id: number, formData: FormData) {
 
   await prisma.client.update({
     where: { id },
-    data: { name, city, phone, address, notes },
+    data: { name, businessName, city, phone, address, notes },
   });
 
   revalidatePath("/clients");

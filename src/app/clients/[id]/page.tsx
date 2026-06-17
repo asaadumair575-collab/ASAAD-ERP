@@ -32,6 +32,9 @@ export default async function ClientDetailPage({
           <h1 className="text-3xl font-semibold tracking-tight">
             {client.name}
           </h1>
+          {client.businessName && (
+            <p className="text-sm text-gray-600 mt-1">{client.businessName}</p>
+          )}
           <p className="text-sm text-gray-500 mt-1">{client.city}</p>
           <div className="text-sm text-gray-500 mt-2 space-y-0.5">
             {client.phone && <p>{client.phone}</p>}
