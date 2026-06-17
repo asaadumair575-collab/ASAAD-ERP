@@ -15,8 +15,13 @@ export default async function EditClientPage({
   const updateClientForId = updateClient.bind(null, clientId);
 
   return (
-    <div className="max-w-md space-y-6">
-      <h1 className="text-2xl font-semibold">Edit Client</h1>
+    <div className="max-w-md space-y-8">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight">Edit Client</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Update {client.name}'s details.
+        </p>
+      </div>
       <form action={updateClientForId} className="space-y-4">
         <Field label="Name" name="name" defaultValue={client.name} required />
         <Field label="City" name="city" defaultValue={client.city} required />
@@ -27,17 +32,17 @@ export default async function EditClientPage({
           defaultValue={client.address ?? ""}
         />
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Notes</label>
+          <label className="block text-xs text-gray-500 mb-1.5">Notes</label>
           <textarea
             name="notes"
             rows={3}
             defaultValue={client.notes ?? ""}
-            className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
           />
         </div>
         <button
           type="submit"
-          className="bg-gray-900 text-white text-sm px-4 py-2 rounded-md"
+          className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
         >
           Save Changes
         </button>
@@ -59,16 +64,16 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs text-gray-500 mb-1">
+      <label className="block text-xs text-gray-500 mb-1.5">
         {label}
-        {required && <span className="text-red-500"> *</span>}
+        {required && <span className="text-black"> *</span>}
       </label>
       <input
         type="text"
         name={name}
         defaultValue={defaultValue}
         required={required}
-        className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
       />
     </div>
   );

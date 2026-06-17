@@ -35,64 +35,71 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
+    <div className="space-y-10">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Overview of your clients and business performance.
+        </p>
+      </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard label="Clients" value={totalClients} />
         <StatCard label="Orders" value={totalOrders} />
         <StatCard label="Total Sales" value={fmt(totalSale)} />
-        <StatCard
-          label="Total Profit"
-          value={fmt(totalProfit)}
-          highlight={totalProfit >= 0 ? "green" : "red"}
-        />
+        <StatCard label="Total Profit" value={fmt(totalProfit)} dark />
       </div>
 
       <div>
-        <h2 className="text-lg font-medium mb-3">By City</h2>
+        <h2 className="text-lg font-semibold mb-4">By City</h2>
         {byCity.size === 0 ? (
-          <p className="text-gray-500 text-sm">
-            No clients yet.{" "}
-            <Link href="/clients/new" className="text-blue-600 underline">
-              Add your first client
-            </Link>
-            .
-          </p>
+          <div className="border border-gray-200 rounded-2xl p-10 text-center">
+            <p className="text-gray-500 text-sm">
+              No clients yet.{" "}
+              <Link href="/clients/new" className="text-black underline font-medium">
+                Add your first client
+              </Link>
+              .
+            </p>
+          </div>
         ) : (
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="text-left border-b border-gray-200 text-gray-500">
-                <th className="py-2 pr-4">City</th>
-                <th className="py-2 pr-4">Clients</th>
-                <th className="py-2 pr-4">Orders</th>
-                <th className="py-2 pr-4">Sales</th>
-                <th className="py-2 pr-4">Purchase Cost</th>
-                <th className="py-2 pr-4">Profit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...byCity.entries()]
-                .sort((a, b) => b[1].sale - a[1].sale)
-                .map(([city, d]) => (
-                  <tr key={city} className="border-b border-gray-100">
-                    <td className="py-2 pr-4">
-                      <Link
-                        href={`/clients?city=${encodeURIComponent(city)}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {city}
-                      </Link>
-                    </td>
-                    <td className="py-2 pr-4">{d.clients}</td>
-                    <td className="py-2 pr-4">{d.orders}</td>
-                    <td className="py-2 pr-4">{fmt(d.sale)}</td>
-                    <td className="py-2 pr-4">{fmt(d.purchase)}</td>
-                    <td className="py-2 pr-4">{fmt(d.sale - d.purchase)}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+          <div className="border border-gray-200 rounded-2xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
+                  <th className="py-3 px-5 font-medium">City</th>
+                  <th className="py-3 px-5 font-medium">Clients</th>
+                  <th className="py-3 px-5 font-medium">Orders</th>
+                  <th className="py-3 px-5 font-medium">Sales</th>
+                  <th className="py-3 px-5 font-medium">Purchase Cost</th>
+                  <th className="py-3 px-5 font-medium">Profit</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {[...byCity.entries()]
+                  .sort((a, b) => b[1].sale - a[1].sale)
+                  .map(([city, d]) => (
+                    <tr key={city} className="hover:bg-gray-50 transition-colors">
+                      <td className="py-3 px-5 font-medium">
+                        <Link
+                          href={`/clients?city=${encodeURIComponent(city)}`}
+                          className="hover:underline"
+                        >
+                          {city}
+                        </Link>
+                      </td>
+                      <td className="py-3 px-5">{d.clients}</td>
+                      <td className="py-3 px-5">{d.orders}</td>
+                      <td className="py-3 px-5">{fmt(d.sale)}</td>
+                      <td className="py-3 px-5">{fmt(d.purchase)}</td>
+                      <td className="py-3 px-5 font-medium">
+                        {fmt(d.sale - d.purchase)}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
@@ -106,24 +113,24 @@ function fmt(n: number) {
 function StatCard({
   label,
   value,
-  highlight,
+  dark,
 }: {
   label: string;
   value: string | number;
-  highlight?: "green" | "red";
+  dark?: boolean;
 }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <div className="text-xs text-gray-500">{label}</div>
-      <div
-        className={`text-xl font-semibold mt-1 ${
-          highlight === "green"
-            ? "text-green-600"
-            : highlight === "red"
-              ? "text-red-600"
-              : ""
-        }`}
-      >
+    <div
+      className={`rounded-2xl p-5 border ${
+        dark
+          ? "bg-black text-white border-black"
+          : "bg-white text-black border-gray-200"
+      }`}
+    >
+      <div className={`text-xs ${dark ? "text-gray-400" : "text-gray-500"}`}>
+        {label}
+      </div>
+      <div className="text-2xl font-semibold mt-2 tracking-tight">
         {value}
       </div>
     </div>

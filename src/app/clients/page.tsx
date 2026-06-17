@@ -26,12 +26,17 @@ export default async function ClientsPage({
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Clients</h1>
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Clients</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {clients.length} client{clients.length === 1 ? "" : "s"}
+          </p>
+        </div>
         <Link
           href="/clients/new"
-          className="bg-gray-900 text-white text-sm px-4 py-2 rounded-md"
+          className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
         >
           + Add Client
         </Link>
@@ -39,21 +44,23 @@ export default async function ClientsPage({
 
       <form className="flex flex-wrap gap-3 items-end" method="get">
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Search name</label>
+          <label className="block text-xs text-gray-500 mb-1.5">
+            Search name
+          </label>
           <input
             type="text"
             name="q"
             defaultValue={q ?? ""}
             placeholder="Search..."
-            className="border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">City</label>
+          <label className="block text-xs text-gray-500 mb-1.5">City</label>
           <select
             name="city"
             defaultValue={city ?? ""}
-            className="border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
           >
             <option value="">All cities</option>
             {allCities.map((c) => (
@@ -65,60 +72,73 @@ export default async function ClientsPage({
         </div>
         <button
           type="submit"
-          className="bg-gray-200 text-sm px-4 py-1.5 rounded-md"
+          className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
         >
           Filter
         </button>
         {(city || q) && (
-          <Link href="/clients" className="text-sm text-blue-600">
+          <Link
+            href="/clients"
+            className="text-sm text-gray-500 hover:text-black px-2 py-2"
+          >
             Clear
           </Link>
         )}
       </form>
 
       {clients.length === 0 ? (
-        <p className="text-gray-500 text-sm">No clients found.</p>
+        <div className="border border-gray-200 rounded-2xl p-10 text-center">
+          <p className="text-gray-500 text-sm">No clients found.</p>
+        </div>
       ) : (
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="text-left border-b border-gray-200 text-gray-500">
-              <th className="py-2 pr-4">Name</th>
-              <th className="py-2 pr-4">City</th>
-              <th className="py-2 pr-4">Phone</th>
-              <th className="py-2 pr-4">Orders</th>
-              <th className="py-2 pr-4">Total Spent</th>
-              <th className="py-2 pr-4">Profit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((c) => {
-              const sale = c.orders.reduce((s, o) => s + o.saleAmount, 0);
-              const purchase = c.orders.reduce(
-                (s, o) => s + o.purchaseAmount,
-                0
-              );
-              return (
-                <tr key={c.id} className="border-b border-gray-100">
-                  <td className="py-2 pr-4">
-                    <Link
-                      href={`/clients/${c.id}`}
-                      className="text-blue-600 hover:underline font-medium"
-                    >
-                      {c.name}
-                    </Link>
-                  </td>
-                  <td className="py-2 pr-4">{c.city}</td>
-                  <td className="py-2 pr-4">{c.phone ?? "-"}</td>
-                  <td className="py-2 pr-4">{c.orders.length}</td>
-                  <td className="py-2 pr-4">{sale.toLocaleString()}</td>
-                  <td className="py-2 pr-4">
-                    {(sale - purchase).toLocaleString()}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="border border-gray-200 rounded-2xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
+                <th className="py-3 px-5 font-medium">Name</th>
+                <th className="py-3 px-5 font-medium">City</th>
+                <th className="py-3 px-5 font-medium">Phone</th>
+                <th className="py-3 px-5 font-medium">Orders</th>
+                <th className="py-3 px-5 font-medium">Total Spent</th>
+                <th className="py-3 px-5 font-medium">Profit</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {clients.map((c) => {
+                const sale = c.orders.reduce((s, o) => s + o.saleAmount, 0);
+                const purchase = c.orders.reduce(
+                  (s, o) => s + o.purchaseAmount,
+                  0
+                );
+                return (
+                  <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="py-3 px-5">
+                      <Link
+                        href={`/clients/${c.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {c.name}
+                      </Link>
+                    </td>
+                    <td className="py-3 px-5 text-gray-600">{c.city}</td>
+                    <td className="py-3 px-5 text-gray-600">
+                      {c.phone ?? "-"}
+                    </td>
+                    <td className="py-3 px-5 text-gray-600">
+                      {c.orders.length}
+                    </td>
+                    <td className="py-3 px-5 text-gray-600">
+                      {sale.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-5 font-medium">
+                      {(sale - purchase).toLocaleString()}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
