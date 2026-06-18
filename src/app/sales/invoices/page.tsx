@@ -63,10 +63,16 @@ export default async function InvoicesPage() {
                       className={`text-xs font-medium px-2 py-1 rounded-full ${
                         o.paymentStatus === "PAID"
                           ? "bg-black text-white"
-                          : "bg-gray-100 text-gray-600"
+                          : o.paymentStatus === "PARTIAL"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-gray-100 text-gray-600"
                       }`}
                     >
-                      {o.paymentStatus === "PAID" ? "Paid" : "Unpaid"}
+                      {o.paymentStatus === "PAID"
+                        ? "Paid"
+                        : o.paymentStatus === "PARTIAL"
+                          ? "Partial"
+                          : "Unpaid"}
                     </span>
                   </td>
                 </tr>

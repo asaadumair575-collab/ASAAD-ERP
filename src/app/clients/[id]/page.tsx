@@ -16,14 +16,20 @@ export default async function ClientDetailPage({
   const client = await prisma.client.findUnique({
     where: { id: clientId },
     include: {
-      orders: { orderBy: { date: "desc" }, include: { items: true } },
+      orders: {
+        orderBy: { date: "desc" },
+        include: { items: true, payments: true },
+      },
     },
   });
 
   if (!client) notFound();
 
   const paidOrders = client.orders.filter((o) => o.paymentStatus === "PAID");
-  const totalSale = paidOrders.reduce((s, o) => s + o.saleAmount, 0);
+  const totalReceived = client.orders.reduce(
+    (s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0),
+    0
+  );
   const monthlyDzn = averageMonthlyDzn(paidOrders);
   const grade = gradeForMonthlyDzn(monthlyDzn, paidOrders.length > 0);
 
@@ -78,7 +84,7 @@ export default async function ClientDetailPage({
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <StatCard label="Orders" value={client.orders.length} />
-        <StatCard label="Total Spent" value={totalSale.toLocaleString()} />
+        <StatCard label="Total Received" value={totalReceived.toLocaleString()} />
         <StatCard
           label="Avg Monthly Dzn"
           value={monthlyDzn.toLocaleString(undefined, { maximumFractionDigits: 1 })}
@@ -106,6 +112,8 @@ export default async function ClientDetailPage({
                   <th className="py-3 px-5 font-medium">Items</th>
                   <th className="py-3 px-5 font-medium">Purchase</th>
                   <th className="py-3 px-5 font-medium">Sale</th>
+                  <th className="py-3 px-5 font-medium">Paid</th>
+                  <th className="py-3 px-5 font-medium">Balance</th>
                   <th className="py-3 px-5 font-medium">Status</th>
                   <th className="py-3 px-5"></th>
                 </tr>
@@ -117,6 +125,8 @@ export default async function ClientDetailPage({
                     o.id,
                     client.id
                   );
+                  const paid = o.payments.reduce((s, p) => s + p.amount, 0);
+                  const balance = o.saleAmount - paid;
                   return (
                     <tr key={o.id} className="hover:bg-gray-50 transition-colors">
                       <td className="py-3 px-5">
@@ -139,15 +149,27 @@ export default async function ClientDetailPage({
                       <td className="py-3 px-5 text-gray-600">
                         {o.saleAmount.toLocaleString()}
                       </td>
+                      <td className="py-3 px-5 text-gray-600">
+                        {paid.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-5 text-gray-600">
+                        {balance.toLocaleString()}
+                      </td>
                       <td className="py-3 px-5">
                         <span
                           className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                             o.paymentStatus === "PAID"
                               ? "bg-black text-white"
-                              : "bg-gray-100 text-gray-500"
+                              : o.paymentStatus === "PARTIAL"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-gray-100 text-gray-500"
                           }`}
                         >
-                          {o.paymentStatus === "PAID" ? "Paid" : "Unpaid"}
+                          {o.paymentStatus === "PAID"
+                            ? "Paid"
+                            : o.paymentStatus === "PARTIAL"
+                              ? "Partial"
+                              : "Unpaid"}
                         </span>
                       </td>
                       <td className="py-3 px-5 text-right">

@@ -2,18 +2,25 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 
 export default async function DashboardPage() {
-  const clients = await prisma.client.findMany({ include: { orders: true } });
+  const clients = await prisma.client.findMany({
+    include: { orders: { include: { payments: true } } },
+  });
 
   const totalClients = clients.length;
   const totalOrders = clients.reduce((sum, c) => sum + c.orders.length, 0);
   const allOrders = clients.flatMap((c) => c.orders);
   const paidOrders = allOrders.filter((o) => o.paymentStatus === "PAID");
-  const totalSale = paidOrders.reduce((s, o) => s + o.saleAmount, 0);
-  const pendingSale = allOrders
-    .filter((o) => o.paymentStatus !== "PAID")
-    .reduce((s, o) => s + o.saleAmount, 0);
+  const totalSale = allOrders.reduce(
+    (s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0),
+    0
+  );
+  const pendingSale = allOrders.reduce((s, o) => {
+    const paid = o.payments.reduce((ps, p) => ps + p.amount, 0);
+    return s + Math.max(0, o.saleAmount - paid);
+  }, 0);
   const totalPurchase = paidOrders.reduce((s, o) => s + o.purchaseAmount, 0);
-  const totalProfit = totalSale - totalPurchase;
+  const totalProfit =
+    paidOrders.reduce((s, o) => s + o.saleAmount, 0) - totalPurchase;
 
   const byCity = new Map<string, { clients: number; orders: number; sale: number }>();
   for (const c of clients) {
@@ -48,7 +55,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         <StatCard label="Customers" value={totalClients} />
         <StatCard label="Orders" value={totalOrders} />
-        <StatCard label="Total Sales (Paid)" value={fmt(totalSale)} />
+        <StatCard label="Total Received" value={fmt(totalSale)} />
         <StatCard label="Pending Payments" value={fmt(pendingSale)} />
         <StatCard label="Total Profit" value={fmt(totalProfit)} dark />
       </div>

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import InvoiceShare from "@/components/InvoiceShare";
-import { markPaymentReceived, cancelOrder } from "@/lib/actions";
+import { recordPayment, cancelOrder } from "@/lib/actions";
 
 export default async function InvoicePage({
   params,
@@ -14,32 +14,35 @@ export default async function InvoicePage({
 
   const order = await prisma.order.findUnique({
     where: { id: orderIdNum },
-    include: { items: true, client: true },
+    include: { items: true, client: true, payments: { orderBy: { date: "asc" } } },
   });
 
   if (!order || order.clientId !== clientId) notFound();
 
   const profile = await prisma.businessProfile.findFirst();
   const invoiceNumber = `INV-${String(order.id).padStart(4, "0")}`;
+  const paidSoFar = order.payments.reduce((s, p) => s + p.amount, 0);
 
   const message = `Invoice ${invoiceNumber}\nDate: ${order.date
     .toISOString()
     .slice(0, 10)}\nTotal: ${order.saleAmount.toLocaleString()}`;
 
-  const markPaymentReceivedBound = markPaymentReceived.bind(
-    null,
-    order.id,
-    clientId
-  );
+  const recordPaymentBound = recordPayment.bind(null, order.id, clientId);
   const cancelOrderBound = cancelOrder.bind(null, order.id, clientId);
 
   return (
     <div className="max-w-2xl space-y-8">
       <InvoiceShare
         message={message}
-        markPaymentReceivedAction={markPaymentReceivedBound}
+        saleAmount={order.saleAmount}
+        paidSoFar={paidSoFar}
+        payments={order.payments.map((p) => ({
+          id: p.id,
+          amount: p.amount,
+          date: p.date.toISOString(),
+        }))}
+        recordPaymentAction={recordPaymentBound}
         cancelOrderAction={cancelOrderBound}
-        isPaid={order.paymentStatus === "PAID"}
       />
 
       <div className="border border-gray-200 rounded-2xl p-8 space-y-8">

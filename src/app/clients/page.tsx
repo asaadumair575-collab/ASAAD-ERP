@@ -21,7 +21,7 @@ export default async function ClientsPage({
           }
         : {}),
     },
-    include: { orders: { include: { items: true } } },
+    include: { orders: { include: { items: true, payments: true } } },
     orderBy: { name: "asc" },
   });
 
@@ -98,7 +98,7 @@ export default async function ClientsPage({
                 <th className="py-3 px-5 font-medium">City</th>
                 <th className="py-3 px-5 font-medium">Phone</th>
                 <th className="py-3 px-5 font-medium">Orders</th>
-                <th className="py-3 px-5 font-medium">Total Spent</th>
+                <th className="py-3 px-5 font-medium">Total Received</th>
                 <th className="py-3 px-5 font-medium">Grade</th>
                 <th className="py-3 px-5"></th>
               </tr>
@@ -108,7 +108,10 @@ export default async function ClientsPage({
                 const paidOrders = c.orders.filter(
                   (o) => o.paymentStatus === "PAID"
                 );
-                const sale = paidOrders.reduce((s, o) => s + o.saleAmount, 0);
+                const totalReceived = c.orders.reduce(
+                  (s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0),
+                  0
+                );
                 const grade = gradeForMonthlyDzn(
                   averageMonthlyDzn(paidOrders),
                   paidOrders.length > 0
@@ -134,7 +137,7 @@ export default async function ClientsPage({
                       {c.orders.length}
                     </td>
                     <td className="py-3 px-5 text-gray-600">
-                      {sale.toLocaleString()}
+                      {totalReceived.toLocaleString()}
                     </td>
                     <td className="py-3 px-5">
                       <span

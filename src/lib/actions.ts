@@ -108,6 +108,14 @@ export async function deleteOrder(orderId: number, clientId: number) {
 }
 
 export async function cancelOrder(orderId: number, clientId: number) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { payments: true },
+  });
+  if (order && order.payments.length > 0) {
+    throw new Error("Cannot cancel an order that has received payments");
+  }
+
   await prisma.order.delete({ where: { id: orderId } });
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/clients");
@@ -198,13 +206,47 @@ export async function createInvoice(formData: FormData) {
   redirect(`/clients/${clientId}/orders/${order.id}`);
 }
 
-export async function markPaymentReceived(orderId: number, clientId: number) {
+export async function recordPayment(
+  orderId: number,
+  clientId: number,
+  formData: FormData
+) {
+  const amount = parseFloat(String(formData.get("amount") ?? "0"));
+  if (Number.isNaN(amount) || amount <= 0) {
+    throw new Error("Enter a valid payment amount");
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { payments: true },
+  });
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  const alreadyPaid = order.payments.reduce((s, p) => s + p.amount, 0);
+  const balanceDue = order.saleAmount - alreadyPaid;
+  if (amount > balanceDue + 0.01) {
+    throw new Error("Payment exceeds the remaining balance due");
+  }
+
+  const newPaid = alreadyPaid + amount;
+  const paymentStatus =
+    newPaid >= order.saleAmount - 0.01
+      ? "PAID"
+      : newPaid > 0
+        ? "PARTIAL"
+        : "UNPAID";
+
+  await prisma.payment.create({ data: { orderId, amount } });
   await prisma.order.update({
     where: { id: orderId },
-    data: { paymentStatus: "PAID" },
+    data: { paymentStatus },
   });
+
   revalidatePath(`/clients/${clientId}/orders/${orderId}`);
   revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/clients");
   revalidatePath("/sales/invoices");
   revalidatePath("/");
 }

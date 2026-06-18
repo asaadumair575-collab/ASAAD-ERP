@@ -35,6 +35,16 @@ model Order {
   paymentStatus  String      @default("UNPAID")
   createdAt      DateTime    @default(now())
   items          OrderItem[]
+  payments       Payment[]
+}
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   Int
+  amount    Float
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model OrderItem {
