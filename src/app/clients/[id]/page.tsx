@@ -31,10 +31,10 @@ export default async function ClientDetailPage({
 
   return (
     <div className="space-y-10">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
               {client.name}
             </h1>
             <span
@@ -75,7 +75,7 @@ export default async function ClientDetailPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <StatCard label="Orders" value={client.orders.length} />
         <StatCard label="Total Spent" value={totalSale.toLocaleString()} />
         <StatCard
@@ -96,7 +96,7 @@ export default async function ClientDetailPage({
             <p className="text-gray-500 text-sm">No orders yet.</p>
           </div>
         ) : (
-          <div className="border border-gray-200 rounded-2xl overflow-hidden">
+          <div className="border border-gray-200 rounded-2xl overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">

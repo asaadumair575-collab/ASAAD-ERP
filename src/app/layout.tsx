@@ -31,10 +31,12 @@ export default async function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex bg-white text-black">
+      <body className="min-h-full flex flex-col md:flex-row bg-white text-black">
         <Sidebar businessName={profile?.name ?? "Trader CRM"} />
-        <main className="flex-1 min-h-screen">
-          <div className="max-w-6xl mx-auto px-8 py-10">{children}</div>
+        <main className="flex-1 min-h-screen min-w-0">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+            {children}
+          </div>
         </main>
       </body>
     </html>

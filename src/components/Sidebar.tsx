@@ -70,6 +70,26 @@ const icons = {
       />
     </svg>
   ),
+  menu: (
+    <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
+      <path
+        d="M3 6h14M3 10h14M3 14h14"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
+  close: (
+    <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
+      <path
+        d="M5 5l10 10M15 5L5 15"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
 };
 
 export default function Sidebar({ businessName }: { businessName: string }) {
@@ -78,110 +98,158 @@ export default function Sidebar({ businessName }: { businessName: string }) {
   const [clientsOpen, setClientsOpen] = useState(isOnClients);
   const isOnSales = pathname.startsWith("/sales");
   const [salesOpen, setSalesOpen] = useState(isOnSales);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(href + "/");
   }
 
+  const closeMobile = () => setMobileOpen(false);
+
   return (
-    <aside className="w-60 shrink-0 bg-black text-white min-h-screen flex flex-col">
-      <div className="px-6 py-6 border-b border-white/10">
-        <span className="text-lg font-semibold tracking-tight">
-          {businessName}
-        </span>
-        <p className="text-xs text-gray-500 mt-0.5">Business Manager</p>
-      </div>
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        <NavLink href="/" active={isActive("/")} icon={icons.dashboard}>
-          Dashboard
-        </NavLink>
+    <>
+      <header className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-black text-white px-4 py-3">
+        <span className="font-semibold tracking-tight">{businessName}</span>
         <button
           type="button"
-          onClick={() => setClientsOpen((o) => !o)}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-            isOnClients
-              ? "bg-white/10 text-white"
-              : "text-gray-300 hover:bg-white/10 hover:text-white"
-          }`}
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open menu"
+          className="p-1.5 rounded-lg hover:bg-white/10"
         >
-          <span className="flex items-center gap-2.5">
-            {icons.clients}
-            Customers
-          </span>
-          <span
-            className={`transition-transform ${clientsOpen ? "rotate-90" : ""}`}
-          >
-            {icons.chevron}
-          </span>
+          {icons.menu}
         </button>
-        {clientsOpen && (
-          <div className="ml-3 pl-3 border-l border-white/10 space-y-1">
-            <NavLink
-              href="/clients"
-              active={pathname === "/clients"}
-              compact
-            >
-              All Customers
-            </NavLink>
-            <NavLink
-              href="/clients/new"
-              active={pathname === "/clients/new"}
-              icon={icons.plus}
-              compact
-            >
-              Add Customer
-            </NavLink>
-          </div>
-        )}
+      </header>
 
-        <button
-          type="button"
-          onClick={() => setSalesOpen((o) => !o)}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-            isOnSales
-              ? "bg-white/10 text-white"
-              : "text-gray-300 hover:bg-white/10 hover:text-white"
-          }`}
-        >
-          <span className="flex items-center gap-2.5">
-            {icons.sales}
-            Sales
-          </span>
-          <span
-            className={`transition-transform ${salesOpen ? "rotate-90" : ""}`}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={closeMobile}
+        />
+      )}
+
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-50 w-60 shrink-0 bg-black text-white flex flex-col h-screen overflow-y-auto transform transition-transform duration-200 md:translate-x-0 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="px-6 py-6 border-b border-white/10 flex items-center justify-between">
+          <div>
+            <span className="text-lg font-semibold tracking-tight">
+              {businessName}
+            </span>
+            <p className="text-xs text-gray-500 mt-0.5">Business Manager</p>
+          </div>
+          <button
+            type="button"
+            onClick={closeMobile}
+            aria-label="Close menu"
+            className="md:hidden p-1.5 rounded-lg hover:bg-white/10"
           >
-            {icons.chevron}
-          </span>
-        </button>
-        {salesOpen && (
-          <div className="ml-3 pl-3 border-l border-white/10 space-y-1">
-            <NavLink
-              href="/sales/invoices"
-              active={pathname.startsWith("/sales/invoices")}
-              compact
+            {icons.close}
+          </button>
+        </div>
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          <NavLink
+            href="/"
+            active={isActive("/")}
+            icon={icons.dashboard}
+            onClick={closeMobile}
+          >
+            Dashboard
+          </NavLink>
+          <button
+            type="button"
+            onClick={() => setClientsOpen((o) => !o)}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+              isOnClients
+                ? "bg-white/10 text-white"
+                : "text-gray-300 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              {icons.clients}
+              Customers
+            </span>
+            <span
+              className={`transition-transform ${clientsOpen ? "rotate-90" : ""}`}
             >
-              Invoicing
-            </NavLink>
-            <NavLink
-              href="/sales/products"
-              active={pathname.startsWith("/sales/products")}
-              compact
-            >
-              Products
-            </NavLink>
-          </div>
-        )}
+              {icons.chevron}
+            </span>
+          </button>
+          {clientsOpen && (
+            <div className="ml-3 pl-3 border-l border-white/10 space-y-1">
+              <NavLink
+                href="/clients"
+                active={pathname === "/clients"}
+                compact
+                onClick={closeMobile}
+              >
+                All Customers
+              </NavLink>
+              <NavLink
+                href="/clients/new"
+                active={pathname === "/clients/new"}
+                icon={icons.plus}
+                compact
+                onClick={closeMobile}
+              >
+                Add Customer
+              </NavLink>
+            </div>
+          )}
 
-        <NavLink
-          href="/settings"
-          active={isActive("/settings")}
-          icon={icons.settings}
-        >
-          Settings
-        </NavLink>
-      </nav>
-    </aside>
+          <button
+            type="button"
+            onClick={() => setSalesOpen((o) => !o)}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+              isOnSales
+                ? "bg-white/10 text-white"
+                : "text-gray-300 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <span className="flex items-center gap-2.5">
+              {icons.sales}
+              Sales
+            </span>
+            <span
+              className={`transition-transform ${salesOpen ? "rotate-90" : ""}`}
+            >
+              {icons.chevron}
+            </span>
+          </button>
+          {salesOpen && (
+            <div className="ml-3 pl-3 border-l border-white/10 space-y-1">
+              <NavLink
+                href="/sales/invoices"
+                active={pathname.startsWith("/sales/invoices")}
+                compact
+                onClick={closeMobile}
+              >
+                Invoicing
+              </NavLink>
+              <NavLink
+                href="/sales/products"
+                active={pathname.startsWith("/sales/products")}
+                compact
+                onClick={closeMobile}
+              >
+                Products
+              </NavLink>
+            </div>
+          )}
+
+          <NavLink
+            href="/settings"
+            active={isActive("/settings")}
+            icon={icons.settings}
+            onClick={closeMobile}
+          >
+            Settings
+          </NavLink>
+        </nav>
+      </aside>
+    </>
   );
 }
 
@@ -190,17 +258,20 @@ function NavLink({
   active,
   icon,
   compact,
+  onClick,
   children,
 }: {
   href: string;
   active: boolean;
   icon?: React.ReactNode;
   compact?: boolean;
+  onClick?: () => void;
   children: React.ReactNode;
 }) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       className={`flex items-center gap-2.5 rounded-lg text-sm transition-colors ${
         compact ? "px-3 py-1.5" : "px-3 py-2"
       } ${

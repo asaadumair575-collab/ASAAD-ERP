@@ -89,7 +89,7 @@ export default async function ClientsPage({
           <p className="text-gray-500 text-sm">No customers found.</p>
         </div>
       ) : (
-        <div className="border border-gray-200 rounded-2xl overflow-hidden">
+        <div className="border border-gray-200 rounded-2xl overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
