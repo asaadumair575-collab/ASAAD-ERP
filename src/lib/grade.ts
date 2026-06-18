@@ -4,10 +4,8 @@ export type Grade = {
 };
 
 const TIERS: { minDzn: number; label: string; badgeClass: string }[] = [
-  { minDzn: 100, label: "Titanium", badgeClass: "bg-slate-700 text-white" },
-  { minDzn: 50, label: "Diamond", badgeClass: "bg-cyan-100 text-cyan-800" },
-  { minDzn: 24, label: "Gold", badgeClass: "bg-yellow-100 text-yellow-800" },
-  { minDzn: 10, label: "B", badgeClass: "bg-gray-200 text-gray-700" },
+  { minDzn: 60, label: "A", badgeClass: "bg-green-100 text-green-800" },
+  { minDzn: 12, label: "B", badgeClass: "bg-gray-200 text-gray-700" },
 ];
 
 const DEFAULT_GRADE: Grade = { label: "C", badgeClass: "bg-orange-100 text-orange-800" };
