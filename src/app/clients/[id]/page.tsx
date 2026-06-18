@@ -3,6 +3,7 @@ import { createOrder, deleteOrder, deleteClient } from "@/lib/actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import OrderItemsForm from "@/components/OrderItemsForm";
+import { averageMonthlyDzn, gradeForMonthlyDzn } from "@/lib/grade";
 
 export default async function ClientDetailPage({
   params,
@@ -24,6 +25,8 @@ export default async function ClientDetailPage({
   const totalSale = client.orders.reduce((s, o) => s + o.saleAmount, 0);
   const totalPurchase = client.orders.reduce((s, o) => s + o.purchaseAmount, 0);
   const totalProfit = totalSale - totalPurchase;
+  const monthlyDzn = averageMonthlyDzn(client.orders);
+  const grade = gradeForMonthlyDzn(monthlyDzn);
 
   const createOrderForClient = createOrder.bind(null, clientId);
   const deleteClientBound = deleteClient.bind(null, clientId);
@@ -32,9 +35,16 @@ export default async function ClientDetailPage({
     <div className="space-y-10">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {client.name}
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-semibold tracking-tight">
+              {client.name}
+            </h1>
+            <span
+              className={`text-xs font-medium px-2.5 py-1 rounded-full ${grade.badgeClass}`}
+            >
+              {grade.label}
+            </span>
+          </div>
           {client.businessName && (
             <p className="text-sm text-gray-600 mt-1">{client.businessName}</p>
           )}
@@ -67,13 +77,17 @@ export default async function ClientDetailPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <StatCard label="Orders" value={client.orders.length} />
         <StatCard label="Total Spent" value={totalSale.toLocaleString()} />
         <StatCard
           label="Profit"
           value={totalProfit.toLocaleString()}
           dark
+        />
+        <StatCard
+          label="Avg Monthly Dzn"
+          value={monthlyDzn.toLocaleString(undefined, { maximumFractionDigits: 1 })}
         />
       </div>
 

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { averageMonthlyDzn, gradeForMonthlyDzn } from "@/lib/grade";
 
 export default async function ClientsPage({
   searchParams,
@@ -20,7 +21,7 @@ export default async function ClientsPage({
           }
         : {}),
     },
-    include: { orders: true },
+    include: { orders: { include: { items: true } } },
     orderBy: { name: "asc" },
   });
 
@@ -99,6 +100,7 @@ export default async function ClientsPage({
                 <th className="py-3 px-5 font-medium">Orders</th>
                 <th className="py-3 px-5 font-medium">Total Spent</th>
                 <th className="py-3 px-5 font-medium">Profit</th>
+                <th className="py-3 px-5 font-medium">Grade</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -108,6 +110,7 @@ export default async function ClientsPage({
                   (s, o) => s + o.purchaseAmount,
                   0
                 );
+                const grade = gradeForMonthlyDzn(averageMonthlyDzn(c.orders));
                 return (
                   <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-5">
@@ -133,6 +136,13 @@ export default async function ClientsPage({
                     </td>
                     <td className="py-3 px-5 font-medium">
                       {(sale - purchase).toLocaleString()}
+                    </td>
+                    <td className="py-3 px-5">
+                      <span
+                        className={`text-xs font-medium px-2.5 py-1 rounded-full ${grade.badgeClass}`}
+                      >
+                        {grade.label}
+                      </span>
                     </td>
                   </tr>
                 );
