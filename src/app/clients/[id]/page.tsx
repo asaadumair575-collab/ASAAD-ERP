@@ -22,9 +22,10 @@ export default async function ClientDetailPage({
 
   if (!client) notFound();
 
-  const totalSale = client.orders.reduce((s, o) => s + o.saleAmount, 0);
-  const monthlyDzn = averageMonthlyDzn(client.orders);
-  const grade = gradeForMonthlyDzn(monthlyDzn, client.orders.length > 0);
+  const paidOrders = client.orders.filter((o) => o.paymentStatus === "PAID");
+  const totalSale = paidOrders.reduce((s, o) => s + o.saleAmount, 0);
+  const monthlyDzn = averageMonthlyDzn(paidOrders);
+  const grade = gradeForMonthlyDzn(monthlyDzn, paidOrders.length > 0);
 
   const createOrderForClient = createOrder.bind(null, clientId);
   const deleteClientBound = deleteClient.bind(null, clientId);
@@ -105,6 +106,7 @@ export default async function ClientDetailPage({
                   <th className="py-3 px-5 font-medium">Items</th>
                   <th className="py-3 px-5 font-medium">Purchase</th>
                   <th className="py-3 px-5 font-medium">Sale</th>
+                  <th className="py-3 px-5 font-medium">Status</th>
                   <th className="py-3 px-5"></th>
                 </tr>
               </thead>
@@ -136,6 +138,17 @@ export default async function ClientDetailPage({
                       </td>
                       <td className="py-3 px-5 text-gray-600">
                         {o.saleAmount.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-5">
+                        <span
+                          className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                            o.paymentStatus === "PAID"
+                              ? "bg-black text-white"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          {o.paymentStatus === "PAID" ? "Paid" : "Unpaid"}
+                        </span>
                       </td>
                       <td className="py-3 px-5 text-right">
                         <form action={deleteOrderBound}>

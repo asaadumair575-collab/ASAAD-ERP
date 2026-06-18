@@ -105,10 +105,13 @@ export default async function ClientsPage({
             </thead>
             <tbody className="divide-y divide-gray-100">
               {clients.map((c) => {
-                const sale = c.orders.reduce((s, o) => s + o.saleAmount, 0);
+                const paidOrders = c.orders.filter(
+                  (o) => o.paymentStatus === "PAID"
+                );
+                const sale = paidOrders.reduce((s, o) => s + o.saleAmount, 0);
                 const grade = gradeForMonthlyDzn(
-                  averageMonthlyDzn(c.orders),
-                  c.orders.length > 0
+                  averageMonthlyDzn(paidOrders),
+                  paidOrders.length > 0
                 );
                 return (
                   <tr key={c.id} className="hover:bg-gray-50 transition-colors">
