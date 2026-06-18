@@ -129,18 +129,45 @@ export async function createInvoice(formData: FormData) {
     throw new Error("Purchase amount must be a number");
   }
 
+  const client = await prisma.client.findUnique({ where: { id: clientId } });
+  if (!client) {
+    throw new Error("Selected customer no longer exists");
+  }
+
   const productIds = formData.getAll("itemProductId").map((v) => String(v));
   const descriptions = formData.getAll("itemDescription").map((v) => String(v).trim());
   const quantities = formData.getAll("itemQuantity").map((v) => parseFloat(String(v)));
   const rates = formData.getAll("itemRate").map((v) => parseFloat(String(v)));
 
+  const requestedProductIds = [
+    ...new Set(
+      productIds
+        .filter((v) => v)
+        .map((v) => parseInt(v, 10))
+        .filter((id) => !Number.isNaN(id))
+    ),
+  ];
+  const existingProducts = requestedProductIds.length
+    ? await prisma.product.findMany({
+        where: { id: { in: requestedProductIds } },
+        select: { id: true },
+      })
+    : [];
+  const existingProductIds = new Set(existingProducts.map((p) => p.id));
+
   const items = descriptions
-    .map((description, i) => ({
-      productId: productIds[i] ? parseInt(productIds[i], 10) : null,
-      description,
-      quantity: quantities[i],
-      rate: rates[i],
-    }))
+    .map((description, i) => {
+      const parsedProductId = productIds[i] ? parseInt(productIds[i], 10) : null;
+      return {
+        productId:
+          parsedProductId !== null && existingProductIds.has(parsedProductId)
+            ? parsedProductId
+            : null,
+        description,
+        quantity: quantities[i],
+        rate: rates[i],
+      };
+    })
     .filter(
       (item) =>
         item.description &&
