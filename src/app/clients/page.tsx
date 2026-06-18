@@ -99,17 +99,12 @@ export default async function ClientsPage({
                 <th className="py-3 px-5 font-medium">Phone</th>
                 <th className="py-3 px-5 font-medium">Orders</th>
                 <th className="py-3 px-5 font-medium">Total Spent</th>
-                <th className="py-3 px-5 font-medium">Profit</th>
                 <th className="py-3 px-5 font-medium">Grade</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {clients.map((c) => {
                 const sale = c.orders.reduce((s, o) => s + o.saleAmount, 0);
-                const purchase = c.orders.reduce(
-                  (s, o) => s + o.purchaseAmount,
-                  0
-                );
                 const grade = gradeForMonthlyDzn(
                   averageMonthlyDzn(c.orders),
                   c.orders.length > 0
@@ -136,9 +131,6 @@ export default async function ClientsPage({
                     </td>
                     <td className="py-3 px-5 text-gray-600">
                       {sale.toLocaleString()}
-                    </td>
-                    <td className="py-3 px-5 font-medium">
-                      {(sale - purchase).toLocaleString()}
                     </td>
                     <td className="py-3 px-5">
                       <span
