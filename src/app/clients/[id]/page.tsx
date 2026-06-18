@@ -23,8 +23,6 @@ export default async function ClientDetailPage({
   if (!client) notFound();
 
   const totalSale = client.orders.reduce((s, o) => s + o.saleAmount, 0);
-  const totalPurchase = client.orders.reduce((s, o) => s + o.purchaseAmount, 0);
-  const totalProfit = totalSale - totalPurchase;
   const monthlyDzn = averageMonthlyDzn(client.orders);
   const grade = gradeForMonthlyDzn(monthlyDzn, client.orders.length > 0);
 
@@ -77,14 +75,9 @@ export default async function ClientDetailPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <StatCard label="Orders" value={client.orders.length} />
         <StatCard label="Total Spent" value={totalSale.toLocaleString()} />
-        <StatCard
-          label="Profit"
-          value={totalProfit.toLocaleString()}
-          dark
-        />
         <StatCard
           label="Avg Monthly Dzn"
           value={monthlyDzn.toLocaleString(undefined, { maximumFractionDigits: 1 })}
@@ -112,7 +105,6 @@ export default async function ClientDetailPage({
                   <th className="py-3 px-5 font-medium">Items</th>
                   <th className="py-3 px-5 font-medium">Purchase</th>
                   <th className="py-3 px-5 font-medium">Sale</th>
-                  <th className="py-3 px-5 font-medium">Profit</th>
                   <th className="py-3 px-5"></th>
                 </tr>
               </thead>
@@ -123,7 +115,6 @@ export default async function ClientDetailPage({
                     o.id,
                     client.id
                   );
-                  const profit = o.saleAmount - o.purchaseAmount;
                   return (
                     <tr key={o.id} className="hover:bg-gray-50 transition-colors">
                       <td className="py-3 px-5">
@@ -145,9 +136,6 @@ export default async function ClientDetailPage({
                       </td>
                       <td className="py-3 px-5 text-gray-600">
                         {o.saleAmount.toLocaleString()}
-                      </td>
-                      <td className="py-3 px-5 font-medium">
-                        {profit.toLocaleString()}
                       </td>
                       <td className="py-3 px-5 text-right">
                         <form action={deleteOrderBound}>
