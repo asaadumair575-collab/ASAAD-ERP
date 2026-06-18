@@ -33,9 +33,9 @@ export default async function ClientsPage({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Clients</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Customers</h1>
         <p className="text-sm text-gray-500 mt-1">
-          {clients.length} client{clients.length === 1 ? "" : "s"}
+          {clients.length} customer{clients.length === 1 ? "" : "s"}
         </p>
       </div>
 
@@ -85,7 +85,7 @@ export default async function ClientsPage({
 
       {clients.length === 0 ? (
         <div className="border border-gray-200 rounded-2xl p-10 text-center">
-          <p className="text-gray-500 text-sm">No clients found.</p>
+          <p className="text-gray-500 text-sm">No customers found.</p>
         </div>
       ) : (
         <div className="border border-gray-200 rounded-2xl overflow-hidden">

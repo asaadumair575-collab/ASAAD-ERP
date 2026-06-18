@@ -107,7 +107,7 @@ export default function Sidebar({ businessName }: { businessName: string }) {
         >
           <span className="flex items-center gap-2.5">
             {icons.clients}
-            Clients
+            Customers
           </span>
           <span
             className={`transition-transform ${clientsOpen ? "rotate-90" : ""}`}
@@ -122,7 +122,7 @@ export default function Sidebar({ businessName }: { businessName: string }) {
               active={pathname === "/clients"}
               compact
             >
-              All Clients
+              All Customers
             </NavLink>
             <NavLink
               href="/clients/new"
@@ -130,7 +130,7 @@ export default function Sidebar({ businessName }: { businessName: string }) {
               icon={icons.plus}
               compact
             >
-              Add Client
+              Add Customer
             </NavLink>
           </div>
         )}

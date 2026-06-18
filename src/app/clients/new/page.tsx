@@ -22,9 +22,9 @@ export default function NewClientPage() {
           </svg>
         </div>
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Add Client</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Add Customer</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Enter the client&apos;s details below.
+            Enter the customer&apos;s details below.
           </p>
         </div>
       </div>
@@ -102,7 +102,7 @@ export default function NewClientPage() {
           <textarea
             name="notes"
             rows={3}
-            placeholder="Any additional notes about this client..."
+            placeholder="Any additional notes about this customer..."
             className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-shadow placeholder:text-gray-400"
           />
         </div>
@@ -112,7 +112,7 @@ export default function NewClientPage() {
             pendingText="Saving..."
             className="bg-black text-white text-sm font-medium px-6 py-2.5 rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
           >
-            Save Client
+            Save Customer
           </SubmitButton>
         </div>
       </form>

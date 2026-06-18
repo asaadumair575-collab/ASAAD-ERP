@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Trader CRM",
-  description: "Client and order tracking for traders",
+  description: "Customer and order tracking for traders",
 };
 
 export default async function RootLayout({

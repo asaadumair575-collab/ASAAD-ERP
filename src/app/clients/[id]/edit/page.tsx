@@ -18,7 +18,7 @@ export default async function EditClientPage({
   return (
     <div className="max-w-md space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Edit Client</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Edit Customer</h1>
         <p className="text-sm text-gray-500 mt-1">
           Update {client.name}'s details.
         </p>

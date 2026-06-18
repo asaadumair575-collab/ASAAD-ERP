@@ -38,12 +38,12 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Overview of your clients and business performance.
+          Overview of your customers and business performance.
         </p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-        <StatCard label="Clients" value={totalClients} />
+        <StatCard label="Customers" value={totalClients} />
         <StatCard label="Orders" value={totalOrders} />
         <StatCard label="Total Sales (Paid)" value={fmt(totalSale)} />
         <StatCard label="Pending Payments" value={fmt(pendingSale)} />
@@ -55,9 +55,9 @@ export default async function DashboardPage() {
         {byCity.size === 0 ? (
           <div className="border border-gray-200 rounded-2xl p-10 text-center">
             <p className="text-gray-500 text-sm">
-              No clients yet.{" "}
+              No customers yet.{" "}
               <Link href="/clients/new" className="text-black underline font-medium">
-                Add your first client
+                Add your first customer
               </Link>
               .
             </p>
@@ -68,7 +68,7 @@ export default async function DashboardPage() {
               <thead>
                 <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
                   <th className="py-3 px-5 font-medium">City</th>
-                  <th className="py-3 px-5 font-medium">Clients</th>
+                  <th className="py-3 px-5 font-medium">Customers</th>
                   <th className="py-3 px-5 font-medium">Orders</th>
                   <th className="py-3 px-5 font-medium">Sales</th>
                   <th className="py-3 px-5 font-medium">Purchase Cost</th>
