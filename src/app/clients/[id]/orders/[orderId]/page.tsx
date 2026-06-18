@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import InvoiceShare from "@/components/InvoiceShare";
-import { markPaymentReceived } from "@/lib/actions";
+import { markPaymentReceived, cancelOrder } from "@/lib/actions";
 
 export default async function InvoicePage({
   params,
@@ -31,12 +31,14 @@ export default async function InvoicePage({
     order.id,
     clientId
   );
+  const cancelOrderBound = cancelOrder.bind(null, order.id, clientId);
 
   return (
     <div className="max-w-2xl space-y-8">
       <InvoiceShare
         message={message}
         markPaymentReceivedAction={markPaymentReceivedBound}
+        cancelOrderAction={cancelOrderBound}
         isPaid={order.paymentStatus === "PAID"}
       />
 

@@ -107,6 +107,15 @@ export async function deleteOrder(orderId: number, clientId: number) {
   revalidatePath("/");
 }
 
+export async function cancelOrder(orderId: number, clientId: number) {
+  await prisma.order.delete({ where: { id: orderId } });
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/clients");
+  revalidatePath("/sales/invoices");
+  revalidatePath("/");
+  redirect(`/clients/${clientId}`);
+}
+
 export async function createInvoice(formData: FormData) {
   const clientId = parseInt(String(formData.get("clientId") ?? ""), 10);
   const purchaseAmount = parseFloat(String(formData.get("purchaseAmount") ?? "0"));

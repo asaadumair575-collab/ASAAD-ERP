@@ -4,11 +4,13 @@ export default function InvoiceShare({
   message,
   email,
   markPaymentReceivedAction,
+  cancelOrderAction,
   isPaid,
 }: {
   message: string;
   email?: string | null;
   markPaymentReceivedAction?: () => void;
+  cancelOrderAction?: () => void;
   isPaid?: boolean;
 }) {
   const waHref = `https://wa.me/?text=${encodeURIComponent(message)}`;
@@ -52,6 +54,16 @@ export default function InvoiceShare({
         <span className="text-sm font-medium px-4 py-2 rounded-lg bg-gray-100 text-gray-600">
           Payment Received
         </span>
+      )}
+      {cancelOrderAction && !isPaid && (
+        <form action={cancelOrderAction}>
+          <button
+            type="submit"
+            className="border border-gray-200 text-red-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            Cancel Order
+          </button>
+        </form>
       )}
     </div>
   );
