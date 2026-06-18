@@ -100,6 +100,7 @@ export default async function ClientsPage({
                 <th className="py-3 px-5 font-medium">Orders</th>
                 <th className="py-3 px-5 font-medium">Total Spent</th>
                 <th className="py-3 px-5 font-medium">Grade</th>
+                <th className="py-3 px-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -138,6 +139,14 @@ export default async function ClientsPage({
                       >
                         {grade.label}
                       </span>
+                    </td>
+                    <td className="py-3 px-5 text-right">
+                      <Link
+                        href={`/clients/${c.id}/edit`}
+                        className="text-xs text-gray-400 hover:text-black transition-colors"
+                      >
+                        Edit
+                      </Link>
                     </td>
                   </tr>
                 );
