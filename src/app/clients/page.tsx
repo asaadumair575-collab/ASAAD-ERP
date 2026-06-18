@@ -32,19 +32,11 @@ export default async function ClientsPage({
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Clients</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {clients.length} client{clients.length === 1 ? "" : "s"}
-          </p>
-        </div>
-        <Link
-          href="/clients/new"
-          className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
-        >
-          + Add Client
-        </Link>
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight">Clients</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          {clients.length} client{clients.length === 1 ? "" : "s"}
+        </p>
       </div>
 
       <form className="flex flex-wrap gap-3 items-end" method="get">

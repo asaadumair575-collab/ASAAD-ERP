@@ -60,6 +60,16 @@ const icons = {
       />
     </svg>
   ),
+  plus: (
+    <svg viewBox="0 0 20 20" fill="none" className="w-3.5 h-3.5">
+      <path
+        d="M10 4v12M4 10h12"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
 };
 
 export default function Sidebar({ businessName }: { businessName: string }) {
@@ -91,6 +101,16 @@ export default function Sidebar({ businessName }: { businessName: string }) {
         >
           Clients
         </NavLink>
+        <div className="ml-3 pl-3 border-l border-white/10 space-y-1">
+          <NavLink
+            href="/clients/new"
+            active={pathname === "/clients/new"}
+            icon={icons.plus}
+            compact
+          >
+            Add Client
+          </NavLink>
+        </div>
 
         <button
           type="button"
