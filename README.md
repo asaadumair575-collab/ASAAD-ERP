@@ -15,7 +15,9 @@ history, amounts spent, and profit per order, client, and city.
 
 ```bash
 npm install
-npx prisma migrate deploy   # creates the local SQLite database
+# create a .env.local with your own Postgres connection string, e.g.:
+# DATABASE_URL="postgres://user:password@host/db?sslmode=require"
+npx prisma migrate deploy
 npm run dev
 ```
 
@@ -23,10 +25,13 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Data storage
 
-All data is stored locally in a SQLite database file (`dev.db`) at the project
-root. No internet connection or external service is required to use the app.
+Data is stored in a Postgres database. In production (Vercel), this is
+provisioned via the Neon Postgres storage integration, which sets the
+`DATABASE_URL` environment variable automatically. For local development,
+point `DATABASE_URL` at your own Postgres database (the same Neon database
+works fine too).
 
 ## Tech stack
 
 - Next.js (App Router) + TypeScript + Tailwind CSS
-- Prisma ORM with SQLite (better-sqlite3 driver adapter)
+- Prisma ORM with Postgres (node-postgres driver adapter)

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { updateClient } from "@/lib/actions";
 import { notFound } from "next/navigation";
+import SubmitButton from "@/components/SubmitButton";
 
 export default async function EditClientPage({
   params,
@@ -45,12 +46,9 @@ export default async function EditClientPage({
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
           />
         </div>
-        <button
-          type="submit"
-          className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
-        >
+        <SubmitButton className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors">
           Save Changes
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

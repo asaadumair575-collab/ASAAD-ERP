@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/actions";
+import SubmitButton from "@/components/SubmitButton";
 
 export default function NewClientPage() {
   return (
@@ -23,12 +24,9 @@ export default function NewClientPage() {
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
           />
         </div>
-        <button
-          type="submit"
-          className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
-        >
+        <SubmitButton className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors">
           Save Client
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

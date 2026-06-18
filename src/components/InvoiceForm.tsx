@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import SubmitButton from "@/components/SubmitButton";
 
 type Client = { id: number; name: string; businessName: string | null };
 type Product = { id: number; name: string; rate: number };
@@ -144,12 +145,12 @@ export default function InvoiceForm({
         </div>
       </div>
 
-      <button
-        type="submit"
+      <SubmitButton
+        pendingText="Creating Invoice..."
         className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
       >
         Create Invoice
-      </button>
+      </SubmitButton>
     </form>
   );
 }

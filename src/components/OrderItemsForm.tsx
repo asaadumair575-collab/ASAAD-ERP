@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import SubmitButton from "@/components/SubmitButton";
 
 export default function OrderItemsForm({
   action,
@@ -88,12 +89,12 @@ export default function OrderItemsForm({
         </button>
       </div>
 
-      <button
-        type="submit"
+      <SubmitButton
+        pendingText="Adding..."
         className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
       >
         Add Order
-      </button>
+      </SubmitButton>
     </form>
   );
 }
