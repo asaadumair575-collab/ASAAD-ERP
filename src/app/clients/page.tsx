@@ -110,7 +110,10 @@ export default async function ClientsPage({
                   (s, o) => s + o.purchaseAmount,
                   0
                 );
-                const grade = gradeForMonthlyDzn(averageMonthlyDzn(c.orders));
+                const grade = gradeForMonthlyDzn(
+                  averageMonthlyDzn(c.orders),
+                  c.orders.length > 0
+                );
                 return (
                   <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-5">

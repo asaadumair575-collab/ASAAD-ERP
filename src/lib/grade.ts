@@ -9,8 +9,10 @@ const TIERS: { minDzn: number; label: string; badgeClass: string }[] = [
 ];
 
 const DEFAULT_GRADE: Grade = { label: "C", badgeClass: "bg-orange-100 text-orange-800" };
+const NIL_GRADE: Grade = { label: "Nil", badgeClass: "bg-gray-100 text-gray-400" };
 
-export function gradeForMonthlyDzn(monthlyDzn: number): Grade {
+export function gradeForMonthlyDzn(monthlyDzn: number, hasOrders: boolean): Grade {
+  if (!hasOrders) return NIL_GRADE;
   for (const tier of TIERS) {
     if (monthlyDzn >= tier.minDzn) {
       return { label: tier.label, badgeClass: tier.badgeClass };

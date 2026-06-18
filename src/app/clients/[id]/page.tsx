@@ -26,7 +26,7 @@ export default async function ClientDetailPage({
   const totalPurchase = client.orders.reduce((s, o) => s + o.purchaseAmount, 0);
   const totalProfit = totalSale - totalPurchase;
   const monthlyDzn = averageMonthlyDzn(client.orders);
-  const grade = gradeForMonthlyDzn(monthlyDzn);
+  const grade = gradeForMonthlyDzn(monthlyDzn, client.orders.length > 0);
 
   const createOrderForClient = createOrder.bind(null, clientId);
   const deleteClientBound = deleteClient.bind(null, clientId);
