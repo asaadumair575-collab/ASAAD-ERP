@@ -74,6 +74,8 @@ const icons = {
 
 export default function Sidebar({ businessName }: { businessName: string }) {
   const pathname = usePathname();
+  const isOnClients = pathname.startsWith("/clients");
+  const [clientsOpen, setClientsOpen] = useState(isOnClients);
   const isOnSales = pathname.startsWith("/sales");
   const [salesOpen, setSalesOpen] = useState(isOnSales);
 
@@ -94,23 +96,44 @@ export default function Sidebar({ businessName }: { businessName: string }) {
         <NavLink href="/" active={isActive("/")} icon={icons.dashboard}>
           Dashboard
         </NavLink>
-        <NavLink
-          href="/clients"
-          active={isActive("/clients")}
-          icon={icons.clients}
+        <button
+          type="button"
+          onClick={() => setClientsOpen((o) => !o)}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+            isOnClients
+              ? "bg-white/10 text-white"
+              : "text-gray-300 hover:bg-white/10 hover:text-white"
+          }`}
         >
-          Clients
-        </NavLink>
-        <div className="ml-3 pl-3 border-l border-white/10 space-y-1">
-          <NavLink
-            href="/clients/new"
-            active={pathname === "/clients/new"}
-            icon={icons.plus}
-            compact
+          <span className="flex items-center gap-2.5">
+            {icons.clients}
+            Clients
+          </span>
+          <span
+            className={`transition-transform ${clientsOpen ? "rotate-90" : ""}`}
           >
-            Add Client
-          </NavLink>
-        </div>
+            {icons.chevron}
+          </span>
+        </button>
+        {clientsOpen && (
+          <div className="ml-3 pl-3 border-l border-white/10 space-y-1">
+            <NavLink
+              href="/clients"
+              active={pathname === "/clients"}
+              compact
+            >
+              All Clients
+            </NavLink>
+            <NavLink
+              href="/clients/new"
+              active={pathname === "/clients/new"}
+              icon={icons.plus}
+              compact
+            >
+              Add Client
+            </NavLink>
+          </div>
+        )}
 
         <button
           type="button"
