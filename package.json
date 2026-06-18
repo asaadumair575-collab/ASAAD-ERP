@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "postinstall": "prisma generate",
-    "build": "prisma migrate deploy && next build",
+    "build": "for i in 1 2 3 4 5; do prisma migrate deploy && break || sleep 10; done && next build",
     "start": "next start",
     "lint": "eslint"
   },
