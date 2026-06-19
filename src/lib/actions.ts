@@ -252,17 +252,31 @@ export async function createInvoice(formData: FormData) {
     throw new Error("At least one valid item is required");
   }
 
-  const saleAmount = items.reduce((s, i) => s + i.quantity * i.rate, 0);
+  const subtotal = items.reduce((s, i) => s + i.quantity * i.rate, 0);
   const purchaseAmount = items.reduce(
     (s, i) => s + i.quantity * i.purchaseRate,
     0
   );
+
+  const discount = parseFloat(String(formData.get("discount") ?? "0")) || 0;
+  const taxPercent = parseFloat(String(formData.get("taxPercent") ?? "0")) || 0;
+  const paymentTerms = String(formData.get("paymentTerms") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+  const terms = String(formData.get("terms") ?? "").trim() || null;
+
+  const taxAmount = (subtotal - discount) * (taxPercent / 100);
+  const saleAmount = subtotal - discount + taxAmount;
 
   const order = await prisma.order.create({
     data: {
       clientId,
       purchaseAmount,
       saleAmount,
+      discount,
+      taxPercent,
+      paymentTerms,
+      notes,
+      terms,
       date,
       confirmed: false,
       items: {
@@ -367,13 +381,23 @@ export async function saveBusinessProfile(formData: FormData) {
   }
 
   const existing = await prisma.businessProfile.findFirst();
+
+  const logoFile = formData.get("logo");
+  let logo: string | null | undefined = undefined;
+  if (logoFile instanceof File && logoFile.size > 0) {
+    const buffer = Buffer.from(await logoFile.arrayBuffer());
+    logo = `data:${logoFile.type};base64,${buffer.toString("base64")}`;
+  }
+
   if (existing) {
     await prisma.businessProfile.update({
       where: { id: existing.id },
-      data: { name, phone, address },
+      data: { name, phone, address, ...(logo !== undefined ? { logo } : {}) },
     });
   } else {
-    await prisma.businessProfile.create({ data: { name, phone, address } });
+    await prisma.businessProfile.create({
+      data: { name, phone, address, logo: logo ?? null },
+    });
   }
 
   revalidatePath("/settings");

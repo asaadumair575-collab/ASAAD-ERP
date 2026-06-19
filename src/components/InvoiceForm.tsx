@@ -17,6 +17,8 @@ export default function InvoiceForm({
   products: Product[];
 }) {
   const [rows, setRows] = useState<Row[]>([{ id: 0, quantity: 0, rate: 0 }]);
+  const [discount, setDiscount] = useState(0);
+  const [taxPercent, setTaxPercent] = useState(0);
 
   function updateRow(id: number, patch: Partial<Row>) {
     setRows((r) => r.map((row) => (row.id === id ? { ...row, ...patch } : row)));
@@ -32,7 +34,9 @@ export default function InvoiceForm({
     if (descInput) descInput.value = product.name;
   }
 
-  const grandTotal = rows.reduce((s, r) => s + r.quantity * r.rate, 0);
+  const subtotal = rows.reduce((s, r) => s + r.quantity * r.rate, 0);
+  const taxAmount = (subtotal - discount) * (taxPercent / 100);
+  const grandTotal = subtotal - discount + taxAmount;
 
   return (
     <form action={action} className="space-y-6">
@@ -66,6 +70,17 @@ export default function InvoiceForm({
               name="date"
               defaultValue={new Date().toISOString().slice(0, 10)}
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              Payment Terms
+            </label>
+            <input
+              type="text"
+              name="paymentTerms"
+              placeholder="e.g. Advance"
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-black bg-white"
             />
           </div>
         </div>
@@ -158,12 +173,78 @@ export default function InvoiceForm({
           </button>
         </div>
 
-        <div className="flex justify-end pt-2 border-t border-gray-200">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">Total</span>
-            <span className="text-lg font-semibold">
-              {grandTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-            </span>
+        <div className="flex flex-wrap gap-3 items-end pt-2 border-t border-gray-200">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              Discount
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              name="discount"
+              placeholder="0"
+              value={discount || ""}
+              onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-black bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              Tax %
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              name="taxPercent"
+              placeholder="0"
+              value={taxPercent || ""}
+              onChange={(e) => setTaxPercent(parseFloat(e.target.value) || 0)}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-black bg-white"
+            />
+          </div>
+          <div className="flex-1" />
+          <div className="space-y-1 text-right">
+            <div className="flex justify-between gap-6 text-sm text-gray-500">
+              <span>Subtotal</span>
+              <span>{subtotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+            </div>
+            <div className="flex justify-between gap-6 text-sm text-gray-500">
+              <span>Discount</span>
+              <span>{discount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+            </div>
+            <div className="flex justify-between gap-6 text-sm text-gray-500">
+              <span>Tax ({taxPercent}%)</span>
+              <span>{taxAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+            </div>
+            <div className="flex justify-between gap-6 text-lg font-semibold">
+              <span>Total</span>
+              <span>{grandTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-200">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              Notes
+            </label>
+            <textarea
+              name="notes"
+              rows={2}
+              placeholder="e.g. All payment should be advance"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              Terms
+            </label>
+            <textarea
+              name="terms"
+              rows={2}
+              placeholder="e.g. Delivery through Cargo service 3 to 5 days"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
+            />
           </div>
         </div>
       </div>

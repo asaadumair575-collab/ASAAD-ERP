@@ -13,7 +13,28 @@ export default async function SettingsPage() {
           These details appear on your invoices.
         </p>
       </div>
-      <form action={saveBusinessProfile} className="space-y-4">
+      <form
+        action={saveBusinessProfile}
+        encType="multipart/form-data"
+        className="space-y-4"
+      >
+        <div>
+          <label className="block text-xs text-gray-500 mb-1.5">Logo</label>
+          {profile?.logo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.logo}
+              alt="Current logo"
+              className="h-16 w-16 rounded-full object-cover mb-2 border border-gray-200"
+            />
+          )}
+          <input
+            type="file"
+            name="logo"
+            accept="image/*"
+            className="w-full text-sm"
+          />
+        </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1.5">
             Business / Shop Name<span className="text-black"> *</span>

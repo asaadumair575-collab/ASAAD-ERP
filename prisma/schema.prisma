@@ -32,6 +32,11 @@ model Order {
   description    String?
   purchaseAmount Float
   saleAmount     Float
+  discount       Float       @default(0)
+  taxPercent     Float       @default(0)
+  paymentTerms   String?
+  notes          String?     @db.Text
+  terms          String?     @db.Text
   paymentStatus  String      @default("UNPAID")
   confirmed      Boolean     @default(false)
   createdAt      DateTime    @default(now())
@@ -74,4 +79,5 @@ model BusinessProfile {
   name    String
   phone   String?
   address String?
+  logo    String? @db.Text
 }
