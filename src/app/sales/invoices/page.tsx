@@ -59,21 +59,27 @@ export default async function InvoicesPage() {
                     {o.saleAmount.toLocaleString()}
                   </td>
                   <td className="py-3 px-5">
-                    <span
-                      className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        o.paymentStatus === "PAID"
-                          ? "bg-black text-white"
+                    {!o.confirmed ? (
+                      <span className="text-xs font-medium px-2 py-1 rounded-full bg-yellow-50 text-yellow-800 border border-yellow-200">
+                        Draft
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-xs font-medium px-2 py-1 rounded-full ${
+                          o.paymentStatus === "PAID"
+                            ? "bg-black text-white"
+                            : o.paymentStatus === "PARTIAL"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {o.paymentStatus === "PAID"
+                          ? "Paid"
                           : o.paymentStatus === "PARTIAL"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {o.paymentStatus === "PAID"
-                        ? "Paid"
-                        : o.paymentStatus === "PARTIAL"
-                          ? "Partial"
-                          : "Unpaid"}
-                    </span>
+                            ? "Partial"
+                            : "Unpaid"}
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}

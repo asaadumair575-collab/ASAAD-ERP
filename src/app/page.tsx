@@ -7,8 +7,8 @@ export default async function DashboardPage() {
   });
 
   const totalClients = clients.length;
-  const totalOrders = clients.reduce((sum, c) => sum + c.orders.length, 0);
-  const allOrders = clients.flatMap((c) => c.orders);
+  const allOrders = clients.flatMap((c) => c.orders).filter((o) => o.confirmed);
+  const totalOrders = allOrders.length;
   const paidOrders = allOrders.filter((o) => o.paymentStatus === "PAID");
   const totalSale = allOrders.reduce(
     (s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0),
@@ -24,10 +24,11 @@ export default async function DashboardPage() {
 
   const byCity = new Map<string, { clients: number; orders: number; sale: number }>();
   for (const c of clients) {
+    const confirmedOrders = c.orders.filter((o) => o.confirmed);
     const entry = byCity.get(c.city) ?? { clients: 0, orders: 0, sale: 0 };
     entry.clients += 1;
-    entry.orders += c.orders.length;
-    entry.sale += c.orders.reduce((s, o) => s + o.saleAmount, 0);
+    entry.orders += confirmedOrders.length;
+    entry.sale += confirmedOrders.reduce((s, o) => s + o.saleAmount, 0);
     byCity.set(c.city, entry);
   }
 

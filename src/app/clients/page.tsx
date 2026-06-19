@@ -105,10 +105,11 @@ export default async function ClientsPage({
             </thead>
             <tbody className="divide-y divide-gray-100">
               {clients.map((c) => {
-                const paidOrders = c.orders.filter(
+                const ledgerOrders = c.orders.filter((o) => o.confirmed);
+                const paidOrders = ledgerOrders.filter(
                   (o) => o.paymentStatus === "PAID"
                 );
-                const totalReceived = c.orders.reduce(
+                const totalReceived = ledgerOrders.reduce(
                   (s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0),
                   0
                 );
@@ -134,7 +135,7 @@ export default async function ClientsPage({
                       {c.phone ?? "-"}
                     </td>
                     <td className="py-3 px-5 text-gray-600">
-                      {c.orders.length}
+                      {ledgerOrders.length}
                     </td>
                     <td className="py-3 px-5 text-gray-600">
                       {totalReceived.toLocaleString()}

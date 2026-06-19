@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import InvoiceShare from "@/components/InvoiceShare";
-import { recordPayment, cancelOrder } from "@/lib/actions";
+import { recordPayment, cancelOrder, confirmOrder } from "@/lib/actions";
 
 export default async function InvoicePage({
   params,
@@ -29,6 +29,7 @@ export default async function InvoicePage({
 
   const recordPaymentBound = recordPayment.bind(null, order.id, clientId);
   const cancelOrderBound = cancelOrder.bind(null, order.id, clientId);
+  const confirmOrderBound = confirmOrder.bind(null, order.id, clientId);
 
   return (
     <div className="max-w-2xl space-y-8">
@@ -41,6 +42,8 @@ export default async function InvoicePage({
           amount: p.amount,
           date: p.date.toISOString(),
         }))}
+        confirmed={order.confirmed}
+        confirmOrderAction={confirmOrderBound}
         recordPaymentAction={recordPaymentBound}
         cancelOrderAction={cancelOrderBound}
       />

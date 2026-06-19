@@ -85,25 +85,42 @@ export async function createOrder(clientId: number, formData: FormData) {
 
   const saleAmount = items.reduce((s, i) => s + i.quantity * i.rate, 0);
 
-  await prisma.order.create({
+  const order = await prisma.order.create({
     data: {
       clientId,
       purchaseAmount,
       saleAmount,
       date,
+      confirmed: false,
       items: { create: items },
     },
   });
 
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/clients");
+  revalidatePath("/sales/invoices");
   revalidatePath("/");
+  redirect(`/clients/${clientId}/orders/${order.id}`);
 }
 
 export async function deleteOrder(orderId: number, clientId: number) {
   await prisma.order.delete({ where: { id: orderId } });
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/clients");
+  revalidatePath("/sales/invoices");
+  revalidatePath("/");
+}
+
+export async function confirmOrder(orderId: number, clientId: number) {
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { confirmed: true },
+  });
+
+  revalidatePath(`/clients/${clientId}/orders/${orderId}`);
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/clients");
+  revalidatePath("/sales/invoices");
   revalidatePath("/");
 }
 
@@ -195,6 +212,7 @@ export async function createInvoice(formData: FormData) {
       purchaseAmount,
       saleAmount,
       date,
+      confirmed: false,
       items: { create: items },
     },
   });
@@ -222,6 +240,9 @@ export async function recordPayment(
   });
   if (!order) {
     throw new Error("Order not found");
+  }
+  if (!order.confirmed) {
+    throw new Error("Confirm the order before recording payments");
   }
 
   const alreadyPaid = order.payments.reduce((s, p) => s + p.amount, 0);

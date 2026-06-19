@@ -33,6 +33,7 @@ model Order {
   purchaseAmount Float
   saleAmount     Float
   paymentStatus  String      @default("UNPAID")
+  confirmed      Boolean     @default(false)
   createdAt      DateTime    @default(now())
   items          OrderItem[]
   payments       Payment[]

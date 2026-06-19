@@ -25,8 +25,11 @@ export default async function ClientDetailPage({
 
   if (!client) notFound();
 
-  const paidOrders = client.orders.filter((o) => o.paymentStatus === "PAID");
-  const totalReceived = client.orders.reduce(
+  const ledgerOrders = client.orders.filter((o) => o.confirmed);
+  const draftOrders = client.orders.filter((o) => !o.confirmed);
+
+  const paidOrders = ledgerOrders.filter((o) => o.paymentStatus === "PAID");
+  const totalReceived = ledgerOrders.reduce(
     (s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0),
     0
   );
@@ -83,7 +86,7 @@ export default async function ClientDetailPage({
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <StatCard label="Orders" value={client.orders.length} />
+        <StatCard label="Orders" value={ledgerOrders.length} />
         <StatCard label="Total Received" value={totalReceived.toLocaleString()} />
         <StatCard
           label="Avg Monthly Dzn"
@@ -96,11 +99,57 @@ export default async function ClientDetailPage({
         <OrderItemsForm action={createOrderForClient} />
       </div>
 
+      {draftOrders.length > 0 && (
+        <div>
+          <h2 className="text-lg font-semibold mb-4">Pending Confirmation</h2>
+          <div className="border border-yellow-200 bg-yellow-50 rounded-2xl overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-yellow-800 uppercase text-xs tracking-wide">
+                  <th className="py-3 px-5 font-medium">Invoice</th>
+                  <th className="py-3 px-5 font-medium">Date</th>
+                  <th className="py-3 px-5 font-medium">Sale</th>
+                  <th className="py-3 px-5"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-yellow-100">
+                {draftOrders.map((o) => (
+                  <tr key={o.id}>
+                    <td className="py-3 px-5">
+                      <Link
+                        href={`/clients/${client.id}/orders/${o.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        INV-{String(o.id).padStart(4, "0")}
+                      </Link>
+                    </td>
+                    <td className="py-3 px-5 text-gray-600">
+                      {o.date.toISOString().slice(0, 10)}
+                    </td>
+                    <td className="py-3 px-5 text-gray-600">
+                      {o.saleAmount.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-5 text-right">
+                      <Link
+                        href={`/clients/${client.id}/orders/${o.id}`}
+                        className="text-xs font-medium text-yellow-800 hover:underline"
+                      >
+                        Confirm
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       <div>
         <h2 className="text-lg font-semibold mb-4">Order History</h2>
-        {client.orders.length === 0 ? (
+        {ledgerOrders.length === 0 ? (
           <div className="border border-gray-200 rounded-2xl p-10 text-center">
-            <p className="text-gray-500 text-sm">No orders yet.</p>
+            <p className="text-gray-500 text-sm">No confirmed orders yet.</p>
           </div>
         ) : (
           <div className="border border-gray-200 rounded-2xl overflow-x-auto">
@@ -119,7 +168,7 @@ export default async function ClientDetailPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {client.orders.map((o) => {
+                {ledgerOrders.map((o) => {
                   const deleteOrderBound = deleteOrder.bind(
                     null,
                     o.id,
