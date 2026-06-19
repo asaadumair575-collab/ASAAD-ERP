@@ -402,3 +402,20 @@ export async function saveBusinessProfile(formData: FormData) {
 
   revalidatePath("/settings");
 }
+
+export async function resetAllData(formData: FormData) {
+  const confirmation = String(formData.get("confirmation") ?? "");
+  if (confirmation !== "DELETE") {
+    throw new Error('Type "DELETE" to confirm');
+  }
+
+  await prisma.payment.deleteMany();
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.client.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.businessProfile.deleteMany();
+
+  revalidatePath("/", "layout");
+  redirect("/settings");
+}
