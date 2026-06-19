@@ -5,6 +5,7 @@ import SubmitButton from "@/components/SubmitButton";
 
 type Client = { id: number; name: string; businessName: string | null };
 type Product = { id: number; name: string; rate: number };
+type Row = { id: number; quantity: number; rate: number };
 
 export default function InvoiceForm({
   action,
@@ -15,21 +16,24 @@ export default function InvoiceForm({
   clients: Client[];
   products: Product[];
 }) {
-  const [rows, setRows] = useState([0]);
+  const [rows, setRows] = useState<Row[]>([{ id: 0, quantity: 0, rate: 0 }]);
 
-  function handleProductChange(rowEl: HTMLSelectElement) {
+  function updateRow(id: number, patch: Partial<Row>) {
+    setRows((r) => r.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+  }
+
+  function handleProductChange(rowId: number, rowEl: HTMLSelectElement) {
     const row = rowEl.closest("[data-row]");
     const product = products.find((p) => p.id === parseInt(rowEl.value, 10));
     if (!row || !product) return;
     const descInput = row.querySelector<HTMLInputElement>(
       'input[name="itemDescription"]'
     );
-    const rateInput = row.querySelector<HTMLInputElement>(
-      'input[name="itemRate"]'
-    );
     if (descInput) descInput.value = product.name;
-    if (rateInput) rateInput.value = String(product.rate);
+    updateRow(rowId, { rate: product.rate });
   }
+
+  const grandTotal = rows.reduce((s, r) => s + r.quantity * r.rate, 0);
 
   return (
     <form action={action} className="space-y-6">
@@ -80,14 +84,20 @@ export default function InvoiceForm({
         </div>
 
         <div className="space-y-2">
-          <label className="block text-xs text-gray-500">Products</label>
-          {rows.map((rowId) => (
-            <div key={rowId} data-row className="flex flex-wrap gap-3 items-end">
+          <div className="flex flex-wrap gap-3 text-xs text-gray-500 px-1">
+            <span className="min-w-[160px]">Item</span>
+            <span className="flex-1 min-w-[150px]">Description</span>
+            <span className="w-24">Qty</span>
+            <span className="w-28">Rate</span>
+            <span className="w-28">Amount</span>
+          </div>
+          {rows.map((row) => (
+            <div key={row.id} data-row className="flex flex-wrap gap-3 items-end">
               <div className="min-w-[160px]">
                 <select
                   name="itemProductId"
                   defaultValue=""
-                  onChange={(e) => handleProductChange(e.target)}
+                  onChange={(e) => handleProductChange(row.id, e.target)}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
                 >
                   <option value="">Custom item</option>
@@ -112,6 +122,12 @@ export default function InvoiceForm({
                   step="0.01"
                   name="itemQuantity"
                   placeholder="Qty"
+                  value={row.quantity || ""}
+                  onChange={(e) =>
+                    updateRow(row.id, {
+                      quantity: parseFloat(e.target.value) || 0,
+                    })
+                  }
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-black bg-white"
                 />
               </div>
@@ -121,13 +137,22 @@ export default function InvoiceForm({
                   step="0.01"
                   name="itemRate"
                   placeholder="Rate"
+                  value={row.rate || ""}
+                  onChange={(e) =>
+                    updateRow(row.id, { rate: parseFloat(e.target.value) || 0 })
+                  }
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-black bg-white"
                 />
+              </div>
+              <div className="w-28 text-sm font-medium px-1 py-2">
+                {(row.quantity * row.rate).toLocaleString(undefined, {
+                  maximumFractionDigits: 2,
+                })}
               </div>
               {rows.length > 1 && (
                 <button
                   type="button"
-                  onClick={() => setRows((r) => r.filter((id) => id !== rowId))}
+                  onClick={() => setRows((r) => r.filter((x) => x.id !== row.id))}
                   className="text-xs text-gray-400 hover:text-red-600 transition-colors px-2 py-2"
                 >
                   Remove
@@ -137,11 +162,22 @@ export default function InvoiceForm({
           ))}
           <button
             type="button"
-            onClick={() => setRows((r) => [...r, Date.now()])}
+            onClick={() =>
+              setRows((r) => [...r, { id: Date.now(), quantity: 0, rate: 0 }])
+            }
             className="text-sm text-gray-600 hover:text-black underline"
           >
             + Add item
           </button>
+        </div>
+
+        <div className="flex justify-end pt-2 border-t border-gray-200">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-500">Total</span>
+            <span className="text-lg font-semibold">
+              {grandTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            </span>
+          </div>
         </div>
       </div>
 
