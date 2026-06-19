@@ -191,15 +191,11 @@ export async function cancelOrder(orderId: number, clientId: number) {
 
 export async function createInvoice(formData: FormData) {
   const clientId = parseInt(String(formData.get("clientId") ?? ""), 10);
-  const purchaseAmount = parseFloat(String(formData.get("purchaseAmount") ?? "0"));
   const dateRaw = String(formData.get("date") ?? "");
   const date = dateRaw ? new Date(dateRaw) : new Date();
 
   if (Number.isNaN(clientId)) {
     throw new Error("Please select a customer");
-  }
-  if (Number.isNaN(purchaseAmount)) {
-    throw new Error("Purchase amount must be a number");
   }
 
   const client = await prisma.client.findUnique({ where: { id: clientId } });
@@ -223,22 +219,26 @@ export async function createInvoice(formData: FormData) {
   const existingProducts = requestedProductIds.length
     ? await prisma.product.findMany({
         where: { id: { in: requestedProductIds } },
-        select: { id: true },
+        select: { id: true, purchaseRate: true },
       })
     : [];
-  const existingProductIds = new Set(existingProducts.map((p) => p.id));
+  const purchaseRateById = new Map(
+    existingProducts.map((p) => [p.id, p.purchaseRate])
+  );
 
   const items = descriptions
     .map((description, i) => {
       const parsedProductId = productIds[i] ? parseInt(productIds[i], 10) : null;
+      const productId =
+        parsedProductId !== null && purchaseRateById.has(parsedProductId)
+          ? parsedProductId
+          : null;
       return {
-        productId:
-          parsedProductId !== null && existingProductIds.has(parsedProductId)
-            ? parsedProductId
-            : null,
+        productId,
         description,
         quantity: quantities[i],
         rate: rates[i],
+        purchaseRate: productId !== null ? purchaseRateById.get(productId)! : 0,
       };
     })
     .filter(
@@ -253,6 +253,10 @@ export async function createInvoice(formData: FormData) {
   }
 
   const saleAmount = items.reduce((s, i) => s + i.quantity * i.rate, 0);
+  const purchaseAmount = items.reduce(
+    (s, i) => s + i.quantity * i.purchaseRate,
+    0
+  );
 
   const order = await prisma.order.create({
     data: {
@@ -261,7 +265,14 @@ export async function createInvoice(formData: FormData) {
       saleAmount,
       date,
       confirmed: false,
-      items: { create: items },
+      items: {
+        create: items.map(({ productId, description, quantity, rate }) => ({
+          productId,
+          description,
+          quantity,
+          rate,
+        })),
+      },
     },
   });
 
@@ -330,12 +341,13 @@ export async function recordPayment(
 export async function createProduct(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const rate = parseFloat(String(formData.get("rate") ?? "0"));
+  const purchaseRate = parseFloat(String(formData.get("purchaseRate") ?? "0"));
 
-  if (!name || Number.isNaN(rate)) {
-    throw new Error("Name and rate are required");
+  if (!name || Number.isNaN(rate) || Number.isNaN(purchaseRate)) {
+    throw new Error("Name, rate and purchase rate are required");
   }
 
-  await prisma.product.create({ data: { name, rate } });
+  await prisma.product.create({ data: { name, rate, purchaseRate } });
   revalidatePath("/sales/products");
   redirect("/sales/products");
 }

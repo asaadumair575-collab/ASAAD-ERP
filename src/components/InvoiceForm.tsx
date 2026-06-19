@@ -4,7 +4,7 @@ import { useState } from "react";
 import SubmitButton from "@/components/SubmitButton";
 
 type Client = { id: number; name: string; businessName: string | null };
-type Product = { id: number; name: string; rate: number };
+type Product = { id: number; name: string };
 type Row = { id: number; quantity: number; rate: number };
 
 export default function InvoiceForm({
@@ -30,7 +30,6 @@ export default function InvoiceForm({
       'input[name="itemDescription"]'
     );
     if (descInput) descInput.value = product.name;
-    updateRow(rowId, { rate: product.rate });
   }
 
   const grandTotal = rows.reduce((s, r) => s + r.quantity * r.rate, 0);
@@ -67,18 +66,6 @@ export default function InvoiceForm({
               name="date"
               defaultValue={new Date().toISOString().slice(0, 10)}
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1.5">
-              Purchase Amount (total cost)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              name="purchaseAmount"
-              required
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-black bg-white"
             />
           </div>
         </div>

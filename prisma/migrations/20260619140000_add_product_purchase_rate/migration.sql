@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Product" ADD COLUMN "purchaseRate" DOUBLE PRECISION NOT NULL DEFAULT 0;
