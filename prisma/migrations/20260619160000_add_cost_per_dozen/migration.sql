@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "BusinessProfile" ADD COLUMN "costPerDozen" DOUBLE PRECISION NOT NULL DEFAULT 1550;

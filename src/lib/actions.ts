@@ -403,6 +403,27 @@ export async function saveBusinessProfile(formData: FormData) {
   revalidatePath("/settings");
 }
 
+export async function setCostPerDozen(formData: FormData) {
+  const costPerDozen = parseFloat(String(formData.get("costPerDozen") ?? ""));
+  if (Number.isNaN(costPerDozen) || costPerDozen < 0) {
+    throw new Error("Enter a valid cost per dozen");
+  }
+
+  const existing = await prisma.businessProfile.findFirst();
+  if (existing) {
+    await prisma.businessProfile.update({
+      where: { id: existing.id },
+      data: { costPerDozen },
+    });
+  } else {
+    await prisma.businessProfile.create({
+      data: { name: "Your Business", costPerDozen },
+    });
+  }
+
+  revalidatePath("/finance");
+}
+
 export async function resetAllData(formData: FormData) {
   const confirmation = String(formData.get("confirmation") ?? "");
   if (confirmation !== "DELETE") {

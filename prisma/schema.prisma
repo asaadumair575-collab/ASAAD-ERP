@@ -75,9 +75,10 @@ model Product {
 }
 
 model BusinessProfile {
-  id      Int     @id @default(autoincrement())
-  name    String
-  phone   String?
-  address String?
-  logo    String? @db.Text
+  id           Int     @id @default(autoincrement())
+  name         String
+  phone        String?
+  address      String?
+  logo         String? @db.Text
+  costPerDozen Float   @default(1550)
 }
