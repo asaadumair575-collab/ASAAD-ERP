@@ -29,12 +29,50 @@ export default async function ClientDetailPage({
   const draftOrders = client.orders.filter((o) => !o.confirmed);
 
   const paidOrders = ledgerOrders.filter((o) => o.paymentStatus === "PAID");
+  const totalBusiness = ledgerOrders.reduce((s, o) => s + o.saleAmount, 0);
   const totalReceived = ledgerOrders.reduce(
     (s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0),
     0
   );
+  const balanceDue = totalBusiness - totalReceived;
   const monthlyDzn = averageMonthlyDzn(paidOrders);
   const grade = gradeForMonthlyDzn(monthlyDzn, paidOrders.length > 0);
+
+  type LedgerEntry = {
+    date: Date;
+    description: string;
+    debit: number;
+    credit: number;
+    href: string;
+    screenshot?: string | null;
+  };
+  const ledgerEntries: LedgerEntry[] = [];
+  for (const o of ledgerOrders) {
+    const invoiceNumber = `INV-${String(o.id).padStart(4, "0")}`;
+    ledgerEntries.push({
+      date: o.date,
+      description: `Order ${invoiceNumber}`,
+      debit: o.saleAmount,
+      credit: 0,
+      href: `/clients/${client.id}/orders/${o.id}`,
+    });
+    for (const p of o.payments) {
+      ledgerEntries.push({
+        date: p.date,
+        description: `Payment - ${invoiceNumber}`,
+        debit: 0,
+        credit: p.amount,
+        href: `/clients/${client.id}/orders/${o.id}`,
+        screenshot: p.screenshot,
+      });
+    }
+  }
+  ledgerEntries.sort((a, b) => a.date.getTime() - b.date.getTime());
+  let runningBalance = 0;
+  const ledgerRows = ledgerEntries.map((entry) => {
+    runningBalance += entry.debit - entry.credit;
+    return { ...entry, balance: runningBalance };
+  });
 
   const createOrderForClient = createOrder.bind(null, clientId);
   const deleteClientBound = deleteClient.bind(null, clientId);
@@ -86,11 +124,12 @@ export default async function ClientDetailPage({
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <StatCard label="Orders" value={ledgerOrders.length} />
-        <StatCard label="Total Received" value={totalReceived.toLocaleString()} />
+        <StatCard label="Total Orders" value={ledgerOrders.length} />
+        <StatCard label="Total Business" value={totalBusiness.toLocaleString()} />
         <StatCard
-          label="Avg Monthly Dzn"
-          value={monthlyDzn.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+          label="Balance Due"
+          value={balanceDue.toLocaleString()}
+          dark={balanceDue > 0}
         />
       </div>
 
@@ -144,6 +183,65 @@ export default async function ClientDetailPage({
           </div>
         </div>
       )}
+
+      <div>
+        <h2 className="text-lg font-semibold mb-4">Ledger</h2>
+        {ledgerRows.length === 0 ? (
+          <div className="border border-gray-200 rounded-2xl p-10 text-center">
+            <p className="text-gray-500 text-sm">No ledger entries yet.</p>
+          </div>
+        ) : (
+          <div className="border border-gray-200 rounded-2xl overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
+                  <th className="py-3 px-5 font-medium">Date</th>
+                  <th className="py-3 px-5 font-medium">Description</th>
+                  <th className="py-3 px-5 font-medium">Debit</th>
+                  <th className="py-3 px-5 font-medium">Credit</th>
+                  <th className="py-3 px-5 font-medium">Balance</th>
+                  <th className="py-3 px-5"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {ledgerRows.map((row, i) => (
+                  <tr key={i} className="hover:bg-gray-50 transition-colors">
+                    <td className="py-3 px-5 text-gray-600">
+                      {row.date.toISOString().slice(0, 10)}
+                    </td>
+                    <td className="py-3 px-5">
+                      <Link href={row.href} className="font-medium hover:underline">
+                        {row.description}
+                      </Link>
+                    </td>
+                    <td className="py-3 px-5 text-gray-600">
+                      {row.debit > 0 ? row.debit.toLocaleString() : "-"}
+                    </td>
+                    <td className="py-3 px-5 text-gray-600">
+                      {row.credit > 0 ? row.credit.toLocaleString() : "-"}
+                    </td>
+                    <td className="py-3 px-5 font-medium">
+                      {row.balance.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-5 text-right">
+                      {row.screenshot && (
+                        <a
+                          href={row.screenshot}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          View Proof
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       <div>
         <h2 className="text-lg font-semibold mb-4">Order History</h2>

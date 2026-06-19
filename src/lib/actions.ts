@@ -111,11 +111,59 @@ export async function deleteOrder(orderId: number, clientId: number) {
   revalidatePath("/");
 }
 
-export async function confirmOrder(orderId: number, clientId: number) {
-  await prisma.order.update({
+export async function confirmOrder(
+  orderId: number,
+  clientId: number,
+  formData: FormData
+) {
+  const mode = String(formData.get("mode") ?? "credit");
+
+  const order = await prisma.order.findUnique({
     where: { id: orderId },
-    data: { confirmed: true },
+    include: { payments: true },
   });
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  if (mode === "paid") {
+    const amount = parseFloat(String(formData.get("amount") ?? "0"));
+    if (Number.isNaN(amount) || amount <= 0) {
+      throw new Error("Enter a valid payment amount");
+    }
+
+    const alreadyPaid = order.payments.reduce((s, p) => s + p.amount, 0);
+    const balanceDue = order.saleAmount - alreadyPaid;
+    if (amount > balanceDue + 0.01) {
+      throw new Error("Payment exceeds the remaining balance due");
+    }
+
+    const screenshotFile = formData.get("screenshot");
+    let screenshot: string | null = null;
+    if (screenshotFile instanceof File && screenshotFile.size > 0) {
+      const buffer = Buffer.from(await screenshotFile.arrayBuffer());
+      screenshot = `data:${screenshotFile.type};base64,${buffer.toString("base64")}`;
+    }
+
+    const newPaid = alreadyPaid + amount;
+    const paymentStatus =
+      newPaid >= order.saleAmount - 0.01
+        ? "PAID"
+        : newPaid > 0
+          ? "PARTIAL"
+          : "UNPAID";
+
+    await prisma.payment.create({ data: { orderId, amount, screenshot } });
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { confirmed: true, paymentStatus },
+    });
+  } else {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { confirmed: true },
+    });
+  }
 
   revalidatePath(`/clients/${clientId}/orders/${orderId}`);
   revalidatePath(`/clients/${clientId}`);

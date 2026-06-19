@@ -1,6 +1,13 @@
 "use client";
 
-type PaymentEntry = { id: number; amount: number; date: string };
+import { useState } from "react";
+
+type PaymentEntry = {
+  id: number;
+  amount: number;
+  date: string;
+  screenshot: string | null;
+};
 
 export default function InvoiceShare({
   message,
@@ -19,7 +26,7 @@ export default function InvoiceShare({
   paidSoFar: number;
   payments: PaymentEntry[];
   confirmed: boolean;
-  confirmOrderAction?: () => void;
+  confirmOrderAction?: (formData: FormData) => void;
   recordPaymentAction?: (formData: FormData) => void;
   cancelOrderAction?: () => void;
 }) {
@@ -72,14 +79,10 @@ export default function InvoiceShare({
             customer&apos;s ledger or order history until you confirm it.
           </p>
           {confirmOrderAction && (
-            <form action={confirmOrderAction}>
-              <button
-                type="submit"
-                className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                Confirm Order
-              </button>
-            </form>
+            <ConfirmOrderForm
+              action={confirmOrderAction}
+              saleAmount={saleAmount}
+            />
           )}
         </div>
       ) : (
@@ -145,11 +148,23 @@ export default function InvoiceShare({
               </p>
               <div className="space-y-1">
                 {payments.map((p) => (
-                  <div key={p.id} className="flex justify-between text-sm">
+                  <div key={p.id} className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">
                       {p.date.slice(0, 10)}
                     </span>
-                    <span className="font-medium">{p.amount.toLocaleString()}</span>
+                    <div className="flex items-center gap-3">
+                      {p.screenshot && (
+                        <a
+                          href={p.screenshot}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          View Proof
+                        </a>
+                      )}
+                      <span className="font-medium">{p.amount.toLocaleString()}</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -158,5 +173,79 @@ export default function InvoiceShare({
         </div>
       )}
     </div>
+  );
+}
+
+function ConfirmOrderForm({
+  action,
+  saleAmount,
+}: {
+  action: (formData: FormData) => void;
+  saleAmount: number;
+}) {
+  const [mode, setMode] = useState<"credit" | "paid">("credit");
+
+  return (
+    <form action={action} className="space-y-3">
+      <div className="flex flex-wrap gap-4 text-sm">
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="mode"
+            value="credit"
+            checked={mode === "credit"}
+            onChange={() => setMode("credit")}
+          />
+          Goods sent on credit (no payment yet)
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="mode"
+            value="paid"
+            checked={mode === "paid"}
+            onChange={() => setMode("paid")}
+          />
+          Payment received
+        </label>
+      </div>
+
+      {mode === "paid" && (
+        <div className="flex flex-wrap gap-3 items-end">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              Amount Received
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              name="amount"
+              defaultValue={saleAmount}
+              required
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-black"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              Payment Screenshot
+            </label>
+            <input
+              type="file"
+              name="screenshot"
+              accept="image/*"
+              required
+              className="text-sm"
+            />
+          </div>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+      >
+        Confirm Order
+      </button>
+    </form>
   );
 }
