@@ -109,7 +109,7 @@ export default function Sidebar({ businessName }: { businessName: string }) {
 
   return (
     <>
-      <header className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-black text-white px-4 py-3">
+      <header className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-black text-white px-4 py-3 print:hidden">
         <span className="font-semibold tracking-tight">{businessName}</span>
         <button
           type="button"
@@ -129,7 +129,7 @@ export default function Sidebar({ businessName }: { businessName: string }) {
       )}
 
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-50 w-60 shrink-0 bg-black text-white flex flex-col h-screen overflow-y-auto transform transition-transform duration-200 md:translate-x-0 ${
+        className={`fixed md:static inset-y-0 left-0 z-50 w-60 shrink-0 bg-black text-white flex flex-col h-screen overflow-y-auto transform transition-transform duration-200 md:translate-x-0 print:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

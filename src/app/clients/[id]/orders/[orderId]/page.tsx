@@ -35,7 +35,7 @@ export default async function InvoicePage({
   const confirmOrderBound = confirmOrder.bind(null, order.id, clientId);
 
   return (
-    <div className="max-w-2xl space-y-8">
+    <div className="max-w-2xl space-y-8 print:max-w-none print:space-y-0">
       <InvoiceShare
         message={message}
         saleAmount={order.saleAmount}
@@ -52,7 +52,7 @@ export default async function InvoicePage({
         cancelOrderAction={cancelOrderBound}
       />
 
-      <div className="border border-gray-200 rounded-2xl p-8 space-y-8">
+      <div className="border border-gray-200 rounded-2xl p-8 space-y-8 print:border-0 print:rounded-none print:p-0">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
             {profile?.logo && (
