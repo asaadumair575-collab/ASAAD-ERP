@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { createOrder, deleteOrder, deleteClient } from "@/lib/actions";
+import { deleteOrder, deleteClient } from "@/lib/actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import OrderItemsForm from "@/components/OrderItemsForm";
 import { averageMonthlyDzn, gradeForMonthlyDzn } from "@/lib/grade";
 
 export default async function ClientDetailPage({
@@ -74,7 +73,6 @@ export default async function ClientDetailPage({
     return { ...entry, balance: runningBalance };
   });
 
-  const createOrderForClient = createOrder.bind(null, clientId);
   const deleteClientBound = deleteClient.bind(null, clientId);
 
   return (
@@ -131,11 +129,6 @@ export default async function ClientDetailPage({
           value={balanceDue.toLocaleString()}
           dark={balanceDue > 0}
         />
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold mb-4">Add Order</h2>
-        <OrderItemsForm action={createOrderForClient} />
       </div>
 
       {draftOrders.length > 0 && (
