@@ -132,6 +132,18 @@ export default function InvoiceShare({
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-black"
                 />
               </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1.5">
+                  Payment Screenshot
+                </label>
+                <input
+                  type="file"
+                  name="screenshot"
+                  accept="image/*"
+                  required
+                  className="text-sm"
+                />
+              </div>
               <button
                 type="submit"
                 className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"

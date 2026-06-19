@@ -299,6 +299,13 @@ export async function recordPayment(
     throw new Error("Payment exceeds the remaining balance due");
   }
 
+  const screenshotFile = formData.get("screenshot");
+  if (!(screenshotFile instanceof File) || screenshotFile.size === 0) {
+    throw new Error("Payment screenshot is required");
+  }
+  const buffer = Buffer.from(await screenshotFile.arrayBuffer());
+  const screenshot = `data:${screenshotFile.type};base64,${buffer.toString("base64")}`;
+
   const newPaid = alreadyPaid + amount;
   const paymentStatus =
     newPaid >= order.saleAmount - 0.01
@@ -307,7 +314,7 @@ export async function recordPayment(
         ? "PARTIAL"
         : "UNPAID";
 
-  await prisma.payment.create({ data: { orderId, amount } });
+  await prisma.payment.create({ data: { orderId, amount, screenshot } });
   await prisma.order.update({
     where: { id: orderId },
     data: { paymentStatus },
