@@ -73,10 +73,16 @@ model Product {
 }
 
 model BusinessProfile {
-  id           Int     @id @default(autoincrement())
-  name         String
-  phone        String?
-  address      String?
-  logo         String? @db.Text
-  costPerDozen Float   @default(1550)
+  id      Int     @id @default(autoincrement())
+  name    String
+  phone   String?
+  address String?
+  logo    String? @db.Text
+}
+
+model CostRate {
+  id            Int      @id @default(autoincrement())
+  costPerDozen  Float
+  effectiveFrom DateTime @default(now())
+  createdAt     DateTime @default(now())
 }

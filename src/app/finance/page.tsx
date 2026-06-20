@@ -23,8 +23,19 @@ export default async function FinancePage({
   const fromDate = new Date(`${from}T00:00:00`);
   const toDate = new Date(`${to}T23:59:59.999`);
 
-  const profile = await prisma.businessProfile.findFirst();
-  const costPerDozen = profile?.costPerDozen ?? 1550;
+  const costRates = await prisma.costRate.findMany({
+    orderBy: { effectiveFrom: "asc" },
+  });
+  const currentCostPerDozen = costRates.at(-1)?.costPerDozen ?? 1550;
+
+  function rateFor(date: Date) {
+    let rate = costRates[0]?.costPerDozen ?? 1550;
+    for (const cr of costRates) {
+      if (cr.effectiveFrom <= date) rate = cr.costPerDozen;
+      else break;
+    }
+    return rate;
+  }
 
   const ordersInRange = await prisma.order.findMany({
     where: { date: { gte: fromDate, lte: toDate } },
@@ -40,7 +51,10 @@ export default async function FinancePage({
     (s, o) => s + o.items.reduce((is, i) => is + i.quantity, 0),
     0
   );
-  const totalCost = totalDozens * costPerDozen;
+  const totalCost = confirmedOrders.reduce((s, o) => {
+    const dozens = o.items.reduce((is, i) => is + i.quantity, 0);
+    return s + dozens * rateFor(o.date);
+  }, 0);
   const profit = totalSales - totalCost;
 
   return (
@@ -64,7 +78,7 @@ export default async function FinancePage({
             type="number"
             step="0.01"
             name="costPerDozen"
-            defaultValue={costPerDozen}
+            defaultValue={currentCostPerDozen}
             required
             className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-black bg-white"
           />
@@ -72,6 +86,9 @@ export default async function FinancePage({
         <SubmitButton className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors">
           Save Rate
         </SubmitButton>
+        <p className="text-xs text-gray-500 w-full">
+          Naya rate sirf is se aage ki invoices par lagega — pehle ki invoices apne purane rate par hi rahengi.
+        </p>
       </form>
 
       <form
@@ -127,7 +144,7 @@ export default async function FinancePage({
         </div>
         <div className="border border-gray-200 rounded-2xl p-5">
           <p className="text-xs text-gray-500 uppercase tracking-wide">
-            Cost ({costPerDozen.toLocaleString()}/dzn)
+            Cost (current rate {currentCostPerDozen.toLocaleString()}/dzn)
           </p>
           <p className="text-2xl font-semibold mt-1">
             {totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}
@@ -170,6 +187,7 @@ export default async function FinancePage({
                 <th className="py-3 px-5 font-medium">Date</th>
                 <th className="py-3 px-5 font-medium">Invoice</th>
                 <th className="py-3 px-5 font-medium text-right">Dozens</th>
+                <th className="py-3 px-5 font-medium text-right">Rate/dzn</th>
                 <th className="py-3 px-5 font-medium text-right">Sale Amount</th>
               </tr>
             </thead>
@@ -185,6 +203,9 @@ export default async function FinancePage({
                       INV-{String(o.id).padStart(4, "0")}
                     </td>
                     <td className="py-3 px-5 text-right">{dozens}</td>
+                    <td className="py-3 px-5 text-right text-gray-500">
+                      {rateFor(o.date).toLocaleString()}
+                    </td>
                     <td className="py-3 px-5 text-right">
                       {o.saleAmount.toLocaleString()}
                     </td>

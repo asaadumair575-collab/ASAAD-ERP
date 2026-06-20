@@ -395,17 +395,7 @@ export async function setCostPerDozen(formData: FormData) {
     throw new Error("Enter a valid cost per dozen");
   }
 
-  const existing = await prisma.businessProfile.findFirst();
-  if (existing) {
-    await prisma.businessProfile.update({
-      where: { id: existing.id },
-      data: { costPerDozen },
-    });
-  } else {
-    await prisma.businessProfile.create({
-      data: { name: "Your Business", costPerDozen },
-    });
-  }
+  await prisma.costRate.create({ data: { costPerDozen } });
 
   revalidatePath("/finance");
 }
@@ -422,6 +412,7 @@ export async function resetAllData(formData: FormData) {
   await prisma.client.deleteMany();
   await prisma.product.deleteMany();
   await prisma.businessProfile.deleteMany();
+  await prisma.costRate.deleteMany();
 
   revalidatePath("/", "layout");
   redirect("/settings");
