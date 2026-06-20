@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
+function round2(n: number) {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
 export async function createClient(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const businessName = String(formData.get("businessName") ?? "").trim() || null;
@@ -83,7 +87,7 @@ export async function createOrder(clientId: number, formData: FormData) {
     throw new Error("At least one valid item is required");
   }
 
-  const saleAmount = items.reduce((s, i) => s + i.quantity * i.rate, 0);
+  const saleAmount = round2(items.reduce((s, i) => s + i.quantity * i.rate, 0));
 
   const order = await prisma.order.create({
     data: {
@@ -249,7 +253,7 @@ export async function createInvoice(formData: FormData) {
     throw new Error("At least one valid item is required");
   }
 
-  const subtotal = items.reduce((s, i) => s + i.quantity * i.rate, 0);
+  const subtotal = round2(items.reduce((s, i) => s + i.quantity * i.rate, 0));
 
   const discount = parseFloat(String(formData.get("discount") ?? "0")) || 0;
   const taxPercent = parseFloat(String(formData.get("taxPercent") ?? "0")) || 0;
@@ -257,8 +261,8 @@ export async function createInvoice(formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const terms = String(formData.get("terms") ?? "").trim() || null;
 
-  const taxAmount = (subtotal - discount) * (taxPercent / 100);
-  const saleAmount = subtotal - discount + taxAmount;
+  const taxAmount = round2((subtotal - discount) * (taxPercent / 100));
+  const saleAmount = round2(subtotal - discount + taxAmount);
 
   const order = await prisma.order.create({
     data: {

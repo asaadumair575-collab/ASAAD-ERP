@@ -32,8 +32,9 @@ export default async function InvoicePage({
   const invoiceNumber = `INV-${String(order.id).padStart(4, "0")}`;
   const paidSoFar = order.payments.reduce((s, p) => s + p.amount, 0);
   const balanceDue = order.saleAmount - paidSoFar;
-  const subtotal = order.items.reduce((s, i) => s + i.quantity * i.rate, 0);
-  const taxAmount = (subtotal - order.discount) * (order.taxPercent / 100);
+  const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+  const subtotal = round2(order.items.reduce((s, i) => s + i.quantity * i.rate, 0));
+  const taxAmount = round2((subtotal - order.discount) * (order.taxPercent / 100));
 
   const message = `Invoice ${invoiceNumber}\nDate: ${order.date
     .toISOString()

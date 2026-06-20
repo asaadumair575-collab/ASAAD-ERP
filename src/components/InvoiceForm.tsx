@@ -34,9 +34,13 @@ export default function InvoiceForm({
     });
   }
 
-  const subtotal = rows.reduce((s, r) => s + r.quantity * r.rate, 0);
-  const taxAmount = (subtotal - discount) * (taxPercent / 100);
-  const grandTotal = subtotal - discount + taxAmount;
+  function round2(n: number) {
+    return Math.round((n + Number.EPSILON) * 100) / 100;
+  }
+
+  const subtotal = round2(rows.reduce((s, r) => s + r.quantity * r.rate, 0));
+  const taxAmount = round2((subtotal - discount) * (taxPercent / 100));
+  const grandTotal = round2(subtotal - discount + taxAmount);
 
   return (
     <form action={action} className="space-y-6">
@@ -149,7 +153,7 @@ export default function InvoiceForm({
                 />
               </div>
               <div className="w-28 text-sm font-medium px-1 py-2">
-                {(row.quantity * row.rate).toLocaleString(undefined, {
+                {round2(row.quantity * row.rate).toLocaleString(undefined, {
                   maximumFractionDigits: 2,
                 })}
               </div>
