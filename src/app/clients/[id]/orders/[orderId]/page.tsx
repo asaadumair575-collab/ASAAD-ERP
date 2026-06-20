@@ -3,6 +3,15 @@ import { notFound } from "next/navigation";
 import InvoiceShare from "@/components/InvoiceShare";
 import { recordPayment, cancelOrder, confirmOrder } from "@/lib/actions";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ orderId: string }>;
+}) {
+  const { orderId } = await params;
+  return { title: `INV-${orderId.padStart(4, "0")}` };
+}
+
 export default async function InvoicePage({
   params,
 }: {
