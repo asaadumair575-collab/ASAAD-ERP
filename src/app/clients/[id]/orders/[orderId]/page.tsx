@@ -35,6 +35,13 @@ export default async function InvoicePage({
   const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
   const subtotal = round2(order.items.reduce((s, i) => s + i.quantity * i.rate, 0));
   const taxAmount = round2((subtotal - order.discount) * (order.taxPercent / 100));
+  const formatCurrency = (n: number) =>
+    `PKR ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formattedDate = order.date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 
   const message = `Invoice ${invoiceNumber}\nDate: ${order.date
     .toISOString()
@@ -65,24 +72,24 @@ export default async function InvoicePage({
 
       <div className="border border-gray-200 rounded-2xl p-8 space-y-8 print:border-0 print:rounded-none print:p-0 print:space-y-16 print:flex print:flex-1 print:flex-col">
         <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4">
+          <div className="flex items-center gap-4">
             {profile?.logo && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={profile.logo}
                 alt={profile.name}
-                className="h-16 w-16 rounded-full object-cover border border-gray-200 print:h-28 print:w-28"
+                className="h-20 w-20 rounded-lg object-cover print:h-32 print:w-32"
               />
             )}
             <div>
-              <h1 className="text-lg font-semibold tracking-tight print:text-3xl">
+              <h1 className="text-lg font-semibold tracking-tight print:text-2xl">
                 {profile?.name ?? "Your Business"}
               </h1>
               {profile?.address && (
-                <p className="text-sm text-gray-500 mt-1 print:text-lg print:mt-2">{profile.address}</p>
+                <p className="text-sm text-gray-500 mt-1 print:text-base print:mt-2">{profile.address}</p>
               )}
               {profile?.phone && (
-                <p className="text-sm text-gray-500 print:text-lg">{profile.phone}</p>
+                <p className="text-sm text-gray-500 print:text-base">{profile.phone}</p>
               )}
             </div>
           </div>
@@ -106,7 +113,7 @@ export default async function InvoicePage({
           <div className="space-y-1 text-right print:space-y-3">
             <div className="flex justify-between gap-6 text-sm print:text-lg">
               <span className="text-gray-500">Date:</span>
-              <span>{order.date.toISOString().slice(0, 10)}</span>
+              <span>{formattedDate}</span>
             </div>
             {order.paymentTerms && (
               <div className="flex justify-between gap-6 text-sm print:text-lg">
@@ -116,9 +123,7 @@ export default async function InvoicePage({
             )}
             <div className="flex justify-between gap-6 text-sm bg-gray-50 px-2 py-1 rounded-lg print:text-lg print:px-4 print:py-3">
               <span className="text-gray-500 font-medium">Balance Due:</span>
-              <span className="font-semibold">
-                {balanceDue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-              </span>
+              <span className="font-semibold">{formatCurrency(balanceDue)}</span>
             </div>
           </div>
         </div>
@@ -135,13 +140,13 @@ export default async function InvoicePage({
           <tbody className="divide-y divide-gray-100">
             {order.items.map((item) => (
               <tr key={item.id}>
-                <td className="py-2 px-3 print:py-4 print:px-5">{item.description}</td>
+                <td className="py-2 px-3 font-medium print:py-4 print:px-5">{item.description}</td>
                 <td className="py-2 px-3 text-right print:py-4 print:px-5">{item.quantity}</td>
                 <td className="py-2 px-3 text-right print:py-4 print:px-5">
-                  {item.rate.toLocaleString()}
+                  {formatCurrency(item.rate)}
                 </td>
                 <td className="py-2 px-3 text-right print:py-4 print:px-5">
-                  {(item.quantity * item.rate).toLocaleString()}
+                  {formatCurrency(item.quantity * item.rate)}
                 </td>
               </tr>
             ))}
@@ -152,22 +157,22 @@ export default async function InvoicePage({
           <div className="w-56 space-y-1 print:w-80 print:space-y-3">
             <div className="flex justify-between text-sm print:text-lg">
               <span className="text-gray-500">Subtotal:</span>
-              <span>{subtotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+              <span>{formatCurrency(subtotal)}</span>
             </div>
             {order.discount > 0 && (
               <div className="flex justify-between text-sm print:text-lg">
                 <span className="text-gray-500">Discount:</span>
-                <span>{order.discount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                <span>{formatCurrency(order.discount)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm print:text-lg">
               <span className="text-gray-500">Tax ({order.taxPercent}%):</span>
-              <span>{taxAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+              <span>{formatCurrency(taxAmount)}</span>
             </div>
             <div className="flex justify-between text-sm pt-1 border-t border-gray-200 print:text-2xl print:pt-3">
               <span className="text-gray-500 font-medium">Total:</span>
               <span className="font-semibold">
-                {order.saleAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                {formatCurrency(order.saleAmount)}
               </span>
             </div>
           </div>
@@ -198,17 +203,6 @@ export default async function InvoicePage({
           </div>
         )}
 
-        <div className="hidden print:flex print:mt-auto print:flex-col print:gap-12">
-          <p className="text-lg text-gray-600">Thank you for your business!</p>
-          <div className="flex justify-between gap-12">
-            <div className="flex-1 border-t border-gray-400 pt-2 text-base text-gray-500">
-              Customer Signature
-            </div>
-            <div className="flex-1 border-t border-gray-400 pt-2 text-base text-gray-500">
-              Authorized Signature
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
