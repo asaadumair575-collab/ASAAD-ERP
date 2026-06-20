@@ -13,6 +13,7 @@ type PaymentEntry = {
 export default function InvoiceShare({
   message,
   email,
+  pdfHref,
   saleAmount,
   paidSoFar,
   payments,
@@ -23,6 +24,7 @@ export default function InvoiceShare({
 }: {
   message: string;
   email?: string | null;
+  pdfHref: string;
   saleAmount: number;
   paidSoFar: number;
   payments: PaymentEntry[];
@@ -55,12 +57,12 @@ export default function InvoiceShare({
         >
           Share via Email
         </a>
-        <button
-          onClick={() => window.print()}
+        <a
+          href={pdfHref}
           className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
         >
           Download PDF
-        </button>
+        </a>
         {confirmed && cancelOrderAction && paidSoFar === 0 && (
           <form action={cancelOrderAction}>
             <button

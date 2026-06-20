@@ -55,6 +55,7 @@ export default async function InvoicePage({
     <div className="max-w-2xl space-y-8 print:max-w-none print:space-y-0 print:min-h-[273mm] print:flex print:flex-col">
       <InvoiceShare
         message={message}
+        pdfHref={`/clients/${clientId}/orders/${order.id}/pdf`}
         saleAmount={order.saleAmount}
         paidSoFar={paidSoFar}
         payments={order.payments.map((p) => ({
