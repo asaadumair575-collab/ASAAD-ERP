@@ -349,12 +349,14 @@ export async function createProduct(formData: FormData) {
 
   await prisma.product.create({ data: { name } });
   revalidatePath("/sales/products");
+  revalidatePath("/sales/invoices/new");
   redirect("/sales/products");
 }
 
 export async function deleteProduct(id: number) {
   await prisma.product.delete({ where: { id } });
   revalidatePath("/sales/products");
+  revalidatePath("/sales/invoices/new");
 }
 
 export async function saveBusinessProfile(formData: FormData) {
