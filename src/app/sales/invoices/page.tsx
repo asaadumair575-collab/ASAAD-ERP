@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { deleteOrder } from "@/lib/actions";
 
 export default async function InvoicesPage() {
   const orders = await prisma.order.findMany({
@@ -38,10 +39,13 @@ export default async function InvoicesPage() {
                 <th className="py-3 px-5 font-medium">Date</th>
                 <th className="py-3 px-5 font-medium">Amount</th>
                 <th className="py-3 px-5 font-medium">Status</th>
+                <th className="py-3 px-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {orders.map((o) => (
+              {orders.map((o) => {
+                const deleteOrderBound = deleteOrder.bind(null, o.id, o.clientId);
+                return (
                 <tr key={o.id} className="hover:bg-gray-50 transition-colors">
                   <td className="py-3 px-5">
                     <Link
@@ -81,8 +85,21 @@ export default async function InvoicesPage() {
                       </span>
                     )}
                   </td>
+                  <td className="py-3 px-5 text-right">
+                    {!o.confirmed && (
+                      <form action={deleteOrderBound}>
+                        <button
+                          type="submit"
+                          className="text-xs text-gray-400 hover:text-red-600 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </form>
+                    )}
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
