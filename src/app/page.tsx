@@ -9,7 +9,6 @@ export default async function DashboardPage() {
   const totalClients = clients.length;
   const allOrders = clients.flatMap((c) => c.orders).filter((o) => o.confirmed);
   const totalOrders = allOrders.length;
-  const paidOrders = allOrders.filter((o) => o.paymentStatus === "PAID");
   const totalSale = allOrders.reduce(
     (s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0),
     0
@@ -18,10 +17,6 @@ export default async function DashboardPage() {
     const paid = o.payments.reduce((ps, p) => ps + p.amount, 0);
     return s + Math.max(0, o.saleAmount - paid);
   }, 0);
-  const totalPurchase = paidOrders.reduce((s, o) => s + o.purchaseAmount, 0);
-  const totalProfit =
-    paidOrders.reduce((s, o) => s + o.saleAmount, 0) - totalPurchase;
-
   const byCity = new Map<string, { clients: number; orders: number; sale: number }>();
   for (const c of clients) {
     const confirmedOrders = c.orders.filter((o) => o.confirmed);
@@ -32,18 +27,6 @@ export default async function DashboardPage() {
     byCity.set(c.city, entry);
   }
 
-  const byMonth = new Map<string, { sale: number; purchase: number }>();
-  for (const o of paidOrders) {
-    const key = `${o.date.getFullYear()}-${String(o.date.getMonth() + 1).padStart(2, "0")}`;
-    const entry = byMonth.get(key) ?? { sale: 0, purchase: 0 };
-    entry.sale += o.saleAmount;
-    entry.purchase += o.purchaseAmount;
-    byMonth.set(key, entry);
-  }
-  const monthlyProfit = [...byMonth.entries()].sort((a, b) =>
-    b[0].localeCompare(a[0])
-  );
-
   return (
     <div className="space-y-10">
       <div>
@@ -53,12 +36,11 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard label="Customers" value={totalClients} />
         <StatCard label="Orders" value={totalOrders} />
         <StatCard label="Total Received" value={fmt(totalSale)} />
-        <StatCard label="Pending Payments" value={fmt(pendingSale)} />
-        <StatCard label="Total Profit" value={fmt(totalProfit)} dark />
+        <StatCard label="Pending Payments" value={fmt(pendingSale)} dark />
       </div>
 
       <div>
@@ -102,40 +84,6 @@ export default async function DashboardPage() {
                       <td className="py-3 px-5">{fmt(d.sale)}</td>
                     </tr>
                   ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold mb-4">Monthly Profit</h2>
-        {monthlyProfit.length === 0 ? (
-          <div className="border border-gray-200 rounded-2xl p-10 text-center">
-            <p className="text-gray-500 text-sm">No paid orders yet.</p>
-          </div>
-        ) : (
-          <div className="border border-gray-200 rounded-2xl overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
-                  <th className="py-3 px-5 font-medium">Month</th>
-                  <th className="py-3 px-5 font-medium">Sales</th>
-                  <th className="py-3 px-5 font-medium">Purchase Cost</th>
-                  <th className="py-3 px-5 font-medium">Profit</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {monthlyProfit.map(([month, d]) => (
-                  <tr key={month} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-5 font-medium">{month}</td>
-                    <td className="py-3 px-5">{fmt(d.sale)}</td>
-                    <td className="py-3 px-5">{fmt(d.purchase)}</td>
-                    <td className="py-3 px-5 font-medium">
-                      {fmt(d.sale - d.purchase)}
-                    </td>
-                  </tr>
-                ))}
               </tbody>
             </table>
           </div>
