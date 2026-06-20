@@ -406,6 +406,11 @@ export async function resetAllData(formData: FormData) {
     throw new Error('Type "DELETE" to confirm');
   }
 
+  const password = String(formData.get("password") ?? "");
+  if (password !== "1212") {
+    throw new Error("Incorrect password");
+  }
+
   await prisma.payment.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
