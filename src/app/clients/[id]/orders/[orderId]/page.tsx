@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getBusinessProfile } from "@/lib/businessProfile";
 import { notFound } from "next/navigation";
 import InvoiceShare from "@/components/InvoiceShare";
 import { recordPayment, cancelOrder, confirmOrder } from "@/lib/actions";
@@ -28,7 +29,7 @@ export default async function InvoicePage({
 
   if (!order || order.clientId !== clientId) notFound();
 
-  const profile = await prisma.businessProfile.findFirst();
+  const profile = await getBusinessProfile();
   const invoiceNumber = `INV-${String(order.id).padStart(4, "0")}`;
   const paidSoFar = order.payments.reduce((s, p) => s + p.amount, 0);
   const balanceDue = order.saleAmount - paidSoFar;

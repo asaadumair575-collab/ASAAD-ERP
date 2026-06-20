@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Sidebar from "@/components/Sidebar";
-import { prisma } from "@/lib/prisma";
+import { getBusinessProfile } from "@/lib/businessProfile";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,7 +37,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const profile = await prisma.businessProfile.findFirst();
+  const profile = await getBusinessProfile();
 
   return (
     <html

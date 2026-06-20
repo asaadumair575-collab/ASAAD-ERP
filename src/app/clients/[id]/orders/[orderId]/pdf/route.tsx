@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getBusinessProfile } from "@/lib/businessProfile";
 import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
@@ -61,7 +62,7 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const profile = await prisma.businessProfile.findFirst();
+  const profile = await getBusinessProfile();
   const invoiceNumber = `INV-${String(order.id).padStart(4, "0")}`;
   const paidSoFar = order.payments.reduce((s, p) => s + p.amount, 0);
   const balanceDue = order.saleAmount - paidSoFar;

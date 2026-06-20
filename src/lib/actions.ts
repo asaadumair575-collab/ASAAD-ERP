@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 function round2(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -404,8 +404,8 @@ export async function saveBusinessProfile(formData: FormData) {
     });
   }
 
+  revalidateTag("business-profile", "max");
   revalidatePath("/settings");
-  revalidatePath("/", "layout");
 }
 
 export async function setCostPerDozen(formData: FormData) {
