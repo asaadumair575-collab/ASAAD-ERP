@@ -6,6 +6,7 @@ type PaymentEntry = {
   id: number;
   amount: number;
   date: string;
+  method: string;
   screenshot: string | null;
 };
 
@@ -118,39 +119,7 @@ export default function InvoiceShare({
           </div>
 
           {recordPaymentAction && !fullyPaid && (
-            <form action={recordPaymentAction} className="flex flex-wrap gap-3 items-end">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">
-                  Payment Amount
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="amount"
-                  defaultValue={balanceDue}
-                  required
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-black"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">
-                  Payment Screenshot
-                </label>
-                <input
-                  type="file"
-                  name="screenshot"
-                  accept="image/*"
-                  required
-                  className="text-sm"
-                />
-              </div>
-              <button
-                type="submit"
-                className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                Record Payment
-              </button>
-            </form>
+            <RecordPaymentForm action={recordPaymentAction} balanceDue={balanceDue} />
           )}
 
           {payments.length > 0 && (
@@ -165,6 +134,9 @@ export default function InvoiceShare({
                       {p.date.slice(0, 10)}
                     </span>
                     <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-400">
+                        {p.method === "CASH" ? "Cash" : "Bank Transfer"}
+                      </span>
                       {p.screenshot && (
                         <a
                           href={p.screenshot}
@@ -196,6 +168,9 @@ function ConfirmOrderForm({
   saleAmount: number;
 }) {
   const [mode, setMode] = useState<"credit" | "paid">("credit");
+  const [paymentMethod, setPaymentMethod] = useState<"BANK_TRANSFER" | "CASH">(
+    "BANK_TRANSFER"
+  );
 
   return (
     <form action={action} className="space-y-3">
@@ -223,20 +198,123 @@ function ConfirmOrderForm({
       </div>
 
       {mode === "paid" && (
-        <div className="flex flex-wrap gap-3 items-end">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1.5">
-              Amount Received
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-4 text-sm">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="BANK_TRANSFER"
+                checked={paymentMethod === "BANK_TRANSFER"}
+                onChange={() => setPaymentMethod("BANK_TRANSFER")}
+              />
+              Bank Transfer
             </label>
-            <input
-              type="number"
-              step="0.01"
-              name="amount"
-              defaultValue={saleAmount}
-              required
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-black"
-            />
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="CASH"
+                checked={paymentMethod === "CASH"}
+                onChange={() => setPaymentMethod("CASH")}
+              />
+              Cash Received
+            </label>
           </div>
+
+          <div className="flex flex-wrap gap-3 items-end">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">
+                Amount Received
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                name="amount"
+                defaultValue={saleAmount}
+                required
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-black"
+              />
+            </div>
+            {paymentMethod === "BANK_TRANSFER" && (
+              <div>
+                <label className="block text-xs text-gray-500 mb-1.5">
+                  Payment Screenshot
+                </label>
+                <input
+                  type="file"
+                  name="screenshot"
+                  accept="image/*"
+                  required
+                  className="text-sm"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+      >
+        Confirm Order
+      </button>
+    </form>
+  );
+}
+
+function RecordPaymentForm({
+  action,
+  balanceDue,
+}: {
+  action: (formData: FormData) => void;
+  balanceDue: number;
+}) {
+  const [paymentMethod, setPaymentMethod] = useState<"BANK_TRANSFER" | "CASH">(
+    "BANK_TRANSFER"
+  );
+
+  return (
+    <form action={action} className="space-y-3">
+      <div className="flex flex-wrap gap-4 text-sm">
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="paymentMethod"
+            value="BANK_TRANSFER"
+            checked={paymentMethod === "BANK_TRANSFER"}
+            onChange={() => setPaymentMethod("BANK_TRANSFER")}
+          />
+          Bank Transfer
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="paymentMethod"
+            value="CASH"
+            checked={paymentMethod === "CASH"}
+            onChange={() => setPaymentMethod("CASH")}
+          />
+          Cash Received
+        </label>
+      </div>
+
+      <div className="flex flex-wrap gap-3 items-end">
+        <div>
+          <label className="block text-xs text-gray-500 mb-1.5">
+            Payment Amount
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            name="amount"
+            defaultValue={balanceDue}
+            required
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-black"
+          />
+        </div>
+        {paymentMethod === "BANK_TRANSFER" && (
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">
               Payment Screenshot
@@ -249,15 +327,14 @@ function ConfirmOrderForm({
               className="text-sm"
             />
           </div>
-        </div>
-      )}
-
-      <button
-        type="submit"
-        className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-      >
-        Confirm Order
-      </button>
+        )}
+        <button
+          type="submit"
+          className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+        >
+          Record Payment
+        </button>
+      </div>
     </form>
   );
 }

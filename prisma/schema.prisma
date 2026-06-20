@@ -49,6 +49,7 @@ model Payment {
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId    Int
   amount     Float
+  method     String   @default("BANK_TRANSFER")
   screenshot String?  @db.Text
   date       DateTime @default(now())
   createdAt  DateTime @default(now())

@@ -142,11 +142,15 @@ export async function confirmOrder(
       throw new Error("Payment exceeds the remaining balance due");
     }
 
+    const paymentMethod = String(formData.get("paymentMethod") ?? "BANK_TRANSFER");
+
     const screenshotFile = formData.get("screenshot");
     let screenshot: string | null = null;
     if (screenshotFile instanceof File && screenshotFile.size > 0) {
       const buffer = Buffer.from(await screenshotFile.arrayBuffer());
       screenshot = `data:${screenshotFile.type};base64,${buffer.toString("base64")}`;
+    } else if (paymentMethod !== "CASH") {
+      throw new Error("Payment screenshot is required for bank transfer payments");
     }
 
     const newPaid = alreadyPaid + amount;
@@ -157,7 +161,9 @@ export async function confirmOrder(
           ? "PARTIAL"
           : "UNPAID";
 
-    await prisma.payment.create({ data: { orderId, amount, screenshot } });
+    await prisma.payment.create({
+      data: { orderId, amount, method: paymentMethod, screenshot },
+    });
     await prisma.order.update({
       where: { id: orderId },
       data: { confirmed: true, paymentStatus },
@@ -316,12 +322,16 @@ export async function recordPayment(
     throw new Error("Payment exceeds the remaining balance due");
   }
 
+  const paymentMethod = String(formData.get("paymentMethod") ?? "BANK_TRANSFER");
+
   const screenshotFile = formData.get("screenshot");
-  if (!(screenshotFile instanceof File) || screenshotFile.size === 0) {
-    throw new Error("Payment screenshot is required");
+  let screenshot: string | null = null;
+  if (screenshotFile instanceof File && screenshotFile.size > 0) {
+    const buffer = Buffer.from(await screenshotFile.arrayBuffer());
+    screenshot = `data:${screenshotFile.type};base64,${buffer.toString("base64")}`;
+  } else if (paymentMethod !== "CASH") {
+    throw new Error("Payment screenshot is required for bank transfer payments");
   }
-  const buffer = Buffer.from(await screenshotFile.arrayBuffer());
-  const screenshot = `data:${screenshotFile.type};base64,${buffer.toString("base64")}`;
 
   const newPaid = alreadyPaid + amount;
   const paymentStatus =
@@ -331,7 +341,9 @@ export async function recordPayment(
         ? "PARTIAL"
         : "UNPAID";
 
-  await prisma.payment.create({ data: { orderId, amount, screenshot } });
+  await prisma.payment.create({
+    data: { orderId, amount, method: paymentMethod, screenshot },
+  });
   await prisma.order.update({
     where: { id: orderId },
     data: { paymentStatus },
