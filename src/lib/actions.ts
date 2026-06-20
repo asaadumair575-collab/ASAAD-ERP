@@ -405,6 +405,7 @@ export async function saveBusinessProfile(formData: FormData) {
   }
 
   revalidatePath("/settings");
+  revalidatePath("/", "layout");
 }
 
 export async function setCostPerDozen(formData: FormData) {
