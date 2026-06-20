@@ -5,7 +5,7 @@ import SubmitButton from "@/components/SubmitButton";
 
 type Client = { id: number; name: string; businessName: string | null };
 type Product = { id: number; name: string };
-type Row = { id: number; quantity: number; rate: number };
+type Row = { id: number; productId: string; description: string; quantity: number; rate: number };
 
 export default function InvoiceForm({
   action,
@@ -16,7 +16,9 @@ export default function InvoiceForm({
   clients: Client[];
   products: Product[];
 }) {
-  const [rows, setRows] = useState<Row[]>([{ id: 0, quantity: 0, rate: 0 }]);
+  const [rows, setRows] = useState<Row[]>([
+    { id: 0, productId: "", description: "", quantity: 0, rate: 0 },
+  ]);
   const [discount, setDiscount] = useState(0);
   const [taxPercent, setTaxPercent] = useState(0);
 
@@ -24,14 +26,12 @@ export default function InvoiceForm({
     setRows((r) => r.map((row) => (row.id === id ? { ...row, ...patch } : row)));
   }
 
-  function handleProductChange(rowId: number, rowEl: HTMLSelectElement) {
-    const row = rowEl.closest("[data-row]");
-    const product = products.find((p) => p.id === parseInt(rowEl.value, 10));
-    if (!row || !product) return;
-    const descInput = row.querySelector<HTMLInputElement>(
-      'input[name="itemDescription"]'
-    );
-    if (descInput) descInput.value = product.name;
+  function handleProductChange(id: number, productId: string) {
+    const product = products.find((p) => p.id === parseInt(productId, 10));
+    updateRow(id, {
+      productId,
+      ...(product ? { description: product.name } : {}),
+    });
   }
 
   const subtotal = rows.reduce((s, r) => s + r.quantity * r.rate, 0);
@@ -94,12 +94,12 @@ export default function InvoiceForm({
             <span className="w-28">Amount</span>
           </div>
           {rows.map((row) => (
-            <div key={row.id} data-row className="flex flex-wrap gap-3 items-end">
+            <div key={row.id} className="flex flex-wrap gap-3 items-end">
               <div className="min-w-[160px]">
                 <select
                   name="itemProductId"
-                  defaultValue=""
-                  onChange={(e) => handleProductChange(row.id, e.target)}
+                  value={row.productId}
+                  onChange={(e) => handleProductChange(row.id, e.target.value)}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
                 >
                   <option value="">Custom item</option>
@@ -115,6 +115,8 @@ export default function InvoiceForm({
                   type="text"
                   name="itemDescription"
                   placeholder="Item description"
+                  value={row.description}
+                  onChange={(e) => updateRow(row.id, { description: e.target.value })}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
                 />
               </div>
@@ -165,7 +167,10 @@ export default function InvoiceForm({
           <button
             type="button"
             onClick={() =>
-              setRows((r) => [...r, { id: Date.now(), quantity: 0, rate: 0 }])
+              setRows((r) => [
+                ...r,
+                { id: Date.now(), productId: "", description: "", quantity: 0, rate: 0 },
+              ])
             }
             className="text-sm text-gray-600 hover:text-black underline"
           >
