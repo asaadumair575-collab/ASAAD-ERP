@@ -25,6 +25,7 @@ export async function createClient(formData: FormData) {
   });
 
   revalidatePath("/clients");
+  revalidatePath("/sales/invoices/new");
   redirect(`/clients/${client.id}`);
 }
 
@@ -47,6 +48,7 @@ export async function updateClient(id: number, formData: FormData) {
 
   revalidatePath("/clients");
   revalidatePath(`/clients/${id}`);
+  revalidatePath("/sales/invoices/new");
   redirect(`/clients/${id}`);
 }
 
@@ -54,6 +56,7 @@ export async function deleteClient(id: number) {
   await prisma.order.deleteMany({ where: { clientId: id } });
   await prisma.client.delete({ where: { id } });
   revalidatePath("/clients");
+  revalidatePath("/sales/invoices/new");
   redirect("/clients");
 }
 
