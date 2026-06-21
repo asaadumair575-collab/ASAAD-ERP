@@ -422,6 +422,60 @@ export async function setCostPerDozen(formData: FormData) {
   revalidatePath("/finance");
 }
 
+export async function createSample(formData: FormData) {
+  const clientId = parseInt(String(formData.get("clientId") ?? ""), 10);
+  const description = String(formData.get("description") ?? "").trim();
+  const dateRaw = String(formData.get("dateSent") ?? "");
+  const dateSent = dateRaw ? new Date(dateRaw) : new Date();
+
+  if (Number.isNaN(clientId)) {
+    throw new Error("Please select a customer");
+  }
+  if (!description) {
+    throw new Error("Sample description is required");
+  }
+
+  const client = await prisma.client.findUnique({ where: { id: clientId } });
+  if (!client) {
+    throw new Error("Selected customer no longer exists");
+  }
+
+  await prisma.sample.create({
+    data: { clientId, description, dateSent },
+  });
+
+  revalidatePath("/samples");
+  redirect("/samples");
+}
+
+export async function recordSampleResponse(id: number, formData: FormData) {
+  const status = String(formData.get("status") ?? "PENDING");
+  const response = String(formData.get("response") ?? "").trim() || null;
+
+  const validStatuses = ["PENDING", "ACCEPTED", "REJECTED", "NO_RESPONSE"];
+  if (!validStatuses.includes(status)) {
+    throw new Error("Invalid status");
+  }
+
+  await prisma.sample.update({
+    where: { id },
+    data: {
+      status,
+      response,
+      responseDate: status === "PENDING" ? null : new Date(),
+    },
+  });
+
+  revalidatePath("/samples");
+  revalidatePath(`/samples/${id}`);
+}
+
+export async function deleteSample(id: number) {
+  await prisma.sample.delete({ where: { id } });
+  revalidatePath("/samples");
+  redirect("/samples");
+}
+
 export async function resetAllData(formData: FormData) {
   const confirmation = String(formData.get("confirmation") ?? "");
   if (confirmation !== "DELETE") {

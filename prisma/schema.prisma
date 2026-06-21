@@ -22,6 +22,7 @@ model Client {
   notes        String?
   createdAt    DateTime @default(now())
   orders       Order[]
+  samples      Sample[]
 }
 
 model Order {
@@ -86,4 +87,16 @@ model CostRate {
   costPerDozen  Float
   effectiveFrom DateTime @default(now())
   createdAt     DateTime @default(now())
+}
+
+model Sample {
+  id           Int       @id @default(autoincrement())
+  client       Client    @relation(fields: [clientId], references: [id])
+  clientId     Int
+  description  String
+  dateSent     DateTime  @default(now())
+  status       String    @default("PENDING")
+  response     String?   @db.Text
+  responseDate DateTime?
+  createdAt    DateTime  @default(now())
 }
