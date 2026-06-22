@@ -182,7 +182,20 @@ export async function confirmOrder(
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/clients");
   revalidatePath("/sales/invoices");
+  revalidatePath("/dispatch");
   revalidatePath("/");
+}
+
+export async function setDispatched(orderId: number, dispatched: boolean) {
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      dispatched,
+      dispatchedAt: dispatched ? new Date() : null,
+    },
+  });
+
+  revalidatePath("/dispatch");
 }
 
 export async function cancelOrder(orderId: number, clientId: number) {

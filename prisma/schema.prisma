@@ -40,6 +40,8 @@ model Order {
   terms          String?     @db.Text
   paymentStatus  String      @default("UNPAID")
   confirmed      Boolean     @default(false)
+  dispatched     Boolean     @default(false)
+  dispatchedAt   DateTime?
   createdAt      DateTime    @default(now())
   items          OrderItem[]
   payments       Payment[]

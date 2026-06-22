@@ -72,6 +72,17 @@ const icons = {
       <path d="M6.5 2.5h7M5 6.5h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
+  dispatch: (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+      <path
+        d="M2.5 6.5 10 2.5l7.5 4M2.5 6.5v7l7.5 4 7.5-4v-7M2.5 6.5 10 10.5l7.5-4M10 10.5V17.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
   chevron: (
     <svg viewBox="0 0 20 20" fill="none" className="w-3.5 h-3.5">
       <path
@@ -269,6 +280,15 @@ export default function Sidebar({ businessName }: { businessName: string }) {
             onClick={closeMobile}
           >
             Finance
+          </NavLink>
+
+          <NavLink
+            href="/dispatch"
+            active={isActive("/dispatch")}
+            icon={icons.dispatch}
+            onClick={closeMobile}
+          >
+            Dispatch
           </NavLink>
 
           <NavLink
