@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { setCostPerDozen } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
+import {
+  AmountVisibilityProvider,
+  AmountToggleButton,
+  Amount,
+} from "@/components/AmountVisibility";
 
 function startOfMonth() {
   const d = new Date();
@@ -58,12 +63,16 @@ export default async function FinancePage({
   const profit = totalSales - totalCost;
 
   return (
+    <AmountVisibilityProvider>
     <div className="max-w-3xl space-y-8">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Finance</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Sales and profit from confirmed orders, by dozen.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Finance</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Sales and profit from confirmed orders, by dozen.
+          </p>
+        </div>
+        <AmountToggleButton />
       </div>
 
       <form
@@ -147,7 +156,7 @@ export default async function FinancePage({
             Cost (current rate {currentCostPerDozen.toLocaleString()}/dzn)
           </p>
           <p className="text-2xl font-semibold mt-1">
-            {totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            <Amount value={totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })} />
           </p>
         </div>
       </div>
@@ -156,19 +165,19 @@ export default async function FinancePage({
         <div className="flex justify-between text-sm">
           <span className="text-gray-500">Sales (confirmed only)</span>
           <span className="font-medium">
-            {totalSales.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            <Amount value={totalSales.toLocaleString(undefined, { maximumFractionDigits: 2 })} />
           </span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-500">Cost</span>
           <span className="font-medium">
-            {totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            <Amount value={totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })} />
           </span>
         </div>
         <div className="flex justify-between text-lg font-semibold pt-2 border-t border-gray-200">
           <span>Profit</span>
           <span className={profit < 0 ? "text-red-600" : ""}>
-            {profit.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            <Amount value={profit.toLocaleString(undefined, { maximumFractionDigits: 2 })} />
           </span>
         </div>
       </div>
@@ -204,10 +213,10 @@ export default async function FinancePage({
                     </td>
                     <td className="py-3 px-5 text-right">{dozens}</td>
                     <td className="py-3 px-5 text-right text-gray-500">
-                      {rateFor(o.date).toLocaleString()}
+                      <Amount value={rateFor(o.date).toLocaleString()} />
                     </td>
                     <td className="py-3 px-5 text-right">
-                      {o.saleAmount.toLocaleString()}
+                      <Amount value={o.saleAmount.toLocaleString()} />
                     </td>
                   </tr>
                 );
@@ -217,5 +226,6 @@ export default async function FinancePage({
         </div>
       )}
     </div>
+    </AmountVisibilityProvider>
   );
 }
