@@ -2,11 +2,11 @@ import { prisma } from "@/lib/prisma";
 import DispatchTabs from "@/components/DispatchTabs";
 import DispatchTable from "@/components/DispatchTable";
 
-export default async function DispatchPendingPage() {
+export default async function DispatchedPage() {
   const orders = await prisma.order.findMany({
-    where: { confirmed: true, dispatched: false },
+    where: { confirmed: true, dispatched: true },
     include: { client: true },
-    orderBy: { date: "desc" },
+    orderBy: { dispatchedAt: "desc" },
   });
 
   return (
@@ -14,11 +14,11 @@ export default async function DispatchPendingPage() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Dispatch</h1>
         <p className="text-sm text-gray-500 mt-1">
-          {orders.length} pending dispatch{orders.length === 1 ? "" : "es"}
+          {orders.length} dispatched
         </p>
       </div>
 
-      <DispatchTabs active="pending" />
+      <DispatchTabs active="dispatched" />
 
       <DispatchTable orders={orders} />
     </div>

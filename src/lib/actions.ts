@@ -196,6 +196,7 @@ export async function setDispatched(orderId: number, dispatched: boolean) {
   });
 
   revalidatePath("/dispatch");
+  revalidatePath("/dispatch/dispatched");
 }
 
 export async function cancelOrder(orderId: number, clientId: number) {
