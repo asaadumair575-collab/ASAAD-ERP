@@ -497,8 +497,8 @@ export async function deleteSample(id: number) {
 }
 
 export async function loginAction(formData: FormData) {
-  const username = String(formData.get("username") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
+  const username = String(formData.get("username") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "").toLowerCase();
 
   const user = await prisma.user.findUnique({ where: { username } });
   if (!user || !verifyPassword(password, user.passwordHash)) {
@@ -515,8 +515,8 @@ export async function logoutAction() {
 }
 
 export async function createUser(formData: FormData) {
-  const username = String(formData.get("username") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
+  const username = String(formData.get("username") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "").toLowerCase();
 
   if (!username || !password) {
     throw new Error("Username and password are required");
