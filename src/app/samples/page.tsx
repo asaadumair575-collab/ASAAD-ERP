@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { deleteSample } from "@/lib/actions";
 
 const statusStyles: Record<string, string> = {
   PENDING: "bg-yellow-50 text-yellow-800 border border-yellow-200",
@@ -51,10 +52,13 @@ export default async function SamplesPage() {
                 <th className="py-3 px-5 font-medium">Description</th>
                 <th className="py-3 px-5 font-medium">Date Sent</th>
                 <th className="py-3 px-5 font-medium">Status</th>
+                <th className="py-3 px-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {samples.map((s) => (
+              {samples.map((s) => {
+                const deleteSampleBound = deleteSample.bind(null, s.id);
+                return (
                 <tr key={s.id} className="hover:bg-gray-50 transition-colors">
                   <td className="py-3 px-5">
                     <Link
@@ -77,8 +81,19 @@ export default async function SamplesPage() {
                       {statusLabels[s.status]}
                     </span>
                   </td>
+                  <td className="py-3 px-5 text-right">
+                    <form action={deleteSampleBound}>
+                      <button
+                        type="submit"
+                        className="text-xs text-gray-400 hover:text-red-600 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </form>
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
