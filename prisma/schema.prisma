@@ -91,6 +91,13 @@ model CostRate {
   createdAt     DateTime @default(now())
 }
 
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
 model Sample {
   id           Int       @id @default(autoincrement())
   client       Client    @relation(fields: [clientId], references: [id])

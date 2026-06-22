@@ -3,6 +3,12 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
+import {
+  hashPassword,
+  verifyPassword,
+  setSessionCookie,
+  clearSessionCookie,
+} from "@/lib/auth";
 
 function round2(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -488,6 +494,56 @@ export async function deleteSample(id: number) {
   await prisma.sample.delete({ where: { id } });
   revalidatePath("/samples");
   redirect("/samples");
+}
+
+export async function loginAction(formData: FormData) {
+  const username = String(formData.get("username") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  const user = await prisma.user.findUnique({ where: { username } });
+  if (!user || !verifyPassword(password, user.passwordHash)) {
+    throw new Error("Invalid username or password");
+  }
+
+  await setSessionCookie(user.username);
+  redirect("/");
+}
+
+export async function logoutAction() {
+  await clearSessionCookie();
+  redirect("/login");
+}
+
+export async function createUser(formData: FormData) {
+  const username = String(formData.get("username") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (!username || !password) {
+    throw new Error("Username and password are required");
+  }
+  if (password.length < 6) {
+    throw new Error("Password must be at least 6 characters");
+  }
+
+  const existing = await prisma.user.findUnique({ where: { username } });
+  if (existing) {
+    throw new Error("That username is already taken");
+  }
+
+  await prisma.user.create({
+    data: { username, passwordHash: hashPassword(password) },
+  });
+
+  revalidatePath("/settings");
+}
+
+export async function deleteUser(id: number) {
+  const count = await prisma.user.count();
+  if (count <= 1) {
+    throw new Error("Cannot delete the last remaining user");
+  }
+  await prisma.user.delete({ where: { id } });
+  revalidatePath("/settings");
 }
 
 export async function resetAllData(formData: FormData) {

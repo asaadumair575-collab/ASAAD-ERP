@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { logoutAction } from "@/lib/actions";
 
 const icons = {
   dashboard: (
@@ -111,6 +112,17 @@ const icons = {
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
+      />
+    </svg>
+  ),
+  logout: (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+      <path
+        d="M7.5 17.5h-3a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1h3M13 14l4-4-4-4M17 10H7.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   ),
@@ -309,6 +321,18 @@ export default function Sidebar({ businessName }: { businessName: string }) {
             Settings
           </NavLink>
         </nav>
+
+        <div className="px-3 py-4 border-t border-white/10">
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+            >
+              {icons.logout}
+              Logout
+            </button>
+          </form>
+        </div>
       </aside>
     </>
   );
