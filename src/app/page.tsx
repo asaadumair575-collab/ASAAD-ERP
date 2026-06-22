@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import {
+  AmountVisibilityProvider,
+  AmountToggleButton,
+  Amount,
+} from "@/components/AmountVisibility";
 
 export default async function DashboardPage() {
   const clients = await prisma.client.findMany({
@@ -28,68 +33,79 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="space-y-10">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Overview of your customers and business performance.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Customers" value={totalClients} />
-        <StatCard label="Orders" value={totalOrders} />
-        <StatCard label="Total Received" value={fmt(totalSale)} />
-        <StatCard label="Pending Payments" value={fmt(pendingSale)} dark />
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold mb-4">By City</h2>
-        {byCity.size === 0 ? (
-          <div className="border border-gray-200 rounded-2xl p-10 text-center">
-            <p className="text-gray-500 text-sm">
-              No customers yet.{" "}
-              <Link href="/clients/new" className="text-black underline font-medium">
-                Add your first customer
-              </Link>
-              .
+    <AmountVisibilityProvider>
+      <div className="space-y-10">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Overview of your customers and business performance.
             </p>
           </div>
-        ) : (
-          <div className="border border-gray-200 rounded-2xl overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
-                  <th className="py-3 px-5 font-medium">City</th>
-                  <th className="py-3 px-5 font-medium">Customers</th>
-                  <th className="py-3 px-5 font-medium">Orders</th>
-                  <th className="py-3 px-5 font-medium">Sales</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {[...byCity.entries()]
-                  .sort((a, b) => b[1].sale - a[1].sale)
-                  .map(([city, d]) => (
-                    <tr key={city} className="hover:bg-gray-50 transition-colors">
-                      <td className="py-3 px-5 font-medium">
-                        <Link
-                          href={`/clients?city=${encodeURIComponent(city)}`}
-                          className="hover:underline"
-                        >
-                          {city}
-                        </Link>
-                      </td>
-                      <td className="py-3 px-5">{d.clients}</td>
-                      <td className="py-3 px-5">{d.orders}</td>
-                      <td className="py-3 px-5">{fmt(d.sale)}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+          <AmountToggleButton />
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <StatCard label="Customers" value={totalClients} />
+          <StatCard label="Orders" value={totalOrders} />
+          <StatCard label="Total Received" value={<Amount value={fmt(totalSale)} />} />
+          <StatCard
+            label="Pending Payments"
+            value={<Amount value={fmt(pendingSale)} />}
+            dark
+          />
+        </div>
+
+        <div>
+          <h2 className="text-lg font-semibold mb-4">By City</h2>
+          {byCity.size === 0 ? (
+            <div className="border border-gray-200 rounded-2xl p-10 text-center">
+              <p className="text-gray-500 text-sm">
+                No customers yet.{" "}
+                <Link href="/clients/new" className="text-black underline font-medium">
+                  Add your first customer
+                </Link>
+                .
+              </p>
+            </div>
+          ) : (
+            <div className="border border-gray-200 rounded-2xl overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
+                    <th className="py-3 px-5 font-medium">City</th>
+                    <th className="py-3 px-5 font-medium">Customers</th>
+                    <th className="py-3 px-5 font-medium">Orders</th>
+                    <th className="py-3 px-5 font-medium">Sales</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {[...byCity.entries()]
+                    .sort((a, b) => b[1].sale - a[1].sale)
+                    .map(([city, d]) => (
+                      <tr key={city} className="hover:bg-gray-50 transition-colors">
+                        <td className="py-3 px-5 font-medium">
+                          <Link
+                            href={`/clients?city=${encodeURIComponent(city)}`}
+                            className="hover:underline"
+                          >
+                            {city}
+                          </Link>
+                        </td>
+                        <td className="py-3 px-5">{d.clients}</td>
+                        <td className="py-3 px-5">{d.orders}</td>
+                        <td className="py-3 px-5">
+                          <Amount value={fmt(d.sale)} />
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </AmountVisibilityProvider>
   );
 }
 
@@ -103,7 +119,7 @@ function StatCard({
   dark,
 }: {
   label: string;
-  value: string | number;
+  value: React.ReactNode;
   dark?: boolean;
 }) {
   return (
