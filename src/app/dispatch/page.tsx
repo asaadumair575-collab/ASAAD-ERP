@@ -14,6 +14,7 @@ export default async function DispatchPendingPage({
 
   if (type === "commission") {
     const commissionOrders = await prisma.commissionOrder.findMany({
+      where: { dispatched: false },
       orderBy: { date: "desc" },
     });
 
@@ -23,12 +24,14 @@ export default async function DispatchPendingPage({
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">Dispatch</h1>
             <p className="text-sm text-gray-500 mt-1">
-              {commissionOrders.length} commission order
+              {commissionOrders.length} pending commission order
               {commissionOrders.length === 1 ? "" : "s"}
             </p>
           </div>
           <DispatchTypeSelect type={type} />
         </div>
+
+        <DispatchTabs active="pending" type="commission" />
 
         <CommissionDispatchTable orders={commissionOrders} />
       </div>

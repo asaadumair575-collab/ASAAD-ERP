@@ -478,6 +478,19 @@ export async function deleteCommissionOrder(id: number) {
   revalidatePath("/commission");
 }
 
+export async function setCommissionDispatched(id: number, dispatched: boolean) {
+  await prisma.commissionOrder.update({
+    where: { id },
+    data: {
+      dispatched,
+      dispatchedAt: dispatched ? new Date() : null,
+    },
+  });
+
+  revalidatePath("/dispatch");
+  revalidatePath("/dispatch/dispatched");
+}
+
 export async function createSample(formData: FormData) {
   const clientId = parseInt(String(formData.get("clientId") ?? ""), 10);
   const description = String(formData.get("description") ?? "").trim();
