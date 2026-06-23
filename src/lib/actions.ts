@@ -784,7 +784,8 @@ export async function markLeadContacted(id: number) {
 
   revalidatePath("/leads");
   revalidatePath(`/leads/${id}`);
-  redirect("/leads?status=CONTACTED");
+  revalidatePath("/leads/contacted");
+  redirect("/leads/contacted");
 }
 
 export async function deleteLead(id: number) {

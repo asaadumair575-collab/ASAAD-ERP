@@ -60,6 +60,12 @@ export default async function LeadsPage({
             </Link>
           )}
           <Link
+            href="/leads/contacted"
+            className="text-sm font-medium text-gray-500 hover:text-black transition-colors"
+          >
+            Contacted Shops
+          </Link>
+          <Link
             href="/leads/new"
             className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
           >
