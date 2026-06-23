@@ -315,7 +315,7 @@ export default function Sidebar({ businessName }: { businessName: string }) {
                 compact
                 onClick={closeMobile}
               >
-                Overview
+                My Business
               </NavLink>
               <NavLink
                 href="/commission"
