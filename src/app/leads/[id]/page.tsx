@@ -1,13 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { markLeadContacted, deleteLead, convertLeadToClient } from "@/lib/actions";
+import { markLeadContacted, deleteLead, convertLeadToClient, cancelLead } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 
 const statusStyles: Record<string, string> = {
   NEW: "bg-gray-100 text-gray-700",
   CONTACTED: "bg-yellow-50 text-yellow-800 border border-yellow-200",
   SAMPLE_SENT: "bg-blue-50 text-blue-700 border border-blue-200",
+  CANCELLED: "bg-red-50 text-red-700 border border-red-200",
   CONFIRMED: "bg-black text-white",
 };
 
@@ -15,6 +16,7 @@ const statusLabels: Record<string, string> = {
   NEW: "New",
   CONTACTED: "Contacted",
   SAMPLE_SENT: "Sample Sent",
+  CANCELLED: "Cancelled",
   CONFIRMED: "Confirmed",
 };
 
@@ -36,6 +38,7 @@ export default async function LeadDetailPage({
   const contactBound = markLeadContacted.bind(null, lead.id);
   const deleteBound = deleteLead.bind(null, lead.id);
   const convertBound = convertLeadToClient.bind(null, lead.id);
+  const cancelBound = cancelLead.bind(null, lead.id);
 
   return (
     <div className="max-w-2xl space-y-8">
@@ -89,6 +92,16 @@ export default async function LeadDetailPage({
         >
           Send Sample
         </Link>
+        {lead.status === "CONTACTED" && (
+          <form action={cancelBound}>
+            <SubmitButton
+              pendingText="Cancelling..."
+              className="border border-gray-200 text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+              Cancel Client
+            </SubmitButton>
+          </form>
+        )}
         <form action={convertBound}>
           <SubmitButton
             pendingText="Confirming..."

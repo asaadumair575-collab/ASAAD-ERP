@@ -1,10 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { cancelLead, deleteLead } from "@/lib/actions";
+import { markLeadContacted, deleteLead } from "@/lib/actions";
 
-export default async function ContactedLeadsPage() {
+export default async function NotContactedLeadsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ added?: string; skipped?: string; error?: string }>;
+}) {
+  const { added, skipped, error } = await searchParams;
+
   const leads = await prisma.lead.findMany({
-    where: { status: "CONTACTED" },
+    where: { status: "NEW" },
     orderBy: { createdAt: "desc" },
   });
 
@@ -13,24 +19,37 @@ export default async function ContactedLeadsPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">
-            Contacted Shops
+            Not Contacted
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            {leads.length} lead{leads.length === 1 ? "" : "s"} marked
+            {leads.length} shop{leads.length === 1 ? "" : "s"} waiting to be
             contacted
           </p>
         </div>
         <Link
-          href="/leads/not-contacted"
-          className="text-sm font-medium text-gray-500 hover:text-black transition-colors"
+          href="/leads/new"
+          className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
         >
-          Back to Not Contacted
+          + Add Shop
         </Link>
       </div>
 
+      {error && (
+        <div className="border border-red-200 bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {(added !== undefined || skipped !== undefined) && (
+        <div className="border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-700">
+          {added} lead{added === "1" ? "" : "s"} added, {skipped} skipped
+          (duplicate or missing fields).
+        </div>
+      )}
+
       {leads.length === 0 ? (
         <div className="border border-gray-200 rounded-2xl p-10 text-center">
-          <p className="text-gray-500 text-sm">No contacted shops yet.</p>
+          <p className="text-gray-500 text-sm">No shops waiting right now.</p>
         </div>
       ) : (
         <div className="border border-gray-200 rounded-2xl overflow-x-auto">
@@ -42,12 +61,11 @@ export default async function ContactedLeadsPage() {
                 <th className="py-3 px-5 font-medium">City</th>
                 <th className="py-3 px-5"></th>
                 <th className="py-3 px-5"></th>
-                <th className="py-3 px-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {leads.map((l) => {
-                const cancelBound = cancelLead.bind(null, l.id);
+                const contactBound = markLeadContacted.bind(null, l.id);
                 const deleteBound = deleteLead.bind(null, l.id);
                 return (
                   <tr key={l.id} className="hover:bg-gray-50 transition-colors">
@@ -59,20 +77,12 @@ export default async function ContactedLeadsPage() {
                     <td className="py-3 px-5 text-gray-600">{l.name}</td>
                     <td className="py-3 px-5 text-gray-600">{l.city}</td>
                     <td className="py-3 px-5 text-right">
-                      <Link
-                        href={`/samples/new?leadId=${l.id}`}
-                        className="text-xs font-medium text-gray-500 hover:text-black transition-colors"
-                      >
-                        Sample Sent
-                      </Link>
-                    </td>
-                    <td className="py-3 px-5 text-right">
-                      <form action={cancelBound}>
+                      <form action={contactBound}>
                         <button
                           type="submit"
-                          className="text-xs font-medium text-gray-500 hover:text-red-600 transition-colors"
+                          className="text-xs font-medium text-gray-500 hover:text-black transition-colors"
                         >
-                          Cancel Client
+                          Mark Contacted
                         </button>
                       </form>
                     </td>

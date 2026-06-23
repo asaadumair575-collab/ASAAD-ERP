@@ -551,7 +551,8 @@ export async function createSample(formData: FormData) {
       where: { id: leadId },
       data: { status: "SAMPLE_SENT" },
     });
-    revalidatePath("/leads");
+    revalidatePath("/leads/contacted");
+    revalidatePath("/leads/sample-sent");
     revalidatePath(`/leads/${leadId}`);
   }
 
@@ -667,7 +668,7 @@ export async function resetAllData(formData: FormData) {
   redirect("/settings");
 }
 
-const LEAD_STATUSES = ["NEW", "CONTACTED", "SAMPLE_SENT", "CONFIRMED"];
+const LEAD_STATUSES = ["NEW", "CONTACTED", "SAMPLE_SENT", "CANCELLED", "CONFIRMED"];
 
 export async function createLead(formData: FormData) {
   const shopNumber = String(formData.get("shopNumber") ?? "").trim();
@@ -684,8 +685,8 @@ export async function createLead(formData: FormData) {
     data: { shopNumber, name, city, phone, notes },
   });
 
-  revalidatePath("/leads");
-  redirect("/leads");
+  revalidatePath("/leads/not-contacted");
+  redirect("/leads/not-contacted");
 }
 
 function parseCsv(text: string): string[][] {
@@ -713,12 +714,12 @@ async function parseLeadsFile(file: File): Promise<string[][]> {
 export async function uploadLeads(formData: FormData) {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    redirect(`/leads?error=${encodeURIComponent("Please choose a file to upload")}`);
+    redirect(`/leads/new?error=${encodeURIComponent("Please choose a file to upload")}`);
   }
 
   const rows = await parseLeadsFile(file as File);
   if (rows.length === 0) {
-    redirect(`/leads?error=${encodeURIComponent("File is empty")}`);
+    redirect(`/leads/new?error=${encodeURIComponent("File is empty")}`);
   }
 
   const header = rows[0].map((h) => h.toLowerCase());
@@ -731,7 +732,7 @@ export async function uploadLeads(formData: FormData) {
 
   if (shopIdx === -1 || nameIdx === -1 || cityIdx === -1) {
     redirect(
-      `/leads?error=${encodeURIComponent(
+      `/leads/new?error=${encodeURIComponent(
         "File must have columns for Shop Number (or Shop Name), Name and City"
       )}`
     );
@@ -764,8 +765,8 @@ export async function uploadLeads(formData: FormData) {
     added++;
   }
 
-  revalidatePath("/leads");
-  redirect(`/leads?added=${added}&skipped=${skipped}`);
+  revalidatePath("/leads/not-contacted");
+  redirect(`/leads/not-contacted?added=${added}&skipped=${skipped}`);
 }
 
 export async function setLeadStatus(id: number, status: string) {
@@ -782,16 +783,28 @@ export async function setLeadStatus(id: number, status: string) {
 export async function markLeadContacted(id: number) {
   await prisma.lead.update({ where: { id }, data: { status: "CONTACTED" } });
 
-  revalidatePath("/leads");
+  revalidatePath("/leads/not-contacted");
   revalidatePath(`/leads/${id}`);
   revalidatePath("/leads/contacted");
   redirect("/leads/contacted");
 }
 
+export async function cancelLead(id: number) {
+  await prisma.lead.update({ where: { id }, data: { status: "CANCELLED" } });
+
+  revalidatePath("/leads/contacted");
+  revalidatePath(`/leads/${id}`);
+  revalidatePath("/leads/cancelled");
+  redirect("/leads/cancelled");
+}
+
 export async function deleteLead(id: number) {
   await prisma.lead.delete({ where: { id } });
-  revalidatePath("/leads");
-  redirect("/leads");
+  revalidatePath("/leads/not-contacted");
+  revalidatePath("/leads/contacted");
+  revalidatePath("/leads/sample-sent");
+  revalidatePath("/leads/cancelled");
+  redirect("/leads/not-contacted");
 }
 
 export async function convertLeadToClient(id: number) {
@@ -817,7 +830,9 @@ export async function convertLeadToClient(id: number) {
 
   await prisma.lead.delete({ where: { id } });
 
-  revalidatePath("/leads");
+  revalidatePath("/leads/sample-sent");
+  revalidatePath("/leads/contacted");
+  revalidatePath("/leads/not-contacted");
   revalidatePath("/clients");
   revalidatePath("/samples");
   redirect(`/clients/${client.id}`);
