@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { deleteOrder } from "@/lib/actions";
+import InvoiceTabs from "@/components/InvoiceTabs";
 
 export default async function InvoicesPage() {
   const orders = await prisma.order.findMany({
+    where: { confirmed: false },
     include: { client: true },
     orderBy: { date: "desc" },
   });
@@ -14,7 +16,7 @@ export default async function InvoicesPage() {
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Invoicing</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {orders.length} invoice{orders.length === 1 ? "" : "s"}
+            {orders.length} draft invoice{orders.length === 1 ? "" : "s"}
           </p>
         </div>
         <Link
@@ -25,9 +27,11 @@ export default async function InvoicesPage() {
         </Link>
       </div>
 
+      <InvoiceTabs active="pending" />
+
       {orders.length === 0 ? (
         <div className="border border-gray-200 rounded-2xl p-10 text-center">
-          <p className="text-gray-500 text-sm">No invoices yet.</p>
+          <p className="text-gray-500 text-sm">No draft invoices.</p>
         </div>
       ) : (
         <div className="border border-gray-200 rounded-2xl overflow-x-auto">
@@ -46,47 +50,28 @@ export default async function InvoicesPage() {
               {orders.map((o) => {
                 const deleteOrderBound = deleteOrder.bind(null, o.id, o.clientId);
                 return (
-                <tr key={o.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="py-3 px-5">
-                    <Link
-                      href={`/clients/${o.clientId}/orders/${o.id}`}
-                      className="font-medium hover:underline"
-                    >
-                      INV-{String(o.id).padStart(4, "0")}
-                    </Link>
-                  </td>
-                  <td className="py-3 px-5 text-gray-600">{o.client.name}</td>
-                  <td className="py-3 px-5 text-gray-600">
-                    {o.date.toISOString().slice(0, 10)}
-                  </td>
-                  <td className="py-3 px-5 text-gray-600">
-                    {o.saleAmount.toLocaleString()}
-                  </td>
-                  <td className="py-3 px-5">
-                    {!o.confirmed ? (
+                  <tr key={o.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="py-3 px-5">
+                      <Link
+                        href={`/clients/${o.clientId}/orders/${o.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        INV-{String(o.id).padStart(4, "0")}
+                      </Link>
+                    </td>
+                    <td className="py-3 px-5 text-gray-600">{o.client.name}</td>
+                    <td className="py-3 px-5 text-gray-600">
+                      {o.date.toISOString().slice(0, 10)}
+                    </td>
+                    <td className="py-3 px-5 text-gray-600">
+                      {o.saleAmount.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-5">
                       <span className="text-xs font-medium px-2 py-1 rounded-full bg-yellow-50 text-yellow-800 border border-yellow-200">
                         Draft
                       </span>
-                    ) : (
-                      <span
-                        className={`text-xs font-medium px-2 py-1 rounded-full ${
-                          o.paymentStatus === "PAID"
-                            ? "bg-black text-white"
-                            : o.paymentStatus === "PARTIAL"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {o.paymentStatus === "PAID"
-                          ? "Paid"
-                          : o.paymentStatus === "PARTIAL"
-                            ? "Partial"
-                            : "Unpaid"}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 px-5 text-right">
-                    {!o.confirmed && (
+                    </td>
+                    <td className="py-3 px-5 text-right">
                       <form action={deleteOrderBound}>
                         <button
                           type="submit"
@@ -95,9 +80,8 @@ export default async function InvoicesPage() {
                           Delete
                         </button>
                       </form>
-                    )}
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
                 );
               })}
             </tbody>
