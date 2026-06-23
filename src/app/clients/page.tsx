@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { averageMonthlyDzn, gradeForMonthlyDzn } from "@/lib/grade";
+import { deleteClient } from "@/lib/actions";
 
 export default async function ClientsPage({
   searchParams,
@@ -130,6 +131,7 @@ export default async function ClientsPage({
                 <th className="py-3 px-5 font-medium">Total Received</th>
                 <th className="py-3 px-5 font-medium">Grade</th>
                 <th className="py-3 px-5"></th>
+                <th className="py-3 px-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -138,6 +140,7 @@ export default async function ClientsPage({
                   (s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0),
                   0
                 );
+                const deleteClientBound = deleteClient.bind(null, c.id);
                 return (
                   <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-5">
@@ -175,6 +178,16 @@ export default async function ClientsPage({
                       >
                         Edit
                       </Link>
+                    </td>
+                    <td className="py-3 px-5 text-right">
+                      <form action={deleteClientBound}>
+                        <button
+                          type="submit"
+                          className="text-xs text-gray-400 hover:text-red-600 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </form>
                     </td>
                   </tr>
                 );
