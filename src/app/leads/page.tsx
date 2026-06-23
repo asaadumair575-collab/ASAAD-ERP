@@ -65,12 +65,12 @@ export default async function LeadsPage({
       >
         <div>
           <label className="block text-xs text-gray-500 mb-1.5">
-            Upload CSV (Shop Number, Name, City, Phone)
+            Upload CSV or Excel (Shop Number/Name, Name, City, Phone/Contact)
           </label>
           <input
             type="file"
             name="file"
-            accept=".csv,text/csv"
+            accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             required
             className="text-sm"
           />

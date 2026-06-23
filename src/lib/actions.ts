@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
+import * as XLSX from "xlsx";
 import {
   hashPassword,
   verifyPassword,
@@ -695,14 +696,27 @@ function parseCsv(text: string): string[][] {
     .map((line) => line.split(",").map((cell) => cell.trim()));
 }
 
+async function parseLeadsFile(file: File): Promise<string[][]> {
+  if (file.name.toLowerCase().endsWith(".xlsx")) {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    return rows
+      .map((row) => row.map((cell) => String(cell ?? "").trim()))
+      .filter((row) => row.some((cell) => cell.length > 0));
+  }
+
+  return parseCsv(await file.text());
+}
+
 export async function uploadLeads(formData: FormData) {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    redirect(`/leads?error=${encodeURIComponent("Please choose a CSV file to upload")}`);
+    redirect(`/leads?error=${encodeURIComponent("Please choose a file to upload")}`);
   }
 
-  const text = await (file as File).text();
-  const rows = parseCsv(text);
+  const rows = await parseLeadsFile(file as File);
   if (rows.length === 0) {
     redirect(`/leads?error=${encodeURIComponent("File is empty")}`);
   }
@@ -711,12 +725,14 @@ export async function uploadLeads(formData: FormData) {
   const shopIdx = header.findIndex((h) => h.includes("shop"));
   const nameIdx = header.findIndex((h) => h === "name");
   const cityIdx = header.findIndex((h) => h === "city");
-  const phoneIdx = header.findIndex((h) => h.includes("phone"));
+  const phoneIdx = header.findIndex(
+    (h) => h.includes("phone") || h.includes("contact")
+  );
 
   if (shopIdx === -1 || nameIdx === -1 || cityIdx === -1) {
     redirect(
       `/leads?error=${encodeURIComponent(
-        "File must have columns for Shop Number, Name and City"
+        "File must have columns for Shop Number (or Shop Name), Name and City"
       )}`
     );
   }
