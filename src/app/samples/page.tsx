@@ -18,7 +18,7 @@ const statusLabels: Record<string, string> = {
 
 export default async function SamplesPage() {
   const samples = await prisma.sample.findMany({
-    include: { client: true },
+    include: { client: true, lead: true },
     orderBy: { dateSent: "desc" },
   });
 
@@ -65,8 +65,13 @@ export default async function SamplesPage() {
                       href={`/samples/${s.id}`}
                       className="font-medium hover:underline"
                     >
-                      {s.client.name}
+                      {s.client?.name ?? s.lead?.name}
                     </Link>
+                    {s.lead && (
+                      <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                        Lead
+                      </span>
+                    )}
                   </td>
                   <td className="py-3 px-5 text-gray-600 max-w-xs truncate">
                     {s.description}

@@ -514,26 +514,45 @@ export async function setCommissionDispatched(id: number, dispatched: boolean) {
 }
 
 export async function createSample(formData: FormData) {
-  const clientId = parseInt(String(formData.get("clientId") ?? ""), 10);
+  const clientIdRaw = String(formData.get("clientId") ?? "");
+  const leadIdRaw = String(formData.get("leadId") ?? "");
+  const clientId = clientIdRaw ? parseInt(clientIdRaw, 10) : null;
+  const leadId = leadIdRaw ? parseInt(leadIdRaw, 10) : null;
   const description = String(formData.get("description") ?? "").trim();
   const dateRaw = String(formData.get("dateSent") ?? "");
   const dateSent = dateRaw ? new Date(dateRaw) : new Date();
 
-  if (Number.isNaN(clientId)) {
-    throw new Error("Please select a customer");
+  if ((!clientId || Number.isNaN(clientId)) && (!leadId || Number.isNaN(leadId))) {
+    throw new Error("Please select a customer or lead");
   }
   if (!description) {
     throw new Error("Sample description is required");
   }
 
-  const client = await prisma.client.findUnique({ where: { id: clientId } });
-  if (!client) {
-    throw new Error("Selected customer no longer exists");
+  if (clientId) {
+    const client = await prisma.client.findUnique({ where: { id: clientId } });
+    if (!client) {
+      throw new Error("Selected customer no longer exists");
+    }
+  } else if (leadId) {
+    const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+    if (!lead) {
+      throw new Error("Selected lead no longer exists");
+    }
   }
 
   await prisma.sample.create({
-    data: { clientId, description, dateSent },
+    data: { clientId, leadId, description, dateSent },
   });
+
+  if (leadId) {
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: { status: "SAMPLE_SENT" },
+    });
+    revalidatePath("/leads");
+    revalidatePath(`/leads/${leadId}`);
+  }
 
   revalidatePath("/samples");
   redirect("/samples");
@@ -645,4 +664,134 @@ export async function resetAllData(formData: FormData) {
 
   revalidatePath("/", "layout");
   redirect("/settings");
+}
+
+const LEAD_STATUSES = ["NEW", "CONTACTED", "SAMPLE_SENT", "CONFIRMED"];
+
+export async function createLead(formData: FormData) {
+  const shopNumber = String(formData.get("shopNumber") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const city = String(formData.get("city") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  if (!shopNumber || !name || !city) {
+    throw new Error("Shop number, name and city are required");
+  }
+
+  await prisma.lead.create({
+    data: { shopNumber, name, city, phone, notes },
+  });
+
+  revalidatePath("/leads");
+  redirect("/leads");
+}
+
+function parseCsv(text: string): string[][] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => line.split(",").map((cell) => cell.trim()));
+}
+
+export async function uploadLeads(formData: FormData) {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Please choose a CSV file to upload");
+  }
+
+  const text = await file.text();
+  const rows = parseCsv(text);
+  if (rows.length === 0) {
+    throw new Error("File is empty");
+  }
+
+  const header = rows[0].map((h) => h.toLowerCase());
+  const shopIdx = header.findIndex((h) => h.includes("shop"));
+  const nameIdx = header.findIndex((h) => h === "name");
+  const cityIdx = header.findIndex((h) => h === "city");
+  const phoneIdx = header.findIndex((h) => h.includes("phone"));
+
+  if (shopIdx === -1 || nameIdx === -1 || cityIdx === -1) {
+    throw new Error(
+      "File must have columns for Shop Number, Name and City"
+    );
+  }
+
+  const dataRows = rows.slice(1);
+  let added = 0;
+  let skipped = 0;
+
+  for (const row of dataRows) {
+    const shopNumber = row[shopIdx]?.trim();
+    const name = row[nameIdx]?.trim();
+    const city = row[cityIdx]?.trim();
+    const phone = phoneIdx !== -1 ? row[phoneIdx]?.trim() || null : null;
+
+    if (!shopNumber || !name || !city) {
+      skipped++;
+      continue;
+    }
+
+    const existing = await prisma.lead.findFirst({
+      where: { shopNumber, name },
+    });
+    if (existing) {
+      skipped++;
+      continue;
+    }
+
+    await prisma.lead.create({ data: { shopNumber, name, city, phone } });
+    added++;
+  }
+
+  revalidatePath("/leads");
+  redirect(`/leads?added=${added}&skipped=${skipped}`);
+}
+
+export async function setLeadStatus(id: number, status: string) {
+  if (!LEAD_STATUSES.includes(status)) {
+    throw new Error("Invalid status");
+  }
+
+  await prisma.lead.update({ where: { id }, data: { status } });
+
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${id}`);
+}
+
+export async function deleteLead(id: number) {
+  await prisma.lead.delete({ where: { id } });
+  revalidatePath("/leads");
+  redirect("/leads");
+}
+
+export async function convertLeadToClient(id: number) {
+  const lead = await prisma.lead.findUnique({ where: { id } });
+  if (!lead) {
+    throw new Error("Lead no longer exists");
+  }
+
+  const client = await prisma.client.create({
+    data: {
+      name: lead.name,
+      businessName: lead.shopNumber,
+      city: lead.city,
+      phone: lead.phone,
+      notes: lead.notes,
+    },
+  });
+
+  await prisma.sample.updateMany({
+    where: { leadId: lead.id },
+    data: { clientId: client.id, leadId: null },
+  });
+
+  await prisma.lead.delete({ where: { id } });
+
+  revalidatePath("/leads");
+  revalidatePath("/clients");
+  revalidatePath("/samples");
+  redirect(`/clients/${client.id}`);
 }

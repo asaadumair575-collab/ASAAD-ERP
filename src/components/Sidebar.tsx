@@ -84,6 +84,18 @@ const icons = {
       />
     </svg>
   ),
+  leads: (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+      <path
+        d="M3 5.5a2 2 0 0 1 2-2h6l4 4v8.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-10.5Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M11 3.5V8h4M7 11.5h6M7 14.5h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
   chevron: (
     <svg viewBox="0 0 20 20" fill="none" className="w-3.5 h-3.5">
       <path
@@ -342,6 +354,15 @@ export default function Sidebar({ businessName }: { businessName: string }) {
               </NavLink>
             </div>
           )}
+
+          <NavLink
+            href="/leads"
+            active={isActive("/leads")}
+            icon={icons.leads}
+            onClick={closeMobile}
+          >
+            Leads
+          </NavLink>
 
           <NavLink
             href="/dispatch"

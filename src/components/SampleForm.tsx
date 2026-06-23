@@ -73,21 +73,35 @@ function CustomerSearchSelect({ clients }: { clients: Client[] }) {
 export default function SampleForm({
   action,
   clients,
+  lead,
 }: {
   action: (formData: FormData) => void;
   clients: Client[];
+  lead?: { id: number; name: string; shopNumber: string };
 }) {
   return (
     <form
       action={action}
       className="bg-white border border-gray-200 rounded-3xl shadow-sm p-6 sm:p-8 space-y-6"
     >
-      <div>
-        <label className="block text-xs font-medium text-gray-500 mb-1.5">
-          Customer<span className="text-black"> *</span>
-        </label>
-        <CustomerSearchSelect clients={clients} />
-      </div>
+      {lead ? (
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1.5">
+            Lead
+          </label>
+          <input type="hidden" name="leadId" value={lead.id} />
+          <p className="text-sm border border-gray-200 rounded-xl px-3.5 py-2.5 bg-gray-50">
+            {lead.name} (Shop #{lead.shopNumber})
+          </p>
+        </div>
+      ) : (
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1.5">
+            Customer<span className="text-black"> *</span>
+          </label>
+          <CustomerSearchSelect clients={clients} />
+        </div>
+      )}
 
       <div>
         <label className="block text-xs font-medium text-gray-500 mb-1.5">

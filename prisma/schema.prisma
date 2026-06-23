@@ -118,12 +118,26 @@ model CommissionOrder {
 
 model Sample {
   id           Int       @id @default(autoincrement())
-  client       Client    @relation(fields: [clientId], references: [id])
-  clientId     Int
+  client       Client?   @relation(fields: [clientId], references: [id])
+  clientId     Int?
+  lead         Lead?     @relation(fields: [leadId], references: [id])
+  leadId       Int?
   description  String
   dateSent     DateTime  @default(now())
   status       String    @default("PENDING")
   response     String?   @db.Text
   responseDate DateTime?
   createdAt    DateTime  @default(now())
+}
+
+model Lead {
+  id         Int      @id @default(autoincrement())
+  shopNumber String
+  name       String
+  city       String
+  phone      String?
+  status     String   @default("NEW")
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now())
+  samples    Sample[]
 }
