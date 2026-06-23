@@ -356,6 +356,15 @@ export default function Sidebar({ businessName }: { businessName: string }) {
           )}
 
           <NavLink
+            href="/leads"
+            active={isActive("/leads")}
+            icon={icons.leads}
+            onClick={closeMobile}
+          >
+            Leads
+          </NavLink>
+
+          <NavLink
             href="/dispatch"
             active={isActive("/dispatch")}
             icon={icons.dispatch}
