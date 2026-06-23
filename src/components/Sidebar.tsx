@@ -61,18 +61,6 @@ const icons = {
       />
     </svg>
   ),
-  commission: (
-    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
-      <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M10 6.5v7M12 8.2c0-.9-.9-1.7-2-1.7s-2 .6-2 1.5c0 2 4 1 4 3 0 .9-.9 1.5-2 1.5s-2-.8-2-1.7"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  ),
   samples: (
     <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
       <path
@@ -156,6 +144,9 @@ export default function Sidebar({ businessName }: { businessName: string }) {
   const [clientsOpen, setClientsOpen] = useState(isOnClients);
   const isOnSales = pathname.startsWith("/sales");
   const [salesOpen, setSalesOpen] = useState(isOnSales);
+  const isOnFinance =
+    pathname.startsWith("/finance") || pathname.startsWith("/commission");
+  const [financeOpen, setFinanceOpen] = useState(isOnFinance);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   function isActive(href: string) {
@@ -297,23 +288,45 @@ export default function Sidebar({ businessName }: { businessName: string }) {
             </div>
           )}
 
-          <NavLink
-            href="/finance"
-            active={isActive("/finance")}
-            icon={icons.finance}
-            onClick={closeMobile}
+          <button
+            type="button"
+            onClick={() => setFinanceOpen((o) => !o)}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+              isOnFinance
+                ? "bg-white/10 text-white"
+                : "text-gray-300 hover:bg-white/10 hover:text-white"
+            }`}
           >
-            Finance
-          </NavLink>
-
-          <NavLink
-            href="/commission"
-            active={isActive("/commission")}
-            icon={icons.commission}
-            onClick={closeMobile}
-          >
-            Commission
-          </NavLink>
+            <span className="flex items-center gap-2.5">
+              {icons.finance}
+              Finance
+            </span>
+            <span
+              className={`transition-transform ${financeOpen ? "rotate-90" : ""}`}
+            >
+              {icons.chevron}
+            </span>
+          </button>
+          {financeOpen && (
+            <div className="ml-3 pl-3 border-l border-white/10 space-y-1">
+              <NavLink
+                href="/finance"
+                active={pathname.startsWith("/finance")}
+                compact
+                onClick={closeMobile}
+              >
+                Overview
+              </NavLink>
+              <NavLink
+                href="/commission"
+                active={pathname.startsWith("/commission")}
+                compact
+                onClick={closeMobile}
+              >
+                Commission
+              </NavLink>
+            </div>
+          )}
 
           <NavLink
             href="/dispatch"
