@@ -82,9 +82,11 @@ export async function updateClient(id: number, formData: FormData) {
 }
 
 export async function deleteClient(id: number) {
+  await prisma.sample.deleteMany({ where: { clientId: id } });
   await prisma.order.deleteMany({ where: { clientId: id } });
   await prisma.client.delete({ where: { id } });
   revalidatePath("/clients");
+  revalidatePath("/samples");
   revalidatePath("/sales/invoices/new");
   redirect("/clients");
 }
