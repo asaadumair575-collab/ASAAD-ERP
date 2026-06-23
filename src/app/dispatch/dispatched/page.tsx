@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import DispatchTabs from "@/components/DispatchTabs";
 import DispatchTable from "@/components/DispatchTable";
+import DispatchTypeSelect from "@/components/DispatchTypeSelect";
 
 export default async function DispatchedPage() {
   const orders = await prisma.order.findMany({
@@ -11,11 +12,14 @@ export default async function DispatchedPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Dispatch</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {orders.length} dispatched
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Dispatch</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {orders.length} dispatched
+          </p>
+        </div>
+        <DispatchTypeSelect type="client" />
       </div>
 
       <DispatchTabs active="dispatched" />
