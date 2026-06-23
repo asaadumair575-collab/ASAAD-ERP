@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 
 type AmountVisibilityContextValue = {
   visible: boolean;
@@ -10,26 +10,15 @@ type AmountVisibilityContextValue = {
 const AmountVisibilityContext =
   createContext<AmountVisibilityContextValue | null>(null);
 
-const STORAGE_KEY = "dashboard-amounts-visible";
-
 export function AmountVisibilityProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored !== null) setVisible(stored === "true");
-  }, []);
+  const [visible, setVisible] = useState(false);
 
   function toggle() {
-    setVisible((v) => {
-      const next = !v;
-      localStorage.setItem(STORAGE_KEY, String(next));
-      return next;
-    });
+    setVisible((v) => !v);
   }
 
   return (
