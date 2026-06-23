@@ -20,9 +20,9 @@ const statusLabels: Record<string, string> = {
 export default async function LeadsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ added?: string; skipped?: string }>;
+  searchParams: Promise<{ added?: string; skipped?: string; error?: string }>;
 }) {
-  const { added, skipped } = await searchParams;
+  const { added, skipped, error } = await searchParams;
 
   const leads = await prisma.lead.findMany({
     orderBy: { createdAt: "desc" },
@@ -44,6 +44,12 @@ export default async function LeadsPage({
           + Add Lead
         </Link>
       </div>
+
+      {error && (
+        <div className="border border-red-200 bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       {(added !== undefined || skipped !== undefined) && (
         <div className="border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-700">

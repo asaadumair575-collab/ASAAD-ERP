@@ -698,13 +698,13 @@ function parseCsv(text: string): string[][] {
 export async function uploadLeads(formData: FormData) {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    throw new Error("Please choose a CSV file to upload");
+    redirect(`/leads?error=${encodeURIComponent("Please choose a CSV file to upload")}`);
   }
 
-  const text = await file.text();
+  const text = await (file as File).text();
   const rows = parseCsv(text);
   if (rows.length === 0) {
-    throw new Error("File is empty");
+    redirect(`/leads?error=${encodeURIComponent("File is empty")}`);
   }
 
   const header = rows[0].map((h) => h.toLowerCase());
@@ -714,8 +714,10 @@ export async function uploadLeads(formData: FormData) {
   const phoneIdx = header.findIndex((h) => h.includes("phone"));
 
   if (shopIdx === -1 || nameIdx === -1 || cityIdx === -1) {
-    throw new Error(
-      "File must have columns for Shop Number, Name and City"
+    redirect(
+      `/leads?error=${encodeURIComponent(
+        "File must have columns for Shop Number, Name and City"
+      )}`
     );
   }
 
