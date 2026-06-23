@@ -442,6 +442,37 @@ export async function setCostPerDozen(formData: FormData) {
   revalidatePath("/finance");
 }
 
+export async function setCommissionRate(formData: FormData) {
+  const ratePerDozen = parseFloat(String(formData.get("ratePerDozen") ?? ""));
+  if (Number.isNaN(ratePerDozen) || ratePerDozen < 0) {
+    throw new Error("Enter a valid commission rate");
+  }
+
+  await prisma.commissionRate.create({ data: { ratePerDozen } });
+
+  revalidatePath("/commission");
+}
+
+export async function createCommissionOrder(formData: FormData) {
+  const dozens = parseFloat(String(formData.get("dozens") ?? ""));
+  if (Number.isNaN(dozens) || dozens <= 0) {
+    throw new Error("Enter a valid number of dozens");
+  }
+
+  const dateRaw = String(formData.get("date") ?? "");
+  const date = dateRaw ? new Date(dateRaw) : new Date();
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  await prisma.commissionOrder.create({ data: { dozens, date, notes } });
+
+  revalidatePath("/commission");
+}
+
+export async function deleteCommissionOrder(id: number) {
+  await prisma.commissionOrder.delete({ where: { id } });
+  revalidatePath("/commission");
+}
+
 export async function createSample(formData: FormData) {
   const clientId = parseInt(String(formData.get("clientId") ?? ""), 10);
   const description = String(formData.get("description") ?? "").trim();

@@ -61,6 +61,18 @@ const icons = {
       />
     </svg>
   ),
+  commission: (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+      <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M10 6.5v7M12 8.2c0-.9-.9-1.7-2-1.7s-2 .6-2 1.5c0 2 4 1 4 3 0 .9-.9 1.5-2 1.5s-2-.8-2-1.7"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
   samples: (
     <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
       <path
@@ -292,6 +304,15 @@ export default function Sidebar({ businessName }: { businessName: string }) {
             onClick={closeMobile}
           >
             Finance
+          </NavLink>
+
+          <NavLink
+            href="/commission"
+            active={isActive("/commission")}
+            icon={icons.commission}
+            onClick={closeMobile}
+          >
+            Commission
           </NavLink>
 
           <NavLink

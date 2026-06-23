@@ -98,6 +98,21 @@ model User {
   createdAt    DateTime @default(now())
 }
 
+model CommissionRate {
+  id            Int      @id @default(autoincrement())
+  ratePerDozen  Float
+  effectiveFrom DateTime @default(now())
+  createdAt     DateTime @default(now())
+}
+
+model CommissionOrder {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @default(now())
+  dozens    Float
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
 model Sample {
   id           Int       @id @default(autoincrement())
   client       Client    @relation(fields: [clientId], references: [id])
