@@ -779,6 +779,14 @@ export async function setLeadStatus(id: number, status: string) {
   revalidatePath(`/leads/${id}`);
 }
 
+export async function markLeadContacted(id: number) {
+  await prisma.lead.update({ where: { id }, data: { status: "CONTACTED" } });
+
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${id}`);
+  redirect("/leads?status=CONTACTED");
+}
+
 export async function deleteLead(id: number) {
   await prisma.lead.delete({ where: { id } });
   revalidatePath("/leads");

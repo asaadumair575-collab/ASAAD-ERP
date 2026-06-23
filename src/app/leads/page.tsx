@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { uploadLeads, setLeadStatus, deleteLead } from "@/lib/actions";
+import { uploadLeads, markLeadContacted, deleteLead } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 
 const statusStyles: Record<string, string> = {
@@ -20,11 +20,19 @@ const statusLabels: Record<string, string> = {
 export default async function LeadsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ added?: string; skipped?: string; error?: string }>;
+  searchParams: Promise<{
+    added?: string;
+    skipped?: string;
+    error?: string;
+    status?: string;
+  }>;
 }) {
-  const { added, skipped, error } = await searchParams;
+  const { added, skipped, error, status } = await searchParams;
+  const statusFilter =
+    status && Object.keys(statusLabels).includes(status) ? status : null;
 
   const leads = await prisma.lead.findMany({
+    where: statusFilter ? { status: statusFilter } : undefined,
     orderBy: { createdAt: "desc" },
   });
 
@@ -32,17 +40,32 @@ export default async function LeadsPage({
     <div className="space-y-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Leads</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {statusFilter ? `${statusLabels[statusFilter]} Leads` : "Leads"}
+          </h1>
           <p className="text-sm text-gray-500 mt-1">
-            {leads.length} lead{leads.length === 1 ? "" : "s"} not yet confirmed
+            {leads.length} lead{leads.length === 1 ? "" : "s"}
+            {statusFilter
+              ? ` marked ${statusLabels[statusFilter].toLowerCase()}`
+              : " not yet confirmed"}
           </p>
         </div>
-        <Link
-          href="/leads/new"
-          className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
-        >
-          + Add Lead
-        </Link>
+        <div className="flex items-center gap-3">
+          {statusFilter && (
+            <Link
+              href="/leads"
+              className="text-sm font-medium text-gray-500 hover:text-black transition-colors"
+            >
+              Clear filter
+            </Link>
+          )}
+          <Link
+            href="/leads/new"
+            className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            + Add Lead
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -102,7 +125,7 @@ export default async function LeadsPage({
             </thead>
             <tbody className="divide-y divide-gray-100">
               {leads.map((l) => {
-                const contactBound = setLeadStatus.bind(null, l.id, "CONTACTED");
+                const contactBound = markLeadContacted.bind(null, l.id);
                 const deleteBound = deleteLead.bind(null, l.id);
                 return (
                   <tr key={l.id} className="hover:bg-gray-50 transition-colors">

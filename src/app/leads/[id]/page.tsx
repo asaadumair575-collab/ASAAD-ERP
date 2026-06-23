@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { setLeadStatus, deleteLead, convertLeadToClient } from "@/lib/actions";
+import { markLeadContacted, deleteLead, convertLeadToClient } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 
 const statusStyles: Record<string, string> = {
@@ -33,7 +33,7 @@ export default async function LeadDetailPage({
 
   if (!lead) notFound();
 
-  const contactBound = setLeadStatus.bind(null, lead.id, "CONTACTED");
+  const contactBound = markLeadContacted.bind(null, lead.id);
   const deleteBound = deleteLead.bind(null, lead.id);
   const convertBound = convertLeadToClient.bind(null, lead.id);
 
