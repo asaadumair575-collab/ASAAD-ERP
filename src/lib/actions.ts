@@ -8,10 +8,32 @@ import {
   verifyPassword,
   setSessionCookie,
   clearSessionCookie,
+  getSessionUsername,
 } from "@/lib/auth";
 
 function round2(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_MS = 60 * 1000;
+const loginAttempts = new Map<string, { count: number; firstAttempt: number }>();
+
+async function loginRateLimit(username: string) {
+  const entry = loginAttempts.get(username);
+  const now = Date.now();
+  if (entry && now - entry.firstAttempt < LOGIN_LOCKOUT_MS) {
+    if (entry.count >= LOGIN_MAX_ATTEMPTS) {
+      throw new Error("Too many attempts. Try again in a minute.");
+    }
+    entry.count += 1;
+  } else {
+    loginAttempts.set(username, { count: 1, firstAttempt: now });
+  }
+}
+
+function clearLoginAttempts(username: string) {
+  loginAttempts.delete(username);
 }
 
 export async function createClient(formData: FormData) {
@@ -547,13 +569,16 @@ export async function deleteSample(id: number) {
 
 export async function loginAction(formData: FormData) {
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
-  const password = String(formData.get("password") ?? "").toLowerCase();
+  const password = String(formData.get("password") ?? "");
+
+  await loginRateLimit(username);
 
   const user = await prisma.user.findUnique({ where: { username } });
   if (!user || !verifyPassword(password, user.passwordHash)) {
     throw new Error("Invalid username or password");
   }
 
+  clearLoginAttempts(username);
   await setSessionCookie(user.username);
   redirect("/");
 }
@@ -565,7 +590,7 @@ export async function logoutAction() {
 
 export async function createUser(formData: FormData) {
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
-  const password = String(formData.get("password") ?? "").toLowerCase();
+  const password = String(formData.get("password") ?? "");
 
   if (!username || !password) {
     throw new Error("Username and password are required");
@@ -602,7 +627,11 @@ export async function resetAllData(formData: FormData) {
   }
 
   const password = String(formData.get("password") ?? "");
-  if (password !== "1212") {
+  const username = await getSessionUsername();
+  const user = username
+    ? await prisma.user.findUnique({ where: { username } })
+    : null;
+  if (!user || !verifyPassword(password, user.passwordHash)) {
     throw new Error("Incorrect password");
   }
 

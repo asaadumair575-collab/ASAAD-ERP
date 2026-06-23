@@ -5,7 +5,13 @@ const SESSION_COOKIE = "session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
 function getSecret() {
-  return process.env.SESSION_SECRET ?? "asaad-erp-dev-secret";
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    throw new Error(
+      "SESSION_SECRET is not set. Add a strong random value to .env.local."
+    );
+  }
+  return secret;
 }
 
 export function hashPassword(password: string) {
