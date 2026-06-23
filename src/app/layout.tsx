@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Sidebar from "@/components/Sidebar";
 import { getBusinessProfile } from "@/lib/businessProfile";
-import { getSessionUsername } from "@/lib/auth";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,7 +38,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const profile = await getBusinessProfile();
-  const username = await getSessionUsername();
 
   return (
     <html
@@ -47,20 +45,12 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col md:flex-row bg-white text-black">
-        {username ? (
-          <>
-            <Sidebar businessName={profile?.name ?? "Trader CRM"} />
-            <main className="flex-1 min-h-screen min-w-0 print:min-h-0">
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 print:max-w-none print:p-0">
-                {children}
-              </div>
-            </main>
-          </>
-        ) : (
-          <main className="flex-1 min-h-screen min-w-0 flex items-center justify-center">
+        <Sidebar businessName={profile?.name ?? "Trader CRM"} />
+        <main className="flex-1 min-h-screen min-w-0 print:min-h-0">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 print:max-w-none print:p-0">
             {children}
-          </main>
-        )}
+          </div>
+        </main>
       </body>
     </html>
   );
