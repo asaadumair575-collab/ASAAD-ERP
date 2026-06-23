@@ -5,9 +5,9 @@ import { averageMonthlyDzn, gradeForMonthlyDzn } from "@/lib/grade";
 export default async function ClientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ city?: string; q?: string }>;
+  searchParams: Promise<{ city?: string; q?: string; grade?: string }>;
 }) {
-  const { city, q } = await searchParams;
+  const { city, q, grade: gradeFilter } = await searchParams;
 
   const clients = await prisma.client.findMany({
     where: {
@@ -31,12 +31,27 @@ export default async function ClientsPage({
     orderBy: { city: "asc" },
   });
 
+  const clientsWithGrade = clients.map((c) => {
+    const ledgerOrders = c.orders.filter((o) => o.confirmed);
+    const paidOrders = ledgerOrders.filter((o) => o.paymentStatus === "PAID");
+    const grade = gradeForMonthlyDzn(
+      averageMonthlyDzn(paidOrders),
+      paidOrders.length > 0
+    );
+    return { client: c, ledgerOrders, grade };
+  });
+
+  const filteredClients = gradeFilter
+    ? clientsWithGrade.filter((c) => c.grade.label === gradeFilter)
+    : clientsWithGrade;
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Customers</h1>
         <p className="text-sm text-gray-500 mt-1">
-          {clients.length} customer{clients.length === 1 ? "" : "s"}
+          {filteredClients.length} customer
+          {filteredClients.length === 1 ? "" : "s"}
         </p>
       </div>
 
@@ -68,13 +83,27 @@ export default async function ClientsPage({
             ))}
           </select>
         </div>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1.5">Grade</label>
+          <select
+            name="grade"
+            defaultValue={gradeFilter ?? ""}
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          >
+            <option value="">All grades</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="Nil">Nil</option>
+          </select>
+        </div>
         <button
           type="submit"
           className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
         >
           Filter
         </button>
-        {(city || q) && (
+        {(city || q || gradeFilter) && (
           <Link
             href="/clients"
             className="text-sm text-gray-500 hover:text-black px-2 py-2"
@@ -84,7 +113,7 @@ export default async function ClientsPage({
         )}
       </form>
 
-      {clients.length === 0 ? (
+      {filteredClients.length === 0 ? (
         <div className="border border-gray-200 rounded-2xl p-10 text-center">
           <p className="text-gray-500 text-sm">No customers found.</p>
         </div>
@@ -104,18 +133,10 @@ export default async function ClientsPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {clients.map((c) => {
-                const ledgerOrders = c.orders.filter((o) => o.confirmed);
-                const paidOrders = ledgerOrders.filter(
-                  (o) => o.paymentStatus === "PAID"
-                );
+              {filteredClients.map(({ client: c, ledgerOrders, grade }) => {
                 const totalReceived = ledgerOrders.reduce(
                   (s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0),
                   0
-                );
-                const grade = gradeForMonthlyDzn(
-                  averageMonthlyDzn(paidOrders),
-                  paidOrders.length > 0
                 );
                 return (
                   <tr key={c.id} className="hover:bg-gray-50 transition-colors">
