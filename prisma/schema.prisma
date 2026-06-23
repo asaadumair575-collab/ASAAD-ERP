@@ -107,6 +107,7 @@ model CommissionRate {
 
 model CommissionOrder {
   id        Int      @id @default(autoincrement())
+  orderFor  String
   date      DateTime @default(now())
   dozens    Float
   notes     String?

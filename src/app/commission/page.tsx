@@ -103,6 +103,17 @@ export default async function CommissionPage({
         >
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">
+              Order For
+            </label>
+            <input
+              type="text"
+              name="orderFor"
+              required
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-black bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
               Dozens
             </label>
             <input
@@ -213,6 +224,7 @@ export default async function CommissionPage({
               <thead>
                 <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
                   <th className="py-3 px-5 font-medium">Date</th>
+                  <th className="py-3 px-5 font-medium">Order For</th>
                   <th className="py-3 px-5 font-medium">Notes</th>
                   <th className="py-3 px-5 font-medium text-right">Dozens</th>
                   <th className="py-3 px-5 font-medium text-right">
@@ -233,6 +245,7 @@ export default async function CommissionPage({
                       <td className="py-3 px-5 text-gray-600">
                         {o.date.toISOString().slice(0, 10)}
                       </td>
+                      <td className="py-3 px-5 font-medium">{o.orderFor}</td>
                       <td className="py-3 px-5 text-gray-600">
                         {o.notes ?? "—"}
                       </td>

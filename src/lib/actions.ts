@@ -454,6 +454,11 @@ export async function setCommissionRate(formData: FormData) {
 }
 
 export async function createCommissionOrder(formData: FormData) {
+  const orderFor = String(formData.get("orderFor") ?? "").trim();
+  if (!orderFor) {
+    throw new Error("Enter who the order is for");
+  }
+
   const dozens = parseFloat(String(formData.get("dozens") ?? ""));
   if (Number.isNaN(dozens) || dozens <= 0) {
     throw new Error("Enter a valid number of dozens");
@@ -463,7 +468,7 @@ export async function createCommissionOrder(formData: FormData) {
   const date = dateRaw ? new Date(dateRaw) : new Date();
   const notes = String(formData.get("notes") ?? "").trim() || null;
 
-  await prisma.commissionOrder.create({ data: { dozens, date, notes } });
+  await prisma.commissionOrder.create({ data: { orderFor, dozens, date, notes } });
 
   revalidatePath("/commission");
 }
