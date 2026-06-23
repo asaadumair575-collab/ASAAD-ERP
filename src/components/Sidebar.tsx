@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { logoutAction } from "@/lib/actions";
 
 const icons = {
@@ -141,13 +141,28 @@ const icons = {
 export default function Sidebar({ businessName }: { businessName: string }) {
   const pathname = usePathname();
   const isOnClients = pathname.startsWith("/clients");
-  const [clientsOpen, setClientsOpen] = useState(isOnClients);
   const isOnSales = pathname.startsWith("/sales");
-  const [salesOpen, setSalesOpen] = useState(isOnSales);
   const isOnFinance =
     pathname.startsWith("/finance") || pathname.startsWith("/commission");
-  const [financeOpen, setFinanceOpen] = useState(isOnFinance);
+
+  type Section = "clients" | "sales" | "finance" | null;
+  function sectionForPath(): Section {
+    if (isOnClients) return "clients";
+    if (isOnSales) return "sales";
+    if (isOnFinance) return "finance";
+    return null;
+  }
+  const [openSection, setOpenSection] = useState<Section>(sectionForPath());
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    setOpenSection(sectionForPath());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  function toggleSection(section: Section) {
+    setOpenSection((current) => (current === section ? null : section));
+  }
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
@@ -209,7 +224,7 @@ export default function Sidebar({ businessName }: { businessName: string }) {
           </NavLink>
           <button
             type="button"
-            onClick={() => setClientsOpen((o) => !o)}
+            onClick={() => toggleSection("clients")}
             className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
               isOnClients
                 ? "bg-white/10 text-white"
@@ -221,12 +236,12 @@ export default function Sidebar({ businessName }: { businessName: string }) {
               Customers
             </span>
             <span
-              className={`transition-transform ${clientsOpen ? "rotate-90" : ""}`}
+              className={`transition-transform ${openSection === "clients" ? "rotate-90" : ""}`}
             >
               {icons.chevron}
             </span>
           </button>
-          {clientsOpen && (
+          {openSection === "clients" && (
             <div className="ml-3 pl-3 border-l border-white/10 space-y-1">
               <NavLink
                 href="/clients"
@@ -250,7 +265,7 @@ export default function Sidebar({ businessName }: { businessName: string }) {
 
           <button
             type="button"
-            onClick={() => setSalesOpen((o) => !o)}
+            onClick={() => toggleSection("sales")}
             className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
               isOnSales
                 ? "bg-white/10 text-white"
@@ -262,12 +277,12 @@ export default function Sidebar({ businessName }: { businessName: string }) {
               Sales
             </span>
             <span
-              className={`transition-transform ${salesOpen ? "rotate-90" : ""}`}
+              className={`transition-transform ${openSection === "sales" ? "rotate-90" : ""}`}
             >
               {icons.chevron}
             </span>
           </button>
-          {salesOpen && (
+          {openSection === "sales" && (
             <div className="ml-3 pl-3 border-l border-white/10 space-y-1">
               <NavLink
                 href="/sales/invoices"
@@ -290,7 +305,7 @@ export default function Sidebar({ businessName }: { businessName: string }) {
 
           <button
             type="button"
-            onClick={() => setFinanceOpen((o) => !o)}
+            onClick={() => toggleSection("finance")}
             className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
               isOnFinance
                 ? "bg-white/10 text-white"
@@ -302,12 +317,12 @@ export default function Sidebar({ businessName }: { businessName: string }) {
               Finance
             </span>
             <span
-              className={`transition-transform ${financeOpen ? "rotate-90" : ""}`}
+              className={`transition-transform ${openSection === "finance" ? "rotate-90" : ""}`}
             >
               {icons.chevron}
             </span>
           </button>
-          {financeOpen && (
+          {openSection === "finance" && (
             <div className="ml-3 pl-3 border-l border-white/10 space-y-1">
               <NavLink
                 href="/finance"
