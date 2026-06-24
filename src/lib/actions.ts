@@ -141,6 +141,40 @@ export async function createOrder(clientId: number, formData: FormData) {
   redirect(`/clients/${clientId}/orders/${order.id}`);
 }
 
+export async function deleteOrderItem(
+  itemId: number,
+  orderId: number,
+  clientId: number
+) {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  await prisma.orderItem.delete({ where: { id: itemId } });
+
+  const remainingItems = await prisma.orderItem.findMany({
+    where: { orderId },
+  });
+  const subtotal = round2(
+    remainingItems.reduce((s, i) => s + i.quantity * i.rate, 0)
+  );
+  const taxAmount = round2((subtotal - order.discount) * (order.taxPercent / 100));
+  const saleAmount = round2(subtotal - order.discount + taxAmount);
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { saleAmount },
+  });
+
+  revalidatePath(`/clients/${clientId}/orders/${orderId}`);
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/clients");
+  revalidatePath("/sales/invoices");
+  revalidatePath("/sales/invoices/paid");
+  revalidatePath("/finance");
+  revalidatePath("/");
+}
+
 export async function deleteOrder(orderId: number, clientId: number) {
   await prisma.order.delete({ where: { id: orderId } });
   revalidatePath(`/clients/${clientId}`);

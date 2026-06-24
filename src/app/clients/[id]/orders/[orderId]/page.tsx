@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getBusinessProfile } from "@/lib/businessProfile";
 import { notFound } from "next/navigation";
 import InvoiceShare from "@/components/InvoiceShare";
-import { recordPayment, cancelOrder, confirmOrder } from "@/lib/actions";
+import { recordPayment, cancelOrder, confirmOrder, deleteOrderItem } from "@/lib/actions";
 
 export async function generateMetadata({
   params,
@@ -137,21 +137,42 @@ export default async function InvoicePage({
               <th className="py-2 px-3 font-medium text-right print:py-4 print:px-5">Quantity</th>
               <th className="py-2 px-3 font-medium text-right print:py-4 print:px-5">Rate</th>
               <th className="py-2 px-3 font-medium text-right rounded-r-lg print:py-4 print:px-5">Amount</th>
+              <th className="py-2 px-3 print:hidden"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {order.items.map((item) => (
-              <tr key={item.id}>
-                <td className="py-2 px-3 font-medium print:py-4 print:px-5">{item.description}</td>
-                <td className="py-2 px-3 text-right print:py-4 print:px-5">{item.quantity}</td>
-                <td className="py-2 px-3 text-right print:py-4 print:px-5">
-                  {formatCurrency(item.rate)}
-                </td>
-                <td className="py-2 px-3 text-right print:py-4 print:px-5">
-                  {formatCurrency(item.quantity * item.rate)}
-                </td>
-              </tr>
-            ))}
+            {order.items.map((item) => {
+              const deleteItemBound = deleteOrderItem.bind(
+                null,
+                item.id,
+                order.id,
+                clientId
+              );
+              return (
+                <tr key={item.id}>
+                  <td className="py-2 px-3 font-medium print:py-4 print:px-5">{item.description}</td>
+                  <td className="py-2 px-3 text-right print:py-4 print:px-5">{item.quantity}</td>
+                  <td className="py-2 px-3 text-right print:py-4 print:px-5">
+                    {formatCurrency(item.rate)}
+                  </td>
+                  <td className="py-2 px-3 text-right print:py-4 print:px-5">
+                    {formatCurrency(item.quantity * item.rate)}
+                  </td>
+                  <td className="py-2 px-3 text-right print:hidden">
+                    {order.items.length > 1 && (
+                      <form action={deleteItemBound}>
+                        <button
+                          type="submit"
+                          className="text-xs text-gray-400 hover:text-red-600 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </form>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
