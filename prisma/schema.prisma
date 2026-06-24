@@ -73,6 +73,7 @@ model OrderItem {
 model Product {
   id         Int         @id @default(autoincrement())
   name       String
+  cost       Float?
   createdAt  DateTime    @default(now())
   orderItems OrderItem[]
 }

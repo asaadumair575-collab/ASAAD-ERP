@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import SubmitButton from "@/components/SubmitButton";
 
 type Client = { id: number; name: string; businessName: string | null };
-type Product = { id: number; name: string };
+type Product = { id: number; name: string; cost: number | null };
 type Row = {
   id: number;
   productId: string;
@@ -102,7 +102,9 @@ export default function InvoiceForm({
     const product = products.find((p) => p.id === parseInt(productId, 10));
     updateRow(id, {
       productId,
-      ...(product ? { description: product.name } : {}),
+      ...(product
+        ? { description: product.name, cost: product.cost ?? 0 }
+        : { cost: 0 }),
     });
   }
 
@@ -152,7 +154,6 @@ export default function InvoiceForm({
             <span className="flex-1 min-w-[150px]">Description</span>
             <span className="w-24">Qty</span>
             <span className="w-28">Rate</span>
-            <span className="w-28">Cost</span>
             <span className="w-28">Amount</span>
           </div>
           {rows.map((row) => (
@@ -210,19 +211,7 @@ export default function InvoiceForm({
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-black bg-white"
                 />
               </div>
-              <div>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="itemCost"
-                  placeholder="Cost"
-                  value={row.cost || ""}
-                  onChange={(e) =>
-                    updateRow(row.id, { cost: parseFloat(e.target.value) || 0 })
-                  }
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-black bg-white"
-                />
-              </div>
+              <input type="hidden" name="itemCost" value={row.cost || ""} />
               <div className="w-28 text-sm font-medium px-1 py-2">
                 {round2(row.quantity * row.rate).toLocaleString(undefined, {
                   maximumFractionDigits: 2,
