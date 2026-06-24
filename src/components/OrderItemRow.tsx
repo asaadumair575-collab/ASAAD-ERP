@@ -10,16 +10,18 @@ type Item = {
   cost: number | null;
 };
 
+function formatCurrency(n: number) {
+  return `PKR ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export default function OrderItemRow({
   item,
   showRemove,
-  formatCurrency,
   updateAction,
   deleteAction,
 }: {
   item: Item;
   showRemove: boolean;
-  formatCurrency: (n: number) => string;
   updateAction: (formData: FormData) => void;
   deleteAction: (formData: FormData) => void;
 }) {

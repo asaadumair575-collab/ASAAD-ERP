@@ -166,7 +166,6 @@ export default async function InvoicePage({
                   key={item.id}
                   item={item}
                   showRemove={order.items.length > 1}
-                  formatCurrency={formatCurrency}
                   updateAction={updateItemBound}
                   deleteAction={deleteItemBound}
                 />
