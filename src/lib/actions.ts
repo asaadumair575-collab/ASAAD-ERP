@@ -732,10 +732,10 @@ export async function uploadLeads(formData: FormData) {
     (h) => h.includes("phone") || h.includes("contact")
   );
 
-  if (shopIdx === -1 || nameIdx === -1 || cityIdx === -1) {
+  if (shopIdx === -1 || nameIdx === -1) {
     redirect(
       `/leads/new?error=${encodeURIComponent(
-        "File must have columns for Shop Number (or Shop Name), Name and City"
+        "File must have columns for Shop Number (or Shop Name) and Name"
       )}`
     );
   }
@@ -747,10 +747,10 @@ export async function uploadLeads(formData: FormData) {
   for (const row of dataRows) {
     const shopNumber = row[shopIdx]?.trim();
     const name = row[nameIdx]?.trim();
-    const city = row[cityIdx]?.trim();
+    const city = cityIdx !== -1 ? row[cityIdx]?.trim() || "" : "";
     const phone = phoneIdx !== -1 ? row[phoneIdx]?.trim() || null : null;
 
-    if (!shopNumber || !name || !city) {
+    if (!shopNumber || !name) {
       skipped++;
       continue;
     }
