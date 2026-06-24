@@ -53,12 +53,22 @@ export default async function FinancePage({
 
   const totalSales = confirmedOrders.reduce((s, o) => s + o.saleAmount, 0);
   const totalDozens = confirmedOrders.reduce(
-    (s, o) => s + o.items.reduce((is, i) => is + i.quantity, 0),
+    (s, o) =>
+      s +
+      o.items
+        .filter((i) => i.cost == null)
+        .reduce((is, i) => is + i.quantity, 0),
     0
   );
   const totalCost = confirmedOrders.reduce((s, o) => {
-    const dozens = o.items.reduce((is, i) => is + i.quantity, 0);
-    return s + dozens * rateFor(o.date);
+    const itemsCost = o.items.reduce((is, i) => {
+      if (i.cost != null) return is + i.cost * i.quantity;
+      return is;
+    }, 0);
+    const legacyDozens = o.items
+      .filter((i) => i.cost == null)
+      .reduce((is, i) => is + i.quantity, 0);
+    return s + itemsCost + legacyDozens * rateFor(o.date);
   }, 0);
   const profit = totalSales - totalCost;
 

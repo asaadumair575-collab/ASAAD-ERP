@@ -5,7 +5,14 @@ import SubmitButton from "@/components/SubmitButton";
 
 type Client = { id: number; name: string; businessName: string | null };
 type Product = { id: number; name: string };
-type Row = { id: number; productId: string; description: string; quantity: number; rate: number };
+type Row = {
+  id: number;
+  productId: string;
+  description: string;
+  quantity: number;
+  rate: number;
+  cost: number;
+};
 
 function CustomerSearchSelect({ clients }: { clients: Client[] }) {
   const [selectedId, setSelectedId] = useState("");
@@ -82,7 +89,7 @@ export default function InvoiceForm({
   products: Product[];
 }) {
   const [rows, setRows] = useState<Row[]>([
-    { id: 0, productId: "", description: "", quantity: 0, rate: 0 },
+    { id: 0, productId: "", description: "", quantity: 0, rate: 0, cost: 0 },
   ]);
   const [discount, setDiscount] = useState(0);
   const [taxPercent, setTaxPercent] = useState(0);
@@ -145,6 +152,7 @@ export default function InvoiceForm({
             <span className="flex-1 min-w-[150px]">Description</span>
             <span className="w-24">Qty</span>
             <span className="w-28">Rate</span>
+            <span className="w-28">Cost</span>
             <span className="w-28">Amount</span>
           </div>
           {rows.map((row) => (
@@ -202,6 +210,19 @@ export default function InvoiceForm({
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-black bg-white"
                 />
               </div>
+              <div>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="itemCost"
+                  placeholder="Cost"
+                  value={row.cost || ""}
+                  onChange={(e) =>
+                    updateRow(row.id, { cost: parseFloat(e.target.value) || 0 })
+                  }
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-black bg-white"
+                />
+              </div>
               <div className="w-28 text-sm font-medium px-1 py-2">
                 {round2(row.quantity * row.rate).toLocaleString(undefined, {
                   maximumFractionDigits: 2,
@@ -223,7 +244,7 @@ export default function InvoiceForm({
             onClick={() =>
               setRows((r) => [
                 ...r,
-                { id: Date.now(), productId: "", description: "", quantity: 0, rate: 0 },
+                { id: Date.now(), productId: "", description: "", quantity: 0, rate: 0, cost: 0 },
               ])
             }
             className="text-sm text-gray-600 hover:text-black underline"

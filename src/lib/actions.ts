@@ -175,6 +175,58 @@ export async function deleteOrderItem(
   revalidatePath("/");
 }
 
+export async function updateOrderItem(
+  itemId: number,
+  orderId: number,
+  clientId: number,
+  formData: FormData
+) {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  const description = String(formData.get("description") ?? "").trim();
+  const quantity = parseFloat(String(formData.get("quantity") ?? ""));
+  const rate = parseFloat(String(formData.get("rate") ?? ""));
+  const costRaw = parseFloat(String(formData.get("cost") ?? ""));
+
+  if (!description || Number.isNaN(quantity) || Number.isNaN(rate)) {
+    throw new Error("Please provide a valid description, quantity and rate");
+  }
+
+  await prisma.orderItem.update({
+    where: { id: itemId },
+    data: {
+      description,
+      quantity,
+      rate,
+      cost: Number.isNaN(costRaw) ? null : costRaw,
+    },
+  });
+
+  const remainingItems = await prisma.orderItem.findMany({
+    where: { orderId },
+  });
+  const subtotal = round2(
+    remainingItems.reduce((s, i) => s + i.quantity * i.rate, 0)
+  );
+  const taxAmount = round2((subtotal - order.discount) * (order.taxPercent / 100));
+  const saleAmount = round2(subtotal - order.discount + taxAmount);
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { saleAmount },
+  });
+
+  revalidatePath(`/clients/${clientId}/orders/${orderId}`);
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/clients");
+  revalidatePath("/sales/invoices");
+  revalidatePath("/sales/invoices/paid");
+  revalidatePath("/finance");
+  revalidatePath("/");
+}
+
 export async function deleteOrder(orderId: number, clientId: number) {
   await prisma.order.delete({ where: { id: orderId } });
   revalidatePath(`/clients/${clientId}`);
@@ -299,6 +351,7 @@ export async function createInvoice(formData: FormData) {
   const descriptions = formData.getAll("itemDescription").map((v) => String(v).trim());
   const quantities = formData.getAll("itemQuantity").map((v) => parseFloat(String(v)));
   const rates = formData.getAll("itemRate").map((v) => parseFloat(String(v)));
+  const costs = formData.getAll("itemCost").map((v) => parseFloat(String(v)));
 
   const requestedProductIds = [
     ...new Set(
@@ -328,6 +381,7 @@ export async function createInvoice(formData: FormData) {
         description,
         quantity: quantities[i],
         rate: rates[i],
+        cost: Number.isNaN(costs[i]) ? null : costs[i],
       };
     })
     .filter(

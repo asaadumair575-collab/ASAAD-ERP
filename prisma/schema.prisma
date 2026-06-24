@@ -67,6 +67,7 @@ model OrderItem {
   description String
   quantity    Float
   rate        Float
+  cost        Float?
 }
 
 model Product {
