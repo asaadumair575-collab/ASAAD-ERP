@@ -725,9 +725,14 @@ export async function uploadLeads(formData: FormData) {
   }
 
   const header = rows[0].map((h) => h.toLowerCase());
-  const shopIdx = header.findIndex((h) => h.includes("shop"));
-  const nameIdx = header.findIndex((h) => h === "name");
-  const cityIdx = header.findIndex((h) => h === "city");
+  const nameIdx = header.findIndex((h) => h.includes("name"));
+  let shopIdx = header.findIndex(
+    (h, i) => i !== nameIdx && (h.includes("number") || h.includes("no"))
+  );
+  if (shopIdx === -1) {
+    shopIdx = header.findIndex((h, i) => i !== nameIdx && h.includes("shop"));
+  }
+  const cityIdx = header.findIndex((h) => h.includes("city"));
   const phoneIdx = header.findIndex(
     (h) => h.includes("phone") || h.includes("contact")
   );
