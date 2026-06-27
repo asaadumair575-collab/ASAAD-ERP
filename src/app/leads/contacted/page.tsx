@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { cancelLead, deleteLead } from "@/lib/actions";
+import { cancelLead, deleteLead, convertLeadToClient } from "@/lib/actions";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SubmitButton from "@/components/SubmitButton";
 
 const PAGE_SIZE = 30;
 
@@ -59,12 +60,14 @@ export default async function ContactedLeadsPage({
                 <th className="py-3 px-5"></th>
                 <th className="py-3 px-5"></th>
                 <th className="py-3 px-5"></th>
+                <th className="py-3 px-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {leads.map((l) => {
                 const cancelBound = cancelLead.bind(null, l.id);
                 const deleteBound = deleteLead.bind(null, l.id);
+                const confirmBound = convertLeadToClient.bind(null, l.id);
                 return (
                   <tr key={l.id} className="hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-5 font-medium">
@@ -84,6 +87,16 @@ export default async function ContactedLeadsPage({
                       >
                         Sample Sent
                       </Link>
+                    </td>
+                    <td className="py-3 px-5 text-right">
+                      <form action={confirmBound}>
+                        <SubmitButton
+                          pendingText="Confirming..."
+                          className="text-xs font-medium text-black hover:underline"
+                        >
+                          Confirm as Client
+                        </SubmitButton>
+                      </form>
                     </td>
                     <td className="py-3 px-5 text-right">
                       <form action={cancelBound}>
