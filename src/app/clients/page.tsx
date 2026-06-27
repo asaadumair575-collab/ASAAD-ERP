@@ -65,58 +65,65 @@ export default async function ClientsPage({
         </p>
       </div>
 
-      <form className="flex flex-wrap gap-3 items-end" method="get">
-        <div>
-          <label className="block text-xs text-gray-500 mb-1.5">
-            Search name, business or phone
-          </label>
+      <form
+        className="flex flex-wrap gap-3 items-center bg-white border border-gray-200 rounded-2xl shadow-sm p-3"
+        method="get"
+      >
+        <div className="relative flex-1 min-w-[200px]">
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"
+            />
+          </svg>
           <input
             type="text"
             name="q"
             defaultValue={q ?? ""}
-            placeholder="Search..."
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+            placeholder="Search name, business or phone..."
+            className="w-full bg-gray-50 border border-transparent rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-colors"
           />
         </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1.5">City</label>
-          <select
-            name="city"
-            defaultValue={city ?? ""}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-          >
-            <option value="">All cities</option>
-            {allCities.map((c) => (
-              <option key={c.city} value={c.city}>
-                {c.city}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1.5">Grade</label>
-          <select
-            name="grade"
-            defaultValue={gradeFilter ?? ""}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-          >
-            <option value="">All grades</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="Nil">Nil</option>
-          </select>
-        </div>
+        <select
+          name="city"
+          defaultValue={city ?? ""}
+          className="bg-gray-50 border border-transparent rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-colors"
+        >
+          <option value="">All cities</option>
+          {allCities.map((c) => (
+            <option key={c.city} value={c.city}>
+              {c.city}
+            </option>
+          ))}
+        </select>
+        <select
+          name="grade"
+          defaultValue={gradeFilter ?? ""}
+          className="bg-gray-50 border border-transparent rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-colors"
+        >
+          <option value="">All grades</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="Nil">Nil</option>
+        </select>
         <button
           type="submit"
-          className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+          className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-colors"
         >
           Filter
         </button>
         {(city || q || gradeFilter) && (
           <Link
             href="/clients"
-            className="text-sm text-gray-500 hover:text-black px-2 py-2"
+            className="text-sm text-gray-400 hover:text-black px-2 py-2.5 transition-colors"
           >
             Clear
           </Link>
