@@ -125,8 +125,8 @@ export default async function NotContactedLeadsPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
-                <th className="py-3 px-5 font-medium">Shop #</th>
-                <th className="py-3 px-5 font-medium">Name</th>
+                <th className="py-3 px-5 font-medium">Shop Name</th>
+                <th className="py-3 px-5 font-medium">Number</th>
                 <th className="py-3 px-5 font-medium">City</th>
                 <th className="py-3 px-5"></th>
                 <th className="py-3 px-5"></th>
@@ -143,7 +143,7 @@ export default async function NotContactedLeadsPage({
                         {l.shopNumber || "-"}
                       </Link>
                     </td>
-                    <td className="py-3 px-5 text-gray-600">{l.name || "-"}</td>
+                    <td className="py-3 px-5 text-gray-600">{l.phone || "-"}</td>
                     <td className="py-3 px-5 text-gray-600">{l.city || "-"}</td>
                     <td className="py-3 px-5 text-right">
                       <form action={contactBound}>
