@@ -2,10 +2,24 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { deleteLead } from "@/lib/actions";
 
-export default async function CancelledLeadsPage() {
+const PAGE_SIZE = 50;
+
+export default async function CancelledLeadsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page } = await searchParams;
+  const currentPage = Math.max(1, Number(page) || 1);
+
+  const totalCount = await prisma.lead.count({ where: { status: "CANCELLED" } });
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
   const leads = await prisma.lead.findMany({
     where: { status: "CANCELLED" },
     orderBy: { createdAt: "desc" },
+    skip: (currentPage - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
   });
 
   return (
@@ -14,7 +28,7 @@ export default async function CancelledLeadsPage() {
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Cancelled</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {leads.length} shop{leads.length === 1 ? "" : "s"} cancelled
+            {totalCount} shop{totalCount === 1 ? "" : "s"} cancelled
           </p>
         </div>
         <Link
@@ -67,6 +81,32 @@ export default async function CancelledLeadsPage() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-gray-500">
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            {currentPage > 1 && (
+              <Link
+                href={{ pathname: "/leads/cancelled", query: { page: currentPage - 1 } }}
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Previous
+              </Link>
+            )}
+            {currentPage < totalPages && (
+              <Link
+                href={{ pathname: "/leads/cancelled", query: { page: currentPage + 1 } }}
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Next 50
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </div>

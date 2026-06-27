@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { markLeadContacted, deleteLead } from "@/lib/actions";
 
+const PAGE_SIZE = 50;
+
 export default async function NotContactedLeadsPage({
   searchParams,
 }: {
@@ -11,25 +13,34 @@ export default async function NotContactedLeadsPage({
     error?: string;
     q?: string;
     city?: string;
+    page?: string;
   }>;
 }) {
-  const { added, skipped, error, q, city } = await searchParams;
+  const { added, skipped, error, q, city, page } = await searchParams;
+  const currentPage = Math.max(1, Number(page) || 1);
+
+  const where = {
+    status: "NEW",
+    ...(city ? { city } : {}),
+    ...(q
+      ? {
+          OR: [
+            { shopNumber: { contains: q, mode: "insensitive" as const } },
+            { name: { contains: q, mode: "insensitive" as const } },
+            { phone: { contains: q } },
+          ],
+        }
+      : {}),
+  };
+
+  const totalCount = await prisma.lead.count({ where });
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const leads = await prisma.lead.findMany({
-    where: {
-      status: "NEW",
-      ...(city ? { city } : {}),
-      ...(q
-        ? {
-            OR: [
-              { shopNumber: { contains: q, mode: "insensitive" } },
-              { name: { contains: q, mode: "insensitive" } },
-              { phone: { contains: q } },
-            ],
-          }
-        : {}),
-    },
+    where,
     orderBy: { createdAt: "desc" },
+    skip: (currentPage - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
   });
 
   const allCities = await prisma.lead.findMany({
@@ -47,7 +58,7 @@ export default async function NotContactedLeadsPage({
             Not Contacted
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            {leads.length} shop{leads.length === 1 ? "" : "s"} waiting to be
+            {totalCount} shop{totalCount === 1 ? "" : "s"} waiting to be
             contacted
           </p>
         </div>
@@ -170,6 +181,38 @@ export default async function NotContactedLeadsPage({
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-gray-500">
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            {currentPage > 1 && (
+              <Link
+                href={{
+                  pathname: "/leads/not-contacted",
+                  query: { q, city, page: currentPage - 1 },
+                }}
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Previous
+              </Link>
+            )}
+            {currentPage < totalPages && (
+              <Link
+                href={{
+                  pathname: "/leads/not-contacted",
+                  query: { q, city, page: currentPage + 1 },
+                }}
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Next 50
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </div>

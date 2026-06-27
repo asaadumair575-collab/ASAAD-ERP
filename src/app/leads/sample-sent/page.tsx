@@ -3,10 +3,24 @@ import Link from "next/link";
 import { convertLeadToClient, deleteLead } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 
-export default async function SampleSentLeadsPage() {
+const PAGE_SIZE = 50;
+
+export default async function SampleSentLeadsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page } = await searchParams;
+  const currentPage = Math.max(1, Number(page) || 1);
+
+  const totalCount = await prisma.lead.count({ where: { status: "SAMPLE_SENT" } });
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
   const leads = await prisma.lead.findMany({
     where: { status: "SAMPLE_SENT" },
     orderBy: { createdAt: "desc" },
+    skip: (currentPage - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
   });
 
   return (
@@ -17,7 +31,7 @@ export default async function SampleSentLeadsPage() {
             Sample Sent
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            {leads.length} shop{leads.length === 1 ? "" : "s"} waiting to be
+            {totalCount} shop{totalCount === 1 ? "" : "s"} waiting to be
             confirmed
           </p>
         </div>
@@ -83,6 +97,32 @@ export default async function SampleSentLeadsPage() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-gray-500">
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            {currentPage > 1 && (
+              <Link
+                href={{ pathname: "/leads/sample-sent", query: { page: currentPage - 1 } }}
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Previous
+              </Link>
+            )}
+            {currentPage < totalPages && (
+              <Link
+                href={{ pathname: "/leads/sample-sent", query: { page: currentPage + 1 } }}
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Next 50
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </div>
