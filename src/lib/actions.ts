@@ -929,6 +929,43 @@ export async function uploadLeads(formData: FormData) {
   redirect(`/leads/not-contacted?added=${added}&skipped=${skipped}`);
 }
 
+function looksLikePhone(s: string): boolean {
+  const digits = s.replace(/[^0-9]/g, "");
+  return digits.length >= 6 && digits.length / s.length > 0.6;
+}
+
+export async function repairSwappedLeadData() {
+  const leads = await prisma.lead.findMany({
+    select: { id: true, shopNumber: true, name: true, phone: true },
+  });
+
+  let fixed = 0;
+  for (const lead of leads) {
+    const hasNoPhone = !lead.phone || !lead.phone.trim();
+    const shopLooksLikePhone = looksLikePhone(lead.shopNumber);
+    const nameLooksLikeShop =
+      lead.name && lead.name.trim() && lead.name.trim() !== "-" && !looksLikePhone(lead.name);
+
+    if (hasNoPhone && shopLooksLikePhone && nameLooksLikeShop) {
+      await prisma.lead.update({
+        where: { id: lead.id },
+        data: {
+          shopNumber: lead.name!.trim(),
+          phone: lead.shopNumber.trim(),
+          name: "-",
+        },
+      });
+      fixed++;
+    }
+  }
+
+  revalidatePath("/leads/not-contacted");
+  revalidatePath("/leads/contacted");
+  revalidatePath("/leads/sample-sent");
+  revalidatePath("/leads/cancelled");
+  redirect(`/leads/not-contacted?fixed=${fixed}`);
+}
+
 export async function setLeadStatus(id: number, status: string) {
   if (!LEAD_STATUSES.includes(status)) {
     throw new Error("Invalid status");
