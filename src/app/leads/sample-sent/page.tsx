@@ -3,7 +3,7 @@ import Link from "next/link";
 import { convertLeadToClient, deleteLead } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 30;
 
 export default async function SampleSentLeadsPage({
   searchParams,
@@ -119,7 +119,7 @@ export default async function SampleSentLeadsPage({
                 href={{ pathname: "/leads/sample-sent", query: { page: currentPage + 1 } }}
                 className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Next 50
+                Next 30
               </Link>
             )}
           </div>

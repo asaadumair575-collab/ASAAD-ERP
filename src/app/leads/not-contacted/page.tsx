@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { markLeadContacted, deleteLead } from "@/lib/actions";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 30;
 
 export default async function NotContactedLeadsPage({
   searchParams,
@@ -21,7 +21,7 @@ export default async function NotContactedLeadsPage({
 
   const where = {
     status: "NEW",
-    ...(city ? { city } : {}),
+    ...(city ? { city: { equals: city, mode: "insensitive" as const } } : {}),
     ...(q
       ? {
           OR: [
@@ -43,12 +43,20 @@ export default async function NotContactedLeadsPage({
     take: PAGE_SIZE,
   });
 
-  const allCities = await prisma.lead.findMany({
+  const rawCities = await prisma.lead.findMany({
     where: { status: "NEW" },
     select: { city: true },
-    distinct: ["city"],
-    orderBy: { city: "asc" },
   });
+  const cityMap = new Map<string, string>();
+  for (const { city: rawCity } of rawCities) {
+    const trimmed = rawCity?.trim();
+    if (!trimmed || trimmed === "-" || !/[a-zA-Z]/.test(trimmed)) continue;
+    const key = trimmed.toLowerCase();
+    if (!cityMap.has(key)) cityMap.set(key, trimmed);
+  }
+  const allCities = Array.from(cityMap.values())
+    .sort((a, b) => a.localeCompare(b))
+    .map((city) => ({ city }));
 
   return (
     <div className="space-y-8">
@@ -209,7 +217,7 @@ export default async function NotContactedLeadsPage({
                 }}
                 className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Next 50
+                Next 30
               </Link>
             )}
           </div>

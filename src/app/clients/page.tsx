@@ -12,7 +12,7 @@ export default async function ClientsPage({
 
   const clients = await prisma.client.findMany({
     where: {
-      ...(city ? { city } : {}),
+      ...(city ? { city: { equals: city, mode: "insensitive" as const } } : {}),
       ...(q
         ? {
             OR: [
@@ -27,11 +27,19 @@ export default async function ClientsPage({
     orderBy: { name: "asc" },
   });
 
-  const allCities = await prisma.client.findMany({
+  const rawClientCities = await prisma.client.findMany({
     select: { city: true },
-    distinct: ["city"],
-    orderBy: { city: "asc" },
   });
+  const clientCityMap = new Map<string, string>();
+  for (const { city: rawCity } of rawClientCities) {
+    const trimmed = rawCity?.trim();
+    if (!trimmed || trimmed === "-" || !/[a-zA-Z]/.test(trimmed)) continue;
+    const key = trimmed.toLowerCase();
+    if (!clientCityMap.has(key)) clientCityMap.set(key, trimmed);
+  }
+  const allCities = Array.from(clientCityMap.values())
+    .sort((a, b) => a.localeCompare(b))
+    .map((city) => ({ city }));
 
   const clientsWithGrade = clients.map((c) => {
     const ledgerOrders = c.orders.filter((o) => o.confirmed);

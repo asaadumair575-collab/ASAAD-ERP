@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { cancelLead, deleteLead } from "@/lib/actions";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 30;
 
 export default async function ContactedLeadsPage({
   searchParams,
@@ -127,7 +127,7 @@ export default async function ContactedLeadsPage({
                 href={{ pathname: "/leads/contacted", query: { page: currentPage + 1 } }}
                 className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Next 50
+                Next 30
               </Link>
             )}
           </div>
