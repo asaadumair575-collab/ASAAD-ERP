@@ -211,19 +211,19 @@ export default function Sidebar({ businessName }: { businessName: string }) {
         type="button"
         onClick={() => setDesktopOpen((v) => !v)}
         aria-label={desktopOpen ? "Collapse sidebar" : "Expand sidebar"}
-        className={`hidden md:flex fixed top-4 z-50 items-center justify-center w-7 h-7 rounded-full bg-black text-white border border-white/20 hover:bg-gray-800 transition-all duration-200 ${
-          desktopOpen ? "left-[224px]" : "left-2"
+        className={`hidden md:flex fixed top-7 z-50 items-center justify-center w-6 h-6 rounded-full bg-white text-black shadow-md ring-1 ring-black/5 hover:bg-gray-100 hover:scale-105 transition-all duration-300 ease-in-out ${
+          desktopOpen ? "left-[233px]" : "left-3"
         }`}
       >
         <span
-          className={`transition-transform ${desktopOpen ? "rotate-180" : ""}`}
+          className={`transition-transform duration-300 ${desktopOpen ? "rotate-180" : ""}`}
         >
           {icons.chevron}
         </span>
       </button>
 
       <aside
-        className={`sidebar-scroll fixed md:sticky inset-y-0 md:inset-y-auto top-0 left-0 z-50 shrink-0 bg-black text-white flex flex-col h-screen overflow-y-auto transform transition-all duration-200 print:hidden ${
+        className={`sidebar-scroll fixed md:sticky inset-y-0 md:inset-y-auto top-0 left-0 z-50 shrink-0 bg-black text-white flex flex-col h-screen overflow-y-auto transform transition-all duration-300 ease-in-out print:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0 ${
           desktopOpen ? "w-60" : "md:w-0 md:overflow-hidden"
