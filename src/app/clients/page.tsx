@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { averageMonthlyDzn, gradeForMonthlyDzn } from "@/lib/grade";
 import { deleteClient } from "@/lib/actions";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 export default async function ClientsPage({
   searchParams,
@@ -150,6 +151,7 @@ export default async function ClientsPage({
                 <th className="py-3 px-5 font-medium">Grade</th>
                 <th className="py-3 px-5"></th>
                 <th className="py-3 px-5"></th>
+                <th className="py-3 px-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -188,6 +190,9 @@ export default async function ClientsPage({
                       >
                         {grade.label}
                       </span>
+                    </td>
+                    <td className="py-3 px-5">
+                      <WhatsAppButton phone={c.phone} />
                     </td>
                     <td className="py-3 px-5 text-right">
                       <Link

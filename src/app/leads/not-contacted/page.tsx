@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { markLeadContacted, deleteLead } from "@/lib/actions";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 const PAGE_SIZE = 30;
 
@@ -161,6 +162,7 @@ export default async function NotContactedLeadsPage({
                 <th className="py-3 px-5 font-medium">City</th>
                 <th className="py-3 px-5"></th>
                 <th className="py-3 px-5"></th>
+                <th className="py-3 px-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -176,6 +178,9 @@ export default async function NotContactedLeadsPage({
                     </td>
                     <td className="py-3 px-5 text-gray-600">{l.phone || "-"}</td>
                     <td className="py-3 px-5 text-gray-600">{l.city || "-"}</td>
+                    <td className="py-3 px-5">
+                      <WhatsAppButton phone={l.phone} />
+                    </td>
                     <td className="py-3 px-5 text-right">
                       <form action={contactBound}>
                         <button
