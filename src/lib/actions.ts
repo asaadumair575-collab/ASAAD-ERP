@@ -780,6 +780,22 @@ export async function resetAllData(formData: FormData) {
 
 const LEAD_STATUSES = ["NEW", "CONTACTED", "SAMPLE_SENT", "CANCELLED", "CONFIRMED"];
 
+function isDuplicateLead(
+  existing: { shopNumber: string; name: string; phone: string | null }[],
+  shopNumber: string,
+  name: string,
+  phone: string | null
+): boolean {
+  const normalizedPhone = normalizePhone(phone);
+  return existing.some((l) => {
+    if (normalizedPhone && normalizePhone(l.phone) === normalizedPhone) return true;
+    return (
+      l.shopNumber.trim().toLowerCase() === shopNumber.trim().toLowerCase() &&
+      l.name.trim().toLowerCase() === name.trim().toLowerCase()
+    );
+  });
+}
+
 export async function createLead(formData: FormData) {
   const shopNumber = String(formData.get("shopNumber") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
@@ -789,6 +805,17 @@ export async function createLead(formData: FormData) {
 
   if (!shopNumber || !name || !city) {
     throw new Error("Shop number, name and city are required");
+  }
+
+  const existingLeads = await prisma.lead.findMany({
+    select: { shopNumber: true, name: true, phone: true },
+  });
+  if (isDuplicateLead(existingLeads, shopNumber, name, phone)) {
+    redirect(
+      `/leads/new?error=${encodeURIComponent(
+        `Duplicate shop: "${name}" already exists with this name/number.`
+      )}`
+    );
   }
 
   await prisma.lead.create({
@@ -833,12 +860,13 @@ export async function uploadLeads(formData: FormData) {
   }
 
   const header = rows[0].map((h) => h.toLowerCase());
-  const nameIdx = header.findIndex((h) => h.includes("name"));
-  let shopIdx = header.findIndex(
-    (h, i) => i !== nameIdx && (h.includes("number") || h.includes("no"))
-  );
+  let shopIdx = header.findIndex((h) => h.includes("shop"));
   if (shopIdx === -1) {
-    shopIdx = header.findIndex((h, i) => i !== nameIdx && h.includes("shop"));
+    shopIdx = header.findIndex((h) => h.includes("number") || h.includes("no"));
+  }
+  let nameIdx = header.findIndex((h) => h.includes("person"));
+  if (nameIdx === -1) {
+    nameIdx = header.findIndex((h, i) => i !== shopIdx && h.includes("name"));
   }
   const cityIdx = header.findIndex((h) => h.includes("city"));
   const phoneIdx = header.findIndex(
@@ -857,6 +885,10 @@ export async function uploadLeads(formData: FormData) {
   let added = 0;
   let skipped = 0;
 
+  const existingLeads = await prisma.lead.findMany({
+    select: { shopNumber: true, name: true, phone: true },
+  });
+
   for (const row of dataRows) {
     const shopNumber = row[shopIdx]?.trim();
     const name = row[nameIdx]?.trim();
@@ -868,15 +900,13 @@ export async function uploadLeads(formData: FormData) {
       continue;
     }
 
-    const existing = await prisma.lead.findFirst({
-      where: { shopNumber, name },
-    });
-    if (existing) {
+    if (isDuplicateLead(existingLeads, shopNumber, name, phone)) {
       skipped++;
       continue;
     }
 
     await prisma.lead.create({ data: { shopNumber, name, city, phone } });
+    existingLeads.push({ shopNumber, name, phone });
     added++;
   }
 
