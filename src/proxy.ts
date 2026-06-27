@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 
-export async function proxy(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const username = token ? verifySessionToken(token) : null;
@@ -21,17 +20,6 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!username) {
-    if (pathname === "/settings") {
-      const userCount = await prisma.user.count();
-      if (userCount === 0) {
-        return next();
-      }
-
-      const adminKey = process.env.ADMIN_BYPASS_KEY;
-      if (adminKey && request.nextUrl.searchParams.get("key") === adminKey) {
-        return next();
-      }
-    }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

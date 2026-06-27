@@ -708,17 +708,22 @@ export async function loginAction(formData: FormData) {
     redirect(`/login?error=${encodeURIComponent(rateLimitError)}`);
   }
 
-  const user = username
-    ? await prisma.user.findUnique({ where: { username } })
-    : null;
-  if (!user || !verifyPassword(password, user.passwordHash)) {
+  const appUsername = (process.env.APP_USERNAME ?? "").trim().toLowerCase();
+  const appPassword = process.env.APP_PASSWORD ?? "";
+
+  if (
+    !appUsername ||
+    !appPassword ||
+    username !== appUsername ||
+    password !== appPassword
+  ) {
     redirect(
       `/login?error=${encodeURIComponent("Invalid username or password")}`
     );
   }
 
   clearLoginAttempts(username);
-  await setSessionCookie(user.username);
+  await setSessionCookie(username);
   redirect("/");
 }
 
