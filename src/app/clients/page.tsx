@@ -31,15 +31,17 @@ export default async function ClientsPage({
     select: { city: true },
   });
   const clientCityMap = new Map<string, string>();
+  const clientCityCounts = new Map<string, number>();
   for (const { city: rawCity } of rawClientCities) {
     const trimmed = rawCity?.trim();
     if (!trimmed || trimmed === "-" || !/[a-zA-Z]/.test(trimmed)) continue;
     const key = trimmed.toLowerCase();
     if (!clientCityMap.has(key)) clientCityMap.set(key, trimmed);
+    clientCityCounts.set(key, (clientCityCounts.get(key) ?? 0) + 1);
   }
-  const allCities = Array.from(clientCityMap.values())
-    .sort((a, b) => a.localeCompare(b))
-    .map((city) => ({ city }));
+  const allCities = Array.from(clientCityMap.entries())
+    .map(([key, city]) => ({ city, count: clientCityCounts.get(key) ?? 0 }))
+    .sort((a, b) => a.city.localeCompare(b.city));
 
   const clientsWithGrade = clients.map((c) => {
     const ledgerOrders = c.orders.filter((o) => o.confirmed);
@@ -99,7 +101,7 @@ export default async function ClientsPage({
           <option value="">All cities</option>
           {allCities.map((c) => (
             <option key={c.city} value={c.city}>
-              {c.city}
+              {c.city} ({c.count})
             </option>
           ))}
         </select>

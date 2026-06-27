@@ -48,15 +48,17 @@ export default async function NotContactedLeadsPage({
     select: { city: true },
   });
   const cityMap = new Map<string, string>();
+  const cityCounts = new Map<string, number>();
   for (const { city: rawCity } of rawCities) {
     const trimmed = rawCity?.trim();
     if (!trimmed || trimmed === "-" || !/[a-zA-Z]/.test(trimmed)) continue;
     const key = trimmed.toLowerCase();
     if (!cityMap.has(key)) cityMap.set(key, trimmed);
+    cityCounts.set(key, (cityCounts.get(key) ?? 0) + 1);
   }
-  const allCities = Array.from(cityMap.values())
-    .sort((a, b) => a.localeCompare(b))
-    .map((city) => ({ city }));
+  const allCities = Array.from(cityMap.entries())
+    .map(([key, city]) => ({ city, count: cityCounts.get(key) ?? 0 }))
+    .sort((a, b) => a.city.localeCompare(b.city));
 
   return (
     <div className="space-y-8">
@@ -112,7 +114,7 @@ export default async function NotContactedLeadsPage({
           <option value="">All cities</option>
           {allCities.map((c) => (
             <option key={c.city} value={c.city}>
-              {c.city}
+              {c.city} ({c.count})
             </option>
           ))}
         </select>
