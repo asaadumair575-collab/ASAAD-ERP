@@ -510,13 +510,40 @@ export async function createProduct(formData: FormData) {
 
 export async function updateProductCost(id: number, formData: FormData) {
   const costRaw = parseFloat(String(formData.get("cost") ?? ""));
+  const cost = Number.isNaN(costRaw) ? null : costRaw;
+  const applyToExisting = formData.get("applyToExisting") === "on";
 
   await prisma.product.update({
     where: { id },
-    data: { cost: Number.isNaN(costRaw) ? null : costRaw },
+    data: { cost },
   });
+
+  if (applyToExisting && cost != null) {
+    await prisma.orderItem.updateMany({
+      where: { productId: id },
+      data: { cost },
+    });
+  }
+
   revalidatePath("/sales/products");
   revalidatePath("/sales/invoices/new");
+  revalidatePath("/finance");
+}
+
+export async function backfillItemCostByDescription(formData: FormData) {
+  const description = String(formData.get("description") ?? "").trim();
+  const costRaw = parseFloat(String(formData.get("cost") ?? ""));
+
+  if (!description || Number.isNaN(costRaw)) {
+    throw new Error("Please provide an item name and a valid cost");
+  }
+
+  await prisma.orderItem.updateMany({
+    where: { description: { equals: description, mode: "insensitive" } },
+    data: { cost: costRaw },
+  });
+
+  revalidatePath("/finance");
 }
 
 export async function deleteProduct(id: number) {

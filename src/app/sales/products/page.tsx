@@ -72,7 +72,7 @@ export default async function ProductsPage() {
                     <td className="py-3 px-5">
                       <form
                         action={updateCostBound}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 flex-wrap"
                       >
                         <input
                           type="number"
@@ -82,6 +82,10 @@ export default async function ProductsPage() {
                           placeholder="0"
                           className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-black bg-white"
                         />
+                        <label className="flex items-center gap-1.5 text-xs text-gray-500">
+                          <input type="checkbox" name="applyToExisting" />
+                          Apply to past invoices too
+                        </label>
                         <button
                           type="submit"
                           className="text-xs text-gray-500 hover:text-black underline"
