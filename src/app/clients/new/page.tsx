@@ -1,9 +1,21 @@
 import { createClient } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 
-export default function NewClientPage() {
+export default async function NewClientPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+
   return (
     <div className="max-w-2xl space-y-8">
+      {error && (
+        <div className="border border-red-200 bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shrink-0">
           <svg

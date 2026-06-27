@@ -49,6 +49,30 @@ export async function createClient(formData: FormData) {
     throw new Error("Name and city are required");
   }
 
+  const duplicate = phone
+    ? await prisma.client.findFirst({
+        where: {
+          OR: [
+            { phone },
+            { name: { equals: name, mode: "insensitive" } },
+          ],
+        },
+      })
+    : await prisma.client.findFirst({
+        where: {
+          name: { equals: name, mode: "insensitive" },
+          city: { equals: city, mode: "insensitive" },
+        },
+      });
+
+  if (duplicate) {
+    redirect(
+      `/clients/new?error=${encodeURIComponent(
+        `Duplicate client: "${duplicate.name}" already exists with this name/number.`
+      )}`
+    );
+  }
+
   const client = await prisma.client.create({
     data: { name, businessName, city, phone, address, notes },
   });
