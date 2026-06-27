@@ -168,6 +168,7 @@ export default function Sidebar({ businessName }: { businessName: string }) {
   }
   const [openSection, setOpenSection] = useState<Section>(sectionForPath());
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopOpen, setDesktopOpen] = useState(true);
 
   useEffect(() => {
     setOpenSection(sectionForPath());
@@ -206,12 +207,29 @@ export default function Sidebar({ businessName }: { businessName: string }) {
         />
       )}
 
-      <aside
-        className={`sidebar-scroll fixed md:sticky inset-y-0 md:inset-y-auto top-0 left-0 z-50 w-60 shrink-0 bg-black text-white flex flex-col h-screen overflow-y-auto transform transition-transform duration-200 md:translate-x-0 print:hidden ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
+      <button
+        type="button"
+        onClick={() => setDesktopOpen((v) => !v)}
+        aria-label={desktopOpen ? "Collapse sidebar" : "Expand sidebar"}
+        className={`hidden md:flex fixed top-4 z-50 items-center justify-center w-7 h-7 rounded-full bg-black text-white border border-white/20 hover:bg-gray-800 transition-all duration-200 ${
+          desktopOpen ? "left-[224px]" : "left-2"
         }`}
       >
-        <div className="px-6 py-6 border-b border-white/10 flex items-center justify-between">
+        <span
+          className={`transition-transform ${desktopOpen ? "rotate-180" : ""}`}
+        >
+          {icons.chevron}
+        </span>
+      </button>
+
+      <aside
+        className={`sidebar-scroll fixed md:sticky inset-y-0 md:inset-y-auto top-0 left-0 z-50 shrink-0 bg-black text-white flex flex-col h-screen overflow-y-auto transform transition-all duration-200 print:hidden ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0 ${
+          desktopOpen ? "w-60" : "md:w-0 md:overflow-hidden"
+        } w-60`}
+      >
+        <div className="px-6 py-6 border-b border-white/10 flex items-center justify-between whitespace-nowrap">
           <div>
             <span className="text-lg font-semibold tracking-tight">
               {businessName}
@@ -227,7 +245,7 @@ export default function Sidebar({ businessName }: { businessName: string }) {
             {icons.close}
           </button>
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-4 space-y-1 whitespace-nowrap">
           <NavLink
             href="/"
             active={isActive("/")}
