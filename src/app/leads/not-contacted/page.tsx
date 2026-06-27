@@ -5,13 +5,38 @@ import { markLeadContacted, deleteLead } from "@/lib/actions";
 export default async function NotContactedLeadsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ added?: string; skipped?: string; error?: string }>;
+  searchParams: Promise<{
+    added?: string;
+    skipped?: string;
+    error?: string;
+    q?: string;
+    city?: string;
+  }>;
 }) {
-  const { added, skipped, error } = await searchParams;
+  const { added, skipped, error, q, city } = await searchParams;
 
   const leads = await prisma.lead.findMany({
-    where: { status: "NEW" },
+    where: {
+      status: "NEW",
+      ...(city ? { city } : {}),
+      ...(q
+        ? {
+            OR: [
+              { shopNumber: { contains: q, mode: "insensitive" } },
+              { name: { contains: q, mode: "insensitive" } },
+              { phone: { contains: q } },
+            ],
+          }
+        : {}),
+    },
     orderBy: { createdAt: "desc" },
+  });
+
+  const allCities = await prisma.lead.findMany({
+    where: { status: "NEW" },
+    select: { city: true },
+    distinct: ["city"],
+    orderBy: { city: "asc" },
   });
 
   return (
@@ -33,6 +58,50 @@ export default async function NotContactedLeadsPage({
           + Add Shop
         </Link>
       </div>
+
+      <form className="flex flex-wrap gap-3 items-end" method="get">
+        <div>
+          <label className="block text-xs text-gray-500 mb-1.5">
+            Search shop, name or contact
+          </label>
+          <input
+            type="text"
+            name="q"
+            defaultValue={q ?? ""}
+            placeholder="Search..."
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1.5">City</label>
+          <select
+            name="city"
+            defaultValue={city ?? ""}
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          >
+            <option value="">All cities</option>
+            {allCities.map((c) => (
+              <option key={c.city} value={c.city}>
+                {c.city}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="submit"
+          className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          Filter
+        </button>
+        {(q || city) && (
+          <Link
+            href="/leads/not-contacted"
+            className="text-sm text-gray-500 hover:text-black px-2 py-2"
+          >
+            Clear
+          </Link>
+        )}
+      </form>
 
       {error && (
         <div className="border border-red-200 bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700">
