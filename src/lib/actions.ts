@@ -20,17 +20,18 @@ const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_LOCKOUT_MS = 60 * 1000;
 const loginAttempts = new Map<string, { count: number; firstAttempt: number }>();
 
-async function loginRateLimit(username: string) {
+function loginRateLimit(username: string): string | null {
   const entry = loginAttempts.get(username);
   const now = Date.now();
   if (entry && now - entry.firstAttempt < LOGIN_LOCKOUT_MS) {
     if (entry.count >= LOGIN_MAX_ATTEMPTS) {
-      throw new Error("Too many attempts. Try again in a minute.");
+      return "Too many attempts. Try again in a minute.";
     }
     entry.count += 1;
   } else {
     loginAttempts.set(username, { count: 1, firstAttempt: now });
   }
+  return null;
 }
 
 function clearLoginAttempts(username: string) {
@@ -702,11 +703,18 @@ export async function loginAction(formData: FormData) {
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  await loginRateLimit(username);
+  const rateLimitError = loginRateLimit(username);
+  if (rateLimitError) {
+    redirect(`/login?error=${encodeURIComponent(rateLimitError)}`);
+  }
 
-  const user = await prisma.user.findUnique({ where: { username } });
+  const user = username
+    ? await prisma.user.findUnique({ where: { username } })
+    : null;
   if (!user || !verifyPassword(password, user.passwordHash)) {
-    throw new Error("Invalid username or password");
+    redirect(
+      `/login?error=${encodeURIComponent("Invalid username or password")}`
+    );
   }
 
   clearLoginAttempts(username);

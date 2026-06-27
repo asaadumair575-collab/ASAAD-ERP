@@ -1,7 +1,13 @@
 import { loginAction } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[radial-gradient(circle_at_top,_#1f2937,_#000_70%)] px-4 py-10">
       <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
@@ -21,6 +27,11 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white/95 backdrop-blur rounded-3xl shadow-2xl border border-white/20 p-8">
+          {error && (
+            <div className="mb-5 border border-red-200 bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
           <form action={loginAction} className="space-y-5">
             <div>
               <label className="block text-sm font-medium mb-1.5 text-gray-700">

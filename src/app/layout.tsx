@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { headers } from "next/headers";
 import Sidebar from "@/components/Sidebar";
 import { getBusinessProfile } from "@/lib/businessProfile";
 import "./globals.css";
@@ -37,7 +38,21 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const profile = await getBusinessProfile();
+  const headerList = await headers();
+  const pathname = headerList.get("x-pathname") ?? "";
+  const isLoginPage = pathname === "/login";
+  const profile = isLoginPage ? null : await getBusinessProfile();
+
+  if (isLoginPage) {
+    return (
+      <html
+        lang="en"
+        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      >
+        <body className="min-h-full bg-white text-black">{children}</body>
+      </html>
+    );
+  }
 
   return (
     <html
