@@ -16,8 +16,9 @@ export default async function ClientsPage({
       ...(q
         ? {
             OR: [
-              { name: { contains: q } },
-              { businessName: { contains: q } },
+              { name: { contains: q, mode: "insensitive" } },
+              { businessName: { contains: q, mode: "insensitive" } },
+              { phone: { contains: q } },
             ],
           }
         : {}),
@@ -59,7 +60,7 @@ export default async function ClientsPage({
       <form className="flex flex-wrap gap-3 items-end" method="get">
         <div>
           <label className="block text-xs text-gray-500 mb-1.5">
-            Search name or business
+            Search name, business or phone
           </label>
           <input
             type="text"

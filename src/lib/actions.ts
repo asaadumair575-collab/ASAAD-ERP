@@ -37,6 +37,12 @@ function clearLoginAttempts(username: string) {
   loginAttempts.delete(username);
 }
 
+function normalizePhone(phone: string | null): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "");
+  return digits.slice(-10) || null;
+}
+
 export async function createClient(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const businessName = String(formData.get("businessName") ?? "").trim() || null;
@@ -49,21 +55,17 @@ export async function createClient(formData: FormData) {
     throw new Error("Name and city are required");
   }
 
-  const duplicate = phone
-    ? await prisma.client.findFirst({
-        where: {
-          OR: [
-            { phone },
-            { name: { equals: name, mode: "insensitive" } },
-          ],
-        },
-      })
-    : await prisma.client.findFirst({
-        where: {
-          name: { equals: name, mode: "insensitive" },
-          city: { equals: city, mode: "insensitive" },
-        },
-      });
+  const normalizedPhone = normalizePhone(phone);
+  const existingClients = await prisma.client.findMany({
+    select: { id: true, name: true, phone: true, city: true },
+  });
+  const duplicate = existingClients.find((c) => {
+    if (normalizedPhone && normalizePhone(c.phone) === normalizedPhone) return true;
+    return (
+      c.name.trim().toLowerCase() === name.toLowerCase() &&
+      (!normalizedPhone ? c.city.trim().toLowerCase() === city.toLowerCase() : true)
+    );
+  });
 
   if (duplicate) {
     redirect(
