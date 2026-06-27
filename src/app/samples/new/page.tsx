@@ -10,11 +10,14 @@ export default async function NewSamplePage({
   const { leadId: leadIdRaw } = await searchParams;
   const leadId = leadIdRaw ? parseInt(leadIdRaw, 10) : null;
 
-  const lead = leadId
+  const leadRecord = leadId
     ? await prisma.lead.findUnique({
         where: { id: leadId },
         select: { id: true, name: true, shopNumber: true },
       })
+    : null;
+  const lead = leadRecord
+    ? { ...leadRecord, name: leadRecord.name ?? leadRecord.shopNumber }
     : null;
 
   const clients = lead

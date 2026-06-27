@@ -50,22 +50,22 @@ export default async function NewLeadPage({
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">
-                Person Name<span className="text-black"> *</span>
+                Person Name
               </label>
               <input
                 type="text"
                 name="name"
-                required
                 className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-shadow"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5">
-                Contact
+                Contact<span className="text-black"> *</span>
               </label>
               <input
                 type="text"
                 name="phone"
+                required
                 className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-shadow"
               />
             </div>
@@ -111,7 +111,7 @@ export default async function NewLeadPage({
                 Upload CSV or Excel
               </label>
               <p className="text-xs text-gray-400 mb-2">
-                Columns: Shop Name, Person Name, Contact, City
+                Columns: Shop Name, Contact (required), Person Name (optional), City
               </p>
               <input
                 type="file"

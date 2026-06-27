@@ -135,7 +135,7 @@ model Sample {
 model Lead {
   id         Int      @id @default(autoincrement())
   shopNumber String
-  name       String
+  name       String?
   city       String
   phone      String?
   status     String   @default("NEW")

@@ -781,9 +781,9 @@ export async function resetAllData(formData: FormData) {
 const LEAD_STATUSES = ["NEW", "CONTACTED", "SAMPLE_SENT", "CANCELLED", "CONFIRMED"];
 
 function isDuplicateLead(
-  existing: { shopNumber: string; name: string; phone: string | null }[],
+  existing: { shopNumber: string; name: string | null; phone: string | null }[],
   shopNumber: string,
-  name: string,
+  name: string | null,
   phone: string | null
 ): boolean {
   const normalizedPhone = normalizePhone(phone);
@@ -791,20 +791,20 @@ function isDuplicateLead(
     if (normalizedPhone && normalizePhone(l.phone) === normalizedPhone) return true;
     return (
       l.shopNumber.trim().toLowerCase() === shopNumber.trim().toLowerCase() &&
-      l.name.trim().toLowerCase() === name.trim().toLowerCase()
+      (l.name ?? "").trim().toLowerCase() === (name ?? "").trim().toLowerCase()
     );
   });
 }
 
 export async function createLead(formData: FormData) {
   const shopNumber = String(formData.get("shopNumber") ?? "").trim();
-  const name = String(formData.get("name") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim() || null;
   const city = String(formData.get("city") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
 
-  if (!shopNumber || !name || !city) {
-    throw new Error("Shop number, name and city are required");
+  if (!shopNumber || !phone || !city) {
+    throw new Error("Shop number, contact number and city are required");
   }
 
   const existingLeads = await prisma.lead.findMany({
@@ -813,7 +813,7 @@ export async function createLead(formData: FormData) {
   if (isDuplicateLead(existingLeads, shopNumber, name, phone)) {
     redirect(
       `/leads/new?error=${encodeURIComponent(
-        `Duplicate shop: "${name}" already exists with this name/number.`
+        `Duplicate shop: "${shopNumber}" already exists with this name/number.`
       )}`
     );
   }
@@ -873,10 +873,10 @@ export async function uploadLeads(formData: FormData) {
     (h) => h.includes("phone") || h.includes("contact")
   );
 
-  if (shopIdx === -1 || nameIdx === -1) {
+  if (shopIdx === -1 || phoneIdx === -1) {
     redirect(
       `/leads/new?error=${encodeURIComponent(
-        "File must have columns for Shop Number (or Shop Name) and Name"
+        "File must have columns for Shop Number (or Shop Name) and Contact"
       )}`
     );
   }
@@ -891,11 +891,11 @@ export async function uploadLeads(formData: FormData) {
 
   for (const row of dataRows) {
     const shopNumber = row[shopIdx]?.trim();
-    const name = row[nameIdx]?.trim();
+    const name = nameIdx !== -1 ? row[nameIdx]?.trim() || null : null;
     const city = cityIdx !== -1 ? row[cityIdx]?.trim() || "" : "";
-    const phone = phoneIdx !== -1 ? row[phoneIdx]?.trim() || null : null;
+    const phone = row[phoneIdx]?.trim() || null;
 
-    if (!shopNumber || !name) {
+    if (!shopNumber || !phone) {
       skipped++;
       continue;
     }
@@ -960,7 +960,7 @@ export async function convertLeadToClient(id: number) {
 
   const client = await prisma.client.create({
     data: {
-      name: lead.name,
+      name: lead.name ?? lead.shopNumber,
       businessName: lead.shopNumber,
       city: lead.city,
       phone: lead.phone,
