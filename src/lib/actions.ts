@@ -709,14 +709,17 @@ export async function loginAction(formData: FormData) {
   }
 
   const appUsername = (process.env.APP_USERNAME ?? "").trim().toLowerCase();
-  const appPassword = process.env.APP_PASSWORD ?? "";
+  const appPassword = (process.env.APP_PASSWORD ?? "").trim();
 
-  if (
-    !appUsername ||
-    !appPassword ||
-    username !== appUsername ||
-    password !== appPassword
-  ) {
+  if (!appUsername || !appPassword) {
+    redirect(
+      `/login?error=${encodeURIComponent(
+        "Server is missing APP_USERNAME or APP_PASSWORD environment variables."
+      )}`
+    );
+  }
+
+  if (username !== appUsername || password.trim() !== appPassword) {
     redirect(
       `/login?error=${encodeURIComponent("Invalid username or password")}`
     );
