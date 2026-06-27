@@ -840,12 +840,44 @@ export async function createLead(formData: FormData) {
   redirect("/leads/not-contacted");
 }
 
+function parseCsvLine(line: string): string[] {
+  const cells: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (inQuotes) {
+      if (char === '"') {
+        if (line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += char;
+      }
+    } else if (char === '"') {
+      inQuotes = true;
+    } else if (char === ",") {
+      cells.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  cells.push(current.trim());
+  return cells;
+}
+
 function parseCsv(text: string): string[][] {
   return text
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
-    .map((line) => line.split(",").map((cell) => cell.trim()));
+    .map(parseCsvLine);
 }
 
 async function parseLeadsFile(file: File): Promise<string[][]> {

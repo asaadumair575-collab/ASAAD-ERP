@@ -207,7 +207,7 @@ export default function Sidebar({ businessName }: { businessName: string }) {
       )}
 
       <aside
-        className={`fixed md:sticky inset-y-0 md:inset-y-auto top-0 left-0 z-50 w-60 shrink-0 bg-black text-white flex flex-col h-screen overflow-y-auto transform transition-transform duration-200 md:translate-x-0 print:hidden ${
+        className={`sidebar-scroll fixed md:sticky inset-y-0 md:inset-y-auto top-0 left-0 z-50 w-60 shrink-0 bg-black text-white flex flex-col h-screen overflow-y-auto transform transition-transform duration-200 md:translate-x-0 print:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
