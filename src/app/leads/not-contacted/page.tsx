@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { markLeadContacted, deleteLead, repairSwappedLeadData } from "@/lib/actions";
+import { markLeadContacted, deleteLead } from "@/lib/actions";
 
 export default async function NotContactedLeadsPage({
   searchParams,
@@ -8,13 +8,12 @@ export default async function NotContactedLeadsPage({
   searchParams: Promise<{
     added?: string;
     skipped?: string;
-    fixed?: string;
     error?: string;
     q?: string;
     city?: string;
   }>;
 }) {
-  const { added, skipped, fixed, error, q, city } = await searchParams;
+  const { added, skipped, error, q, city } = await searchParams;
 
   const leads = await prisma.lead.findMany({
     where: {
@@ -52,22 +51,12 @@ export default async function NotContactedLeadsPage({
             contacted
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <form action={repairSwappedLeadData}>
-            <button
-              type="submit"
-              className="border border-gray-200 text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Fix Old Upload Data
-            </button>
-          </form>
-          <Link
-            href="/leads/new"
-            className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            + Add Shop
-          </Link>
-        </div>
+        <Link
+          href="/leads/new"
+          className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
+        >
+          + Add Shop
+        </Link>
       </div>
 
       <form className="flex flex-wrap gap-3 items-end" method="get">
@@ -117,12 +106,6 @@ export default async function NotContactedLeadsPage({
       {error && (
         <div className="border border-red-200 bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700">
           {error}
-        </div>
-      )}
-
-      {fixed !== undefined && (
-        <div className="border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-700">
-          {fixed} old shop{fixed === "1" ? "" : "s"} repaired (number/name swapped back).
         </div>
       )}
 
