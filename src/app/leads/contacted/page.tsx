@@ -53,11 +53,11 @@ export default async function ContactedLeadsPage() {
                   <tr key={l.id} className="hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-5 font-medium">
                       <Link href={`/leads/${l.id}`} className="hover:underline">
-                        {l.shopNumber}
+                        {l.shopNumber || "-"}
                       </Link>
                     </td>
-                    <td className="py-3 px-5 text-gray-600">{l.name}</td>
-                    <td className="py-3 px-5 text-gray-600">{l.city}</td>
+                    <td className="py-3 px-5 text-gray-600">{l.name || "-"}</td>
+                    <td className="py-3 px-5 text-gray-600">{l.city || "-"}</td>
                     <td className="py-3 px-5 text-right">
                       <Link
                         href={`/samples/new?leadId=${l.id}`}

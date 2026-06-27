@@ -45,10 +45,10 @@ export default async function LeadDetailPage({
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">
-            {lead.name}
+            {lead.name || "-"}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Shop #{lead.shopNumber} &middot; {lead.city}
+            Shop #{lead.shopNumber || "-"} &middot; {lead.city || "-"}
           </p>
         </div>
         <span
