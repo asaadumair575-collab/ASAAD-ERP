@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { setCostPerDozen, backfillItemCostByDescription } from "@/lib/actions";
+import { setCostPerDozen } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 import {
   AmountVisibilityProvider,
@@ -53,43 +53,14 @@ export default async function FinancePage({
 
   const totalSales = confirmedOrders.reduce((s, o) => s + o.saleAmount, 0);
   const totalDozens = confirmedOrders.reduce(
-    (s, o) =>
-      s +
-      o.items
-        .filter((i) => i.cost == null)
-        .reduce((is, i) => is + i.quantity, 0),
+    (s, o) => s + o.items.reduce((is, i) => is + i.quantity, 0),
     0
   );
   const totalCost = confirmedOrders.reduce((s, o) => {
-    const itemsCost = o.items.reduce((is, i) => {
-      if (i.cost != null) return is + i.cost * i.quantity;
-      return is;
-    }, 0);
-    const legacyDozens = o.items
-      .filter((i) => i.cost == null)
-      .reduce((is, i) => is + i.quantity, 0);
-    return s + itemsCost + legacyDozens * rateFor(o.date);
+    const dozens = o.items.reduce((is, i) => is + i.quantity, 0);
+    return s + dozens * rateFor(o.date);
   }, 0);
   const profit = totalSales - totalCost;
-
-  const itemsSoldMap = new Map<
-    string,
-    { description: string; quantity: number; cost: number }
-  >();
-  for (const o of confirmedOrders) {
-    for (const i of o.items) {
-      const key = i.description.trim().toLowerCase();
-      const entry = itemsSoldMap.get(key) ?? {
-        description: i.description.trim(),
-        quantity: 0,
-        cost: 0,
-      };
-      entry.quantity += i.quantity;
-      entry.cost += i.cost != null ? i.cost * i.quantity : i.quantity * rateFor(o.date);
-      itemsSoldMap.set(key, entry);
-    }
-  }
-  const itemsSold = [...itemsSoldMap.values()].sort((a, b) => b.quantity - a.quantity);
 
   return (
     <AmountVisibilityProvider>
@@ -210,68 +181,6 @@ export default async function FinancePage({
           </span>
         </div>
       </div>
-
-      {itemsSold.length > 0 && (
-        <div className="border border-gray-200 rounded-2xl overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
-                <th className="py-3 px-5 font-medium">Item</th>
-                <th className="py-3 px-5 font-medium text-right">Qty Sold</th>
-                <th className="py-3 px-5 font-medium text-right">Cost</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {itemsSold.map((item) => (
-                <tr key={item.description}>
-                  <td className="py-3 px-5 font-medium">{item.description}</td>
-                  <td className="py-3 px-5 text-right">
-                    {item.quantity.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                  </td>
-                  <td className="py-3 px-5 text-right text-gray-500">
-                    <Amount value={item.cost.toLocaleString(undefined, { maximumFractionDigits: 2 })} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <form
-        action={backfillItemCostByDescription}
-        className="flex flex-wrap gap-3 items-end bg-gray-50 border border-gray-200 rounded-2xl p-5"
-      >
-        <div className="flex-1 min-w-[160px]">
-          <label className="block text-xs text-gray-500 mb-1.5">
-            Item Name
-          </label>
-          <input
-            type="text"
-            name="description"
-            placeholder="e.g. Tape"
-            required
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1.5">Cost</label>
-          <input
-            type="number"
-            step="0.01"
-            name="cost"
-            placeholder="0"
-            required
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-32 focus:outline-none focus:ring-2 focus:ring-black bg-white"
-          />
-        </div>
-        <SubmitButton className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors">
-          Fix Past Invoices
-        </SubmitButton>
-        <p className="text-xs text-gray-500 w-full">
-          Naam se match hone wale tamam past invoice items ki cost set kar deta hai (e.g. "Tape" likh ke cost 50 daal do).
-        </p>
-      </form>
 
       {confirmedOrders.length === 0 ? (
         <div className="border border-gray-200 rounded-2xl p-10 text-center">

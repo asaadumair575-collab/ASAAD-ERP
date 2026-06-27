@@ -4,14 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import SubmitButton from "@/components/SubmitButton";
 
 type Client = { id: number; name: string; businessName: string | null };
-type Product = { id: number; name: string; cost: number | null };
+type Product = { id: number; name: string };
 type Row = {
   id: number;
   productId: string;
   description: string;
   quantity: number;
   rate: number;
-  cost: number;
 };
 
 function CustomerSearchSelect({ clients }: { clients: Client[] }) {
@@ -89,7 +88,7 @@ export default function InvoiceForm({
   products: Product[];
 }) {
   const [rows, setRows] = useState<Row[]>([
-    { id: 0, productId: "", description: "", quantity: 0, rate: 0, cost: 0 },
+    { id: 0, productId: "", description: "", quantity: 0, rate: 0 },
   ]);
   const [discount, setDiscount] = useState(0);
   const [taxPercent, setTaxPercent] = useState(0);
@@ -102,9 +101,7 @@ export default function InvoiceForm({
     const product = products.find((p) => p.id === parseInt(productId, 10));
     updateRow(id, {
       productId,
-      ...(product
-        ? { description: product.name, cost: product.cost ?? 0 }
-        : { cost: 0 }),
+      ...(product ? { description: product.name } : {}),
     });
   }
 
@@ -211,7 +208,6 @@ export default function InvoiceForm({
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-black bg-white"
                 />
               </div>
-              <input type="hidden" name="itemCost" value={row.cost || ""} />
               <div className="w-28 text-sm font-medium px-1 py-2">
                 {round2(row.quantity * row.rate).toLocaleString(undefined, {
                   maximumFractionDigits: 2,
@@ -233,7 +229,7 @@ export default function InvoiceForm({
             onClick={() =>
               setRows((r) => [
                 ...r,
-                { id: Date.now(), productId: "", description: "", quantity: 0, rate: 0, cost: 0 },
+                { id: Date.now(), productId: "", description: "", quantity: 0, rate: 0 },
               ])
             }
             className="text-sm text-gray-600 hover:text-black underline"

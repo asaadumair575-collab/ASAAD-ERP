@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { createProduct, deleteProduct, updateProductCost } from "@/lib/actions";
+import { createProduct, deleteProduct } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 
 export default async function ProductsPage() {
@@ -10,8 +10,7 @@ export default async function ProductsPage() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Products</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Manage products to quickly add them to invoices. Set the cost so
-          profit is calculated correctly.
+          Manage products to quickly add them to invoices.
         </p>
       </div>
 
@@ -30,19 +29,6 @@ export default async function ProductsPage() {
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
           />
         </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1.5">
-            Cost
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            name="cost"
-            placeholder="0"
-            required
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-32 focus:outline-none focus:ring-2 focus:ring-black bg-white"
-          />
-        </div>
         <SubmitButton className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors">
           Add Product
         </SubmitButton>
@@ -58,42 +44,15 @@ export default async function ProductsPage() {
             <thead>
               <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
                 <th className="py-3 px-5 font-medium">Name</th>
-                <th className="py-3 px-5 font-medium">Cost</th>
                 <th className="py-3 px-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {products.map((p) => {
                 const deleteProductBound = deleteProduct.bind(null, p.id);
-                const updateCostBound = updateProductCost.bind(null, p.id);
                 return (
                   <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-5 font-medium">{p.name}</td>
-                    <td className="py-3 px-5">
-                      <form
-                        action={updateCostBound}
-                        className="flex items-center gap-2 flex-wrap"
-                      >
-                        <input
-                          type="number"
-                          step="0.01"
-                          name="cost"
-                          defaultValue={p.cost ?? ""}
-                          placeholder="0"
-                          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-black bg-white"
-                        />
-                        <label className="flex items-center gap-1.5 text-xs text-gray-500">
-                          <input type="checkbox" name="applyToExisting" />
-                          Apply to past invoices too
-                        </label>
-                        <button
-                          type="submit"
-                          className="text-xs text-gray-500 hover:text-black underline"
-                        >
-                          Save
-                        </button>
-                      </form>
-                    </td>
                     <td className="py-3 px-5 text-right">
                       <form action={deleteProductBound}>
                         <button

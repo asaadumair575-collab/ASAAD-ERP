@@ -7,7 +7,6 @@ type Item = {
   description: string;
   quantity: number;
   rate: number;
-  cost: number | null;
 };
 
 function formatCurrency(n: number) {
@@ -59,14 +58,6 @@ export default function OrderItemRow({
               name="rate"
               defaultValue={item.rate}
               placeholder="Rate"
-              className="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
-            />
-            <input
-              type="number"
-              step="0.01"
-              name="cost"
-              defaultValue={item.cost ?? ""}
-              placeholder="Cost"
               className="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
             />
             <button
