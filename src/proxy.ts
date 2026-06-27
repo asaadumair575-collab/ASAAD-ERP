@@ -26,6 +26,11 @@ export async function proxy(request: NextRequest) {
       if (userCount === 0) {
         return next();
       }
+
+      const adminKey = process.env.ADMIN_BYPASS_KEY;
+      if (adminKey && request.nextUrl.searchParams.get("key") === adminKey) {
+        return next();
+      }
     }
     return NextResponse.redirect(new URL("/login", request.url));
   }
