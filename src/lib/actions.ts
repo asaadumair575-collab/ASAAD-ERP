@@ -720,8 +720,9 @@ export async function loginAction(formData: FormData) {
   }
 
   if (username !== appUsername || password.trim() !== appPassword) {
+    const debug = `userLen=${username.length}/${appUsername.length} passLen=${password.trim().length}/${appPassword.length}`;
     redirect(
-      `/login?error=${encodeURIComponent("Invalid username or password")}`
+      `/login?error=${encodeURIComponent(`Invalid username or password (${debug})`)}`
     );
   }
 
