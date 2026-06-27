@@ -111,7 +111,7 @@ export default async function NewLeadPage({
                 Upload CSV or Excel
               </label>
               <p className="text-xs text-gray-400 mb-2">
-                Columns: Shop Name, Contact (required), Person Name (optional), City
+                Columns: Shop Name, Number, City (all required) &middot; Person Name (optional, shows as &quot;-&quot; if missing)
               </p>
               <input
                 type="file"

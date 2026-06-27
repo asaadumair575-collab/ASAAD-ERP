@@ -874,23 +874,24 @@ export async function uploadLeads(formData: FormData) {
   }
 
   const header = rows[0].map((h) => h.toLowerCase());
-  let shopIdx = header.findIndex((h) => h.includes("shop"));
-  if (shopIdx === -1) {
-    shopIdx = header.findIndex((h) => h.includes("number") || h.includes("no"));
-  }
+  const shopIdx = header.findIndex((h) => h.includes("shop"));
+  const phoneIdx = header.findIndex(
+    (h, i) =>
+      i !== shopIdx &&
+      (h.includes("phone") || h.includes("contact") || h.includes("number"))
+  );
+  const cityIdx = header.findIndex((h) => h.includes("city"));
   let nameIdx = header.findIndex((h) => h.includes("person"));
   if (nameIdx === -1) {
-    nameIdx = header.findIndex((h, i) => i !== shopIdx && h.includes("name"));
+    nameIdx = header.findIndex(
+      (h, i) => i !== shopIdx && i !== phoneIdx && h.includes("name")
+    );
   }
-  const cityIdx = header.findIndex((h) => h.includes("city"));
-  const phoneIdx = header.findIndex(
-    (h) => h.includes("phone") || h.includes("contact")
-  );
 
-  if (shopIdx === -1 || phoneIdx === -1) {
+  if (shopIdx === -1 || phoneIdx === -1 || cityIdx === -1) {
     redirect(
       `/leads/new?error=${encodeURIComponent(
-        "File must have columns for Shop Number (or Shop Name) and Contact"
+        "File must have columns for Shop Name, Number (Contact) and City"
       )}`
     );
   }
@@ -905,9 +906,9 @@ export async function uploadLeads(formData: FormData) {
 
   for (const row of dataRows) {
     const shopNumber = row[shopIdx]?.trim();
-    const name = nameIdx !== -1 ? row[nameIdx]?.trim() || null : null;
-    const city = cityIdx !== -1 ? row[cityIdx]?.trim() || "" : "";
-    const phone = row[phoneIdx]?.trim() || null;
+    const city = row[cityIdx]?.trim() || "-";
+    const phone = row[phoneIdx]?.trim();
+    const name = (nameIdx !== -1 ? row[nameIdx]?.trim() : "") || "-";
 
     if (!shopNumber || !phone) {
       skipped++;
