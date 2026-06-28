@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { logoutAction } from "@/lib/actions";
+import InstallPwaButton from "@/components/InstallPwaButton";
 
 const icons = {
   dashboard: (
@@ -452,7 +453,8 @@ export default function Sidebar({ businessName }: { businessName: string }) {
           </NavLink>
         </nav>
 
-        <div className="px-3 py-4 border-t border-white/10">
+        <div className="px-3 py-4 border-t border-white/10 space-y-1">
+          <InstallPwaButton />
           <form action={logoutAction}>
             <button
               type="submit"

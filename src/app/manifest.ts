@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Trader CRM",
-    short_name: "Trader CRM",
+    name: "ASAAD ERP",
+    short_name: "ASAAD ERP",
     description: "Customer, sales and finance tracking",
     start_url: "/",
     display: "standalone",

@@ -16,13 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trader CRM",
+  title: "ASAAD ERP",
   description: "Customer and order tracking for traders",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Trader CRM",
+    title: "ASAAD ERP",
   },
   icons: {
     apple: "/apple-touch-icon.png",
