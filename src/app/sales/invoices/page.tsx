@@ -10,6 +10,8 @@ export default async function InvoicesPage() {
     orderBy: { date: "desc" },
   });
 
+  const pendingAmount = orders.reduce((sum, o) => sum + o.saleAmount, 0);
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -25,6 +27,15 @@ export default async function InvoicesPage() {
         >
           + New Invoice
         </Link>
+      </div>
+
+      <div className="border border-gray-200 rounded-2xl p-5 bg-yellow-50/50">
+        <p className="text-xs text-gray-500 uppercase tracking-wide">
+          Total Pending Amount
+        </p>
+        <p className="text-2xl font-semibold tracking-tight mt-1">
+          {pendingAmount.toLocaleString()}
+        </p>
       </div>
 
       <InvoiceTabs active="pending" />
