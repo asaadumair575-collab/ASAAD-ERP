@@ -22,6 +22,7 @@ export default function LeadsSelectableTable({
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [copied, setCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
 
   const allSelected = leads.length > 0 && selected.size === leads.length;
 
@@ -42,6 +43,13 @@ export default function LeadsSelectableTable({
     () => leads.filter((l) => selected.has(l.id)),
     [leads, selected]
   );
+
+  async function copyNumber(id: number, phone: string | null) {
+    if (!phone) return;
+    await navigator.clipboard.writeText(phone);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1500);
+  }
 
   async function copySelected() {
     const text = selectedLeads
@@ -103,7 +111,41 @@ export default function LeadsSelectableTable({
                     {l.shopNumber || "-"}
                   </Link>
                 </td>
-                <td className="py-3 px-5 text-gray-600">{l.phone || "-"}</td>
+                <td className="py-3 px-5 text-gray-600">
+                  <div className="flex items-center gap-1.5">
+                    <span>{l.phone || "-"}</span>
+                    {l.phone && (
+                      <button
+                        type="button"
+                        onClick={() => copyNumber(l.id, l.phone)}
+                        title="Copy number"
+                        className="text-gray-400 hover:text-black transition-colors"
+                      >
+                        {copiedId === l.id ? (
+                          <span className="text-xs">Copied!</span>
+                        ) : (
+                          <svg viewBox="0 0 20 20" fill="none" className="w-3.5 h-3.5">
+                            <rect
+                              x="7"
+                              y="7"
+                              width="9"
+                              height="9"
+                              rx="1.5"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                            />
+                            <path
+                              d="M4 13V5.5A1.5 1.5 0 0 1 5.5 4H13"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </td>
                 <td className="py-3 px-5 text-gray-600">{l.city || "-"}</td>
                 <td className="py-3 px-5">
                   <WhatsAppButton phone={l.phone} />
