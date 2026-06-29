@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { markLeadContacted, deleteLead } from "@/lib/actions";
-import WhatsAppButton from "@/components/WhatsAppButton";
+import LeadsSelectableTable from "@/components/LeadsSelectableTable";
 
 const PAGE_SIZE = 30;
 
@@ -153,60 +153,11 @@ export default async function NotContactedLeadsPage({
           <p className="text-gray-500 text-sm">No shops waiting right now.</p>
         </div>
       ) : (
-        <div className="border border-gray-200 rounded-2xl overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
-                <th className="py-3 px-5 font-medium">Shop Name</th>
-                <th className="py-3 px-5 font-medium">Number</th>
-                <th className="py-3 px-5 font-medium">City</th>
-                <th className="py-3 px-5"></th>
-                <th className="py-3 px-5"></th>
-                <th className="py-3 px-5"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {leads.map((l) => {
-                const contactBound = markLeadContacted.bind(null, l.id);
-                const deleteBound = deleteLead.bind(null, l.id);
-                return (
-                  <tr key={l.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-5 font-medium">
-                      <Link href={`/leads/${l.id}`} className="hover:underline">
-                        {l.shopNumber || "-"}
-                      </Link>
-                    </td>
-                    <td className="py-3 px-5 text-gray-600">{l.phone || "-"}</td>
-                    <td className="py-3 px-5 text-gray-600">{l.city || "-"}</td>
-                    <td className="py-3 px-5">
-                      <WhatsAppButton phone={l.phone} />
-                    </td>
-                    <td className="py-3 px-5 text-right">
-                      <form action={contactBound}>
-                        <button
-                          type="submit"
-                          className="text-xs font-medium text-gray-500 hover:text-black transition-colors"
-                        >
-                          Mark Contacted
-                        </button>
-                      </form>
-                    </td>
-                    <td className="py-3 px-5 text-right">
-                      <form action={deleteBound}>
-                        <button
-                          type="submit"
-                          className="text-xs text-gray-400 hover:text-red-600 transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <LeadsSelectableTable
+          leads={leads}
+          contactedAction={markLeadContacted}
+          deleteAction={deleteLead}
+        />
       )}
 
       {totalPages > 1 && (
