@@ -989,6 +989,25 @@ export async function cancelLead(id: number) {
   redirect("/leads/cancelled");
 }
 
+export async function cancelLeadFromSample(id: number, formData: FormData) {
+  const reason = (formData.get("reason") as string | null)?.trim();
+
+  const lead = await prisma.lead.findUnique({ where: { id } });
+  const notes = [lead?.notes, reason ? `Cancelled: ${reason}` : null]
+    .filter(Boolean)
+    .join("\n");
+
+  await prisma.lead.update({
+    where: { id },
+    data: { status: "CANCELLED", notes: notes || null },
+  });
+
+  revalidatePath("/samples");
+  revalidatePath("/leads/contacted");
+  revalidatePath(`/leads/${id}`);
+  revalidatePath("/leads/cancelled");
+}
+
 export async function deleteLead(id: number) {
   await prisma.lead.delete({ where: { id } });
   revalidatePath("/leads/not-contacted");

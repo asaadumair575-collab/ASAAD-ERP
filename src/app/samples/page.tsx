@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { deleteSample } from "@/lib/actions";
+import { deleteSample, convertLeadToClient, cancelLeadFromSample } from "@/lib/actions";
+import SubmitButton from "@/components/SubmitButton";
+import CancelLeadModal from "@/components/CancelLeadModal";
 
 const statusStyles: Record<string, string> = {
   PENDING: "bg-yellow-50 text-yellow-800 border border-yellow-200",
@@ -53,11 +55,19 @@ export default async function SamplesPage() {
                 <th className="py-3 px-5 font-medium">Date Sent</th>
                 <th className="py-3 px-5 font-medium">Status</th>
                 <th className="py-3 px-5"></th>
+                <th className="py-3 px-5"></th>
+                <th className="py-3 px-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {samples.map((s) => {
                 const deleteSampleBound = deleteSample.bind(null, s.id);
+                const confirmBound = s.leadId
+                  ? convertLeadToClient.bind(null, s.leadId)
+                  : null;
+                const cancelBound = s.leadId
+                  ? cancelLeadFromSample.bind(null, s.leadId)
+                  : null;
                 return (
                 <tr key={s.id} className="hover:bg-gray-50 transition-colors">
                   <td className="py-3 px-5">
@@ -85,6 +95,21 @@ export default async function SamplesPage() {
                     >
                       {statusLabels[s.status]}
                     </span>
+                  </td>
+                  <td className="py-3 px-5 text-right">
+                    {confirmBound && (
+                      <form action={confirmBound}>
+                        <SubmitButton
+                          pendingText="Confirming..."
+                          className="text-xs font-medium text-black hover:underline"
+                        >
+                          Confirm as Client
+                        </SubmitButton>
+                      </form>
+                    )}
+                  </td>
+                  <td className="py-3 px-5 text-right">
+                    {cancelBound && <CancelLeadModal cancelAction={cancelBound} />}
                   </td>
                   <td className="py-3 px-5 text-right">
                     <form action={deleteSampleBound}>
