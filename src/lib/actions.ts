@@ -978,7 +978,6 @@ export async function markLeadContacted(id: number) {
   revalidatePath("/leads/not-contacted");
   revalidatePath(`/leads/${id}`);
   revalidatePath("/leads/contacted");
-  redirect("/leads/contacted");
 }
 
 export async function cancelLead(id: number) {
