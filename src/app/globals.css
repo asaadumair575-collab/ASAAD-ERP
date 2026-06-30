@@ -63,6 +63,13 @@ a:active {
   transform: scale(0.98);
 }
 
+@media (max-width: 767px) {
+  button,
+  a {
+    transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  }
+}
+
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
