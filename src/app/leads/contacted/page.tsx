@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cancelLead, deleteLead, convertLeadToClient } from "@/lib/actions";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SubmitButton from "@/components/SubmitButton";
+import ConfirmClientModal from "@/components/ConfirmClientModal";
 
 const PAGE_SIZE = 30;
 
@@ -89,14 +90,10 @@ export default async function ContactedLeadsPage({
                       </Link>
                     </td>
                     <td className="py-3 px-5 text-right">
-                      <form action={confirmBound}>
-                        <SubmitButton
-                          pendingText="Confirming..."
-                          className="text-xs font-medium text-black hover:underline"
-                        >
-                          Confirm as Client
-                        </SubmitButton>
-                      </form>
+                      <ConfirmClientModal
+                        confirmAction={confirmBound}
+                        defaultName={l.name}
+                      />
                     </td>
                     <td className="py-3 px-5 text-right">
                       <form action={cancelBound}>

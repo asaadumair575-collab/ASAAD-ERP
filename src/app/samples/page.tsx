@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { deleteSample, convertLeadToClient, cancelLeadFromSample } from "@/lib/actions";
-import SubmitButton from "@/components/SubmitButton";
 import CancelLeadModal from "@/components/CancelLeadModal";
+import ConfirmClientModal from "@/components/ConfirmClientModal";
 
 const statusStyles: Record<string, string> = {
   PENDING: "bg-yellow-50 text-yellow-800 border border-yellow-200",
@@ -98,14 +98,10 @@ export default async function SamplesPage() {
                   </td>
                   <td className="py-3 px-5 text-right">
                     {confirmBound && (
-                      <form action={confirmBound}>
-                        <SubmitButton
-                          pendingText="Confirming..."
-                          className="text-xs font-medium text-black hover:underline"
-                        >
-                          Confirm as Client
-                        </SubmitButton>
-                      </form>
+                      <ConfirmClientModal
+                        confirmAction={confirmBound}
+                        defaultName={s.lead?.name}
+                      />
                     )}
                   </td>
                   <td className="py-3 px-5 text-right">

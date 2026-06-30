@@ -1017,15 +1017,17 @@ export async function deleteLead(id: number) {
   redirect("/leads/not-contacted");
 }
 
-export async function convertLeadToClient(id: number) {
+export async function convertLeadToClient(id: number, formData: FormData) {
   const lead = await prisma.lead.findUnique({ where: { id } });
   if (!lead) {
     throw new Error("Lead no longer exists");
   }
 
+  const enteredName = (formData.get("name") as string | null)?.trim();
+
   const client = await prisma.client.create({
     data: {
-      name: lead.name ?? lead.shopNumber,
+      name: enteredName || lead.name || lead.shopNumber,
       businessName: lead.shopNumber,
       city: lead.city,
       phone: lead.phone,

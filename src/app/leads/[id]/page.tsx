@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { markLeadContacted, deleteLead, convertLeadToClient, cancelLead } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
+import ConfirmClientModal from "@/components/ConfirmClientModal";
 
 const statusStyles: Record<string, string> = {
   NEW: "bg-gray-100 text-gray-700",
@@ -102,14 +103,12 @@ export default async function LeadDetailPage({
             </SubmitButton>
           </form>
         )}
-        <form action={convertBound}>
-          <SubmitButton
-            pendingText="Confirming..."
-            className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            Confirm as Customer
-          </SubmitButton>
-        </form>
+        <ConfirmClientModal
+          confirmAction={convertBound}
+          defaultName={lead.name}
+          triggerLabel="Confirm as Customer"
+          triggerClassName="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
+        />
         <form action={deleteBound}>
           <button
             type="submit"
