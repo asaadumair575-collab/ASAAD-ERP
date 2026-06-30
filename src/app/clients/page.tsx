@@ -4,12 +4,15 @@ import { averageMonthlyDzn, gradeForMonthlyDzn } from "@/lib/grade";
 import { deleteClient } from "@/lib/actions";
 import WhatsAppButton from "@/components/WhatsAppButton";
 
+const PAGE_SIZE = 30;
+
 export default async function ClientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ city?: string; q?: string; grade?: string }>;
+  searchParams: Promise<{ city?: string; q?: string; grade?: string; page?: string }>;
 }) {
-  const { city, q, grade: gradeFilter } = await searchParams;
+  const { city, q, grade: gradeFilter, page } = await searchParams;
+  const currentPage = Math.max(1, Number(page) || 1);
 
   const clients = await prisma.client.findMany({
     where: {
@@ -58,13 +61,23 @@ export default async function ClientsPage({
     ? clientsWithGrade.filter((c) => c.grade.label === gradeFilter)
     : clientsWithGrade;
 
+  const activeCount = filteredClients.filter((c) => c.ledgerOrders.length > 0).length;
+  const inactiveCount = filteredClients.length - activeCount;
+
+  const totalPages = Math.max(1, Math.ceil(filteredClients.length / PAGE_SIZE));
+  const pagedClients = filteredClients.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Customers</h1>
         <p className="text-sm text-gray-500 mt-1">
           {filteredClients.length} customer
-          {filteredClients.length === 1 ? "" : "s"}
+          {filteredClients.length === 1 ? "" : "s"} &middot; {activeCount} active
+          (have orders) &middot; {inactiveCount} nil
         </p>
       </div>
 
@@ -155,7 +168,7 @@ export default async function ClientsPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredClients.map(({ client: c, ledgerOrders, grade }) => {
+              {pagedClients.map(({ client: c, ledgerOrders, grade }) => {
                 const totalReceived = ledgerOrders.reduce(
                   (s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0),
                   0
@@ -217,6 +230,38 @@ export default async function ClientsPage({
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-gray-500">
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            {currentPage > 1 && (
+              <Link
+                href={{
+                  pathname: "/clients",
+                  query: { q, city, grade: gradeFilter, page: currentPage - 1 },
+                }}
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Previous
+              </Link>
+            )}
+            {currentPage < totalPages && (
+              <Link
+                href={{
+                  pathname: "/clients",
+                  query: { q, city, grade: gradeFilter, page: currentPage + 1 },
+                }}
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Next 30
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </div>
