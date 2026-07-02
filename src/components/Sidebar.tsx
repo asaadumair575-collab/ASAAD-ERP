@@ -187,59 +187,19 @@ export default function Sidebar({ businessName }: { businessName: string }) {
 
   const closeMobile = () => setMobileOpen(false);
 
-  const mobileTabs: { href: string; label: string; icon: React.ReactNode; active: boolean }[] = [
-    { href: "/", label: "Home", icon: icons.dashboard, active: isActive("/") },
-    { href: "/leads/not-contacted", label: "Leads", icon: icons.leads, active: isOnLeads },
-    { href: "/clients", label: "Customers", icon: icons.clients, active: isOnClients },
-    { href: "/sales/invoices", label: "Sales", icon: icons.sales, active: isOnSales },
-  ];
-
   return (
     <>
-      <header className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-black text-white px-4 py-3 print:hidden shadow-sm">
+      <header className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-black text-white px-4 py-3 print:hidden">
         <span className="font-semibold tracking-tight">{businessName}</span>
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
           aria-label="Open menu"
-          className="p-2 rounded-xl bg-white/10 active:bg-white/20 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-white/10"
         >
           {icons.menu}
         </button>
       </header>
-
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-black/95 backdrop-blur border-t border-white/10 print:hidden pb-[env(safe-area-inset-bottom)]">
-        <div className="flex items-stretch justify-around">
-          {mobileTabs.map((tab) => (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={`flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[11px] transition-colors ${
-                tab.active ? "text-white" : "text-gray-500"
-              }`}
-            >
-              <span
-                className={`flex items-center justify-center w-9 h-9 rounded-xl transition-all ${
-                  tab.active ? "bg-white text-black scale-100" : "scale-95"
-                }`}
-              >
-                {tab.icon}
-              </span>
-              {tab.label}
-            </Link>
-          ))}
-          <button
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            className="flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[11px] text-gray-500"
-          >
-            <span className="flex items-center justify-center w-9 h-9 rounded-xl scale-95">
-              {icons.menu}
-            </span>
-            More
-          </button>
-        </div>
-      </nav>
 
       {mobileOpen && (
         <div
