@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
-import Sidebar from "@/components/Sidebar";
+import AppShell from "@/components/AppShell";
 import { getBusinessProfile } from "@/lib/businessProfile";
 import { getSessionUser } from "@/lib/auth";
 import "./globals.css";
@@ -62,13 +62,14 @@ export default async function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col md:flex-row bg-gray-50 text-black">
-        <Sidebar businessName={profile?.name ?? "Trader CRM"} isAdmin={me?.isAdmin ?? false} />
-        <main className="flex-1 min-h-screen min-w-0 print:min-h-0">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 print:max-w-none print:p-0">
-            {children}
-          </div>
-        </main>
+      <body className="h-full overflow-hidden text-black">
+        <AppShell
+          businessName={profile?.name ?? "Trader CRM"}
+          isAdmin={me?.isAdmin ?? false}
+          username={me?.displayName ?? me?.username ?? null}
+        >
+          {children}
+        </AppShell>
       </body>
     </html>
   );
