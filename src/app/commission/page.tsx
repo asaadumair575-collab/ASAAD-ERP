@@ -4,6 +4,7 @@ import {
   createCommissionOrder,
   deleteCommissionOrder,
 } from "@/lib/actions";
+import DeleteButton from "@/components/DeleteButton";
 import SubmitButton from "@/components/SubmitButton";
 import {
   AmountVisibilityProvider,
@@ -62,10 +63,10 @@ export default async function CommissionPage({
       <div className="max-w-3xl space-y-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">
+            <h1 className="text-2xl font-semibold tracking-tight">
               Commission
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 mt-0.5">
               Dozens ordered through the company and the commission earned.
             </p>
           </div>
@@ -219,24 +220,20 @@ export default async function CommissionPage({
             </p>
           </div>
         ) : (
-          <div className="border border-gray-200 rounded-2xl overflow-x-auto">
+          <div className="table-container">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
-                  <th className="py-3 px-5 font-medium">Date</th>
-                  <th className="py-3 px-5 font-medium">Order For</th>
-                  <th className="py-3 px-5 font-medium">Notes</th>
-                  <th className="py-3 px-5 font-medium text-right">Dozens</th>
-                  <th className="py-3 px-5 font-medium text-right">
-                    Rate/dzn
-                  </th>
-                  <th className="py-3 px-5 font-medium text-right">
-                    Commission
-                  </th>
+                <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
+                  <th className="py-3 px-5">Date</th>
+                  <th className="py-3 px-5">Order For</th>
+                  <th className="py-3 px-5">Notes</th>
+                  <th className="py-3 px-5 text-right">Dozens</th>
+                  <th className="py-3 px-5 text-right">Rate/dzn</th>
+                  <th className="py-3 px-5 text-right">Commission</th>
                   <th className="py-3 px-5"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-50">
                 {orders.map((o) => {
                   const rate = rateFor(o.date);
                   const deleteBound = deleteCommissionOrder.bind(null, o.id);
@@ -261,14 +258,7 @@ export default async function CommissionPage({
                         />
                       </td>
                       <td className="py-3 px-5 text-right">
-                        <form action={deleteBound}>
-                          <button
-                            type="submit"
-                            className="text-xs text-gray-400 hover:text-red-600 transition-colors"
-                          >
-                            Delete
-                          </button>
-                        </form>
+                        <DeleteButton action={deleteBound} message="This commission order will be permanently deleted." />
                       </td>
                     </tr>
                   );

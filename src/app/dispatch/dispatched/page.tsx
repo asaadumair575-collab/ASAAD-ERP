@@ -22,8 +22,8 @@ export default async function DispatchedPage({
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Dispatch</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Dispatch</h1>
+            <p className="text-sm text-gray-500 mt-0.5">
               {commissionOrders.length} dispatched commission order
               {commissionOrders.length === 1 ? "" : "s"}
             </p>

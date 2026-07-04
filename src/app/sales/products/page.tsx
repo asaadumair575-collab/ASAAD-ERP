@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { createProduct, deleteProduct } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
+import DeleteButton from "@/components/DeleteButton";
 
 export default async function ProductsPage() {
   const products = await prisma.product.findMany({ orderBy: { name: "asc" } });
@@ -8,8 +9,8 @@ export default async function ProductsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Products</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
+        <p className="text-sm text-gray-500 mt-0.5">
           Manage products to quickly add them to invoices.
         </p>
       </div>
@@ -35,33 +36,26 @@ export default async function ProductsPage() {
       </form>
 
       {products.length === 0 ? (
-        <div className="border border-gray-200 rounded-2xl p-10 text-center">
-          <p className="text-gray-500 text-sm">No products yet.</p>
+        <div className="border border-gray-200 rounded-2xl p-12 text-center">
+          <p className="text-gray-400 text-sm">No products yet.</p>
         </div>
       ) : (
-        <div className="border border-gray-200 rounded-2xl overflow-x-auto">
+        <div className="table-container">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
-                <th className="py-3 px-5 font-medium">Name</th>
+              <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
+                <th className="py-3 px-5">Name</th>
                 <th className="py-3 px-5"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-50">
               {products.map((p) => {
                 const deleteProductBound = deleteProduct.bind(null, p.id);
                 return (
-                  <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={p.id} className="hover:bg-gray-50/70 transition-colors">
                     <td className="py-3 px-5 font-medium">{p.name}</td>
                     <td className="py-3 px-5 text-right">
-                      <form action={deleteProductBound}>
-                        <button
-                          type="submit"
-                          className="text-xs text-gray-400 hover:text-red-600 transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </form>
+                      <DeleteButton action={deleteProductBound} message="This product will be permanently deleted." />
                     </td>
                   </tr>
                 );

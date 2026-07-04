@@ -62,95 +62,91 @@ export default async function NotContactedLeadsPage({
     .sort((a, b) => a.city.localeCompare(b.city));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Not Contacted
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {totalCount} shop{totalCount === 1 ? "" : "s"} waiting to be
-            contacted
+          <h1 className="text-2xl font-semibold tracking-tight">Not Contacted</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {totalCount} shop{totalCount === 1 ? "" : "s"} waiting to be contacted
           </p>
         </div>
         <Link
           href="/leads/new"
-          className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
+          className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
         >
           + Add Shop
         </Link>
       </div>
 
       <form
-        className="flex flex-wrap gap-3 items-center bg-white border border-gray-200 rounded-2xl shadow-sm p-3"
+        className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5"
         method="get"
       >
-        <div className="relative flex-1 min-w-[200px]">
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z"
-            />
+        <div className="relative flex-1 min-w-[180px]">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z" />
           </svg>
           <input
             type="text"
             name="q"
             defaultValue={q ?? ""}
             placeholder="Search shop, name or contact..."
-            className="w-full bg-gray-50 border border-transparent rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-colors"
+            className="w-full bg-gray-50 border border-transparent rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-colors"
           />
         </div>
         <select
           name="city"
           defaultValue={city ?? ""}
-          className="bg-gray-50 border border-transparent rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-colors"
+          className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-colors"
         >
           <option value="">All cities</option>
           {allCities.map((c) => (
-            <option key={c.city} value={c.city}>
-              {c.city} ({c.count})
-            </option>
+            <option key={c.city} value={c.city}>{c.city} ({c.count})</option>
           ))}
         </select>
         <button
           type="submit"
-          className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-colors"
+          className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
         >
           Filter
         </button>
-        {(q || city) && (
-          <Link
-            href="/leads/not-contacted"
-            className="text-sm text-gray-400 hover:text-black px-2 py-2.5 transition-colors"
-          >
-            Clear
-          </Link>
-        )}
       </form>
 
-      {error && (
-        <div className="border border-red-200 bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700">
-          {error}
+      {(q || city) && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">Active:</span>
+          {q && (
+            <Link href={{ pathname: "/leads/not-contacted", query: { city } }} className="filter-chip">
+              Search: {q}<span className="filter-chip-x">×</span>
+            </Link>
+          )}
+          {city && (
+            <Link href={{ pathname: "/leads/not-contacted", query: { q } }} className="filter-chip">
+              {city}<span className="filter-chip-x">×</span>
+            </Link>
+          )}
+          <Link href="/leads/not-contacted" className="text-xs text-gray-400 hover:text-black transition-colors ml-1">
+            Clear all
+          </Link>
         </div>
       )}
 
+      {error && (
+        <div className="alert alert-error">{error}</div>
+      )}
+
       {(added !== undefined || skipped !== undefined) && (
-        <div className="border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-700">
-          {added} lead{added === "1" ? "" : "s"} added, {skipped} skipped
-          (duplicate or missing fields).
+        <div className="alert alert-success">
+          {added} lead{added === "1" ? "" : "s"} added, {skipped} skipped (duplicate or missing fields).
         </div>
       )}
 
       {leads.length === 0 ? (
-        <div className="border border-gray-200 rounded-2xl p-10 text-center">
-          <p className="text-gray-500 text-sm">No shops waiting right now.</p>
+        <div className="border border-gray-200 rounded-2xl p-12 text-center space-y-1">
+          <p className="text-gray-400 text-sm">No shops waiting right now.</p>
+          {(q || city) && (
+            <Link href="/leads/not-contacted" className="text-sm font-medium text-black hover:underline">Clear filters</Link>
+          )}
         </div>
       ) : (
         <LeadsSelectableTable
@@ -162,30 +158,18 @@ export default async function NotContactedLeadsPage({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm text-gray-500">
-          <span>
-            Page {currentPage} of {totalPages}
-          </span>
+          <span>Page {currentPage} of {totalPages}</span>
           <div className="flex gap-2">
             {currentPage > 1 && (
-              <Link
-                href={{
-                  pathname: "/leads/not-contacted",
-                  query: { q, city, page: currentPage - 1 },
-                }}
-                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Previous
+              <Link href={{ pathname: "/leads/not-contacted", query: { q, city, page: currentPage - 1 } }}
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                ← Previous
               </Link>
             )}
             {currentPage < totalPages && (
-              <Link
-                href={{
-                  pathname: "/leads/not-contacted",
-                  query: { q, city, page: currentPage + 1 },
-                }}
-                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Next 30
+              <Link href={{ pathname: "/leads/not-contacted", query: { q, city, page: currentPage + 1 } }}
+                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                Next 30 →
               </Link>
             )}
           </div>

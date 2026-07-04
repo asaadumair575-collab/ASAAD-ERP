@@ -34,67 +34,55 @@ export default async function DashboardPage() {
 
   return (
     <AmountVisibilityProvider>
-      <div className="space-y-10">
+      <div className="space-y-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Overview of your customers and business performance.
-            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Overview of your business performance.</p>
           </div>
           <AmountToggleButton />
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Customers" value={totalClients} />
           <StatCard label="Orders" value={totalOrders} />
           <StatCard label="Total Received" value={<Amount value={fmt(totalSale)} />} />
-          <StatCard
-            label="Pending Payments"
-            value={<Amount value={fmt(pendingSale)} />}
-            dark
-          />
+          <StatCard label="Pending" value={<Amount value={fmt(pendingSale)} />} dark />
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold mb-4">By City</h2>
+          <h2 className="text-base font-semibold mb-3 text-gray-700">Performance by City</h2>
           {byCity.size === 0 ? (
-            <div className="border border-gray-200 rounded-2xl p-10 text-center">
-              <p className="text-gray-500 text-sm">
-                No customers yet.{" "}
-                <Link href="/clients/new" className="text-black underline font-medium">
-                  Add your first customer
-                </Link>
-                .
-              </p>
+            <div className="border border-gray-200 rounded-2xl p-12 text-center space-y-2">
+              <p className="text-gray-400 text-sm">No customers yet.</p>
+              <Link href="/clients/new" className="text-sm font-medium text-black hover:underline">
+                Add your first customer →
+              </Link>
             </div>
           ) : (
-            <div className="border border-gray-200 rounded-2xl overflow-x-auto">
+            <div className="table-container">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
-                    <th className="py-3 px-5 font-medium">City</th>
-                    <th className="py-3 px-5 font-medium">Customers</th>
-                    <th className="py-3 px-5 font-medium">Orders</th>
-                    <th className="py-3 px-5 font-medium">Sales</th>
+                  <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
+                    <th className="py-3 px-5">City</th>
+                    <th className="py-3 px-5">Customers</th>
+                    <th className="py-3 px-5">Orders</th>
+                    <th className="py-3 px-5">Sales</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-50">
                   {[...byCity.entries()]
                     .sort((a, b) => b[1].sale - a[1].sale)
                     .map(([city, d]) => (
-                      <tr key={city} className="hover:bg-gray-50 transition-colors">
+                      <tr key={city} className="hover:bg-gray-50/70 transition-colors">
                         <td className="py-3 px-5 font-medium">
-                          <Link
-                            href={`/clients?city=${encodeURIComponent(city)}`}
-                            className="hover:underline"
-                          >
+                          <Link href={`/clients?city=${encodeURIComponent(city)}`} className="hover:underline">
                             {city}
                           </Link>
                         </td>
-                        <td className="py-3 px-5">{d.clients}</td>
-                        <td className="py-3 px-5">{d.orders}</td>
-                        <td className="py-3 px-5">
+                        <td className="py-3 px-5 text-gray-600">{d.clients}</td>
+                        <td className="py-3 px-5 text-gray-600">{d.orders}</td>
+                        <td className="py-3 px-5 font-medium tabular-nums">
                           <Amount value={fmt(d.sale)} />
                         </td>
                       </tr>

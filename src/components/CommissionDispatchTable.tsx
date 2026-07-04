@@ -16,26 +16,26 @@ export default function CommissionDispatchTable({
 }) {
   if (orders.length === 0) {
     return (
-      <div className="border border-gray-200 rounded-2xl p-10 text-center">
-        <p className="text-gray-500 text-sm">No commission orders here.</p>
+      <div className="border border-gray-200 rounded-2xl p-12 text-center">
+        <p className="text-gray-400 text-sm">No commission orders here.</p>
       </div>
     );
   }
 
   return (
-    <div className="border border-gray-200 rounded-2xl overflow-x-auto">
+    <div className="table-container">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
-            <th className="py-3 px-5 font-medium">Order</th>
-            <th className="py-3 px-5 font-medium">Order For</th>
-            <th className="py-3 px-5 font-medium">Date</th>
-            <th className="py-3 px-5 font-medium text-right">Dozens</th>
-            <th className="py-3 px-5 font-medium">Notes</th>
+          <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
+            <th className="py-3 px-5">Order</th>
+            <th className="py-3 px-5">Order For</th>
+            <th className="py-3 px-5">Date</th>
+            <th className="py-3 px-5 text-right">Dozens</th>
+            <th className="py-3 px-5">Notes</th>
             <th className="py-3 px-5"></th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-gray-50">
           {orders.map((o) => {
             const toggleBound = setCommissionDispatched.bind(
               null,
@@ -43,7 +43,7 @@ export default function CommissionDispatchTable({
               !o.dispatched
             );
             return (
-              <tr key={o.id} className="hover:bg-gray-50 transition-colors">
+              <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
                 <td className="py-3 px-5 font-medium">
                   COM-{String(o.id).padStart(4, "0")}
                 </td>

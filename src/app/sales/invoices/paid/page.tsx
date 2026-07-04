@@ -10,11 +10,11 @@ export default async function PaidInvoicesPage() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Invoicing</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Invoicing</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
             {orders.length} confirmed invoice{orders.length === 1 ? "" : "s"}
           </p>
         </div>
@@ -29,24 +29,24 @@ export default async function PaidInvoicesPage() {
       <InvoiceTabs active="paid" />
 
       {orders.length === 0 ? (
-        <div className="border border-gray-200 rounded-2xl p-10 text-center">
-          <p className="text-gray-500 text-sm">No confirmed invoices yet.</p>
+        <div className="border border-gray-200 rounded-2xl p-12 text-center">
+          <p className="text-gray-400 text-sm">No confirmed invoices yet.</p>
         </div>
       ) : (
-        <div className="border border-gray-200 rounded-2xl overflow-x-auto">
+        <div className="table-container">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
-                <th className="py-3 px-5 font-medium">Invoice</th>
-                <th className="py-3 px-5 font-medium">Customer</th>
-                <th className="py-3 px-5 font-medium">Date</th>
-                <th className="py-3 px-5 font-medium">Amount</th>
-                <th className="py-3 px-5 font-medium">Status</th>
+              <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
+                <th className="py-3 px-5">Invoice</th>
+                <th className="py-3 px-5">Customer</th>
+                <th className="py-3 px-5">Date</th>
+                <th className="py-3 px-5">Amount</th>
+                <th className="py-3 px-5">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-50">
               {orders.map((o) => (
-                <tr key={o.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
                   <td className="py-3 px-5">
                     <Link
                       href={`/clients/${o.clientId}/orders/${o.id}`}

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { markLeadContacted, deleteLead, convertLeadToClient, cancelLead } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 import ConfirmClientModal from "@/components/ConfirmClientModal";
+import DeleteButton from "@/components/DeleteButton";
 
 const statusStyles: Record<string, string> = {
   NEW: "bg-gray-100 text-gray-700",
@@ -45,10 +46,10 @@ export default async function LeadDetailPage({
     <div className="max-w-2xl space-y-8">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight">
             {lead.name || "-"}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 mt-0.5">
             Shop #{lead.shopNumber || "-"} &middot; {lead.city || "-"}
           </p>
         </div>
@@ -109,14 +110,7 @@ export default async function LeadDetailPage({
           triggerLabel="Confirm as Customer"
           triggerClassName="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
         />
-        <form action={deleteBound}>
-          <button
-            type="submit"
-            className="text-sm text-gray-400 hover:text-red-600 transition-colors px-2"
-          >
-            Delete
-          </button>
-        </form>
+        <DeleteButton action={deleteBound} message="This lead will be permanently deleted." />
       </div>
 
       <div>

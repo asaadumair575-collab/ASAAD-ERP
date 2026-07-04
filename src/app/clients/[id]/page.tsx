@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { deleteOrder, deleteClient } from "@/lib/actions";
 import Link from "next/link";
+import DeleteButton from "@/components/DeleteButton";
 import { notFound } from "next/navigation";
 import { averageMonthlyDzn, gradeForMonthlyDzn } from "@/lib/grade";
 
@@ -76,7 +77,7 @@ export default async function ClientDetailPage({
   const deleteClientBound = deleteClient.bind(null, clientId);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -110,14 +111,7 @@ export default async function ClientDetailPage({
           >
             Edit
           </Link>
-          <form action={deleteClientBound}>
-            <button
-              type="submit"
-              className="text-sm font-medium border border-gray-200 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors"
-            >
-              Delete
-            </button>
-          </form>
+          <DeleteButton action={deleteClientBound} label="Delete Customer" message="This customer and all their orders will be permanently deleted." />
         </div>
       </div>
 
@@ -134,7 +128,7 @@ export default async function ClientDetailPage({
       {draftOrders.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold mb-4">Pending Confirmation</h2>
-          <div className="border border-yellow-200 bg-yellow-50 rounded-2xl overflow-x-auto">
+          <div className="table-container border-yellow-200 bg-yellow-50">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-yellow-800 uppercase text-xs tracking-wide">
@@ -184,10 +178,10 @@ export default async function ClientDetailPage({
             <p className="text-gray-500 text-sm">No ledger entries yet.</p>
           </div>
         ) : (
-          <div className="border border-gray-200 rounded-2xl overflow-x-auto">
+          <div className="table-container">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
+                <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
                   <th className="py-3 px-5 font-medium">Date</th>
                   <th className="py-3 px-5 font-medium">Description</th>
                   <th className="py-3 px-5 font-medium">Debit</th>
@@ -196,7 +190,7 @@ export default async function ClientDetailPage({
                   <th className="py-3 px-5"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-50">
                 {ledgerRows.map((row, i) => (
                   <tr key={i} className="hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-5 text-gray-600">
@@ -243,10 +237,10 @@ export default async function ClientDetailPage({
             <p className="text-gray-500 text-sm">No confirmed orders yet.</p>
           </div>
         ) : (
-          <div className="border border-gray-200 rounded-2xl overflow-x-auto">
+          <div className="table-container">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
+                <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
                   <th className="py-3 px-5 font-medium">Invoice</th>
                   <th className="py-3 px-5 font-medium">Date</th>
                   <th className="py-3 px-5 font-medium">Items</th>
@@ -258,7 +252,7 @@ export default async function ClientDetailPage({
                   <th className="py-3 px-5"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-50">
                 {ledgerOrders.map((o) => {
                   const deleteOrderBound = deleteOrder.bind(
                     null,
@@ -313,14 +307,7 @@ export default async function ClientDetailPage({
                         </span>
                       </td>
                       <td className="py-3 px-5 text-right">
-                        <form action={deleteOrderBound}>
-                          <button
-                            type="submit"
-                            className="text-xs text-gray-400 hover:text-red-600 transition-colors"
-                          >
-                            Delete
-                          </button>
-                        </form>
+                        <DeleteButton action={deleteOrderBound} message="This order and all its payments will be permanently deleted." />
                       </td>
                     </tr>
                   );
