@@ -140,6 +140,86 @@ function RowMenu({ lead, contactAction, deleteAction }: {
   );
 }
 
+function PrintModal({
+  leads,
+  onClose,
+}: {
+  leads: Lead[];
+  onClose: () => void;
+}) {
+  const [checked, setChecked] = useState<Set<number>>(new Set(leads.map((l) => l.id)));
+
+  function toggleOne(id: number) {
+    setChecked((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function doPrint() {
+    const toPrint = leads.filter((l) => checked.has(l.id));
+    const rows = toPrint.map((l, i) =>
+      `<tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${i + 1}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:500">${l.shopNumber || l.name || "-"}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${l.city || "-"}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #eee">${l.phone || "-"}</td>
+      </tr>`
+    ).join("");
+    const html = `<!doctype html><html><head><title>Leads List</title>
+      <style>body{font-family:sans-serif;font-size:13px;margin:20px}table{border-collapse:collapse;width:100%}th{background:#f5f5f5;text-align:left;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.05em}@media print{button{display:none}}</style>
+      </head><body>
+      <h2 style="font-size:16px;font-weight:600;margin-bottom:16px">Leads List (${toPrint.length})</h2>
+      <table><thead><tr><th>#</th><th>Shop</th><th>City</th><th>Phone</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+      <script>window.onload=()=>window.print()<\/script></body></html>`;
+    const win = window.open("", "_blank");
+    if (win) { win.document.write(html); win.document.close(); }
+  }
+
+  const allChecked = checked.size === leads.length;
+  const noneChecked = checked.size === 0;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.4)" }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 className="text-sm font-semibold">Print List — {leads.length} selected</h2>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-700 text-lg leading-none">✕</button>
+        </div>
+        <div className="px-5 py-2 border-b border-gray-50 flex items-center gap-2 text-xs text-gray-500">
+          <button type="button" onClick={() => setChecked(new Set(leads.map(l => l.id)))} className={`px-2.5 py-1 rounded-lg transition-colors ${allChecked ? "bg-black text-white" : "hover:bg-gray-100"}`}>All</button>
+          <button type="button" onClick={() => setChecked(new Set())} className={`px-2.5 py-1 rounded-lg transition-colors ${noneChecked ? "bg-black text-white" : "hover:bg-gray-100"}`}>None</button>
+          <span className="ml-auto">{checked.size} of {leads.length} included</span>
+        </div>
+        <div className="overflow-y-auto flex-1 divide-y divide-gray-50">
+          {leads.map((l) => (
+            <label key={l.id} className="flex items-center gap-3 px-5 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors">
+              <input
+                type="checkbox"
+                checked={checked.has(l.id)}
+                onChange={() => toggleOne(l.id)}
+                className="w-4 h-4 accent-black rounded shrink-0"
+              />
+              <div className="min-w-0">
+                <p className="font-medium text-sm text-gray-900 truncate">{l.shopNumber || l.name || "-"}</p>
+                <p className="text-xs text-gray-400">{l.city || ""}{l.city && l.phone ? " · " : ""}{l.phone || ""}</p>
+              </div>
+            </label>
+          ))}
+        </div>
+        <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">Cancel</button>
+          <button type="button" onClick={doPrint} disabled={noneChecked} className="text-sm px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors disabled:opacity-40">
+            Print
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LeadsTable({
   leads,
   contactAction,
@@ -151,6 +231,7 @@ export default function LeadsTable({
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [copied, setCopied] = useState(false);
+  const [showPrint, setShowPrint] = useState(false);
 
   const allSelected = leads.length > 0 && selected.size === leads.length;
 
@@ -184,16 +265,28 @@ export default function LeadsTable({
 
   return (
     <div className="space-y-3">
+      {showPrint && (
+        <PrintModal leads={selectedLeads} onClose={() => setShowPrint(false)} />
+      )}
       {selected.size > 0 && (
         <div className="flex items-center justify-between bg-black text-white rounded-xl px-4 py-2.5 text-sm">
           <span className="font-medium">{selected.size} selected</span>
-          <button
-            type="button"
-            onClick={copySelected}
-            className="bg-white text-black text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            {copied ? "✓ Copied!" : "Copy Name & Number"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowPrint(true)}
+              className="bg-white/15 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-white/25 transition-colors"
+            >
+              Print
+            </button>
+            <button
+              type="button"
+              onClick={copySelected}
+              className="bg-white text-black text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              {copied ? "✓ Copied!" : "Copy Name & Number"}
+            </button>
+          </div>
         </div>
       )}
 
