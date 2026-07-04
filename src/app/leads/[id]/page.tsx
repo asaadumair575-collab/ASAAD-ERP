@@ -5,6 +5,7 @@ import { markLeadContacted, deleteLead, convertLeadToClient, cancelLead } from "
 import SubmitButton from "@/components/SubmitButton";
 import ConfirmClientModal from "@/components/ConfirmClientModal";
 import DeleteButton from "@/components/DeleteButton";
+import ContactReasonModal from "@/components/ContactReasonModal";
 
 const statusStyles: Record<string, string> = {
   NEW: "bg-gray-100 text-gray-700",
@@ -79,14 +80,7 @@ export default async function LeadDetailPage({
 
       <div className="flex flex-wrap gap-3">
         {lead.status === "NEW" && (
-          <form action={contactBound}>
-            <SubmitButton
-              pendingText="Saving..."
-              className="border border-gray-200 text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Mark Contacted
-            </SubmitButton>
-          </form>
+          <ContactReasonModal action={contactBound} />
         )}
         <Link
           href={`/samples/new?leadId=${lead.id}`}

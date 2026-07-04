@@ -973,9 +973,21 @@ export async function setLeadStatus(id: number, status: string) {
   revalidatePath(`/leads/${id}`);
 }
 
-export async function markLeadContacted(id: number) {
-  await prisma.lead.update({ where: { id }, data: { status: "CONTACTED" } });
+export async function markLeadContacted(id: number, reason?: string) {
+  const lead = await prisma.lead.findUnique({ where: { id } });
+  const existing = lead?.notes?.trim();
+  const notes = reason
+    ? existing
+      ? `${existing}\nContacted: ${reason}`
+      : `Contacted: ${reason}`
+    : existing ?? null;
 
+  await prisma.lead.update({
+    where: { id },
+    data: { status: "CONTACTED", notes },
+  });
+
+  revalidatePath("/leads");
   revalidatePath("/leads/not-contacted");
   revalidatePath(`/leads/${id}`);
   revalidatePath("/leads/contacted");

@@ -88,53 +88,127 @@ function LocationIcon() {
   );
 }
 
+const CONTACT_REASONS = [
+  "Interested",
+  "Not Interested",
+  "Not Working in Balls",
+  "Will Contact Later",
+  "Wrong Number",
+  "No Response",
+  "Others",
+];
+
 function RowMenu({ lead, contactAction, deleteAction }: {
   lead: Lead;
-  contactAction: (id: number) => Promise<void>;
+  contactAction: (id: number, reason?: string) => Promise<void>;
   deleteAction: (id: number) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"menu" | "contact" | "delete">("menu");
+  const [selectedReason, setSelectedReason] = useState("");
+  const [customReason, setCustomReason] = useState("");
+  const [isPending, startTransition] = useTransition();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) closeAll();
     }
     if (open) document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [open]);
 
+  function closeAll() {
+    setOpen(false);
+    setMode("menu");
+    setSelectedReason("");
+    setCustomReason("");
+  }
+
+  function confirmContact() {
+    const reason = selectedReason === "Others" ? customReason.trim() : selectedReason;
+    startTransition(async () => {
+      await contactAction(lead.id, reason || undefined);
+      closeAll();
+    });
+  }
+
+  function confirmDelete() {
+    startTransition(async () => {
+      await deleteAction(lead.id);
+      closeAll();
+    });
+  }
+
   return (
     <div className="relative" ref={ref}>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => { setOpen((v) => !v); setMode("menu"); }}
         className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
       >
         <MoreIcon />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-white border border-gray-200 rounded-xl shadow-lg py-1 text-sm">
-          <Link
-            href={`/leads/${lead.id}`}
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-gray-700 transition-colors"
-          >
-            View Details
-          </Link>
-          {lead.status === "NEW" && (
-            <form action={contactAction.bind(null, lead.id)}>
-              <button type="submit" className="w-full text-left flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-gray-700 transition-colors">
-                Mark Contacted
+        <div className="absolute right-0 top-full mt-1 z-50 w-52 bg-white border border-gray-200 rounded-xl shadow-lg py-1 text-sm">
+          {mode === "menu" && (
+            <>
+              <Link href={`/leads/${lead.id}`} onClick={closeAll} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-gray-700 transition-colors">
+                View Details
+              </Link>
+              {lead.status === "NEW" && (
+                <button type="button" onClick={() => setMode("contact")} className="w-full text-left flex items-center justify-between px-3 py-2 hover:bg-gray-50 text-gray-700 transition-colors">
+                  Mark Contacted
+                  <svg viewBox="0 0 12 12" fill="currentColor" className="w-3 h-3 text-gray-400"><path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>
+                </button>
+              )}
+              <div className="border-t border-gray-100 my-1" />
+              <button type="button" onClick={() => setMode("delete")} className="w-full text-left flex items-center gap-2 px-3 py-2 hover:bg-red-50 text-red-600 transition-colors">
+                Delete
               </button>
-            </form>
+            </>
           )}
-          <div className="border-t border-gray-100 my-1" />
-          <form action={deleteAction.bind(null, lead.id)}>
-            <button type="submit" className="w-full text-left flex items-center gap-2 px-3 py-2 hover:bg-red-50 text-red-600 transition-colors">
-              Delete
-            </button>
-          </form>
+
+          {mode === "contact" && (
+            <div className="px-2 py-2 space-y-1">
+              <div className="flex items-center gap-1 px-1 pb-1 mb-1 border-b border-gray-100">
+                <button type="button" onClick={() => setMode("menu")} className="text-gray-400 hover:text-gray-700 p-0.5">
+                  <svg viewBox="0 0 12 12" fill="none" className="w-3.5 h-3.5"><path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </button>
+                <span className="text-xs font-medium text-gray-500">Contact Result</span>
+              </div>
+              {CONTACT_REASONS.map((r) => (
+                <button key={r} type="button" onClick={() => { setSelectedReason(r); if (r !== "Others") setCustomReason(""); }}
+                  className={`w-full text-left text-xs px-2.5 py-2 rounded-lg transition-colors ${selectedReason === r ? "bg-black text-white" : "hover:bg-gray-50 text-gray-700"}`}
+                >
+                  {r}
+                </button>
+              ))}
+              {selectedReason === "Others" && (
+                <input autoFocus type="text" value={customReason} onChange={(e) => setCustomReason(e.target.value)}
+                  placeholder="Reason likhein..." className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-black mt-1" />
+              )}
+              <button type="button" onClick={confirmContact}
+                disabled={isPending || !selectedReason || (selectedReason === "Others" && !customReason.trim())}
+                className="w-full mt-1 bg-black text-white text-xs font-medium py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-40"
+              >
+                {isPending ? "Saving…" : "Confirm"}
+              </button>
+            </div>
+          )}
+
+          {mode === "delete" && (
+            <div className="px-2 py-2 space-y-2">
+              <p className="text-xs text-gray-500 px-1">Delete this lead?</p>
+              <div className="flex gap-1.5">
+                <button type="button" onClick={() => setMode("menu")} className="flex-1 text-xs border border-gray-200 py-1.5 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button type="button" onClick={confirmDelete} disabled={isPending}
+                  className="flex-1 text-xs bg-red-600 text-white py-1.5 rounded-lg hover:bg-red-700 disabled:opacity-50">
+                  {isPending ? "…" : "Delete"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -227,7 +301,7 @@ export default function LeadsTable({
   deleteAction,
 }: {
   leads: Lead[];
-  contactAction: (id: number) => Promise<void>;
+  contactAction: (id: number, reason?: string) => Promise<void>;
   deleteAction: (id: number) => Promise<void>;
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
