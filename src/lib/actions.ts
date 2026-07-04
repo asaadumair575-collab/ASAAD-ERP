@@ -1008,6 +1008,16 @@ export async function cancelLeadFromSample(id: number, formData: FormData) {
   revalidatePath("/leads/cancelled");
 }
 
+export async function bulkUpdateLeadStatus(ids: number[], status: string) {
+  if (!ids.length) return;
+  await prisma.lead.updateMany({ where: { id: { in: ids } }, data: { status } });
+  revalidatePath("/leads");
+  revalidatePath("/leads/not-contacted");
+  revalidatePath("/leads/contacted");
+  revalidatePath("/leads/sample-sent");
+  revalidatePath("/leads/cancelled");
+}
+
 export async function deleteLead(id: number) {
   await prisma.lead.delete({ where: { id } });
   revalidatePath("/leads/not-contacted");

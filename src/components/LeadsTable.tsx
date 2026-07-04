@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, useTransition } from "react";
 import Link from "next/link";
+import { bulkUpdateLeadStatus } from "@/lib/actions";
 
 type Lead = {
   id: number;
@@ -232,6 +233,17 @@ export default function LeadsTable({
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [copied, setCopied] = useState(false);
   const [showPrint, setShowPrint] = useState(false);
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const statusMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (statusMenuRef.current && !statusMenuRef.current.contains(e.target as Node)) setShowStatusMenu(false);
+    }
+    if (showStatusMenu) document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [showStatusMenu]);
 
   const allSelected = leads.length > 0 && selected.size === leads.length;
 
@@ -263,6 +275,14 @@ export default function LeadsTable({
     window.open(`https://wa.me/${digits}`, "_blank");
   }
 
+  function applyBulkStatus(status: string) {
+    setShowStatusMenu(false);
+    startTransition(async () => {
+      await bulkUpdateLeadStatus(Array.from(selected), status);
+      setSelected(new Set());
+    });
+  }
+
   return (
     <div className="space-y-3">
       {showPrint && (
@@ -272,6 +292,32 @@ export default function LeadsTable({
         <div className="flex items-center justify-between bg-black text-white rounded-xl px-4 py-2.5 text-sm">
           <span className="font-medium">{selected.size} selected</span>
           <div className="flex items-center gap-2">
+            <div className="relative" ref={statusMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowStatusMenu((v) => !v)}
+                disabled={isPending}
+                className="bg-white/15 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-white/25 transition-colors disabled:opacity-50 flex items-center gap-1"
+              >
+                {isPending ? "Updating…" : "Change Status"}
+                <svg viewBox="0 0 12 12" fill="currentColor" className="w-3 h-3"><path d="M6 8L1 3h10z"/></svg>
+              </button>
+              {showStatusMenu && (
+                <div className="absolute right-0 bottom-full mb-1 z-50 w-44 bg-white border border-gray-200 rounded-xl shadow-lg py-1 text-sm">
+                  {Object.entries(statusConfig).map(([value, cfg]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => applyBulkStatus(value)}
+                      className="w-full text-left flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-gray-700 transition-colors"
+                    >
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+                      {cfg.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => setShowPrint(true)}
