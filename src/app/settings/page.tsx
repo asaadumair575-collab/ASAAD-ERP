@@ -78,7 +78,7 @@ export default async function SettingsPage() {
         </SubmitButton>
       </form>
 
-      <div className="border border-gray-200 rounded-2xl p-5 space-y-4">
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 shadow-sm">
         <div>
           <h2 className="text-sm font-semibold">Users</h2>
           <p className="text-sm text-gray-500 mt-1">

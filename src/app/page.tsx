@@ -112,7 +112,7 @@ function StatCard({
 }) {
   return (
     <div
-      className={`rounded-2xl p-5 border ${
+      className={`rounded-2xl p-5 border shadow-sm ${
         dark
           ? "bg-black text-white border-black"
           : "bg-white text-black border-gray-200"

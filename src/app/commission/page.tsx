@@ -75,7 +75,7 @@ export default async function CommissionPage({
 
         <form
           action={setCommissionRate}
-          className="flex flex-wrap gap-3 items-end bg-gray-50 border border-gray-200 rounded-2xl p-5"
+          className="flex flex-wrap gap-3 items-end bg-white border border-gray-200 rounded-2xl p-5 shadow-sm"
         >
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">
@@ -100,7 +100,7 @@ export default async function CommissionPage({
 
         <form
           action={createCommissionOrder}
-          className="flex flex-wrap gap-3 items-end bg-gray-50 border border-gray-200 rounded-2xl p-5"
+          className="flex flex-wrap gap-3 items-end bg-white border border-gray-200 rounded-2xl p-5 shadow-sm"
         >
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">
@@ -154,7 +154,7 @@ export default async function CommissionPage({
 
         <form
           method="GET"
-          className="flex flex-wrap gap-3 items-end bg-gray-50 border border-gray-200 rounded-2xl p-5"
+          className="flex flex-wrap gap-3 items-end bg-white border border-gray-200 rounded-2xl p-5 shadow-sm"
         >
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">From</label>
@@ -183,13 +183,13 @@ export default async function CommissionPage({
         </form>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div className="border border-gray-200 rounded-2xl p-5">
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
             <p className="text-xs text-gray-500 uppercase tracking-wide">
               Orders
             </p>
             <p className="text-2xl font-semibold mt-1">{orders.length}</p>
           </div>
-          <div className="border border-gray-200 rounded-2xl p-5">
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
             <p className="text-xs text-gray-500 uppercase tracking-wide">
               Total Dozens
             </p>

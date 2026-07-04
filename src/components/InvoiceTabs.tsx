@@ -6,23 +6,23 @@ export default function InvoiceTabs({
   active: "pending" | "paid";
 }) {
   return (
-    <div className="flex gap-2 border-b border-gray-200">
+    <div className="flex items-center gap-1">
       <Link
         href="/sales/invoices"
-        className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+        className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
           active === "pending"
-            ? "border-black text-black"
-            : "border-transparent text-gray-500 hover:text-black"
+            ? "bg-black text-white"
+            : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
         }`}
       >
         Pending
       </Link>
       <Link
         href="/sales/invoices/paid"
-        className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+        className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
           active === "paid"
-            ? "border-black text-black"
-            : "border-transparent text-gray-500 hover:text-black"
+            ? "bg-black text-white"
+            : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
         }`}
       >
         Paid

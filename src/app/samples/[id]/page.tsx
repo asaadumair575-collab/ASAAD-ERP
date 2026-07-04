@@ -6,6 +6,8 @@ import {
   convertLeadToClient,
 } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
+import DeleteButton from "@/components/DeleteButton";
+import ConfirmClientModal from "@/components/ConfirmClientModal";
 
 const statusOptions = [
   { value: "PENDING", label: "Pending" },
@@ -39,33 +41,24 @@ export default async function SampleDetailPage({
     <div className="max-w-2xl space-y-8">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight">
             {sample.client?.name ?? sample.lead?.name}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 mt-0.5">
             Sample sent on {sample.dateSent.toISOString().slice(0, 10)}
             {sample.lead && " · Lead — not yet a customer"}
           </p>
         </div>
-        <form action={deleteSampleBound}>
-          <button
-            type="submit"
-            className="text-xs text-gray-400 hover:text-red-600 transition-colors"
-          >
-            Delete
-          </button>
-        </form>
+        <DeleteButton action={deleteSampleBound} message="This sample record will be permanently removed." />
       </div>
 
       {convertBound && (
-        <form action={convertBound}>
-          <SubmitButton
-            pendingText="Confirming..."
-            className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
-          >
-            Confirm as Customer
-          </SubmitButton>
-        </form>
+        <ConfirmClientModal
+          confirmAction={convertBound}
+          defaultName={sample.lead?.name ?? undefined}
+          triggerLabel="Confirm as Customer"
+          triggerClassName="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
+        />
       )}
 
       <div className="bg-white border border-gray-200 rounded-3xl shadow-sm p-6 sm:p-8 space-y-2">

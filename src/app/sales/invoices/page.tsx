@@ -30,7 +30,7 @@ export default async function InvoicesPage() {
         </Link>
       </div>
 
-      <div className="border border-gray-200 rounded-xl p-5 bg-amber-50/60 flex items-center justify-between">
+      <div className="border border-amber-200 rounded-xl p-5 bg-amber-50 flex items-center justify-between shadow-sm">
         <div>
           <p className="text-xs text-amber-700 font-medium uppercase tracking-wide">Total Pending</p>
           <p className="text-2xl font-semibold tracking-tight mt-0.5 tabular-nums">

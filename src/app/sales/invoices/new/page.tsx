@@ -14,8 +14,8 @@ export default async function NewInvoicePage() {
   return (
     <div className="max-w-2xl space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">New Invoice</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-2xl font-semibold tracking-tight">New Invoice</h1>
+        <p className="text-sm text-gray-500 mt-0.5">
           Select a customer, then add products to bill.
         </p>
       </div>

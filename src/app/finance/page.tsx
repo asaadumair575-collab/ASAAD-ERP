@@ -77,7 +77,7 @@ export default async function FinancePage({
 
       <form
         action={setCostPerDozen}
-        className="flex flex-wrap gap-3 items-end bg-gray-50 border border-gray-200 rounded-2xl p-5"
+        className="flex flex-wrap gap-3 items-end bg-white border border-gray-200 rounded-2xl p-5 shadow-sm"
       >
         <div>
           <label className="block text-xs text-gray-500 mb-1.5">
@@ -102,7 +102,7 @@ export default async function FinancePage({
 
       <form
         method="GET"
-        className="flex flex-wrap gap-3 items-end bg-gray-50 border border-gray-200 rounded-2xl p-5"
+        className="flex flex-wrap gap-3 items-end bg-white border border-gray-200 rounded-2xl p-5 shadow-sm"
       >
         <div>
           <label className="block text-xs text-gray-500 mb-1.5">From</label>
@@ -131,19 +131,19 @@ export default async function FinancePage({
       </form>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="border border-gray-200 rounded-2xl p-5">
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide">
             Confirmed Invoices
           </p>
           <p className="text-2xl font-semibold mt-1">{confirmedOrders.length}</p>
         </div>
-        <div className="border border-gray-200 rounded-2xl p-5">
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide">
             On Hold
           </p>
           <p className="text-2xl font-semibold mt-1">{holdOrders.length}</p>
         </div>
-        <div className="border border-gray-200 rounded-2xl p-5">
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide">
             Total Dozens
           </p>
@@ -151,7 +151,7 @@ export default async function FinancePage({
             {totalDozens.toLocaleString(undefined, { maximumFractionDigits: 2 })}
           </p>
         </div>
-        <div className="border border-gray-200 rounded-2xl p-5">
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide">
             Cost (current rate {currentCostPerDozen.toLocaleString()}/dzn)
           </p>
@@ -161,7 +161,7 @@ export default async function FinancePage({
         </div>
       </div>
 
-      <div className="border border-gray-200 rounded-2xl p-6 space-y-2">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-2 shadow-sm">
         <div className="flex justify-between text-sm">
           <span className="text-gray-500">Sales (confirmed only)</span>
           <span className="font-medium">

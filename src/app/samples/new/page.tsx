@@ -30,8 +30,8 @@ export default async function NewSamplePage({
   return (
     <div className="max-w-2xl space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Log a Sample</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-2xl font-semibold tracking-tight">Log a Sample</h1>
+        <p className="text-sm text-gray-500 mt-0.5">
           {lead
             ? `Record a sample sent to lead ${lead.name}.`
             : "Record a sample sent to a customer."}

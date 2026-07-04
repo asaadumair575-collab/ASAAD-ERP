@@ -79,7 +79,7 @@ export default async function NotContactedLeadsPage({
       </div>
 
       <form
-        className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5"
+        className="flex flex-wrap gap-2 items-center"
         method="get"
       >
         <div className="relative flex-1 min-w-[180px]">

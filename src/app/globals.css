@@ -25,7 +25,7 @@
 }
 
 body {
-  background: var(--background);
+  background: #f8f9fa;
   color: var(--foreground);
   font-feature-settings: "rlig" 1, "calt" 1;
 }
@@ -70,6 +70,7 @@ html {
 
 /* ── Tables ─────────────────────────────────────────────── */
 .table-container {
+  background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: var(--radius-2xl);
   overflow-x: auto;
