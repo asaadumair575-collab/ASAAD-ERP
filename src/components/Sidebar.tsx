@@ -40,6 +40,13 @@ const icons = {
       />
     </svg>
   ),
+  users: (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+      <circle cx="8" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M2 17c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M15 8v4M13 10h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
   settings: (
     <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
       <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.5" />
@@ -151,7 +158,7 @@ const icons = {
   ),
 };
 
-export default function Sidebar({ businessName }: { businessName: string }) {
+export default function Sidebar({ businessName, isAdmin = false }: { businessName: string; isAdmin?: boolean }) {
   const pathname = usePathname();
   const isOnClients = pathname.startsWith("/clients");
   const isOnSales = pathname.startsWith("/sales");
@@ -412,12 +419,22 @@ export default function Sidebar({ businessName }: { businessName: string }) {
 
           <NavLink
             href="/settings"
-            active={isActive("/settings")}
+            active={isActive("/settings") && !pathname.startsWith("/settings/users")}
             icon={icons.settings}
             onClick={closeMobile}
           >
             Settings
           </NavLink>
+          {isAdmin && (
+            <NavLink
+              href="/settings/users"
+              active={pathname.startsWith("/settings/users")}
+              icon={icons.users}
+              onClick={closeMobile}
+            >
+              Users
+            </NavLink>
+          )}
         </nav>
 
         <div className="px-3 py-4 border-t border-white/10 space-y-1">

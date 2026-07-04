@@ -1,0 +1,57 @@
+export const MODULES = [
+  { key: "clients",    label: "Clients",          href: "/clients" },
+  { key: "leads",      label: "Leads / CRM",      href: "/leads" },
+  { key: "sales",      label: "Sales & Invoices",  href: "/sales/invoices" },
+  { key: "dispatch",   label: "Dispatch",          href: "/dispatch" },
+  { key: "samples",    label: "Samples",           href: "/samples" },
+  { key: "finance",    label: "Finance",           href: "/finance" },
+  { key: "commission", label: "Commission",        href: "/commission" },
+] as const;
+
+export type ModuleKey = (typeof MODULES)[number]["key"];
+export type AccessLevel = "none" | "view" | "full";
+export type UserPermissions = Record<ModuleKey, AccessLevel>;
+
+export const ALL_MODULE_KEYS: ModuleKey[] = MODULES.map((m) => m.key);
+
+export const EMPTY_PERMISSIONS: UserPermissions = {
+  clients:    "none",
+  leads:      "none",
+  sales:      "none",
+  dispatch:   "none",
+  samples:    "none",
+  finance:    "none",
+  commission: "none",
+};
+
+export const FULL_PERMISSIONS: UserPermissions = {
+  clients:    "full",
+  leads:      "full",
+  sales:      "full",
+  dispatch:   "full",
+  samples:    "full",
+  finance:    "full",
+  commission: "full",
+};
+
+export function parsePermissions(raw: unknown): UserPermissions {
+  const base = { ...EMPTY_PERMISSIONS };
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    const obj = raw as Record<string, unknown>;
+    for (const key of ALL_MODULE_KEYS) {
+      const v = obj[key];
+      if (v === "view" || v === "full") base[key] = v;
+    }
+  }
+  return base;
+}
+
+export function canView(perms: UserPermissions, module: ModuleKey, isAdmin: boolean): boolean {
+  if (isAdmin) return true;
+  return perms[module] === "view" || perms[module] === "full";
+}
+
+export function canManage(perms: UserPermissions, module: ModuleKey, isAdmin: boolean): boolean {
+  if (isAdmin) return true;
+  return perms[module] === "full";
+}

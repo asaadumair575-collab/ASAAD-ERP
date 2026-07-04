@@ -77,4 +77,11 @@ export async function getSessionUsername(): Promise<string | null> {
   return verifySessionToken(token);
 }
 
+export async function getSessionUser() {
+  const username = await getSessionUsername();
+  if (!username) return null;
+  const { prisma } = await import("@/lib/prisma");
+  return prisma.user.findUnique({ where: { username } });
+}
+
 export const SESSION_COOKIE_NAME = SESSION_COOKIE;

@@ -737,33 +737,57 @@ export async function logoutAction() {
 export async function createUser(formData: FormData) {
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const displayName = String(formData.get("displayName") ?? "").trim() || null;
+  const isAdmin = formData.get("isAdmin") === "1";
 
-  if (!username || !password) {
-    throw new Error("Username and password are required");
-  }
-  if (password.length < 6) {
-    throw new Error("Password must be at least 6 characters");
-  }
+  if (!username || !password) throw new Error("Username and password are required");
+  if (password.length < 6) throw new Error("Password must be at least 6 characters");
 
   const existing = await prisma.user.findUnique({ where: { username } });
-  if (existing) {
-    throw new Error("That username is already taken");
-  }
+  if (existing) throw new Error("That username is already taken");
 
   await prisma.user.create({
-    data: { username, passwordHash: hashPassword(password) },
+    data: { username, passwordHash: hashPassword(password), displayName, isAdmin, permissions: {} },
   });
 
   revalidatePath("/settings");
+  revalidatePath("/settings/users");
+  redirect("/settings/users");
+}
+
+export async function updateUser(id: number, formData: FormData) {
+  const displayName = String(formData.get("displayName") ?? "").trim() || null;
+  const isAdmin = formData.get("isAdmin") === "1";
+
+  const { MODULES } = await import("@/lib/permissions");
+  const permissions: Record<string, string> = {};
+  for (const m of MODULES) {
+    const val = String(formData.get(`perm_${m.key}`) ?? "none");
+    permissions[m.key] = ["none", "view", "full"].includes(val) ? val : "none";
+  }
+
+  await prisma.user.update({
+    where: { id },
+    data: { displayName, isAdmin, permissions },
+  });
+
+  revalidatePath("/settings/users");
+  revalidatePath(`/settings/users/${id}`);
+}
+
+export async function changeUserPassword(id: number, formData: FormData) {
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 6) throw new Error("Password must be at least 6 characters");
+  await prisma.user.update({ where: { id }, data: { passwordHash: hashPassword(password) } });
+  revalidatePath(`/settings/users/${id}`);
 }
 
 export async function deleteUser(id: number) {
   const count = await prisma.user.count();
-  if (count <= 1) {
-    throw new Error("Cannot delete the last remaining user");
-  }
+  if (count <= 1) throw new Error("Cannot delete the last remaining user");
   await prisma.user.delete({ where: { id } });
-  revalidatePath("/settings");
+  revalidatePath("/settings/users");
+  redirect("/settings/users");
 }
 
 export async function resetAllData(formData: FormData) {

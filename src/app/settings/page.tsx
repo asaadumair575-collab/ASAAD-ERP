@@ -1,15 +1,15 @@
 import { prisma } from "@/lib/prisma";
-import {
-  saveBusinessProfile,
-  resetAllData,
-  createUser,
-  deleteUser,
-} from "@/lib/actions";
+import { saveBusinessProfile, resetAllData } from "@/lib/actions";
+import { getSessionUser } from "@/lib/auth";
 import SubmitButton from "@/components/SubmitButton";
+import Link from "next/link";
 
 export default async function SettingsPage() {
-  const profile = await prisma.businessProfile.findFirst();
-  const users = await prisma.user.findMany({ orderBy: { createdAt: "asc" } });
+  const [profile, me, userCount] = await Promise.all([
+    prisma.businessProfile.findFirst(),
+    getSessionUser(),
+    prisma.user.count(),
+  ]);
 
   return (
     <div className="max-w-md space-y-8">
@@ -63,9 +63,7 @@ export default async function SettingsPage() {
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1.5">
-            Address
-          </label>
+          <label className="block text-xs text-gray-500 mb-1.5">Address</label>
           <input
             type="text"
             name="address"
@@ -78,70 +76,22 @@ export default async function SettingsPage() {
         </SubmitButton>
       </form>
 
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 shadow-sm">
-        <div>
-          <h2 className="text-sm font-semibold">Users</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            People who can log in to this app.
-          </p>
-        </div>
-
-        <ul className="divide-y divide-gray-100">
-          {users.map((u) => {
-            const deleteUserBound = deleteUser.bind(null, u.id);
-            return (
-              <li
-                key={u.id}
-                className="flex items-center justify-between py-2 text-sm"
-              >
-                <span>{u.username}</span>
-                {users.length > 1 && (
-                  <form action={deleteUserBound}>
-                    <button
-                      type="submit"
-                      className="text-xs text-gray-400 hover:text-red-600 transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </form>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-
-        <form action={createUser} className="flex flex-wrap gap-3 items-end">
+      {me?.isAdmin && (
+        <Link
+          href="/settings/users"
+          className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:bg-gray-50 transition-colors group"
+        >
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">
-              Username
-            </label>
-            <input
-              type="text"
-              name="username"
-              required
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-black"
-            />
+            <p className="text-sm font-semibold">Users</p>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {userCount} user{userCount === 1 ? "" : "s"} · Manage access and permissions
+            </p>
           </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1.5">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              required
-              minLength={6}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-black"
-            />
-          </div>
-          <SubmitButton
-            pendingText="Creating..."
-            className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            Create User
-          </SubmitButton>
-        </form>
-      </div>
+          <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5 text-gray-300 group-hover:text-gray-400 transition-colors">
+            <path d="M7 4l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </Link>
+      )}
 
       <div className="border border-red-200 bg-red-50 rounded-2xl p-5 space-y-3">
         <div>
