@@ -36,8 +36,8 @@ export default async function EditClientPage({
           </svg>
         </div>
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Edit Customer</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Edit Customer</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
             Update {client.name}&apos;s details below.
           </p>
         </div>
