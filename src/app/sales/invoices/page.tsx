@@ -5,11 +5,14 @@ import InvoiceTabs from "@/components/InvoiceTabs";
 import DeleteButton from "@/components/DeleteButton";
 
 export default async function InvoicesPage() {
-  const orders = await prisma.order.findMany({
-    where: { confirmed: false },
-    include: { client: true },
-    orderBy: { date: "desc" },
-  });
+  const [orders, advanceCount] = await Promise.all([
+    prisma.order.findMany({
+      where: { confirmed: false },
+      include: { client: true },
+      orderBy: { date: "desc" },
+    }),
+    prisma.order.count({ where: { confirmed: true, paymentStatus: "PARTIAL" } }),
+  ]);
 
   const pendingAmount = orders.reduce((sum, o) => sum + o.saleAmount, 0);
 
@@ -42,7 +45,7 @@ export default async function InvoicesPage() {
         </svg>
       </div>
 
-      <InvoiceTabs active="pending" />
+      <InvoiceTabs active="pending" advanceCount={advanceCount} />
 
       {orders.length === 0 ? (
         <div className="border border-gray-200 rounded-2xl p-12 text-center">
