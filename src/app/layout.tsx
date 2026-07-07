@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import AppShell from "@/components/AppShell";
 import { getBusinessProfile } from "@/lib/businessProfile";
 import { getSessionUser } from "@/lib/auth";
+import { parsePermissions } from "@/lib/permissions";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -67,6 +68,7 @@ export default async function RootLayout({
           businessName={profile?.name ?? "Trader CRM"}
           isAdmin={me?.isAdmin ?? false}
           username={me?.displayName ?? me?.username ?? null}
+          permissions={parsePermissions(me?.permissions)}
         >
           {children}
         </AppShell>

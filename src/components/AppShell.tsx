@@ -3,17 +3,20 @@
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
+import type { UserPermissions } from "@/lib/permissions";
 
 export default function AppShell({
   children,
   businessName,
   isAdmin,
   username,
+  permissions,
 }: {
   children: React.ReactNode;
   businessName: string;
   isAdmin: boolean;
   username: string | null;
+  permissions?: UserPermissions;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -24,6 +27,7 @@ export default function AppShell({
         isAdmin={isAdmin}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
+        permissions={permissions}
       />
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
         <TopHeader

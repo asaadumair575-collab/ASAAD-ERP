@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import InstallPwaButton from "@/components/InstallPwaButton";
+import { canView, type UserPermissions, EMPTY_PERMISSIONS } from "@/lib/permissions";
 
 const icons = {
   dashboard: (
@@ -87,11 +88,13 @@ export default function Sidebar({
   isAdmin = false,
   mobileOpen,
   onMobileClose,
+  permissions = EMPTY_PERMISSIONS,
 }: {
   businessName: string;
   isAdmin?: boolean;
   mobileOpen?: boolean;
   onMobileClose?: () => void;
+  permissions?: UserPermissions;
 }) {
   const pathname = usePathname();
   const isOnClients = pathname.startsWith("/clients");
@@ -154,149 +157,127 @@ export default function Sidebar({
           Dashboard
         </NavLink>
 
-        <SectionLabel>Operations</SectionLabel>
+        {/* Operations section — only show if user has access to at least one */}
+        {(canView(permissions, "clients", isAdmin) || canView(permissions, "sales", isAdmin) || canView(permissions, "finance", isAdmin)) && (
+          <SectionLabel>Operations</SectionLabel>
+        )}
 
         {/* Customers */}
-        <button
-          type="button"
-          onClick={() => toggleSection("clients")}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-            isOnClients
-              ? "bg-zinc-900/8 text-zinc-900 font-medium"
-              : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-          }`}
-        >
-          <span className="flex items-center gap-2.5">
-            {icons.clients}
-            Customers
-          </span>
-          <span className={`transition-transform text-gray-400 ${openSection === "clients" ? "rotate-90" : ""}`}>
-            {icons.chevron}
-          </span>
-        </button>
-        {openSection === "clients" && (
-          <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
-            <NavLink href="/clients" active={pathname === "/clients"} compact onClick={closeMobile}>
-              All Customers
-            </NavLink>
-            <NavLink href="/clients/new" active={pathname === "/clients/new"} icon={icons.plus} compact onClick={closeMobile}>
-              Add Customer
-            </NavLink>
-          </div>
+        {canView(permissions, "clients", isAdmin) && (
+          <>
+            <button
+              type="button"
+              onClick={() => toggleSection("clients")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                isOnClients ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              }`}
+            >
+              <span className="flex items-center gap-2.5">{icons.clients} Customers</span>
+              <span className={`transition-transform text-gray-400 ${openSection === "clients" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+            </button>
+            {openSection === "clients" && (
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+                <NavLink href="/clients" active={pathname === "/clients"} compact onClick={closeMobile}>All Customers</NavLink>
+                <NavLink href="/clients/new" active={pathname === "/clients/new"} icon={icons.plus} compact onClick={closeMobile}>Add Customer</NavLink>
+              </div>
+            )}
+          </>
         )}
 
         {/* Sales */}
-        <button
-          type="button"
-          onClick={() => toggleSection("sales")}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-            isOnSales
-              ? "bg-zinc-900/8 text-zinc-900 font-medium"
-              : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-          }`}
-        >
-          <span className="flex items-center gap-2.5">
-            {icons.sales}
-            Sales
-          </span>
-          <span className={`transition-transform text-gray-400 ${openSection === "sales" ? "rotate-90" : ""}`}>
-            {icons.chevron}
-          </span>
-        </button>
-        {openSection === "sales" && (
-          <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
-            <NavLink href="/sales/invoices" active={pathname.startsWith("/sales/invoices")} compact onClick={closeMobile}>
-              Invoicing
-            </NavLink>
-            <NavLink href="/sales/products" active={pathname.startsWith("/sales/products")} compact onClick={closeMobile}>
-              Products
-            </NavLink>
-          </div>
+        {canView(permissions, "sales", isAdmin) && (
+          <>
+            <button
+              type="button"
+              onClick={() => toggleSection("sales")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                isOnSales ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              }`}
+            >
+              <span className="flex items-center gap-2.5">{icons.sales} Sales</span>
+              <span className={`transition-transform text-gray-400 ${openSection === "sales" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+            </button>
+            {openSection === "sales" && (
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+                <NavLink href="/sales/invoices" active={pathname.startsWith("/sales/invoices")} compact onClick={closeMobile}>Invoicing</NavLink>
+                <NavLink href="/sales/products" active={pathname.startsWith("/sales/products")} compact onClick={closeMobile}>Products</NavLink>
+              </div>
+            )}
+          </>
         )}
 
         {/* Finance */}
-        <button
-          type="button"
-          onClick={() => toggleSection("finance")}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-            isOnFinance
-              ? "bg-zinc-900/8 text-zinc-900 font-medium"
-              : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-          }`}
-        >
-          <span className="flex items-center gap-2.5">
-            {icons.finance}
-            Finance
-          </span>
-          <span className={`transition-transform text-gray-400 ${openSection === "finance" ? "rotate-90" : ""}`}>
-            {icons.chevron}
-          </span>
-        </button>
-        {openSection === "finance" && (
-          <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
-            <NavLink href="/finance" active={pathname.startsWith("/finance")} compact onClick={closeMobile}>
-              My Business
-            </NavLink>
-            <NavLink href="/commission" active={pathname.startsWith("/commission")} compact onClick={closeMobile}>
-              Commission
-            </NavLink>
-          </div>
+        {canView(permissions, "finance", isAdmin) && (
+          <>
+            <button
+              type="button"
+              onClick={() => toggleSection("finance")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                isOnFinance ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              }`}
+            >
+              <span className="flex items-center gap-2.5">{icons.finance} Finance</span>
+              <span className={`transition-transform text-gray-400 ${openSection === "finance" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+            </button>
+            {openSection === "finance" && (
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+                <NavLink href="/finance" active={pathname.startsWith("/finance")} compact onClick={closeMobile}>My Business</NavLink>
+                {canView(permissions, "commission", isAdmin) && (
+                  <NavLink href="/commission" active={pathname.startsWith("/commission")} compact onClick={closeMobile}>Commission</NavLink>
+                )}
+              </div>
+            )}
+          </>
         )}
 
-        <SectionLabel>CRM</SectionLabel>
+        {/* CRM section */}
+        {(canView(permissions, "leads", isAdmin) || canView(permissions, "dispatch", isAdmin)) && (
+          <SectionLabel>CRM</SectionLabel>
+        )}
 
         {/* Leads */}
-        <button
-          type="button"
-          onClick={() => toggleSection("leads")}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-            isOnLeads
-              ? "bg-zinc-900/8 text-zinc-900 font-medium"
-              : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-          }`}
-        >
-          <span className="flex items-center gap-2.5">
-            {icons.leads}
-            Leads
-          </span>
-          <span className={`transition-transform text-gray-400 ${openSection === "leads" ? "rotate-90" : ""}`}>
-            {icons.chevron}
-          </span>
-        </button>
-        {openSection === "leads" && (
-          <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
-            <NavLink href="/leads" active={pathname === "/leads"} compact onClick={closeMobile}>
-              All Shops
-            </NavLink>
-            <NavLink href="/leads/not-contacted" active={pathname.startsWith("/leads/not-contacted")} compact onClick={closeMobile}>
-              Not Contacted
-            </NavLink>
-            <NavLink href="/leads/contacted" active={pathname.startsWith("/leads/contacted")} compact onClick={closeMobile}>
-              Contacted
-            </NavLink>
-            <NavLink href="/leads/sample-sent" active={pathname.startsWith("/leads/sample-sent")} compact onClick={closeMobile}>
-              Samples
-            </NavLink>
-            <NavLink href="/leads/new" active={pathname === "/leads/new"} icon={icons.plus} compact onClick={closeMobile}>
-              Add Shop
-            </NavLink>
-          </div>
+        {canView(permissions, "leads", isAdmin) && (
+          <>
+            <button
+              type="button"
+              onClick={() => toggleSection("leads")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                isOnLeads ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              }`}
+            >
+              <span className="flex items-center gap-2.5">{icons.leads} Leads</span>
+              <span className={`transition-transform text-gray-400 ${openSection === "leads" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+            </button>
+            {openSection === "leads" && (
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+                <NavLink href="/leads" active={pathname === "/leads"} compact onClick={closeMobile}>All Shops</NavLink>
+                <NavLink href="/leads/not-contacted" active={pathname.startsWith("/leads/not-contacted")} compact onClick={closeMobile}>Not Contacted</NavLink>
+                <NavLink href="/leads/contacted" active={pathname.startsWith("/leads/contacted")} compact onClick={closeMobile}>Contacted</NavLink>
+                <NavLink href="/leads/sample-sent" active={pathname.startsWith("/leads/sample-sent")} compact onClick={closeMobile}>Samples</NavLink>
+                <NavLink href="/leads/new" active={pathname === "/leads/new"} icon={icons.plus} compact onClick={closeMobile}>Add Shop</NavLink>
+              </div>
+            )}
+          </>
         )}
 
-        <NavLink href="/dispatch" active={isActive("/dispatch")} icon={icons.dispatch} onClick={closeMobile}>
-          Dispatch
-        </NavLink>
+        {canView(permissions, "dispatch", isAdmin) && (
+          <NavLink href="/dispatch" active={isActive("/dispatch")} icon={icons.dispatch} onClick={closeMobile}>
+            Dispatch
+          </NavLink>
+        )}
 
-        <SectionLabel>Admin</SectionLabel>
+        {isAdmin && <SectionLabel>Admin</SectionLabel>}
 
-        <NavLink
-          href="/settings"
-          active={isActive("/settings") && !pathname.startsWith("/settings/users")}
-          icon={icons.settings}
-          onClick={closeMobile}
-        >
-          Settings
-        </NavLink>
+        {isAdmin && (
+          <NavLink
+            href="/settings"
+            active={isActive("/settings") && !pathname.startsWith("/settings/users")}
+            icon={icons.settings}
+            onClick={closeMobile}
+          >
+            Settings
+          </NavLink>
+        )}
         {isAdmin && (
           <NavLink
             href="/settings/users"

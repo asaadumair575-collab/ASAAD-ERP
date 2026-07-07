@@ -17,7 +17,12 @@ import {
   type LeadStatusData,
 } from "@/components/DashboardCharts";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const [clients, leads, orders] = await Promise.all([
     prisma.client.findMany({
       include: { orders: { include: { payments: true } } },
@@ -123,6 +128,13 @@ export default async function DashboardPage() {
   return (
     <AmountVisibilityProvider>
       <div className="space-y-8">
+        {/* Access denied banner */}
+        {error === "access" && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+            You don't have permission to access that page.
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
