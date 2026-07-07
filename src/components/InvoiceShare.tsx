@@ -7,6 +7,7 @@ type PaymentEntry = {
   amount: number;
   date: string;
   method: string;
+  note: string | null;
   screenshot: string | null;
 };
 
@@ -131,11 +132,16 @@ export default function InvoiceShare({
               </p>
               <div className="space-y-1">
                 {payments.map((p) => (
-                  <div key={p.id} className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500">
-                      {p.date.slice(0, 10)}
-                    </span>
-                    <div className="flex items-center gap-3">
+                  <div key={p.id} className="flex justify-between items-start text-sm py-1 border-b border-gray-50 last:border-0">
+                    <div>
+                      <span className="text-gray-500">{p.date.slice(0, 10)}</span>
+                      {p.note && (
+                        <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                          {p.note}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
                       <span className="text-xs text-gray-400">
                         {p.method === "CASH" ? "Cash" : "Bank Transfer"}
                       </span>
@@ -305,7 +311,7 @@ function RecordPaymentForm({
       <div className="flex flex-wrap gap-3 items-end">
         <div>
           <label className="block text-xs text-gray-500 mb-1.5">
-            Payment Amount
+            Amount Received
           </label>
           <input
             type="number"
@@ -313,13 +319,24 @@ function RecordPaymentForm({
             name="amount"
             defaultValue={balanceDue}
             required
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-black"
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-black"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1.5">
+            Note <span className="text-gray-400">(optional)</span>
+          </label>
+          <input
+            type="text"
+            name="note"
+            placeholder="e.g. 1st advance, final payment"
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-black"
           />
         </div>
         {paymentMethod === "BANK_TRANSFER" && (
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">
-              Payment Screenshot
+              Screenshot
             </label>
             <input
               type="file"

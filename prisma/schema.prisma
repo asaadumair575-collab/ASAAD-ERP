@@ -53,6 +53,7 @@ model Payment {
   orderId    Int
   amount     Float
   method     String   @default("BANK_TRANSFER")
+  note       String?
   screenshot String?  @db.Text
   date       DateTime @default(now())
   createdAt  DateTime @default(now())

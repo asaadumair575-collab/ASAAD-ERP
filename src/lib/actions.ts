@@ -479,6 +479,7 @@ export async function recordPayment(
   }
 
   const paymentMethod = String(formData.get("paymentMethod") ?? "BANK_TRANSFER");
+  const note = String(formData.get("note") ?? "").trim() || null;
 
   const screenshotFile = formData.get("screenshot");
   let screenshot: string | null = null;
@@ -498,7 +499,7 @@ export async function recordPayment(
         : "UNPAID";
 
   await prisma.payment.create({
-    data: { orderId, amount, method: paymentMethod, screenshot },
+    data: { orderId, amount, method: paymentMethod, note, screenshot },
   });
   await prisma.order.update({
     where: { id: orderId },

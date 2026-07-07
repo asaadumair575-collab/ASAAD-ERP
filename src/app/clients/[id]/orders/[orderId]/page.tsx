@@ -71,6 +71,7 @@ export default async function InvoicePage({
           amount: p.amount,
           date: p.date.toISOString(),
           method: p.method,
+          note: p.note,
           screenshot: p.screenshot,
         }))}
         confirmed={order.confirmed}
