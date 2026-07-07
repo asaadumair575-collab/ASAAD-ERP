@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 
 type PaymentEntry = {
   id: number;
@@ -179,9 +179,16 @@ function ConfirmOrderForm({
   const [paymentMethod, setPaymentMethod] = useState<"BANK_TRANSFER" | "CASH">(
     "BANK_TRANSFER"
   );
+  const [pending, startTransition] = useTransition();
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransition(() => action(formData));
+  }
 
   return (
-    <form action={action} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-3">
       <div className="flex flex-wrap gap-4 text-sm">
         <label className="flex items-center gap-2">
           <input
@@ -264,9 +271,10 @@ function ConfirmOrderForm({
 
       <button
         type="submit"
-        className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+        disabled={pending}
+        className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        Confirm Order
+        {pending ? "Confirming…" : "Confirm Order"}
       </button>
     </form>
   );
@@ -282,9 +290,16 @@ function RecordPaymentForm({
   const [paymentMethod, setPaymentMethod] = useState<"BANK_TRANSFER" | "CASH">(
     "BANK_TRANSFER"
   );
+  const [pending, startTransition] = useTransition();
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransition(() => action(formData));
+  }
 
   return (
-    <form action={action} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-3">
       <div className="flex flex-wrap gap-4 text-sm">
         <label className="flex items-center gap-2">
           <input
@@ -349,9 +364,10 @@ function RecordPaymentForm({
         )}
         <button
           type="submit"
-          className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+          disabled={pending}
+          className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          Record Payment
+          {pending ? "Recording…" : "Record Payment"}
         </button>
       </div>
     </form>
