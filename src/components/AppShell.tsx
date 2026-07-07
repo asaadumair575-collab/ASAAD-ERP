@@ -9,13 +9,11 @@ export default function AppShell({
   businessName,
   isAdmin,
   username,
-  unreadMessages = 0,
 }: {
   children: React.ReactNode;
   businessName: string;
   isAdmin: boolean;
   username: string | null;
-  unreadMessages?: number;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -26,7 +24,6 @@ export default function AppShell({
         isAdmin={isAdmin}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
-        unreadMessages={unreadMessages}
       />
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
         <TopHeader

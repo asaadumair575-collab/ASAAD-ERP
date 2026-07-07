@@ -80,13 +80,6 @@ const icons = {
       <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
-  messages: (
-    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 shrink-0">
-      <path d="M2.5 4.5h15a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z"
-        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M2.5 5.5 10 11l7.5-5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  ),
 };
 
 export default function Sidebar({
@@ -94,13 +87,11 @@ export default function Sidebar({
   isAdmin = false,
   mobileOpen,
   onMobileClose,
-  unreadMessages = 0,
 }: {
   businessName: string;
   isAdmin?: boolean;
   mobileOpen?: boolean;
   onMobileClose?: () => void;
-  unreadMessages?: number;
 }) {
   const pathname = usePathname();
   const isOnClients = pathname.startsWith("/clients");
@@ -295,29 +286,6 @@ export default function Sidebar({
         <NavLink href="/dispatch" active={isActive("/dispatch")} icon={icons.dispatch} onClick={closeMobile}>
           Dispatch
         </NavLink>
-
-        {/* Messages */}
-        <Link
-          href="/messages"
-          onClick={closeMobile}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-            pathname.startsWith("/messages")
-              ? "bg-zinc-900 text-white font-medium"
-              : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-          }`}
-        >
-          <span className="flex items-center gap-2.5">
-            {icons.messages}
-            Messages
-          </span>
-          {unreadMessages > 0 && (
-            <span className={`min-w-[18px] h-[18px] text-[10px] font-semibold rounded-full flex items-center justify-center px-1 ${
-              pathname.startsWith("/messages") ? "bg-white text-zinc-900" : "bg-zinc-900 text-white"
-            }`}>
-              {unreadMessages > 99 ? "99+" : unreadMessages}
-            </span>
-          )}
-        </Link>
 
         <SectionLabel>Admin</SectionLabel>
 
