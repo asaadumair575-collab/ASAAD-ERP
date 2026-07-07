@@ -37,7 +37,8 @@ export default async function SampleSentLeadsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Samples</h1>
           <p className="text-sm text-gray-500 mt-0.5">
@@ -46,9 +47,9 @@ export default async function SampleSentLeadsPage({
         </div>
       </div>
 
-      {/* Manual sample entry form */}
+      {/* Add Sample Entry */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
-        <h2 className="text-sm font-semibold">Add Sample Entry</h2>
+        <h2 className="text-sm font-semibold text-gray-800">Add Sample Entry</h2>
         <form action={createLeadSample} className="flex flex-wrap gap-3 items-end">
           <div className="flex-1 min-w-[220px]">
             <label className="block text-xs text-gray-500 mb-1.5">Lead / Shop</label>
@@ -61,7 +62,7 @@ export default async function SampleSentLeadsPage({
               name="description"
               required
               placeholder="e.g. Cotton Balls 100g"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-black transition-colors"
             />
           </div>
           <div>
@@ -70,7 +71,7 @@ export default async function SampleSentLeadsPage({
               type="date"
               name="dateSent"
               defaultValue={today}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-black transition-colors"
             />
           </div>
           <SubmitButton className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 transition-colors">
@@ -82,8 +83,9 @@ export default async function SampleSentLeadsPage({
         )}
       </div>
 
+      {/* Table */}
       {leads.length === 0 ? (
-        <div className="border border-gray-200 rounded-2xl p-12 text-center">
+        <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
           <p className="text-gray-400 text-sm">No samples sent yet.</p>
         </div>
       ) : (
@@ -133,20 +135,21 @@ export default async function SampleSentLeadsPage({
         </div>
       )}
 
+      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm text-gray-500">
           <span>Page {currentPage} of {totalPages}</span>
           <div className="flex gap-2">
             {currentPage > 1 && (
               <Link href={{ pathname: "/leads/sample-sent", query: { page: currentPage - 1 } }}
-                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                className="border border-gray-200 bg-white px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
                 ← Previous
               </Link>
             )}
             {currentPage < totalPages && (
               <Link href={{ pathname: "/leads/sample-sent", query: { page: currentPage + 1 } }}
-                className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-                Next 30 →
+                className="border border-gray-200 bg-white px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+                Next →
               </Link>
             )}
           </div>
