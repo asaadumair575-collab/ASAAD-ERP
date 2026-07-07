@@ -5,6 +5,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import ConfirmClientModal from "@/components/ConfirmClientModal";
 import DeleteButton from "@/components/DeleteButton";
 import SubmitButton from "@/components/SubmitButton";
+import LeadSearchSelect from "@/components/LeadSearchSelect";
 
 const PAGE_SIZE = 30;
 
@@ -49,20 +50,9 @@ export default async function SampleSentLeadsPage({
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
         <h2 className="text-sm font-semibold">Add Sample Entry</h2>
         <form action={createLeadSample} className="flex flex-wrap gap-3 items-end">
-          <div className="flex-1 min-w-[180px]">
+          <div className="flex-1 min-w-[220px]">
             <label className="block text-xs text-gray-500 mb-1.5">Lead / Shop</label>
-            <select
-              name="leadId"
-              required
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-            >
-              <option value="">Select a shop…</option>
-              {contactedLeads.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.shopNumber}{l.name ? ` — ${l.name}` : ""}{l.city ? ` (${l.city})` : ""}
-                </option>
-              ))}
-            </select>
+            <LeadSearchSelect leads={contactedLeads} />
           </div>
           <div className="flex-1 min-w-[200px]">
             <label className="block text-xs text-gray-500 mb-1.5">Sample Description</label>
