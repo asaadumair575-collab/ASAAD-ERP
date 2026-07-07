@@ -700,6 +700,26 @@ export async function createSample(formData: FormData) {
   redirect("/samples");
 }
 
+export async function createLeadSample(formData: FormData) {
+  "use server";
+  const leadIdRaw = String(formData.get("leadId") ?? "").trim();
+  const leadId = leadIdRaw ? parseInt(leadIdRaw, 10) : null;
+  const description = String(formData.get("description") ?? "").trim();
+  const dateRaw = String(formData.get("dateSent") ?? "");
+  const dateSent = dateRaw ? new Date(dateRaw) : new Date();
+
+  if (!leadId || Number.isNaN(leadId)) throw new Error("Select a lead");
+  if (!description) throw new Error("Description is required");
+
+  await prisma.sample.create({ data: { leadId, description, dateSent } });
+  await prisma.lead.update({ where: { id: leadId }, data: { status: "SAMPLE_SENT" } });
+
+  revalidatePath("/leads/sample-sent");
+  revalidatePath("/leads/contacted");
+  revalidatePath("/samples");
+  redirect("/leads/sample-sent");
+}
+
 export async function recordSampleResponse(id: number, formData: FormData) {
   const status = String(formData.get("status") ?? "PENDING");
   const response = String(formData.get("response") ?? "").trim() || null;

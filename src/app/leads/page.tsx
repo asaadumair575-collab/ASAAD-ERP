@@ -5,14 +5,6 @@ import LeadsTable from "@/components/LeadsTable";
 
 const PAGE_SIZE = 30;
 
-const TABS = [
-  { status: "",           label: "All" },
-  { status: "NEW",        label: "Not Contacted" },
-  { status: "CONTACTED",  label: "Contacted" },
-  { status: "SAMPLE_SENT",label: "Sample Sent" },
-  { status: "CANCELLED",  label: "Cancelled" },
-];
-
 const STATUS_LABELS: Record<string, string> = {
   NEW: "Not Contacted",
   CONTACTED: "Contacted",
@@ -52,7 +44,7 @@ export default async function LeadsPage({
       : {}),
   };
 
-  const [totalCount, leads, allLeadsForCities, tabCounts, totalLeads] = await Promise.all([
+  const [totalCount, leads, allLeadsForCities] = await Promise.all([
     prisma.lead.count({ where }),
     prisma.lead.findMany({
       where,
@@ -61,14 +53,9 @@ export default async function LeadsPage({
       take: PAGE_SIZE,
     }),
     prisma.lead.findMany({ select: { city: true }, distinct: ["city"] }),
-    prisma.lead.groupBy({ by: ["status"], _count: true }),
-    prisma.lead.count(),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-
-  const countByStatus: Record<string, number> = {};
-  for (const row of tabCounts) countByStatus[row.status] = row._count;
 
   const citySet = new Set<string>();
   for (const { city: c } of allLeadsForCities) {
@@ -84,7 +71,7 @@ export default async function LeadsPage({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {totalLeads.toLocaleString()} lead{totalLeads === 1 ? "" : "s"} in your pipeline
+            {totalCount.toLocaleString()} lead{totalCount === 1 ? "" : "s"} in your pipeline
           </p>
         </div>
         <Link
@@ -96,30 +83,6 @@ export default async function LeadsPage({
           </svg>
           Add Lead
         </Link>
-      </div>
-
-      {/* Status tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
-        {TABS.map((tab) => {
-          const count = tab.status === "" ? totalLeads : (countByStatus[tab.status] ?? 0);
-          const isActive = (status ?? "") === tab.status;
-          return (
-            <Link
-              key={tab.status}
-              href={{ pathname: "/leads", query: { ...(tab.status ? { status: tab.status } : {}), ...(q ? { q } : {}), ...(city ? { city } : {}) } }}
-              className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-black text-white"
-                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-              }`}
-            >
-              {tab.label}
-              <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>
-                {count.toLocaleString()}
-              </span>
-            </Link>
-          );
-        })}
       </div>
 
       {/* Search + city filter */}

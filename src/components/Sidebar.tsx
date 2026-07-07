@@ -286,9 +286,6 @@ export default function Sidebar({
         <NavLink href="/dispatch" active={isActive("/dispatch")} icon={icons.dispatch} onClick={closeMobile}>
           Dispatch
         </NavLink>
-        <NavLink href="/samples" active={isActive("/samples")} icon={icons.samples} onClick={closeMobile}>
-          Samples
-        </NavLink>
 
         <SectionLabel>Admin</SectionLabel>
 

@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { convertLeadToClient, deleteLead } from "@/lib/actions";
+import { convertLeadToClient, deleteLead, createLeadSample } from "@/lib/actions";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import ConfirmClientModal from "@/components/ConfirmClientModal";
 import DeleteButton from "@/components/DeleteButton";
+import SubmitButton from "@/components/SubmitButton";
 
 const PAGE_SIZE = 30;
 
@@ -15,28 +16,81 @@ export default async function SampleSentLeadsPage({
   const { page } = await searchParams;
   const currentPage = Math.max(1, Number(page) || 1);
 
-  const totalCount = await prisma.lead.count({ where: { status: "SAMPLE_SENT" } });
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const [totalCount, leads, contactedLeads] = await Promise.all([
+    prisma.lead.count({ where: { status: "SAMPLE_SENT" } }),
+    prisma.lead.findMany({
+      where: { status: "SAMPLE_SENT" },
+      include: { samples: { orderBy: { dateSent: "desc" }, take: 1 } },
+      orderBy: { createdAt: "desc" },
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.lead.findMany({
+      where: { status: "CONTACTED" },
+      select: { id: true, shopNumber: true, name: true, city: true },
+      orderBy: { shopNumber: "asc" },
+    }),
+  ]);
 
-  const leads = await prisma.lead.findMany({
-    where: { status: "SAMPLE_SENT" },
-    orderBy: { createdAt: "desc" },
-    skip: (currentPage - 1) * PAGE_SIZE,
-    take: PAGE_SIZE,
-  });
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Sample Sent</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Samples</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {totalCount} shop{totalCount === 1 ? "" : "s"} waiting to be confirmed
+            {totalCount} shop{totalCount === 1 ? "" : "s"} with sample sent
           </p>
         </div>
-        <Link href="/leads/contacted" className="text-sm font-medium text-gray-500 hover:text-black transition-colors">
-          ← Contacted
-        </Link>
+      </div>
+
+      {/* Manual sample entry form */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
+        <h2 className="text-sm font-semibold">Add Sample Entry</h2>
+        <form action={createLeadSample} className="flex flex-wrap gap-3 items-end">
+          <div className="flex-1 min-w-[180px]">
+            <label className="block text-xs text-gray-500 mb-1.5">Lead / Shop</label>
+            <select
+              name="leadId"
+              required
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+            >
+              <option value="">Select a contacted shop…</option>
+              {contactedLeads.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.shopNumber}{l.name ? ` — ${l.name}` : ""}{l.city ? ` (${l.city})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-xs text-gray-500 mb-1.5">Sample Description</label>
+            <input
+              type="text"
+              name="description"
+              required
+              placeholder="e.g. Cotton Balls 100g"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">Date Sent</label>
+            <input
+              type="date"
+              name="dateSent"
+              defaultValue={today}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+            />
+          </div>
+          <SubmitButton className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+            + Add Sample
+          </SubmitButton>
+        </form>
+        {contactedLeads.length === 0 && (
+          <p className="text-xs text-gray-400">No contacted leads yet — mark a lead as contacted first.</p>
+        )}
       </div>
 
       {leads.length === 0 ? (
@@ -48,8 +102,9 @@ export default async function SampleSentLeadsPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                <th className="py-3 px-5">Shop Name</th>
-                <th className="py-3 px-5">Number</th>
+                <th className="py-3 px-5">Shop</th>
+                <th className="py-3 px-5">Sample</th>
+                <th className="py-3 px-5">Date Sent</th>
                 <th className="py-3 px-5">City</th>
                 <th className="py-3 px-5"></th>
                 <th className="py-3 px-5"></th>
@@ -60,12 +115,19 @@ export default async function SampleSentLeadsPage({
               {leads.map((l) => {
                 const confirmBound = convertLeadToClient.bind(null, l.id);
                 const deleteBound = deleteLead.bind(null, l.id);
+                const lastSample = l.samples[0];
                 return (
                   <tr key={l.id} className="hover:bg-gray-50/70 transition-colors">
                     <td className="py-3 px-5 font-medium">
                       <Link href={`/leads/${l.id}`} className="hover:underline">{l.shopNumber || "-"}</Link>
+                      {l.name && <p className="text-xs text-gray-400 mt-0.5">{l.name}</p>}
                     </td>
-                    <td className="py-3 px-5 text-gray-500">{l.phone || "-"}</td>
+                    <td className="py-3 px-5 text-gray-600">
+                      {lastSample?.description ?? <span className="text-gray-300">—</span>}
+                    </td>
+                    <td className="py-3 px-5 text-gray-500">
+                      {lastSample ? lastSample.dateSent.toISOString().slice(0, 10) : "—"}
+                    </td>
                     <td className="py-3 px-5 text-gray-500">{l.city || "-"}</td>
                     <td className="py-3 px-5"><WhatsAppButton phone={l.phone} /></td>
                     <td className="py-3 px-5 text-right">
