@@ -99,11 +99,12 @@ export default function Sidebar({
   const isOnFinance = pathname.startsWith("/finance") || pathname.startsWith("/commission");
   const isOnLeads = pathname.startsWith("/leads");
 
-  type Section = "clients" | "sales" | "finance" | null;
+  type Section = "clients" | "sales" | "finance" | "leads" | null;
   function sectionForPath(): Section {
     if (isOnClients) return "clients";
     if (isOnSales) return "sales";
     if (isOnFinance) return "finance";
+    if (isOnLeads) return "leads";
     return null;
   }
   const [openSection, setOpenSection] = useState<Section>(sectionForPath());
@@ -244,12 +245,44 @@ export default function Sidebar({
 
         <SectionLabel>CRM</SectionLabel>
 
-        <NavLink href="/leads" active={isOnLeads && pathname !== "/leads/new"} icon={icons.leads} onClick={closeMobile}>
-          Leads
-        </NavLink>
-        <NavLink href="/leads/new" active={pathname === "/leads/new"} icon={icons.plus} onClick={closeMobile}>
-          Add Shop
-        </NavLink>
+        {/* Leads */}
+        <button
+          type="button"
+          onClick={() => toggleSection("leads")}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+            isOnLeads
+              ? "bg-zinc-900/8 text-zinc-900 font-medium"
+              : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          }`}
+        >
+          <span className="flex items-center gap-2.5">
+            {icons.leads}
+            Leads
+          </span>
+          <span className={`transition-transform text-gray-400 ${openSection === "leads" ? "rotate-90" : ""}`}>
+            {icons.chevron}
+          </span>
+        </button>
+        {openSection === "leads" && (
+          <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+            <NavLink href="/leads" active={pathname === "/leads"} compact onClick={closeMobile}>
+              All Shops
+            </NavLink>
+            <NavLink href="/leads/not-contacted" active={pathname.startsWith("/leads/not-contacted")} compact onClick={closeMobile}>
+              Not Contacted
+            </NavLink>
+            <NavLink href="/leads/contacted" active={pathname.startsWith("/leads/contacted")} compact onClick={closeMobile}>
+              Contacted
+            </NavLink>
+            <NavLink href="/leads/sample-sent" active={pathname.startsWith("/leads/sample-sent")} compact onClick={closeMobile}>
+              Samples
+            </NavLink>
+            <NavLink href="/leads/new" active={pathname === "/leads/new"} icon={icons.plus} compact onClick={closeMobile}>
+              Add Shop
+            </NavLink>
+          </div>
+        )}
+
         <NavLink href="/dispatch" active={isActive("/dispatch")} icon={icons.dispatch} onClick={closeMobile}>
           Dispatch
         </NavLink>
