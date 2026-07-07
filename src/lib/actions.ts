@@ -757,24 +757,28 @@ export async function loginAction(formData: FormData) {
     redirect(`/login?error=${encodeURIComponent(rateLimitError)}`);
   }
 
+  // Check DB users first
+  const dbUser = await prisma.user.findUnique({ where: { username } });
+  if (dbUser) {
+    if (!verifyPassword(password, dbUser.passwordHash)) {
+      redirect(`/login?error=${encodeURIComponent("Invalid username or password")}`);
+    }
+    clearLoginAttempts(username);
+    await setSessionCookie(username);
+    redirect("/");
+  }
+
+  // Fallback: env-based admin credentials
   const appUsername = (process.env.APP_USERNAME ?? "").trim().toLowerCase();
   const appPassword = (process.env.APP_PASSWORD ?? "").trim();
 
-  if (!appUsername || !appPassword) {
-    redirect(
-      `/login?error=${encodeURIComponent(
-        "Server is missing APP_USERNAME or APP_PASSWORD environment variables."
-      )}`
-    );
+  if (appUsername && appPassword && username === appUsername && password.trim() === appPassword) {
+    clearLoginAttempts(username);
+    await setSessionCookie(username);
+    redirect("/");
   }
 
-  if (username !== appUsername || password.trim() !== appPassword) {
-    redirect(`/login?error=${encodeURIComponent("Invalid username or password")}`);
-  }
-
-  clearLoginAttempts(username);
-  await setSessionCookie(username);
-  redirect("/");
+  redirect(`/login?error=${encodeURIComponent("Invalid username or password")}`);
 }
 
 export async function logoutAction() {
