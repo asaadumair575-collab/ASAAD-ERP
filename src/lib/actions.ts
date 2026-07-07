@@ -1144,3 +1144,27 @@ export async function convertLeadToClient(id: number, formData: FormData) {
   revalidatePath("/samples");
   redirect(`/clients/${client.id}`);
 }
+
+export async function sendMessage(formData: FormData) {
+  "use server";
+  const me = await getSessionUsername();
+  if (!me) redirect("/login");
+  const toUsername = String(formData.get("toUsername") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+  if (!toUsername || !body) return;
+  await prisma.message.create({ data: { fromUsername: me, toUsername, body } });
+  revalidatePath(`/messages/${toUsername}`);
+  revalidatePath("/messages");
+}
+
+export async function markMessagesRead(fromUsername: string) {
+  "use server";
+  const me = await getSessionUsername();
+  if (!me) return;
+  await prisma.message.updateMany({
+    where: { fromUsername, toUsername: me, readAt: null },
+    data: { readAt: new Date() },
+  });
+  revalidatePath(`/messages/${fromUsername}`);
+  revalidatePath("/messages");
+}

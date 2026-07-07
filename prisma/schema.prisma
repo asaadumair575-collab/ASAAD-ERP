@@ -136,6 +136,18 @@ model Sample {
   createdAt    DateTime  @default(now())
 }
 
+model Message {
+  id           Int       @id @default(autoincrement())
+  fromUsername String
+  toUsername   String
+  body         String    @db.Text
+  readAt       DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([toUsername, readAt])
+  @@index([fromUsername, toUsername])
+}
+
 model Lead {
   id         Int      @id @default(autoincrement())
   shopNumber String

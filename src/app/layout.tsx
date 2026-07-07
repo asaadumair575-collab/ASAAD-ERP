@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import AppShell from "@/components/AppShell";
 import { getBusinessProfile } from "@/lib/businessProfile";
 import { getSessionUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -46,6 +47,10 @@ export default async function RootLayout({
     ? [null, null]
     : await Promise.all([getBusinessProfile(), getSessionUser()]);
 
+  const unreadMessages = me
+    ? await prisma.message.count({ where: { toUsername: me.username, readAt: null } })
+    : 0;
+
   if (isLoginPage) {
     return (
       <html
@@ -67,6 +72,7 @@ export default async function RootLayout({
           businessName={profile?.name ?? "Trader CRM"}
           isAdmin={me?.isAdmin ?? false}
           username={me?.displayName ?? me?.username ?? null}
+          unreadMessages={unreadMessages}
         >
           {children}
         </AppShell>
