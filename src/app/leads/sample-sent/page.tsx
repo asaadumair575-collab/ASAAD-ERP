@@ -26,7 +26,6 @@ export default async function SampleSentLeadsPage({
       take: PAGE_SIZE,
     }),
     prisma.lead.findMany({
-      where: { status: "CONTACTED" },
       select: { id: true, shopNumber: true, name: true, city: true },
       orderBy: { shopNumber: "asc" },
     }),
@@ -57,7 +56,7 @@ export default async function SampleSentLeadsPage({
               required
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
             >
-              <option value="">Select a contacted shop…</option>
+              <option value="">Select a shop…</option>
               {contactedLeads.map((l) => (
                 <option key={l.id} value={l.id}>
                   {l.shopNumber}{l.name ? ` — ${l.name}` : ""}{l.city ? ` (${l.city})` : ""}
@@ -89,7 +88,7 @@ export default async function SampleSentLeadsPage({
           </SubmitButton>
         </form>
         {contactedLeads.length === 0 && (
-          <p className="text-xs text-gray-400">No contacted leads yet — mark a lead as contacted first.</p>
+          <p className="text-xs text-gray-400">No leads found — add a lead first.</p>
         )}
       </div>
 
