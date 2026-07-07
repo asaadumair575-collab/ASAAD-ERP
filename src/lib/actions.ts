@@ -513,6 +513,33 @@ export async function recordPayment(
   revalidatePath("/");
 }
 
+export async function deletePayment(paymentId: number, orderId: number, clientId: number) {
+  "use server";
+  await prisma.payment.delete({ where: { id: paymentId } });
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { payments: true },
+  });
+  if (order) {
+    const totalPaid = order.payments.reduce((s, p) => s + p.amount, 0);
+    const paymentStatus =
+      totalPaid >= order.saleAmount - 0.01
+        ? "PAID"
+        : totalPaid > 0
+          ? "PARTIAL"
+          : "UNPAID";
+    await prisma.order.update({ where: { id: orderId }, data: { paymentStatus } });
+  }
+
+  revalidatePath(`/clients/${clientId}/orders/${orderId}`);
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/sales/invoices");
+  revalidatePath("/sales/invoices/advance");
+  revalidatePath("/sales/invoices/paid");
+  revalidatePath("/");
+}
+
 export async function createProduct(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
 
