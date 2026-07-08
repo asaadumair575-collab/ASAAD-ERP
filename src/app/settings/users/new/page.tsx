@@ -56,21 +56,26 @@ export default async function NewUserPage() {
             <p className="text-xs text-gray-500 mt-0.5">Ignored if user is Admin.</p>
           </div>
           <div className="space-y-1">
-            {MODULES.map((m) => (
-              <div key={m.key} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                <span className="text-sm text-gray-700">{m.label}</span>
-                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-                  {(["none", "view", "full"] as const).map((level) => (
-                    <label key={level} className="relative cursor-pointer">
-                      <input type="radio" name={`perm_${m.key}`} value={level} defaultChecked={level === "none"} className="sr-only peer" />
-                      <span className="block px-3 py-1 text-xs font-medium rounded-md transition-colors text-gray-500 peer-checked:bg-white peer-checked:text-black peer-checked:shadow-sm capitalize">
-                        {level}
-                      </span>
-                    </label>
-                  ))}
+            {MODULES.map((m) => {
+              const levels = m.yesNo
+                ? ([["none", "No"], ["view", "Yes"]] as const)
+                : ([["none", "None"], ["view", "View"], ["full", "Full"]] as const);
+              return (
+                <div key={m.key} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                  <span className="text-sm text-gray-700">{m.label}</span>
+                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                    {levels.map(([value, label]) => (
+                      <label key={value} className="relative cursor-pointer">
+                        <input type="radio" name={`perm_${m.key}`} value={value} defaultChecked={value === "none"} className="sr-only peer" />
+                        <span className="block px-3 py-1 text-xs font-medium rounded-md transition-colors text-gray-500 peer-checked:bg-white peer-checked:text-black peer-checked:shadow-sm">
+                          {label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

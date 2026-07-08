@@ -1,11 +1,12 @@
 export const MODULES = [
-  { key: "clients",    label: "Clients",          href: "/clients" },
-  { key: "leads",      label: "Leads / CRM",      href: "/leads" },
-  { key: "sales",      label: "Sales & Invoices",  href: "/sales/invoices" },
-  { key: "dispatch",   label: "Dispatch",          href: "/dispatch" },
-  { key: "samples",    label: "Samples",           href: "/samples" },
-  { key: "finance",    label: "Finance",           href: "/finance" },
-  { key: "commission", label: "Commission",        href: "/commission" },
+  { key: "dashboard",  label: "Dashboard",         href: "/",               yesNo: true  },
+  { key: "clients",    label: "Clients",            href: "/clients",        yesNo: false },
+  { key: "leads",      label: "Leads / CRM",        href: "/leads",          yesNo: false },
+  { key: "sales",      label: "Sales & Invoices",   href: "/sales/invoices", yesNo: false },
+  { key: "dispatch",   label: "Dispatch",           href: "/dispatch",       yesNo: false },
+  { key: "samples",    label: "Samples",            href: "/samples",        yesNo: false },
+  { key: "finance",    label: "Finance",            href: "/finance",        yesNo: false },
+  { key: "commission", label: "Commission",         href: "/commission",     yesNo: false },
 ] as const;
 
 export type ModuleKey = (typeof MODULES)[number]["key"];
@@ -15,6 +16,7 @@ export type UserPermissions = Record<ModuleKey, AccessLevel>;
 export const ALL_MODULE_KEYS: ModuleKey[] = MODULES.map((m) => m.key);
 
 export const EMPTY_PERMISSIONS: UserPermissions = {
+  dashboard:  "none",
   clients:    "none",
   leads:      "none",
   sales:      "none",
@@ -25,6 +27,7 @@ export const EMPTY_PERMISSIONS: UserPermissions = {
 };
 
 export const FULL_PERMISSIONS: UserPermissions = {
+  dashboard:  "view",
   clients:    "full",
   leads:      "full",
   sales:      "full",

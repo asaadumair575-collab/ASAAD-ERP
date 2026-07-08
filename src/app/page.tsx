@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSessionUser } from "@/lib/auth";
+import { parsePermissions, canView } from "@/lib/permissions";
 import {
   AmountVisibilityProvider,
   AmountToggleButton,
@@ -23,6 +26,11 @@ export default async function DashboardPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
+
+  const me = await getSessionUser();
+  if (!me) redirect("/login");
+  const dashboardAllowed = me.isAdmin || canView(parsePermissions(me.permissions), "dashboard", false);
+
   const [clients, leads, orders] = await Promise.all([
     prisma.client.findMany({
       include: { orders: { include: { payments: true } } },
@@ -124,6 +132,21 @@ export default async function DashboardPage({
 
   const hasSalesData = orders.length > 0;
   const hasLeadData = leads.length > 0;
+
+  if (!dashboardAllowed) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-3 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center">
+          <svg viewBox="0 0 20 20" fill="none" className="w-6 h-6 text-gray-400">
+            <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M10 7v4M10 13h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </div>
+        <p className="text-sm font-medium text-gray-700">No dashboard access</p>
+        <p className="text-xs text-gray-400">Your admin has not given you access to the dashboard.</p>
+      </div>
+    );
+  }
 
   return (
     <AmountVisibilityProvider>
