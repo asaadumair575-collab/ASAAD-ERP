@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import ProofViewer from "@/components/ProofViewer";
 
 type PaymentEntry = {
   id: number;
@@ -171,16 +172,7 @@ function PaymentRow({
             {p.note}
           </span>
         )}
-        {p.screenshot && (
-          <a
-            href={p.screenshot}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-blue-600 hover:underline"
-          >
-            View Proof
-          </a>
-        )}
+        {p.screenshot && <ProofViewer src={p.screenshot} />}
       </div>
       <div className="flex items-center gap-3 shrink-0 ml-3">
         <span className="font-medium">{p.amount.toLocaleString()}</span>
