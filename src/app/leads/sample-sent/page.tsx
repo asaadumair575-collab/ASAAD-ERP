@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { convertLeadToClient, deleteLead, createLeadSample } from "@/lib/actions";
+import { convertLeadToClient, deleteLead, createLeadSample, updateSampleResponse } from "@/lib/actions";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import ConfirmClientModal from "@/components/ConfirmClientModal";
 import DeleteButton from "@/components/DeleteButton";
 import SubmitButton from "@/components/SubmitButton";
 import LeadSearchSelect from "@/components/LeadSearchSelect";
+import SampleResponseInline from "@/components/SampleResponseInline";
 
 const PAGE_SIZE = 30;
 
@@ -21,7 +22,7 @@ export default async function SampleSentLeadsPage({
     prisma.lead.count({ where: { status: "SAMPLE_SENT" } }),
     prisma.lead.findMany({
       where: { status: "SAMPLE_SENT" },
-      include: { samples: { orderBy: { dateSent: "desc" }, take: 1 } },
+      include: { samples: { orderBy: { dateSent: "desc" }, take: 1, select: { id: true, description: true, dateSent: true, response: true } } },
       orderBy: { createdAt: "desc" },
       skip: (currentPage - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
@@ -96,6 +97,7 @@ export default async function SampleSentLeadsPage({
                 <th className="py-3 px-5">Shop</th>
                 <th className="py-3 px-5">Sample</th>
                 <th className="py-3 px-5">Date Sent</th>
+                <th className="py-3 px-5">Response</th>
                 <th className="py-3 px-5">City</th>
                 <th className="py-3 px-5"></th>
                 <th className="py-3 px-5"></th>
@@ -118,6 +120,17 @@ export default async function SampleSentLeadsPage({
                     </td>
                     <td className="py-3 px-5 text-gray-500">
                       {lastSample ? lastSample.dateSent.toISOString().slice(0, 10) : "—"}
+                    </td>
+                    <td className="py-3 px-5 max-w-[240px]">
+                      {lastSample ? (
+                        <SampleResponseInline
+                          sampleId={lastSample.id}
+                          initialResponse={lastSample.response}
+                          action={updateSampleResponse}
+                        />
+                      ) : (
+                        <span className="text-gray-300 text-xs">—</span>
+                      )}
                     </td>
                     <td className="py-3 px-5 text-gray-500">{l.city || "-"}</td>
                     <td className="py-3 px-5"><WhatsAppButton phone={l.phone} /></td>

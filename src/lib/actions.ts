@@ -1148,3 +1148,13 @@ export async function convertLeadToClient(id: number, formData: FormData) {
   revalidatePath("/samples");
   redirect(`/clients/${client.id}`);
 }
+
+export async function updateSampleResponse(sampleId: number, formData: FormData) {
+  "use server";
+  const response = String(formData.get("response") ?? "").trim() || null;
+  await prisma.sample.update({
+    where: { id: sampleId },
+    data: { response, responseDate: response ? new Date() : null },
+  });
+  revalidatePath("/leads/sample-sent");
+}
