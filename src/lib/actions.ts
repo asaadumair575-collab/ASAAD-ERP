@@ -542,17 +542,27 @@ export async function deletePayment(paymentId: number, orderId: number, clientId
 
 export async function createProduct(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
+  const costRaw = formData.get("cost");
+  const cost = costRaw ? parseFloat(String(costRaw)) : null;
 
-  if (!name) {
-    throw new Error("Product name is required");
-  }
+  if (!name) throw new Error("Product name is required");
 
-  await prisma.product.create({
-    data: { name },
-  });
+  await prisma.product.create({ data: { name, cost: cost && !isNaN(cost) ? cost : null } });
   revalidatePath("/sales/products");
   revalidatePath("/sales/invoices/new");
+  revalidatePath("/finance");
   redirect("/sales/products");
+}
+
+export async function updateProductCost(id: number, formData: FormData) {
+  const costRaw = formData.get("cost");
+  const cost = costRaw ? parseFloat(String(costRaw)) : null;
+  await prisma.product.update({
+    where: { id },
+    data: { cost: cost && !isNaN(cost) ? cost : null },
+  });
+  revalidatePath("/sales/products");
+  revalidatePath("/finance");
 }
 
 export async function deleteProduct(id: number) {
