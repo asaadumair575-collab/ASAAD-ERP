@@ -5,6 +5,12 @@ import {
   Amount,
 } from "@/components/AmountVisibility";
 import Link from "next/link";
+import {
+  ProductQtyChart,
+  ProductProfitChart,
+  ProductRevenueChart,
+  type ProductChartData,
+} from "@/components/FinanceCharts";
 
 function startOfMonth() {
   const d = new Date();
@@ -79,6 +85,14 @@ export default async function FinancePage({
   }
 
   const productStats = [...productMap.values()].sort((a, b) => b.revenue - a.revenue);
+
+  const chartData: ProductChartData[] = productStats.map((p) => ({
+    name: p.name,
+    qty: p.qty,
+    revenue: p.revenue,
+    profit: p.cost != null ? p.profit : null,
+    hasCost: p.cost != null,
+  }));
 
   // ── Summary ────────────────────────────────────────────────────
   const totalRevenue = orders.reduce((s, o) => s + o.saleAmount, 0);
@@ -182,6 +196,27 @@ export default async function FinancePage({
             )}
           </div>
         </div>
+
+        {/* Charts */}
+        {productStats.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-base font-semibold text-gray-800">Product Charts</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-4">Units Sold per Product</p>
+                <ProductQtyChart data={chartData} />
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-4">Revenue per Product</p>
+                <ProductRevenueChart data={chartData} />
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-4">Profit per Product</p>
+                <ProductProfitChart data={chartData} />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Product-wise table */}
         <div>
