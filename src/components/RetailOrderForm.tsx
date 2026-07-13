@@ -4,6 +4,7 @@ import { useState } from "react";
 import SubmitButton from "@/components/SubmitButton";
 
 type Product = { id: number; name: string };
+type Customer = { id: number; name: string; phone: string | null; city: string | null };
 type Row = { id: number; description: string; quantity: number; rate: number };
 
 function round2(n: number) {
@@ -13,12 +14,17 @@ function round2(n: number) {
 export default function RetailOrderForm({
   action,
   products,
+  customers = [],
 }: {
   action: (formData: FormData) => void;
   products: Product[];
+  customers?: Customer[];
 }) {
   const [rows, setRows] = useState<Row[]>([{ id: 0, description: "", quantity: 0, rate: 0 }]);
   const [deliveryCharge, setDeliveryCharge] = useState(300);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+
+  const selectedCustomer = customers.find((c) => String(c.id) === selectedCustomerId);
 
   function updateRow(id: number, patch: Partial<Row>) {
     setRows((r) => r.map((row) => (row.id === id ? { ...row, ...patch } : row)));
@@ -31,37 +37,56 @@ export default function RetailOrderForm({
     <form action={action} className="space-y-5">
       {/* Customer info */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
-        <h2 className="text-sm font-semibold text-gray-700">Customer Info</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="sm:col-span-1">
-            <label className="block text-xs text-gray-500 mb-1.5">Name <span className="text-black">*</span></label>
-            <input
-              type="text"
-              name="customerName"
-              required
-              placeholder="e.g. Ahmed"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
-            />
-          </div>
+        <h2 className="text-sm font-semibold text-gray-700">Customer</h2>
+
+        {customers.length > 0 && (
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">Phone</label>
-            <input
-              type="tel"
-              name="phone"
-              placeholder="03xx-xxxxxxx"
+            <label className="block text-xs text-gray-500 mb-1.5">Select existing retail customer</label>
+            <select
+              value={selectedCustomerId}
+              onChange={(e) => setSelectedCustomerId(e.target.value)}
+              name="retailCustomerId"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
-            />
+            >
+              <option value="">— Quick / one-time entry —</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}{c.city ? ` (${c.city})` : ""}
+                </option>
+              ))}
+            </select>
           </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1.5">City</label>
-            <input
-              type="text"
-              name="city"
-              placeholder="e.g. Lahore"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
-            />
+        )}
+
+        {selectedCustomer ? (
+          <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm">
+            <p className="font-medium">{selectedCustomer.name}</p>
+            {(selectedCustomer.phone || selectedCustomer.city) && (
+              <p className="text-gray-500 text-xs mt-0.5">
+                {[selectedCustomer.phone, selectedCustomer.city].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            <input type="hidden" name="customerName" value={selectedCustomer.name} />
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="sm:col-span-1">
+              <label className="block text-xs text-gray-500 mb-1.5">Name <span className="text-black">*</span></label>
+              <input type="text" name="customerName" required placeholder="e.g. Ahmed"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">Phone</label>
+              <input type="tel" name="phone" placeholder="03xx-xxxxxxx"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">City</label>
+              <input type="text" name="city" placeholder="e.g. Lahore"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Items */}

@@ -20,7 +20,6 @@ model Client {
   phone        String?
   address      String?
   notes        String?
-  customerType String   @default("RETAIL")
   createdAt    DateTime @default(now())
   orders       Order[]
   samples      Sample[]
@@ -139,19 +138,31 @@ model Sample {
   createdAt    DateTime  @default(now())
 }
 
+model RetailCustomer {
+  id        Int           @id @default(autoincrement())
+  name      String
+  phone     String?
+  city      String?
+  notes     String?
+  createdAt DateTime      @default(now())
+  orders    RetailOrder[]
+}
+
 model RetailOrder {
-  id             Int               @id @default(autoincrement())
-  customerName   String
-  phone          String?
-  city           String?
-  totalAmount    Float
-  deliveryCharge Float             @default(0)
-  status         String            @default("PENDING")
-  notes          String?
-  date           DateTime          @default(now())
-  createdAt      DateTime          @default(now())
-  items          RetailOrderItem[]
-  payments       RetailPayment[]
+  id               Int              @id @default(autoincrement())
+  retailCustomer   RetailCustomer?  @relation(fields: [retailCustomerId], references: [id])
+  retailCustomerId Int?
+  customerName     String
+  phone            String?
+  city             String?
+  totalAmount      Float
+  deliveryCharge   Float            @default(0)
+  status           String           @default("PENDING")
+  notes            String?
+  date             DateTime         @default(now())
+  createdAt        DateTime         @default(now())
+  items            RetailOrderItem[]
+  payments         RetailPayment[]
 }
 
 model RetailOrderItem {

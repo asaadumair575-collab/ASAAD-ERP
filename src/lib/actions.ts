@@ -76,10 +76,8 @@ export async function createClient(formData: FormData) {
     );
   }
 
-  const customerType = String(formData.get("customerType") ?? "RETAIL");
-
   const client = await prisma.client.create({
-    data: { name, businessName, city, phone, address, notes, customerType },
+    data: { name, businessName, city, phone, address, notes },
   });
 
   revalidatePath("/clients");
@@ -99,11 +97,9 @@ export async function updateClient(id: number, formData: FormData) {
     throw new Error("Name and city are required");
   }
 
-  const customerType = String(formData.get("customerType") ?? "RETAIL");
-
   await prisma.client.update({
     where: { id },
-    data: { name, businessName, city, phone, address, notes, customerType },
+    data: { name, businessName, city, phone, address, notes },
   });
 
   revalidatePath("/clients");
@@ -1194,11 +1190,19 @@ export async function updateSampleResponse(sampleId: number, formData: FormData)
 // ── Retail / COD ──────────────────────────────────────────────────────────────
 
 export async function createRetailOrder(formData: FormData) {
-  const customerName = String(formData.get("customerName") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim() || null;
-  const city = String(formData.get("city") ?? "").trim() || null;
+  const retailCustomerIdRaw = formData.get("retailCustomerId");
+  const retailCustomerId = retailCustomerIdRaw ? parseInt(String(retailCustomerIdRaw), 10) : null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const deliveryCharge = parseFloat(String(formData.get("deliveryCharge") ?? "0")) || 0;
+
+  let customerName = String(formData.get("customerName") ?? "").trim();
+  let phone: string | null = String(formData.get("phone") ?? "").trim() || null;
+  let city: string | null = String(formData.get("city") ?? "").trim() || null;
+
+  if (retailCustomerId) {
+    const rc = await prisma.retailCustomer.findUnique({ where: { id: retailCustomerId } });
+    if (rc) { customerName = rc.name; phone = phone ?? rc.phone; city = city ?? rc.city; }
+  }
 
   if (!customerName) throw new Error("Customer name is required");
 
@@ -1217,6 +1221,7 @@ export async function createRetailOrder(formData: FormData) {
   const order = await prisma.retailOrder.create({
     data: {
       customerName, phone, city, notes, deliveryCharge, totalAmount,
+      retailCustomerId: retailCustomerId ?? undefined,
       status: deliveryCharge > 0 ? "PARTIAL" : "PENDING",
       items: { create: items },
       payments: deliveryCharge > 0
@@ -1225,8 +1230,8 @@ export async function createRetailOrder(formData: FormData) {
     },
   });
 
-  revalidatePath("/retail");
-  redirect(`/retail/${order.id}`);
+  revalidatePath("/retail/orders");
+  redirect(`/retail/orders/${order.id}`);
 }
 
 export async function recordRetailPayment(orderId: number, formData: FormData) {
@@ -1246,8 +1251,8 @@ export async function recordRetailPayment(orderId: number, formData: FormData) {
   const status = totalPaid >= order.totalAmount - 0.01 ? "PAID" : "PARTIAL";
   await prisma.retailOrder.update({ where: { id: orderId }, data: { status } });
 
-  revalidatePath(`/retail/${orderId}`);
-  revalidatePath("/retail");
+  revalidatePath(`/retail/orders/${orderId}`);
+  revalidatePath("/retail/orders");
 }
 
 export async function deleteRetailPayment(paymentId: number, orderId: number) {
@@ -1260,12 +1265,44 @@ export async function deleteRetailPayment(paymentId: number, orderId: number) {
   const totalPaid = order.payments.filter((p) => p.id !== paymentId).reduce((s, p) => s + p.amount, 0);
   const status = totalPaid >= order.totalAmount - 0.01 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "PENDING";
   await prisma.retailOrder.update({ where: { id: orderId }, data: { status } });
-  revalidatePath(`/retail/${orderId}`);
-  revalidatePath("/retail");
+  revalidatePath(`/retail/orders/${orderId}`);
+  revalidatePath("/retail/orders");
 }
 
 export async function deleteRetailOrder(orderId: number) {
   await prisma.retailOrder.delete({ where: { id: orderId } });
-  revalidatePath("/retail");
-  redirect("/retail");
+  revalidatePath("/retail/orders");
+  redirect("/retail/orders");
+}
+
+// ── Retail Customers ──────────────────────────────────────────────────────────
+
+export async function createRetailCustomer(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim() || null;
+  const city = String(formData.get("city") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+  if (!name) throw new Error("Name is required");
+  const customer = await prisma.retailCustomer.create({ data: { name, phone, city, notes } });
+  revalidatePath("/retail/customers");
+  redirect(`/retail/customers/${customer.id}`);
+}
+
+export async function updateRetailCustomer(id: number, formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim() || null;
+  const city = String(formData.get("city") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+  if (!name) throw new Error("Name is required");
+  await prisma.retailCustomer.update({ where: { id }, data: { name, phone, city, notes } });
+  revalidatePath("/retail/customers");
+  revalidatePath(`/retail/customers/${id}`);
+  redirect(`/retail/customers/${id}`);
+}
+
+export async function deleteRetailCustomer(id: number) {
+  await prisma.retailOrder.updateMany({ where: { retailCustomerId: id }, data: { retailCustomerId: null } });
+  await prisma.retailCustomer.delete({ where: { id } });
+  revalidatePath("/retail/customers");
+  redirect("/retail/customers");
 }

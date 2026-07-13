@@ -5,162 +5,129 @@ function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
 }
 
-export default async function RetailPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ status?: string; q?: string }>;
-}) {
-  const { status, q } = await searchParams;
+export default async function RetailOverviewPage() {
+  const [allOrders, customers] = await Promise.all([
+    prisma.retailOrder.findMany({ include: { payments: true }, orderBy: { date: "desc" } }),
+    prisma.retailCustomer.findMany(),
+  ]);
 
-  const orders = await prisma.retailOrder.findMany({
-    where: {
-      ...(status ? { status } : {}),
-      ...(q
-        ? {
-            OR: [
-              { customerName: { contains: q, mode: "insensitive" } },
-              { phone: { contains: q } },
-              { city: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    include: { items: true, payments: true },
-    orderBy: { date: "desc" },
-  });
-
-  const pendingCount = await prisma.retailOrder.count({ where: { status: { in: ["PENDING", "PARTIAL"] } } });
-  const pendingAmount = await prisma.retailOrder.findMany({
-    where: { status: { in: ["PENDING", "PARTIAL"] } },
-    include: { payments: true },
-  }).then((rows) =>
-    rows.reduce((s, o) => {
-      const paid = o.payments.reduce((ps, p) => ps + p.amount, 0);
-      return s + Math.max(0, o.totalAmount - paid);
-    }, 0)
+  const totalRevenue = allOrders.reduce((s, o) => s + o.totalAmount, 0);
+  const totalReceived = allOrders.reduce(
+    (s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0),
+    0
   );
+  const totalPending = Math.max(0, totalRevenue - totalReceived);
+  const pendingOrders = allOrders.filter((o) => o.status === "PENDING").length;
+  const partialOrders = allOrders.filter((o) => o.status === "PARTIAL").length;
+  const paidOrders = allOrders.filter((o) => o.status === "PAID").length;
+  const recentOrders = allOrders.slice(0, 5);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Retail / COD</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Chote orders — delivery advance le ke maal bhejo, baad mein payment receive karo.
+            COD orders, retail customers, aur payments ka overview.
           </p>
         </div>
         <Link
-          href="/retail/new"
+          href="/retail/orders/new"
           className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
         >
           + New Order
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Finance KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-          <p className="text-xs text-gray-500">Pending Recovery</p>
-          <p className="text-xl font-semibold mt-1 text-orange-600">Rs {fmt(pendingAmount)}</p>
-          <p className="text-xs text-gray-400 mt-1">{pendingCount} orders unpaid / partial</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Billed</p>
+          <p className="text-2xl font-bold tracking-tight">Rs {fmt(totalRevenue)}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{allOrders.length} orders</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-          <p className="text-xs text-gray-500">Total Orders</p>
-          <p className="text-xl font-semibold mt-1">{orders.length}</p>
-          <p className="text-xs text-gray-400 mt-1">
-            {orders.filter((o) => o.status === "PAID").length} paid
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Received</p>
+          <p className="text-2xl font-bold tracking-tight text-green-700">Rs {fmt(totalReceived)}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{paidOrders} fully paid</p>
+        </div>
+        <div className={`rounded-2xl p-5 shadow-sm ${totalPending > 0 ? "bg-orange-50 border border-orange-200" : "bg-green-50 border border-green-200"}`}>
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Pending Recovery</p>
+          <p className={`text-2xl font-bold tracking-tight ${totalPending > 0 ? "text-orange-600" : "text-green-700"}`}>
+            Rs {fmt(totalPending)}
           </p>
+          <p className="text-xs text-gray-400 mt-0.5">{pendingOrders + partialOrders} open orders</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Customers</p>
+          <p className="text-2xl font-bold tracking-tight">{customers.length}</p>
+          <p className="text-xs text-gray-400 mt-0.5">retail accounts</p>
         </div>
       </div>
 
-      {/* Filter bar */}
-      <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
-        <input
-          type="text"
-          name="q"
-          defaultValue={q ?? ""}
-          placeholder="Search customer, phone, city..."
-          className="flex-1 min-w-[180px] bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white"
-        />
-        <select
-          name="status"
-          defaultValue={status ?? ""}
-          className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+      {/* Quick links */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link
+          href="/retail/orders"
+          className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-gray-400 transition-colors group"
         >
-          <option value="">All status</option>
-          <option value="PENDING">Pending</option>
-          <option value="PARTIAL">Partial</option>
-          <option value="PAID">Paid</option>
-        </select>
-        <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-          Filter
-        </button>
-        {(status || q) && (
-          <Link href="/retail" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>
-        )}
-      </form>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold">Orders</p>
+              <p className="text-xs text-gray-500 mt-0.5">Saare COD orders dekho aur manage karo</p>
+            </div>
+            <span className="text-gray-300 group-hover:text-gray-600 text-xl">→</span>
+          </div>
+          <div className="flex gap-3 mt-3">
+            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{pendingOrders} pending</span>
+            <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">{partialOrders} partial</span>
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{paidOrders} paid</span>
+          </div>
+        </Link>
+        <Link
+          href="/retail/customers"
+          className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-gray-400 transition-colors group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold">Customers</p>
+              <p className="text-xs text-gray-500 mt-0.5">Retail customers ki list aur ledger</p>
+            </div>
+            <span className="text-gray-300 group-hover:text-gray-600 text-xl">→</span>
+          </div>
+          <p className="text-xs text-gray-400 mt-3">{customers.length} customer{customers.length !== 1 ? "s" : ""} registered</p>
+        </Link>
+      </div>
 
-      {/* Table */}
-      {orders.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
-          <p className="text-gray-400 text-sm">Koi retail order nahi mila.</p>
-          <Link href="/retail/new" className="mt-3 inline-block text-sm font-medium text-black hover:underline">
-            + Pehla order banao
-          </Link>
-        </div>
-      ) : (
-        <div className="table-container">
+      {/* Recent orders */}
+      {recentOrders.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Recent Orders</p>
+            <Link href="/retail/orders" className="text-xs font-medium text-black hover:underline">View all</Link>
+          </div>
           <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                <th className="py-3 px-5">#</th>
-                <th className="py-3 px-5">Customer</th>
-                <th className="py-3 px-5">Date</th>
-                <th className="py-3 px-5">Items</th>
-                <th className="py-3 px-5 text-right">Total</th>
-                <th className="py-3 px-5 text-right">Advance</th>
-                <th className="py-3 px-5 text-right">Received</th>
-                <th className="py-3 px-5 text-right">Balance</th>
-                <th className="py-3 px-5 text-right">Status</th>
-              </tr>
-            </thead>
             <tbody className="divide-y divide-gray-50">
-              {orders.map((o) => {
-                const received = o.payments.reduce((s, p) => s + p.amount, 0);
-                const balance = Math.max(0, o.totalAmount - received);
+              {recentOrders.map((o) => {
+                const rec = o.payments.reduce((s, p) => s + p.amount, 0);
+                const bal = Math.max(0, o.totalAmount - rec);
                 return (
                   <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
                     <td className="py-3 px-5">
-                      <Link href={`/retail/${o.id}`} className="font-medium hover:underline text-gray-700">
+                      <Link href={`/retail/orders/${o.id}`} className="font-medium hover:underline">
                         R-{String(o.id).padStart(3, "0")}
                       </Link>
-                    </td>
-                    <td className="py-3 px-5">
-                      <p className="font-medium">{o.customerName}</p>
-                      {(o.phone || o.city) && (
-                        <p className="text-xs text-gray-400">{[o.phone, o.city].filter(Boolean).join(" · ")}</p>
-                      )}
+                      <p className="text-xs text-gray-400">{o.customerName}</p>
                     </td>
                     <td className="py-3 px-5 text-gray-500">{o.date.toISOString().slice(0, 10)}</td>
-                    <td className="py-3 px-5 text-gray-500 text-xs">
-                      {o.items.map((i) => `${i.description} ×${i.quantity}`).join(", ")}
-                    </td>
-                    <td className="py-3 px-5 text-right tabular-nums font-medium">Rs {fmt(o.totalAmount)}</td>
-                    <td className="py-3 px-5 text-right tabular-nums text-gray-500">
-                      {o.deliveryCharge > 0 ? `Rs ${fmt(o.deliveryCharge)}` : "—"}
-                    </td>
-                    <td className="py-3 px-5 text-right tabular-nums text-gray-600">Rs {fmt(received)}</td>
-                    <td className={`py-3 px-5 text-right tabular-nums font-medium ${balance > 0 ? "text-orange-600" : "text-green-700"}`}>
-                      {balance > 0 ? `Rs ${fmt(balance)}` : "✓"}
-                    </td>
+                    <td className="py-3 px-5 text-right tabular-nums">Rs {fmt(o.totalAmount)}</td>
                     <td className="py-3 px-5 text-right">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                         o.status === "PAID" ? "bg-green-100 text-green-700" :
                         o.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" :
                         "bg-gray-100 text-gray-500"
                       }`}>
-                        {o.status}
+                        {bal > 0 ? `Rs ${fmt(bal)} due` : "✓ Paid"}
                       </span>
                     </td>
                   </tr>

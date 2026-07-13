@@ -70,14 +70,9 @@ export default async function InvoicesPage() {
                 return (
                   <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
                     <td className="py-3 px-5">
-                      <div className="flex items-center gap-2">
-                        <Link href={`/clients/${o.clientId}/orders/${o.id}`} className="font-medium hover:underline">
-                          INV-{String(o.id).padStart(4, "0")}
-                        </Link>
-                        {o.orderType === "COD" && (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-full">COD</span>
-                        )}
-                      </div>
+                      <Link href={`/clients/${o.clientId}/orders/${o.id}`} className="font-medium hover:underline">
+                        INV-{String(o.id).padStart(4, "0")}
+                      </Link>
                     </td>
                     <td className="py-3 px-5 text-gray-500">{o.client.name}</td>
                     <td className="py-3 px-5 text-gray-500">{o.date.toISOString().slice(0, 10)}</td>

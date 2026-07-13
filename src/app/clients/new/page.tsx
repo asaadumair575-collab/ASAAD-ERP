@@ -45,27 +45,6 @@ export default async function NewClientPage({
         action={createClient}
         className="bg-white border border-gray-200 rounded-3xl shadow-sm p-6 sm:p-8 space-y-6"
       >
-        {/* Customer Type */}
-        <div>
-          <label className="block text-xs font-medium text-gray-500 mb-2">Customer Type <span className="text-black">*</span></label>
-          <div className="flex flex-wrap gap-3">
-            {[
-              { value: "WHOLESALER", label: "Wholesaler", desc: "Bulk buyer, credit orders" },
-              { value: "SHOPKEEPER", label: "Shop Keeper", desc: "Retail shop, regular orders" },
-              { value: "RETAIL", label: "Retail / COD", desc: "Small buyer, COD delivery" },
-            ].map((opt) => (
-              <label key={opt.value} className="flex items-start gap-2.5 cursor-pointer group">
-                <input type="radio" name="customerType" value={opt.value} defaultChecked={opt.value === "RETAIL"}
-                  className="mt-0.5 accent-black" />
-                <span>
-                  <span className="text-sm font-medium text-gray-800">{opt.label}</span>
-                  <span className="block text-xs text-gray-400">{opt.desc}</span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <Field
             label="Name"
