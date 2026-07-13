@@ -1275,6 +1275,18 @@ export async function deleteRetailOrder(orderId: number) {
   redirect("/retail/orders");
 }
 
+export async function setRetailDispatched(orderId: number, dispatched: boolean) {
+  await prisma.retailOrder.update({
+    where: { id: orderId },
+    data: {
+      dispatched,
+      dispatchedAt: dispatched ? new Date() : null,
+    },
+  });
+  revalidatePath(`/retail/orders/${orderId}`);
+  revalidatePath("/retail/orders");
+}
+
 // ── Retail Customers ──────────────────────────────────────────────────────────
 
 export async function createRetailCustomer(formData: FormData) {

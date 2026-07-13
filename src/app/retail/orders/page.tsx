@@ -122,6 +122,7 @@ export default async function RetailPage({
                 <th className="py-3 px-5 text-right">Advance</th>
                 <th className="py-3 px-5 text-right">Received</th>
                 <th className="py-3 px-5 text-right">Balance</th>
+                <th className="py-3 px-5 text-right">Dispatch</th>
                 <th className="py-3 px-5 text-right">Status</th>
               </tr>
             </thead>
@@ -132,7 +133,7 @@ export default async function RetailPage({
                 return (
                   <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
                     <td className="py-3 px-5">
-                      <Link href={`/retail/${o.id}`} className="font-medium hover:underline text-gray-700">
+                      <Link href={`/retail/orders/${o.id}`} className="font-medium hover:underline text-gray-700">
                         R-{String(o.id).padStart(3, "0")}
                       </Link>
                     </td>
@@ -153,6 +154,13 @@ export default async function RetailPage({
                     <td className="py-3 px-5 text-right tabular-nums text-gray-600">Rs {fmt(received)}</td>
                     <td className={`py-3 px-5 text-right tabular-nums font-medium ${balance > 0 ? "text-orange-600" : "text-green-700"}`}>
                       {balance > 0 ? `Rs ${fmt(balance)}` : "✓"}
+                    </td>
+                    <td className="py-3 px-5 text-right">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        o.dispatched ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-600"
+                      }`}>
+                        {o.dispatched ? "Dispatched" : "Not Dispatched"}
+                      </span>
                     </td>
                     <td className="py-3 px-5 text-right">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${

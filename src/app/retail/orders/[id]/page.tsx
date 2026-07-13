@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder } from "@/lib/actions";
+import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, setRetailDispatched } from "@/lib/actions";
 import RetailPaymentSection from "@/components/RetailPaymentSection";
 
 function fmt(n: number) {
@@ -28,6 +28,7 @@ export default async function RetailOrderPage({
 
   const recordPaymentBound = recordRetailPayment.bind(null, order.id);
   const deleteOrderBound = deleteRetailOrder.bind(null, order.id);
+  const toggleDispatchBound = setRetailDispatched.bind(null, order.id, !order.dispatched);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -42,13 +43,20 @@ export default async function RetailOrderPage({
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">{order.date.toISOString().slice(0, 10)}</p>
         </div>
-        <span className={`text-xs font-semibold px-3 py-1.5 rounded-full mt-1 ${
-          order.status === "PAID" ? "bg-green-100 text-green-700" :
-          order.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" :
-          "bg-gray-100 text-gray-500"
-        }`}>
-          {order.status}
-        </span>
+        <div className="flex flex-col items-end gap-1.5 mt-1">
+          <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
+            order.status === "PAID" ? "bg-green-100 text-green-700" :
+            order.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" :
+            "bg-gray-100 text-gray-500"
+          }`}>
+            {order.status}
+          </span>
+          <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
+            order.dispatched ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-600"
+          }`}>
+            {order.dispatched ? "Dispatched" : "Not Dispatched"}
+          </span>
+        </div>
       </div>
 
       {/* Customer card */}
@@ -94,6 +102,34 @@ export default async function RetailOrderPage({
             </tr>
           </tfoot>
         </table>
+      </div>
+
+      {/* Dispatch */}
+      <div className={`rounded-2xl p-5 shadow-sm flex items-center justify-between gap-4 ${
+        order.dispatched ? "bg-blue-50 border border-blue-200" : "bg-orange-50 border border-orange-200"
+      }`}>
+        <div>
+          <p className={`text-sm font-semibold ${order.dispatched ? "text-blue-800" : "text-orange-800"}`}>
+            {order.dispatched ? "Order Dispatched" : "Not Yet Dispatched"}
+          </p>
+          {order.dispatchedAt && (
+            <p className="text-xs text-blue-600 mt-0.5">
+              {order.dispatchedAt.toISOString().slice(0, 10)}
+            </p>
+          )}
+        </div>
+        <form action={toggleDispatchBound}>
+          <button
+            type="submit"
+            className={`text-sm font-medium px-4 py-2 rounded-lg transition-colors ${
+              order.dispatched
+                ? "bg-white text-blue-700 border border-blue-200 hover:bg-blue-50"
+                : "bg-orange-600 text-white hover:bg-orange-700"
+            }`}
+          >
+            {order.dispatched ? "Mark Not Dispatched" : "Mark as Dispatched"}
+          </button>
+        </form>
       </div>
 
       {/* Payment summary */}

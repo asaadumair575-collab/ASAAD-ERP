@@ -158,6 +158,8 @@ model RetailOrder {
   totalAmount      Float
   deliveryCharge   Float            @default(0)
   status           String           @default("PENDING")
+  dispatched       Boolean          @default(false)
+  dispatchedAt     DateTime?
   notes            String?
   date             DateTime         @default(now())
   createdAt        DateTime         @default(now())
