@@ -94,7 +94,7 @@ export default async function CommissionPage({
             Save Rate
           </SubmitButton>
           <p className="text-xs text-gray-500 w-full">
-            Naya rate sirf is se aage ke orders par lagega — pehle ke orders apne purane rate par hi rahenge.
+            The new rate will only apply to future orders — existing orders keep their original rate.
           </p>
         </form>
 

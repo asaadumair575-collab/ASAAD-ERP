@@ -95,7 +95,7 @@ export function ProductProfitChart({ data }: { data: ProductChartData[] }) {
   const sorted = [...withCost].sort((a, b) => (b.profit ?? 0) - (a.profit ?? 0)).slice(0, 10);
   if (sorted.length === 0) return (
     <div className="flex items-center justify-center h-[260px] text-sm text-gray-400">
-      Kisi product ka cost set nahi — profit chart nahi ban sakta.
+      No product costs set — profit chart unavailable.
     </div>
   );
   return (

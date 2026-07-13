@@ -191,7 +191,7 @@ export default function RetailOrderForm({
           <div className="text-sm text-orange-700 pb-2">
             <span className="font-medium">Balance after advance:</span>{" "}
             <span className="font-semibold">Rs {balanceAfterAdvance.toLocaleString()}</span>
-            <p className="text-xs text-orange-500 mt-0.5">Ye baad mein receive hoga — record payment se.</p>
+            <p className="text-xs text-orange-500 mt-0.5">This will be collected later — use Record Payment.</p>
           </div>
         </div>
       </div>

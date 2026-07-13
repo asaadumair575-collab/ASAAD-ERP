@@ -51,7 +51,7 @@ export default async function RetailCustomerDetailPage({
             </p>
           )}
         </div>
-        <DeleteButton action={deleteBound} message="Is customer aur unke saath linked orders ka link hata diya jayega." />
+        <DeleteButton action={deleteBound} message="This customer will be unlinked from their orders and removed." />
       </div>
 
       {/* Stats */}
@@ -138,7 +138,7 @@ export default async function RetailCustomerDetailPage({
           </Link>
         </div>
         {customer.orders.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">Koi order nahi abhi tak.</p>
+          <p className="text-sm text-gray-400 text-center py-8">No orders yet.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>

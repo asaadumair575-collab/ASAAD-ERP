@@ -6,7 +6,7 @@ export default function NewRetailCustomerPage() {
     <div className="max-w-lg space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">New Retail Customer</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Customer add karo retail / COD orders ke liye.</p>
+        <p className="text-sm text-gray-500 mt-0.5">Add a customer for retail / COD orders.</p>
       </div>
 
       <form action={createRetailCustomer} className="space-y-5">

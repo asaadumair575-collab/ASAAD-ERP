@@ -34,9 +34,9 @@ export default async function RetailCustomersPage() {
 
       {customers.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
-          <p className="text-gray-400 text-sm">Koi retail customer nahi.</p>
+          <p className="text-gray-400 text-sm">No retail customers yet.</p>
           <Link href="/retail/customers/new" className="mt-3 inline-block text-sm font-medium text-black hover:underline">
-            + Pehla customer add karo
+            + Add your first customer
           </Link>
         </div>
       ) : (
@@ -78,7 +78,7 @@ export default async function RetailCustomersPage() {
                       {balance > 0 ? `Rs ${fmt(balance)}` : "✓"}
                     </td>
                     <td className="py-3 px-5 text-right">
-                      <DeleteButton action={deleteBound} message="Ye customer aur unke orders ka link remove ho jayega." />
+                      <DeleteButton action={deleteBound} message="This customer will be unlinked from their orders and removed." />
                     </td>
                   </tr>
                 );

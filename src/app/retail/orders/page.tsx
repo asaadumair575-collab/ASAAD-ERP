@@ -47,7 +47,7 @@ export default async function RetailPage({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Retail / COD</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Chote orders — delivery advance le ke maal bhejo, baad mein payment receive karo.
+            Small orders — collect a delivery advance, ship the goods, receive payment later.
           </p>
         </div>
         <Link
@@ -104,9 +104,9 @@ export default async function RetailPage({
       {/* Table */}
       {orders.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
-          <p className="text-gray-400 text-sm">Koi retail order nahi mila.</p>
+          <p className="text-gray-400 text-sm">No retail orders found.</p>
           <Link href="/retail/orders/new" className="mt-3 inline-block text-sm font-medium text-black hover:underline">
-            + Pehla order banao
+            + Create your first order
           </Link>
         </div>
       ) : (

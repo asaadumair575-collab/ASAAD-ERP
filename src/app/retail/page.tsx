@@ -28,7 +28,7 @@ export default async function RetailOverviewPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Retail / COD</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            COD orders, retail customers, aur payments ka overview.
+            Overview of COD orders, retail customers, and payments.
           </p>
         </div>
         <Link
@@ -74,7 +74,7 @@ export default async function RetailOverviewPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold">Orders</p>
-              <p className="text-xs text-gray-500 mt-0.5">Saare COD orders dekho aur manage karo</p>
+              <p className="text-xs text-gray-500 mt-0.5">View and manage all COD orders</p>
             </div>
             <span className="text-gray-300 group-hover:text-gray-600 text-xl">→</span>
           </div>
@@ -91,7 +91,7 @@ export default async function RetailOverviewPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold">Customers</p>
-              <p className="text-xs text-gray-500 mt-0.5">Retail customers ki list aur ledger</p>
+              <p className="text-xs text-gray-500 mt-0.5">View retail customer list and ledger</p>
             </div>
             <span className="text-gray-300 group-hover:text-gray-600 text-xl">→</span>
           </div>

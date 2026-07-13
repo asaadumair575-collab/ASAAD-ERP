@@ -69,7 +69,7 @@ export default function RetailPaymentSection({
       )}
 
       {balance <= 0.01 && payments.length === 0 && (
-        <p className="text-sm text-gray-400">Koi payment record nahi.</p>
+        <p className="text-sm text-gray-400">No payments recorded yet.</p>
       )}
       {balance <= 0.01 && payments.length > 0 && (
         <p className="text-sm text-green-700 font-medium">✓ Fully paid</p>

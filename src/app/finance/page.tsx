@@ -148,8 +148,8 @@ export default async function FinancePage({
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-sm text-yellow-800 flex items-start gap-2">
             <span className="shrink-0 mt-0.5">⚠</span>
             <span>
-              <strong>{productsWithoutCost.map(p => p.name).join(", ")}</strong> ka cost set nahi hai — profit calculation mein shamil nahi honge.{" "}
-              <Link href="/sales/products" className="underline font-medium">Products page pe set karein →</Link>
+              <strong>{productsWithoutCost.map(p => p.name).join(", ")}</strong> — cost not set, excluded from profit calculations.{" "}
+              <Link href="/sales/products" className="underline font-medium">Set cost on Products page →</Link>
             </span>
           </div>
         )}
@@ -223,7 +223,7 @@ export default async function FinancePage({
           <h2 className="text-base font-semibold mb-3 text-gray-800">Product-wise Breakdown</h2>
           {productStats.length === 0 ? (
             <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
-              <p className="text-gray-400 text-sm">Is period mein koi order nahi.</p>
+              <p className="text-gray-400 text-sm">No orders in this period.</p>
             </div>
           ) : (
             <div className="table-container">
