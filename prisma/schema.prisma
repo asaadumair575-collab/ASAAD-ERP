@@ -139,6 +139,39 @@ model Sample {
   createdAt    DateTime  @default(now())
 }
 
+model RetailOrder {
+  id             Int               @id @default(autoincrement())
+  customerName   String
+  phone          String?
+  city           String?
+  totalAmount    Float
+  deliveryCharge Float             @default(0)
+  status         String            @default("PENDING")
+  notes          String?
+  date           DateTime          @default(now())
+  createdAt      DateTime          @default(now())
+  items          RetailOrderItem[]
+  payments       RetailPayment[]
+}
+
+model RetailOrderItem {
+  id          Int         @id @default(autoincrement())
+  order       RetailOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId     Int
+  description String
+  quantity    Float
+  rate        Float
+}
+
+model RetailPayment {
+  id        Int         @id @default(autoincrement())
+  order     RetailOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   Int
+  amount    Float
+  note      String?
+  date      DateTime    @default(now())
+}
+
 model Lead {
   id         Int      @id @default(autoincrement())
   shopNumber String

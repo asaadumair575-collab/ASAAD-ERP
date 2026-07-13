@@ -222,6 +222,9 @@ export default function Sidebar({
             {openSection === "finance" && (
               <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 <NavLink href="/finance" active={pathname.startsWith("/finance")} compact onClick={closeMobile}>My Business</NavLink>
+                {canView(permissions, "retail", isAdmin) && (
+                  <NavLink href="/retail" active={pathname.startsWith("/retail")} compact onClick={closeMobile}>Retail / COD</NavLink>
+                )}
                 {canView(permissions, "commission", isAdmin) && (
                   <NavLink href="/commission" active={pathname.startsWith("/commission")} compact onClick={closeMobile}>Commission</NavLink>
                 )}

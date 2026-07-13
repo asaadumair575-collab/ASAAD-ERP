@@ -92,8 +92,6 @@ export default function InvoiceForm({
   ]);
   const [discount, setDiscount] = useState(0);
   const [taxPercent, setTaxPercent] = useState(0);
-  const [orderType, setOrderType] = useState<"CREDIT" | "COD">("CREDIT");
-  const [deliveryCharge, setDeliveryCharge] = useState<number>(300);
 
   function updateRow(id: number, patch: Partial<Row>) {
     setRows((r) => r.map((row) => (row.id === id ? { ...row, ...patch } : row)));
@@ -288,43 +286,6 @@ export default function InvoiceForm({
               <span>{grandTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
             </div>
           </div>
-        </div>
-
-        {/* Order Type */}
-        <div className="pt-2 border-t border-gray-200">
-          <input type="hidden" name="orderType" value={orderType} />
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="text-xs text-gray-500 font-medium">Order Type:</span>
-            <label className="flex items-center gap-2 cursor-pointer text-sm">
-              <input type="radio" checked={orderType === "CREDIT"} onChange={() => setOrderType("CREDIT")} className="accent-black" />
-              <span className="font-medium">Credit</span>
-              <span className="text-xs text-gray-400">— Maal pehle, payment baad mein</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer text-sm">
-              <input type="radio" checked={orderType === "COD"} onChange={() => setOrderType("COD")} className="accent-black" />
-              <span className="font-medium">COD</span>
-              <span className="text-xs text-gray-400">— Delivery charges advance</span>
-            </label>
-          </div>
-          {orderType === "COD" && (
-            <div className="mt-3 flex items-end gap-3">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Delivery Charge Advance (Rs)</label>
-                <input
-                  type="number"
-                  name="deliveryCharge"
-                  min="0"
-                  step="1"
-                  value={deliveryCharge}
-                  onChange={(e) => setDeliveryCharge(parseFloat(e.target.value) || 0)}
-                  className="border border-orange-200 bg-orange-50 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                />
-              </div>
-              <p className="text-xs text-orange-600 pb-2.5">
-                Ye amount confirm karte waqt automatically payment mein record ho jayega.
-              </p>
-            </div>
-          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-200">

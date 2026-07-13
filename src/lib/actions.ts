@@ -324,29 +324,10 @@ export async function confirmOrder(
       data: { confirmed: true, paymentStatus },
     });
   } else {
-    // Credit mode — but if COD with delivery advance, record it
-    const deliveryAdvance = order.deliveryCharge ?? 0;
-    if (order.orderType === "COD" && deliveryAdvance > 0) {
-      const paymentStatus =
-        deliveryAdvance >= order.saleAmount - 0.01 ? "PAID" : "PARTIAL";
-      await prisma.payment.create({
-        data: {
-          orderId,
-          amount: deliveryAdvance,
-          method: "CASH",
-          note: "Delivery Advance",
-        },
-      });
-      await prisma.order.update({
-        where: { id: orderId },
-        data: { confirmed: true, paymentStatus },
-      });
-    } else {
-      await prisma.order.update({
-        where: { id: orderId },
-        data: { confirmed: true },
-      });
-    }
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { confirmed: true },
+    });
   }
 
   revalidatePath(`/clients/${clientId}/orders/${orderId}`);
@@ -1208,4 +1189,83 @@ export async function updateSampleResponse(sampleId: number, formData: FormData)
     data: { response, responseDate: response ? new Date() : null },
   });
   revalidatePath("/leads/sample-sent");
+}
+
+// ── Retail / COD ──────────────────────────────────────────────────────────────
+
+export async function createRetailOrder(formData: FormData) {
+  const customerName = String(formData.get("customerName") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim() || null;
+  const city = String(formData.get("city") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+  const deliveryCharge = parseFloat(String(formData.get("deliveryCharge") ?? "0")) || 0;
+
+  if (!customerName) throw new Error("Customer name is required");
+
+  const descriptions = formData.getAll("itemDescription").map((v) => String(v).trim());
+  const quantities = formData.getAll("itemQuantity").map((v) => parseFloat(String(v)));
+  const rates = formData.getAll("itemRate").map((v) => parseFloat(String(v)));
+
+  const items = descriptions
+    .map((description, i) => ({ description, quantity: quantities[i], rate: rates[i] }))
+    .filter((it) => it.description && !isNaN(it.quantity) && !isNaN(it.rate));
+
+  if (items.length === 0) throw new Error("At least one item is required");
+
+  const totalAmount = round2(items.reduce((s, i) => s + i.quantity * i.rate, 0));
+
+  const order = await prisma.retailOrder.create({
+    data: {
+      customerName, phone, city, notes, deliveryCharge, totalAmount,
+      status: deliveryCharge > 0 ? "PARTIAL" : "PENDING",
+      items: { create: items },
+      payments: deliveryCharge > 0
+        ? { create: [{ amount: deliveryCharge, note: "Delivery Advance" }] }
+        : undefined,
+    },
+  });
+
+  revalidatePath("/retail");
+  redirect(`/retail/${order.id}`);
+}
+
+export async function recordRetailPayment(orderId: number, formData: FormData) {
+  const amount = parseFloat(String(formData.get("amount") ?? "0"));
+  const note = String(formData.get("note") ?? "").trim() || null;
+  if (isNaN(amount) || amount <= 0) throw new Error("Enter a valid amount");
+
+  const order = await prisma.retailOrder.findUnique({
+    where: { id: orderId },
+    include: { payments: true },
+  });
+  if (!order) throw new Error("Order not found");
+
+  await prisma.retailPayment.create({ data: { orderId, amount, note } });
+
+  const totalPaid = order.payments.reduce((s, p) => s + p.amount, 0) + amount;
+  const status = totalPaid >= order.totalAmount - 0.01 ? "PAID" : "PARTIAL";
+  await prisma.retailOrder.update({ where: { id: orderId }, data: { status } });
+
+  revalidatePath(`/retail/${orderId}`);
+  revalidatePath("/retail");
+}
+
+export async function deleteRetailPayment(paymentId: number, orderId: number) {
+  await prisma.retailPayment.delete({ where: { id: paymentId } });
+  const order = await prisma.retailOrder.findUnique({
+    where: { id: orderId },
+    include: { payments: true },
+  });
+  if (!order) return;
+  const totalPaid = order.payments.filter((p) => p.id !== paymentId).reduce((s, p) => s + p.amount, 0);
+  const status = totalPaid >= order.totalAmount - 0.01 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "PENDING";
+  await prisma.retailOrder.update({ where: { id: orderId }, data: { status } });
+  revalidatePath(`/retail/${orderId}`);
+  revalidatePath("/retail");
+}
+
+export async function deleteRetailOrder(orderId: number) {
+  await prisma.retailOrder.delete({ where: { id: orderId } });
+  revalidatePath("/retail");
+  redirect("/retail");
 }

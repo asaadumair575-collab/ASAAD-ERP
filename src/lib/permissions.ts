@@ -6,6 +6,7 @@ export const MODULES = [
   { key: "dispatch",   label: "Dispatch",           href: "/dispatch",       yesNo: false },
   { key: "samples",    label: "Samples",            href: "/samples",        yesNo: false },
   { key: "finance",    label: "Finance",            href: "/finance",        yesNo: false },
+  { key: "retail",     label: "Retail / COD",       href: "/retail",         yesNo: false },
   { key: "commission", label: "Commission",         href: "/commission",     yesNo: false },
 ] as const;
 
@@ -23,6 +24,7 @@ export const EMPTY_PERMISSIONS: UserPermissions = {
   dispatch:   "none",
   samples:    "none",
   finance:    "none",
+  retail:     "none",
   commission: "none",
 };
 
@@ -34,6 +36,7 @@ export const FULL_PERMISSIONS: UserPermissions = {
   dispatch:   "full",
   samples:    "full",
   finance:    "full",
+  retail:     "full",
   commission: "full",
 };
 
