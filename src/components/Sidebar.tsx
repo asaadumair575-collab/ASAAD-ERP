@@ -76,6 +76,13 @@ const icons = {
       <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
+  retail: (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 shrink-0">
+      <path d="M3 7h14l-1.5 8.5a1 1 0 0 1-1 .5H5.5a1 1 0 0 1-1-.5L3 7Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 7l1.5-3.5h11L17 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 7v4M12 7v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  ),
   close: (
     <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5 shrink-0">
       <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -100,13 +107,15 @@ export default function Sidebar({
   const isOnClients = pathname.startsWith("/clients");
   const isOnSales = pathname.startsWith("/sales");
   const isOnFinance = pathname.startsWith("/finance") || pathname.startsWith("/commission");
+  const isOnRetail = pathname.startsWith("/retail");
   const isOnLeads = pathname.startsWith("/leads");
 
-  type Section = "clients" | "sales" | "finance" | "leads" | null;
+  type Section = "clients" | "sales" | "finance" | "retail" | "leads" | null;
   function sectionForPath(): Section {
     if (isOnClients) return "clients";
     if (isOnSales) return "sales";
     if (isOnFinance) return "finance";
+    if (isOnRetail) return "retail";
     if (isOnLeads) return "leads";
     return null;
   }
@@ -222,12 +231,33 @@ export default function Sidebar({
             {openSection === "finance" && (
               <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 <NavLink href="/finance" active={pathname.startsWith("/finance")} compact onClick={closeMobile}>My Business</NavLink>
-                {canView(permissions, "retail", isAdmin) && (
-                  <NavLink href="/retail" active={pathname.startsWith("/retail")} compact onClick={closeMobile}>Retail / COD</NavLink>
-                )}
                 {canView(permissions, "commission", isAdmin) && (
                   <NavLink href="/commission" active={pathname.startsWith("/commission")} compact onClick={closeMobile}>Commission</NavLink>
                 )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Retail / COD */}
+        {canView(permissions, "retail", isAdmin) && (
+          <>
+            <button
+              type="button"
+              onClick={() => toggleSection("retail")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                isOnRetail ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              }`}
+            >
+              <span className="flex items-center gap-2.5">{icons.retail} Retail / COD</span>
+              <span className={`transition-transform text-gray-400 ${openSection === "retail" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+            </button>
+            {openSection === "retail" && (
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+                <NavLink href="/retail" active={pathname === "/retail"} compact onClick={closeMobile}>Overview</NavLink>
+                <NavLink href="/retail/orders" active={pathname.startsWith("/retail/orders")} compact onClick={closeMobile}>Orders</NavLink>
+                <NavLink href="/retail/customers" active={pathname.startsWith("/retail/customers")} compact onClick={closeMobile}>Customers</NavLink>
+                <NavLink href="/retail/finance" active={pathname.startsWith("/retail/finance")} compact onClick={closeMobile}>Finance</NavLink>
               </div>
             )}
           </>

@@ -66,7 +66,7 @@ export default async function RetailOverviewPage() {
       </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link
           href="/retail/orders"
           className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-gray-400 transition-colors group"
@@ -96,6 +96,19 @@ export default async function RetailOverviewPage() {
             <span className="text-gray-300 group-hover:text-gray-600 text-xl">→</span>
           </div>
           <p className="text-xs text-gray-400 mt-3">{customers.length} customer{customers.length !== 1 ? "s" : ""} registered</p>
+        </Link>
+        <Link
+          href="/retail/finance"
+          className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:border-gray-400 transition-colors group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold">Finance</p>
+              <p className="text-xs text-gray-500 mt-0.5">Monthly breakdown, product sales, customer balances</p>
+            </div>
+            <span className="text-gray-300 group-hover:text-gray-600 text-xl">→</span>
+          </div>
+          <p className="text-xs text-gray-400 mt-3">Rs {fmt(totalRevenue)} total billed</p>
         </Link>
       </div>
 
