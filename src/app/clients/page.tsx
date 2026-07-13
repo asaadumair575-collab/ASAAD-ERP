@@ -10,14 +10,15 @@ const PAGE_SIZE = 30;
 export default async function ClientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ city?: string; q?: string; grade?: string; page?: string }>;
+  searchParams: Promise<{ city?: string; q?: string; grade?: string; page?: string; type?: string }>;
 }) {
-  const { city, q, grade: gradeFilter, page } = await searchParams;
+  const { city, q, grade: gradeFilter, page, type: typeFilter } = await searchParams;
   const currentPage = Math.max(1, Number(page) || 1);
 
   const clients = await prisma.client.findMany({
     where: {
       ...(city ? { city: { equals: city, mode: "insensitive" as const } } : {}),
+      ...(typeFilter ? { customerType: typeFilter } : {}),
       ...(q
         ? {
             OR: [
@@ -66,7 +67,7 @@ export default async function ClientsPage({
     currentPage * PAGE_SIZE
   );
 
-  const hasFilters = !!(city || q || gradeFilter);
+  const hasFilters = !!(city || q || gradeFilter || typeFilter);
 
   return (
     <div className="space-y-6">
@@ -118,6 +119,16 @@ export default async function ClientsPage({
           ))}
         </select>
         <select
+          name="type"
+          defaultValue={typeFilter ?? ""}
+          className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-colors"
+        >
+          <option value="">All types</option>
+          <option value="WHOLESALER">Wholesaler</option>
+          <option value="SHOPKEEPER">Shop Keeper</option>
+          <option value="RETAIL">Retail / COD</option>
+        </select>
+        <select
           name="grade"
           defaultValue={gradeFilter ?? ""}
           className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-colors"
@@ -141,30 +152,24 @@ export default async function ClientsPage({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">Active:</span>
           {q && (
-            <Link
-              href={{ pathname: "/clients", query: { city, grade: gradeFilter } }}
-              className="filter-chip"
-            >
-              Search: {q}
-              <span className="filter-chip-x">×</span>
+            <Link href={{ pathname: "/clients", query: { city, grade: gradeFilter, type: typeFilter } }} className="filter-chip">
+              Search: {q}<span className="filter-chip-x">×</span>
             </Link>
           )}
           {city && (
-            <Link
-              href={{ pathname: "/clients", query: { q, grade: gradeFilter } }}
-              className="filter-chip"
-            >
-              {city}
+            <Link href={{ pathname: "/clients", query: { q, grade: gradeFilter, type: typeFilter } }} className="filter-chip">
+              {city}<span className="filter-chip-x">×</span>
+            </Link>
+          )}
+          {typeFilter && (
+            <Link href={{ pathname: "/clients", query: { q, city, grade: gradeFilter } }} className="filter-chip">
+              {typeFilter === "WHOLESALER" ? "Wholesaler" : typeFilter === "SHOPKEEPER" ? "Shop Keeper" : "Retail/COD"}
               <span className="filter-chip-x">×</span>
             </Link>
           )}
           {gradeFilter && (
-            <Link
-              href={{ pathname: "/clients", query: { q, city } }}
-              className="filter-chip"
-            >
-              Grade {gradeFilter}
-              <span className="filter-chip-x">×</span>
+            <Link href={{ pathname: "/clients", query: { q, city, type: typeFilter } }} className="filter-chip">
+              Grade {gradeFilter}<span className="filter-chip-x">×</span>
             </Link>
           )}
           <Link
@@ -195,6 +200,7 @@ export default async function ClientsPage({
                 <th className="py-3 px-5">Business</th>
                 <th className="py-3 px-5">City</th>
                 <th className="py-3 px-5">Phone</th>
+                <th className="py-3 px-5">Type</th>
                 <th className="py-3 px-5">Orders</th>
                 <th className="py-3 px-5">Received</th>
                 <th className="py-3 px-5">Grade</th>
@@ -220,6 +226,15 @@ export default async function ClientsPage({
                     <td className="py-3 px-5 text-gray-500">{c.businessName ?? "-"}</td>
                     <td className="py-3 px-5 text-gray-500">{c.city}</td>
                     <td className="py-3 px-5 text-gray-500">{c.phone ?? "-"}</td>
+                    <td className="py-3 px-5">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        c.customerType === "WHOLESALER" ? "bg-blue-50 text-blue-700" :
+                        c.customerType === "SHOPKEEPER" ? "bg-purple-50 text-purple-700" :
+                        "bg-orange-50 text-orange-700"
+                      }`}>
+                        {c.customerType === "WHOLESALER" ? "Wholesale" : c.customerType === "SHOPKEEPER" ? "Shop" : "COD"}
+                      </span>
+                    </td>
                     <td className="py-3 px-5 text-gray-500">{ledgerOrders.length}</td>
                     <td className="py-3 px-5 text-gray-700 font-medium tabular-nums">
                       {totalReceived.toLocaleString()}

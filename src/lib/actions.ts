@@ -76,8 +76,10 @@ export async function createClient(formData: FormData) {
     );
   }
 
+  const customerType = String(formData.get("customerType") ?? "RETAIL");
+
   const client = await prisma.client.create({
-    data: { name, businessName, city, phone, address, notes },
+    data: { name, businessName, city, phone, address, notes, customerType },
   });
 
   revalidatePath("/clients");
@@ -97,9 +99,11 @@ export async function updateClient(id: number, formData: FormData) {
     throw new Error("Name and city are required");
   }
 
+  const customerType = String(formData.get("customerType") ?? "RETAIL");
+
   await prisma.client.update({
     where: { id },
-    data: { name, businessName, city, phone, address, notes },
+    data: { name, businessName, city, phone, address, notes, customerType },
   });
 
   revalidatePath("/clients");
@@ -151,12 +155,21 @@ export async function createOrder(clientId: number, formData: FormData) {
 
   const saleAmount = round2(items.reduce((s, i) => s + i.quantity * i.rate, 0));
 
+  const orderType = String(formData.get("orderType") ?? "CREDIT");
+  const deliveryChargeRaw = formData.get("deliveryCharge");
+  const deliveryCharge =
+    orderType === "COD" && deliveryChargeRaw
+      ? parseFloat(String(deliveryChargeRaw)) || null
+      : null;
+
   const order = await prisma.order.create({
     data: {
       clientId,
       purchaseAmount,
       saleAmount,
       date,
+      orderType,
+      deliveryCharge,
       confirmed: false,
       items: { create: items },
     },
@@ -311,10 +324,29 @@ export async function confirmOrder(
       data: { confirmed: true, paymentStatus },
     });
   } else {
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { confirmed: true },
-    });
+    // Credit mode — but if COD with delivery advance, record it
+    const deliveryAdvance = order.deliveryCharge ?? 0;
+    if (order.orderType === "COD" && deliveryAdvance > 0) {
+      const paymentStatus =
+        deliveryAdvance >= order.saleAmount - 0.01 ? "PAID" : "PARTIAL";
+      await prisma.payment.create({
+        data: {
+          orderId,
+          amount: deliveryAdvance,
+          method: "CASH",
+          note: "Delivery Advance",
+        },
+      });
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { confirmed: true, paymentStatus },
+      });
+    } else {
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { confirmed: true },
+      });
+    }
   }
 
   revalidatePath(`/clients/${clientId}/orders/${orderId}`);
@@ -426,6 +458,13 @@ export async function createInvoice(formData: FormData) {
   const taxAmount = round2((subtotal - discount) * (taxPercent / 100));
   const saleAmount = round2(subtotal - discount + taxAmount);
 
+  const orderType = String(formData.get("orderType") ?? "CREDIT");
+  const deliveryChargeRaw = formData.get("deliveryCharge");
+  const deliveryCharge =
+    orderType === "COD" && deliveryChargeRaw
+      ? parseFloat(String(deliveryChargeRaw)) || null
+      : null;
+
   const order = await prisma.order.create({
     data: {
       clientId,
@@ -437,6 +476,8 @@ export async function createInvoice(formData: FormData) {
       notes,
       terms,
       date,
+      orderType,
+      deliveryCharge,
       confirmed: false,
       items: {
         create: items,

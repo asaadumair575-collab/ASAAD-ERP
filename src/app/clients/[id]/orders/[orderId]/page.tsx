@@ -107,8 +107,18 @@ export default async function InvoicePage({
             </div>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-semibold tracking-tight print:text-6xl">INVOICE</p>
+            <div className="flex items-center gap-2 justify-end">
+              <p className="text-3xl font-semibold tracking-tight print:text-6xl">INVOICE</p>
+              {order.orderType === "COD" && (
+                <span className="text-xs font-semibold px-2 py-1 bg-orange-100 text-orange-700 rounded-full print:hidden">COD</span>
+              )}
+            </div>
             <p className="text-sm text-gray-500 print:text-lg print:mt-2"># {invoiceNumber}</p>
+            {order.orderType === "COD" && order.deliveryCharge != null && (
+              <p className="text-xs text-orange-600 mt-1 print:hidden">
+                Delivery advance: Rs {order.deliveryCharge.toLocaleString()}
+              </p>
+            )}
           </div>
         </div>
 

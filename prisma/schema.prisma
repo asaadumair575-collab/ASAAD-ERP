@@ -20,6 +20,7 @@ model Client {
   phone        String?
   address      String?
   notes        String?
+  customerType String   @default("RETAIL")
   createdAt    DateTime @default(now())
   orders       Order[]
   samples      Sample[]
@@ -39,6 +40,8 @@ model Order {
   notes          String?     @db.Text
   terms          String?     @db.Text
   paymentStatus  String      @default("UNPAID")
+  orderType      String      @default("CREDIT")
+  deliveryCharge Float?
   confirmed      Boolean     @default(false)
   dispatched     Boolean     @default(false)
   dispatchedAt   DateTime?
