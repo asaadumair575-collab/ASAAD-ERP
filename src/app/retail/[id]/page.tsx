@@ -136,7 +136,7 @@ export default async function RetailOrderPage({
               type="submit"
               className="text-xs text-gray-400 hover:text-red-500 transition-colors"
               onClick={(e) => {
-                if (!confirm("Ye order delete ho jayega.")) e.preventDefault();
+                if (!confirm("This order will be permanently deleted.")) e.preventDefault();
               }}
             >
               Delete Order

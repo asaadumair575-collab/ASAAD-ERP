@@ -120,7 +120,7 @@ export default async function FinancePage({
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Finance</h1>
             <p className="text-sm text-gray-500 mt-0.5">
-              Confirmed orders ka revenue, cost aur profit.
+              Revenue, cost, and profit from confirmed orders.
             </p>
           </div>
           <AmountToggleButton />

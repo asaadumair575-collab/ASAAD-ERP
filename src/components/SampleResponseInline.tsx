@@ -51,7 +51,7 @@ export default function SampleResponseInline({
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKey}
           rows={2}
-          placeholder="Customer ka response likhein…"
+          placeholder="Write the customer's response…"
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
         />
         <div className="flex gap-1.5">

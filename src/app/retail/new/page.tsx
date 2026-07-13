@@ -10,7 +10,7 @@ export default async function NewRetailOrderPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">New Retail / COD Order</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Delivery advance record karo aur maal bhejo. Baad mein payment receive karo.
+          Record a delivery advance and ship the goods. Collect the remaining payment later.
         </p>
       </div>
       <RetailOrderForm action={createRetailOrder} products={products} />

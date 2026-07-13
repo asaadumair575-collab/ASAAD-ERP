@@ -11,7 +11,7 @@ export default async function ProductsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Products aur unka cost per unit manage karein.
+          Manage your products and their cost per unit.
         </p>
       </div>
 

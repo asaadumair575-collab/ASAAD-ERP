@@ -58,7 +58,7 @@ export default function ContactReasonModal({
             <div>
               <p className="font-semibold text-sm">Mark as Contacted</p>
               <p className="text-xs text-gray-500 mt-0.5">
-                Contact ka result select karein
+                Select the outcome of this contact
               </p>
             </div>
 
