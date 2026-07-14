@@ -172,7 +172,7 @@ const CITIES: [string, string][] = [
   ["HUNZA", "GB"],
 ];
 
-const ORIGIN = { city: "LAHORE", province: "Punjab" };
+const ORIGIN = { city: "KARACHI", province: "Sindh" };
 
 type Zone = "within" | "same" | "other";
 
@@ -250,7 +250,7 @@ export default function RateCalculatorPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Rate Calculator</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Estimate courier charges for ball deliveries — COD &amp; Non-COD. Origin: <strong>Lahore (Punjab)</strong>.
+          Estimate courier charges for ball deliveries — COD &amp; Non-COD. Origin: <strong>Karachi (Sindh)</strong>.
         </p>
       </div>
 
