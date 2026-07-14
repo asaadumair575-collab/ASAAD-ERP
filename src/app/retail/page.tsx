@@ -1,5 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import {
+  RetailDailyChart,
+  RetailProductChart,
+  RetailStatusChart,
+  type DailyTrendPoint,
+  type ProductRevenuePoint,
+  type StatusPoint,
+} from "@/components/RetailCharts";
 
 function startOfMonth() {
   const d = new Date();
@@ -28,7 +36,7 @@ export default async function RetailOverviewPage({
 
   const orders = await prisma.retailOrder.findMany({
     where: { date: { gte: fromDate, lte: toDate } },
-    include: { payments: true },
+    include: { payments: true, items: true },
   });
 
   const totalRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
@@ -40,6 +48,41 @@ export default async function RetailOverviewPage({
   const pendingDispatch = orders.filter((o) => !o.dispatched).length;
   const paidOrders = orders.filter((o) => o.status === "PAID").length;
   const unpaidOrders = orders.filter((o) => o.status !== "PAID").length;
+
+  // ── Chart data ──────────────────────────────────────────────────
+  // Daily billed vs received
+  const dayMap = new Map<string, DailyTrendPoint>();
+  for (const o of orders) {
+    const key = o.date.toISOString().slice(0, 10);
+    const rec = o.payments.reduce((s, p) => s + p.amount, 0);
+    const existing = dayMap.get(key) ?? { date: key, billed: 0, received: 0 };
+    existing.billed += o.totalAmount;
+    existing.received += rec;
+    dayMap.set(key, existing);
+  }
+  const dailyData: DailyTrendPoint[] = Array.from(dayMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+
+  // Revenue by product
+  const prodMap = new Map<string, ProductRevenuePoint>();
+  for (const o of orders) {
+    for (const item of o.items) {
+      const key = item.description;
+      const existing = prodMap.get(key) ?? { name: key, revenue: 0, qty: 0 };
+      existing.revenue += item.quantity * item.rate;
+      existing.qty += item.quantity;
+      prodMap.set(key, existing);
+    }
+  }
+  const productData: ProductRevenuePoint[] = Array.from(prodMap.values());
+
+  // Order status breakdown
+  const statusData: StatusPoint[] = [
+    { label: "Paid", count: paidOrders, color: "#16a34a" },
+    { label: "Partial", count: orders.filter((o) => o.status === "PARTIAL").length, color: "#d97706" },
+    { label: "Pending", count: orders.filter((o) => o.status === "PENDING").length, color: "#71717a" },
+    { label: "Dispatched", count: orders.filter((o) => o.dispatched).length, color: "#2563eb" },
+    { label: "Not Dispatched", count: pendingDispatch, color: "#ea580c" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -105,6 +148,31 @@ export default async function RetailOverviewPage({
           </p>
         </div>
       </div>
+
+      {/* Charts */}
+      {orders.length > 0 && (
+        <div className="space-y-4">
+          {/* Daily trend */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-4">Daily Billed vs Received</p>
+            <RetailDailyChart data={dailyData} />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Revenue by product */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-4">Revenue by Product</p>
+              <RetailProductChart data={productData} />
+            </div>
+
+            {/* Order & dispatch status */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-4">Order & Dispatch Status</p>
+              <RetailStatusChart data={statusData} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
