@@ -258,6 +258,7 @@ export default function Sidebar({
                 <NavLink href="/retail/orders" active={pathname.startsWith("/retail/orders")} compact onClick={closeMobile}>Orders</NavLink>
                 <NavLink href="/retail/customers" active={pathname.startsWith("/retail/customers")} compact onClick={closeMobile}>Customers</NavLink>
                 <NavLink href="/retail/finance" active={pathname.startsWith("/retail/finance")} compact onClick={closeMobile}>Finance</NavLink>
+                <NavLink href="/retail/calculator" active={pathname.startsWith("/retail/calculator")} compact onClick={closeMobile}>Rate Calculator</NavLink>
               </div>
             )}
           </>
