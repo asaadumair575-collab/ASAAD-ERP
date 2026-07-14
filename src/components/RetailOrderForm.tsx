@@ -5,7 +5,7 @@ import SubmitButton from "@/components/SubmitButton";
 
 type Product = { id: number; name: string };
 type Customer = { id: number; name: string; phone: string | null; city: string | null };
-type Row = { id: number; description: string; quantity: number; rate: number };
+type Row = { id: number; description: string; quantity: number; rate: number; costPrice: number };
 
 function round2(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -20,7 +20,7 @@ export default function RetailOrderForm({
   products: Product[];
   customers?: Customer[];
 }) {
-  const [rows, setRows] = useState<Row[]>([{ id: 0, description: "", quantity: 0, rate: 0 }]);
+  const [rows, setRows] = useState<Row[]>([{ id: 0, description: "", quantity: 0, rate: 0, costPrice: 0 }]);
   const [deliveryCharge, setDeliveryCharge] = useState(300);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
 
@@ -93,14 +93,15 @@ export default function RetailOrderForm({
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-3">
         <h2 className="text-sm font-semibold text-gray-700">Items</h2>
         <div className="space-y-2">
-          <div className="grid grid-cols-[1fr_80px_96px_80px] gap-2 text-xs text-gray-400 px-1">
+          <div className="grid grid-cols-[1fr_70px_90px_90px_70px] gap-2 text-xs text-gray-400 px-1">
             <span>Product / Description</span>
             <span>Qty</span>
             <span>Rate (Rs)</span>
+            <span>Cost (Rs)</span>
             <span className="text-right">Amount</span>
           </div>
           {rows.map((row) => (
-            <div key={row.id} className="grid grid-cols-[1fr_80px_96px_80px] gap-2 items-center">
+            <div key={row.id} className="grid grid-cols-[1fr_70px_90px_90px_70px] gap-2 items-center">
               <div className="flex flex-col gap-1">
                 <select
                   onChange={(e) => {
@@ -143,6 +144,16 @@ export default function RetailOrderForm({
                 onChange={(e) => updateRow(row.id, { rate: parseFloat(e.target.value) || 0 })}
                 className="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black bg-white"
               />
+              <input
+                type="number"
+                name="itemCostPrice"
+                min="0"
+                step="1"
+                value={row.costPrice || ""}
+                placeholder="0"
+                onChange={(e) => updateRow(row.id, { costPrice: parseFloat(e.target.value) || 0 })}
+                className="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black bg-white"
+              />
               <div className="text-right text-sm font-medium tabular-nums">
                 {round2(row.quantity * row.rate).toLocaleString()}
               </div>
@@ -152,7 +163,7 @@ export default function RetailOrderForm({
         <div className="flex items-center justify-between pt-2">
           <button
             type="button"
-            onClick={() => setRows((r) => [...r, { id: Date.now(), description: "", quantity: 0, rate: 0 }])}
+            onClick={() => setRows((r) => [...r, { id: Date.now(), description: "", quantity: 0, rate: 0, costPrice: 0 }])}
             className="text-sm text-gray-500 hover:text-black underline"
           >
             + Add item

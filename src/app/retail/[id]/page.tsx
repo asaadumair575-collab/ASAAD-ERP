@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder } from "@/lib/actions";
+import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, updateRetailCourierCharge } from "@/lib/actions";
 import RetailPaymentSection from "@/components/RetailPaymentSection";
 
 function fmt(n: number) {
@@ -27,6 +27,7 @@ export default async function RetailOrderPage({
   const balance = Math.max(0, order.totalAmount - received);
 
   const recordPaymentBound = recordRetailPayment.bind(null, order.id);
+  const updateCourierBound = updateRetailCourierCharge.bind(null, order.id);
   const deleteOrderBound = deleteRetailOrder.bind(null, order.id);
 
   return (
@@ -118,6 +119,7 @@ export default async function RetailOrderPage({
       <RetailPaymentSection
         orderId={order.id}
         balance={balance}
+        courierCharge={order.courierCharge}
         payments={order.payments.map((p) => ({
           id: p.id,
           amount: p.amount,
@@ -126,6 +128,7 @@ export default async function RetailOrderPage({
         }))}
         recordAction={recordPaymentBound}
         deleteAction={deleteRetailPayment}
+        updateCourierAction={updateCourierBound}
       />
 
       {/* Delete order */}

@@ -1209,9 +1209,10 @@ export async function createRetailOrder(formData: FormData) {
   const descriptions = formData.getAll("itemDescription").map((v) => String(v).trim());
   const quantities = formData.getAll("itemQuantity").map((v) => parseFloat(String(v)));
   const rates = formData.getAll("itemRate").map((v) => parseFloat(String(v)));
+  const costPrices = formData.getAll("itemCostPrice").map((v) => parseFloat(String(v)) || 0);
 
   const items = descriptions
-    .map((description, i) => ({ description, quantity: quantities[i], rate: rates[i] }))
+    .map((description, i) => ({ description, quantity: quantities[i], rate: rates[i], costPrice: costPrices[i] ?? 0 }))
     .filter((it) => it.description && !isNaN(it.quantity) && !isNaN(it.rate));
 
   if (items.length === 0) throw new Error("At least one item is required");
@@ -1253,6 +1254,14 @@ export async function recordRetailPayment(orderId: number, formData: FormData) {
 
   revalidatePath(`/retail/orders/${orderId}`);
   revalidatePath("/retail/orders");
+}
+
+export async function updateRetailCourierCharge(orderId: number, formData: FormData) {
+  "use server";
+  const courierCharge = parseFloat(String(formData.get("courierCharge") ?? "0")) || 0;
+  await prisma.retailOrder.update({ where: { id: orderId }, data: { courierCharge } });
+  revalidatePath(`/retail/orders/${orderId}`);
+  revalidatePath("/retail/finance");
 }
 
 export async function deleteRetailPayment(paymentId: number, orderId: number) {

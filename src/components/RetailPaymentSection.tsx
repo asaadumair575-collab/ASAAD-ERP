@@ -13,18 +13,70 @@ export default function RetailPaymentSection({
   orderId,
   balance,
   payments,
+  courierCharge,
   recordAction,
   deleteAction,
+  updateCourierAction,
 }: {
   orderId: number;
   balance: number;
   payments: Payment[];
+  courierCharge: number;
   recordAction: (formData: FormData) => void;
   deleteAction: (paymentId: number, orderId: number) => Promise<void>;
+  updateCourierAction: (formData: FormData) => void;
 }) {
+  const [editingCourier, setEditingCourier] = useState(false);
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
       <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Payments</p>
+
+      {/* Postex courier charge */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs text-blue-700 font-medium">Postex Delivery Charges</p>
+          <p className="text-sm font-semibold text-blue-900 mt-0.5">
+            {courierCharge > 0 ? `Rs ${fmt(courierCharge)}` : "Not set"}
+          </p>
+        </div>
+        {!editingCourier && (
+          <button
+            type="button"
+            onClick={() => setEditingCourier(true)}
+            className="text-xs text-blue-600 hover:text-blue-800 underline shrink-0"
+          >
+            {courierCharge > 0 ? "Update" : "Add"}
+          </button>
+        )}
+        {editingCourier && (
+          <form action={updateCourierAction} className="flex items-center gap-2" onSubmit={() => setEditingCourier(false)}>
+            <input
+              type="number"
+              name="courierCharge"
+              min="0"
+              step="1"
+              defaultValue={courierCharge || ""}
+              placeholder="e.g. 280"
+              className="border border-blue-200 rounded-lg px-2 py-1.5 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="text-xs font-medium bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditingCourier(false)}
+              className="text-xs text-gray-400 hover:text-gray-600"
+            >
+              Cancel
+            </button>
+          </form>
+        )}
+      </div>
 
       {/* Payment history */}
       {payments.length > 0 && (
@@ -55,7 +107,7 @@ export default function RetailPaymentSection({
             <input
               type="text"
               name="note"
-              placeholder="e.g. final payment"
+              placeholder="e.g. Postex weekly settlement"
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-black"
             />
           </div>
