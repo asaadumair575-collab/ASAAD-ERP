@@ -185,28 +185,34 @@ function getZone(city: string, province: string): Zone {
 function calcRate(dozens: number, zone: Zone, service: "standard" | "overland") {
   const weightKg = dozens * 0.75;
   let base = 0;
+  let fuelPct = 0;
 
   if (service === "standard") {
+    // Base rates per weight slab; each additional 0.5 kg after 1 kg
     const r =
-      zone === "within" ? { r1: 90, r2: 100, add: 100 } :
-      zone === "same"   ? { r1: 160, r2: 170, add: 170 } :
-                          { r1: 170, r2: 180, add: 180 };
+      zone === "within" ? { r1: 120, r2: 130, add: 65 } :
+      zone === "same"   ? { r1: 140, r2: 160, add: 80 } :
+                          { r1: 150, r2: 170, add: 85 };
     if (weightKg <= 0.5) base = r.r1;
     else if (weightKg <= 1.0) base = r.r2;
-    else base = r.r2 + Math.ceil(weightKg - 1) * r.add;
+    else base = r.r2 + Math.ceil((weightKg - 1) / 0.5) * r.add;
+    fuelPct = 0.15;
   } else {
+    // Overland: flat up to 5 kg, then per 1 kg
     const r =
-      zone === "within" ? { r1: 350, add: 90 } :
-                          { r1: 400, add: 100 };
+      zone === "within" ? { r1: 300, add: 100 } :
+      zone === "same"   ? { r1: 360, add: 120 } :
+                          { r1: 390, add: 130 };
     if (weightKg <= 5) base = r.r1;
     else base = r.r1 + Math.ceil(weightKg - 5) * r.add;
+    fuelPct = 0.25;
   }
 
-  const fuel = Math.round(base * 0.25);
+  const fuel = Math.round(base * fuelPct);
   const subtotal = base + fuel;
   const tax = Math.round(subtotal * 0.15);
   const total = subtotal + tax;
-  return { weightKg, base, fuel, subtotal, tax, total };
+  return { weightKg, base, fuel, fuelPct, subtotal, tax, total };
 }
 
 function fmt(n: number) {
@@ -311,7 +317,7 @@ export default function RateCalculatorPage() {
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
             >
               <option value="auto">Auto-detect from city</option>
-              <option value="within">Within City (Lahore)</option>
+              <option value="within">Within City (Karachi)</option>
               <option value="same">Same Province — Other City</option>
               <option value="other">Province to Province</option>
             </select>
@@ -389,7 +395,7 @@ export default function RateCalculatorPage() {
                   <span className="font-medium">Rs {fmt(result.base)}</span>
                 </div>
                 <div className="flex justify-between py-2.5">
-                  <span className="text-gray-500">Fuel Surcharge (25%)</span>
+                  <span className="text-gray-500">Fuel Surcharge ({Math.round(result.fuelPct * 100)}%)</span>
                   <span className="font-medium">Rs {fmt(result.fuel)}</span>
                 </div>
                 <div className="flex justify-between py-2.5">
@@ -431,21 +437,21 @@ export default function RateCalculatorPage() {
                 <tbody className="divide-y divide-gray-50">
                   <tr>
                     <td className="py-1.5 pr-3 text-gray-500">≤ 0.5 kg</td>
-                    <td className="py-1.5 pr-3">Rs 90</td>
+                    <td className="py-1.5 pr-3">Rs 120</td>
+                    <td className="py-1.5 pr-3">Rs 140</td>
+                    <td className="py-1.5">Rs 150</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1.5 pr-3 text-gray-500">≤ 1.0 kg</td>
+                    <td className="py-1.5 pr-3">Rs 130</td>
                     <td className="py-1.5 pr-3">Rs 160</td>
                     <td className="py-1.5">Rs 170</td>
                   </tr>
                   <tr>
-                    <td className="py-1.5 pr-3 text-gray-500">≤ 1.0 kg</td>
-                    <td className="py-1.5 pr-3">Rs 100</td>
-                    <td className="py-1.5 pr-3">Rs 170</td>
-                    <td className="py-1.5">Rs 180</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1.5 pr-3 text-gray-500">+1 kg each</td>
-                    <td className="py-1.5 pr-3">+ Rs 100</td>
-                    <td className="py-1.5 pr-3">+ Rs 170</td>
-                    <td className="py-1.5">+ Rs 180</td>
+                    <td className="py-1.5 pr-3 text-gray-500">+0.5 kg each</td>
+                    <td className="py-1.5 pr-3">+ Rs 65</td>
+                    <td className="py-1.5 pr-3">+ Rs 80</td>
+                    <td className="py-1.5">+ Rs 85</td>
                   </tr>
                 </tbody>
               </table>
@@ -461,19 +467,22 @@ export default function RateCalculatorPage() {
                   <tr className="text-left text-gray-400 border-b border-gray-100">
                     <th className="pb-1.5 pr-3">Weight</th>
                     <th className="pb-1.5 pr-3">Within City</th>
-                    <th className="pb-1.5">Other</th>
+                    <th className="pb-1.5 pr-3">Same Province</th>
+                    <th className="pb-1.5">Prov–Prov</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   <tr>
                     <td className="py-1.5 pr-3 text-gray-500">≤ 5 kg</td>
-                    <td className="py-1.5 pr-3">Rs 350</td>
-                    <td className="py-1.5">Rs 400</td>
+                    <td className="py-1.5 pr-3">Rs 300</td>
+                    <td className="py-1.5 pr-3">Rs 360</td>
+                    <td className="py-1.5">Rs 390</td>
                   </tr>
                   <tr>
                     <td className="py-1.5 pr-3 text-gray-500">+1 kg each</td>
-                    <td className="py-1.5 pr-3">+ Rs 90</td>
-                    <td className="py-1.5">+ Rs 100</td>
+                    <td className="py-1.5 pr-3">+ Rs 100</td>
+                    <td className="py-1.5 pr-3">+ Rs 120</td>
+                    <td className="py-1.5">+ Rs 130</td>
                   </tr>
                 </tbody>
               </table>
@@ -482,7 +491,7 @@ export default function RateCalculatorPage() {
         </div>
 
         <p className="text-xs text-gray-400 mt-3">
-          Fuel surcharge 25% + Tax 15% applied on top of base rates. · 1 dozen balls = 0.75 kg.
+          Fuel surcharge 15% (standard) / 25% (overland) + Tax 15% applied on top of base rates. · 1 dozen balls = 0.75 kg. · Standard: +0.5 kg slabs after 1 kg.
         </p>
       </div>
     </div>
