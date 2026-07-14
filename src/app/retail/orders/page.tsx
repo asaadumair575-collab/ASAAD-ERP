@@ -5,15 +5,23 @@ function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
 }
 
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default async function RetailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; from?: string; to?: string }>;
 }) {
-  const { status, q } = await searchParams;
+  const { status, q, from, to } = await searchParams;
+
+  const fromDate = from ? new Date(`${from}T00:00:00`) : undefined;
+  const toDate = to ? new Date(`${to}T23:59:59.999`) : undefined;
 
   const orders = await prisma.retailOrder.findMany({
     where: {
+      ...(fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {}),
       ...(status ? { status } : {}),
       ...(q
         ? {
@@ -83,6 +91,18 @@ export default async function RetailPage({
           placeholder="Search customer, phone, city..."
           className="flex-1 min-w-[180px] bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white"
         />
+        <input
+          type="date"
+          name="from"
+          defaultValue={from ?? ""}
+          className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+        />
+        <input
+          type="date"
+          name="to"
+          defaultValue={to ?? ""}
+          className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+        />
         <select
           name="status"
           defaultValue={status ?? ""}
@@ -96,7 +116,7 @@ export default async function RetailPage({
         <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
           Filter
         </button>
-        {(status || q) && (
+        {(status || q || from || to) && (
           <Link href="/retail/orders" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>
         )}
       </form>
