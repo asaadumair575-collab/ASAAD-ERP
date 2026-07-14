@@ -225,12 +225,12 @@ export default function Sidebar({
                 isOnFinance ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               }`}
             >
-              <span className="flex items-center gap-2.5">{icons.finance} Finance</span>
+              <span className="flex items-center gap-2.5">{icons.finance} Wholesale Finance</span>
               <span className={`transition-transform text-gray-400 ${openSection === "finance" ? "rotate-90" : ""}`}>{icons.chevron}</span>
             </button>
             {openSection === "finance" && (
               <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
-                <NavLink href="/finance" active={pathname.startsWith("/finance")} compact onClick={closeMobile}>My Business</NavLink>
+                <NavLink href="/finance" active={pathname.startsWith("/finance")} compact onClick={closeMobile}>Finance</NavLink>
                 {canView(permissions, "commission", isAdmin) && (
                   <NavLink href="/commission" active={pathname.startsWith("/commission")} compact onClick={closeMobile}>Commission</NavLink>
                 )}

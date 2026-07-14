@@ -118,9 +118,9 @@ export default async function FinancePage({
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Finance</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Wholesale Finance</h1>
             <p className="text-sm text-gray-500 mt-0.5">
-              Revenue, cost, and profit from confirmed orders.
+              Revenue, cost, and profit from confirmed wholesale orders only.
             </p>
           </div>
           <AmountToggleButton />
