@@ -29,8 +29,9 @@ export default async function RetailFinancePage({
   const totalRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
   const totalReceived = orders.reduce((s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0), 0);
   const totalPending = Math.max(0, totalRevenue - totalReceived);
+  const COST_PER_DOZEN = 1550;
   const totalCogs = orders.reduce(
-    (s, o) => s + o.items.reduce((is, i) => is + i.quantity * (i.costPrice ?? 0), 0),
+    (s, o) => s + o.items.reduce((is, i) => is + i.quantity * COST_PER_DOZEN, 0),
     0
   );
   const totalCourier = orders.reduce((s, o) => s + (o.courierCharge ?? 0), 0);
@@ -40,7 +41,7 @@ export default async function RetailFinancePage({
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Retail Finance</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Profit = Revenue − Ball Cost − Postex Charges</p>
+        <p className="text-sm text-gray-500 mt-0.5">Profit = Revenue − Ball Cost (Rs 1,550/doz) − Postex Charges</p>
       </div>
 
       {/* Date filter */}
@@ -100,7 +101,7 @@ export default async function RetailFinancePage({
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Ball Cost</p>
           <p className="text-xl font-bold tracking-tight text-gray-700">Rs {fmt(totalCogs)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">purchase cost</p>
+          <p className="text-xs text-gray-400 mt-0.5">@ Rs 1,550/doz</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Postex Charges</p>
@@ -131,7 +132,7 @@ export default async function RetailFinancePage({
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {orders.map((o) => {
-                  const cogs = o.items.reduce((s, i) => s + i.quantity * (i.costPrice ?? 0), 0);
+                  const cogs = o.items.reduce((s, i) => s + i.quantity * COST_PER_DOZEN, 0);
                   const courier = o.courierCharge ?? 0;
                   const profit = o.totalAmount - cogs - courier;
                   return (
