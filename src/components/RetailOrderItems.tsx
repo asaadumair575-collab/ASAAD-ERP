@@ -48,7 +48,7 @@ export default function RetailOrderItems({
                     name="costPrice"
                     min="0"
                     step="1"
-                    defaultValue={item.costPrice || ""}
+                    defaultValue={item.costPrice || 1550}
                     placeholder="0"
                     autoFocus
                     className="border border-gray-200 rounded-lg px-2 py-1 text-sm w-24 text-right focus:outline-none focus:ring-1 focus:ring-black"

@@ -20,7 +20,7 @@ export default function RetailOrderForm({
   products: Product[];
   customers?: Customer[];
 }) {
-  const [rows, setRows] = useState<Row[]>([{ id: 0, description: "", quantity: 0, rate: 0, costPrice: 0 }]);
+  const [rows, setRows] = useState<Row[]>([{ id: 0, description: "", quantity: 0, rate: 0, costPrice: 1550 }]);
   const [deliveryCharge, setDeliveryCharge] = useState(300);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
 
@@ -163,7 +163,7 @@ export default function RetailOrderForm({
         <div className="flex items-center justify-between pt-2">
           <button
             type="button"
-            onClick={() => setRows((r) => [...r, { id: Date.now(), description: "", quantity: 0, rate: 0, costPrice: 0 }])}
+            onClick={() => setRows((r) => [...r, { id: Date.now(), description: "", quantity: 0, rate: 0, costPrice: 1550 }])}
             className="text-sm text-gray-500 hover:text-black underline"
           >
             + Add item
