@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import SubmitButton from "@/components/SubmitButton";
 
 type Product = { id: number; name: string };
@@ -22,9 +22,31 @@ export default function RetailOrderForm({
 }) {
   const [rows, setRows] = useState<Row[]>([{ id: 0, description: "", quantity: 0, rate: 0, costPrice: 1550 }]);
   const [deliveryCharge, setDeliveryCharge] = useState(300);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [search, setSearch] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
 
-  const selectedCustomer = customers.find((c) => String(c.id) === selectedCustomerId);
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    if (!q) return customers.slice(0, 8);
+    return customers.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.phone ?? "").includes(q) ||
+        (c.city ?? "").toLowerCase().includes(q)
+    ).slice(0, 10);
+  }, [search, customers]);
+
+  function selectCustomer(c: Customer) {
+    setSelectedCustomer(c);
+    setSearch(c.name);
+    setShowDropdown(false);
+  }
+
+  function clearCustomer() {
+    setSelectedCustomer(null);
+    setSearch("");
+  }
 
   function updateRow(id: number, patch: Partial<Row>) {
     setRows((r) => r.map((row) => (row.id === id ? { ...row, ...patch } : row)));
@@ -39,24 +61,49 @@ export default function RetailOrderForm({
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
         <h2 className="text-sm font-semibold text-gray-700">Customer</h2>
 
-        {customers.length > 0 && (
-          <div>
-            <label className="block text-xs text-gray-500 mb-1.5">Select existing retail customer</label>
-            <select
-              value={selectedCustomerId}
-              onChange={(e) => setSelectedCustomerId(e.target.value)}
-              name="retailCustomerId"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
-            >
-              <option value="">— Quick / one-time entry —</option>
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}{c.city ? ` (${c.city})` : ""}
-                </option>
-              ))}
-            </select>
+        {/* Search box */}
+        <div className="relative">
+          <label className="block text-xs text-gray-500 mb-1.5">Search existing customer</label>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Type name, phone or city…"
+              value={search}
+              autoComplete="off"
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setShowDropdown(true);
+                if (!e.target.value) setSelectedCustomer(null);
+              }}
+              onFocus={() => setShowDropdown(true)}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white pr-8"
+            />
+            {selectedCustomer && (
+              <button
+                type="button"
+                onClick={clearCustomer}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 text-lg leading-none"
+              >×</button>
+            )}
           </div>
-        )}
+
+          {showDropdown && filtered.length > 0 && !selectedCustomer && (
+            <div className="absolute z-10 w-full mt-1 border border-gray-200 rounded-xl bg-white shadow-lg max-h-52 overflow-y-auto">
+              {filtered.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onMouseDown={() => selectCustomer(c)}
+                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-50 flex justify-between items-center gap-2"
+                >
+                  <span className="font-medium">{c.name}</span>
+                  <span className="text-xs text-gray-400 shrink-0">{[c.phone, c.city].filter(Boolean).join(" · ")}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {selectedCustomer ? (
           <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm">
@@ -66,6 +113,7 @@ export default function RetailOrderForm({
                 {[selectedCustomer.phone, selectedCustomer.city].filter(Boolean).join(" · ")}
               </p>
             )}
+            <input type="hidden" name="retailCustomerId" value={selectedCustomer.id} />
             <input type="hidden" name="customerName" value={selectedCustomer.name} />
           </div>
         ) : (
