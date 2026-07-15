@@ -1256,6 +1256,14 @@ export async function recordRetailPayment(orderId: number, formData: FormData) {
   revalidatePath("/retail/orders");
 }
 
+export async function updateRetailItemCostPrice(orderId: number, itemId: number, formData: FormData) {
+  "use server";
+  const costPrice = parseFloat(String(formData.get("costPrice") ?? "0")) || 0;
+  await prisma.retailOrderItem.update({ where: { id: itemId }, data: { costPrice } });
+  revalidatePath(`/retail/orders/${orderId}`);
+  revalidatePath("/retail/finance");
+}
+
 export async function updateRetailCourierCharge(orderId: number, formData: FormData) {
   "use server";
   const courierCharge = parseFloat(String(formData.get("courierCharge") ?? "0")) || 0;

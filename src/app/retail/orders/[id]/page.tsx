@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, setRetailDispatched, updateRetailCourierCharge } from "@/lib/actions";
+import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, setRetailDispatched, updateRetailCourierCharge, updateRetailItemCostPrice } from "@/lib/actions";
 import RetailPaymentSection from "@/components/RetailPaymentSection";
+import RetailOrderItems from "@/components/RetailOrderItems";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -77,32 +78,17 @@ export default async function RetailOrderPage({
         <div className="px-5 py-3 border-b border-gray-100">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Items</p>
         </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left bg-gray-50 text-xs text-gray-400 uppercase tracking-wide">
-              <th className="py-2 px-5">Item</th>
-              <th className="py-2 px-5 text-right">Qty</th>
-              <th className="py-2 px-5 text-right">Rate</th>
-              <th className="py-2 px-5 text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {order.items.map((item) => (
-              <tr key={item.id}>
-                <td className="py-3 px-5 font-medium">{item.description}</td>
-                <td className="py-3 px-5 text-right tabular-nums text-gray-600">{item.quantity}</td>
-                <td className="py-3 px-5 text-right tabular-nums text-gray-500">Rs {fmt(item.rate)}</td>
-                <td className="py-3 px-5 text-right tabular-nums font-medium">Rs {fmt(item.quantity * item.rate)}</td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr className="border-t-2 border-gray-200 bg-gray-50 font-semibold">
-              <td className="py-3 px-5" colSpan={3}>Total</td>
-              <td className="py-3 px-5 text-right tabular-nums">Rs {fmt(order.totalAmount)}</td>
-            </tr>
-          </tfoot>
-        </table>
+        <RetailOrderItems
+          items={order.items.map(i => ({
+            id: i.id,
+            description: i.description,
+            quantity: i.quantity,
+            rate: i.rate,
+            costPrice: i.costPrice ?? 0,
+          }))}
+          totalAmount={order.totalAmount}
+          updateCostAction={updateRetailItemCostPrice.bind(null, order.id)}
+        />
       </div>
 
       {/* Dispatch */}
