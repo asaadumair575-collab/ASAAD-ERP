@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, setRetailDispatched, updateRetailCourierCharge } from "@/lib/actions";
 import RetailPaymentSection from "@/components/RetailPaymentSection";
+import RetailDeleteButton from "@/components/RetailDeleteButton";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -169,17 +170,7 @@ export default async function RetailOrderPage({
 
       {/* Delete order */}
       <div className="pt-2">
-        <form action={deleteOrderBound}>
-          <button
-            type="submit"
-            className="text-xs text-gray-400 hover:text-red-500 transition-colors"
-            onClick={(e) => {
-              if (!confirm("This order will be permanently deleted.")) e.preventDefault();
-            }}
-          >
-            Delete Order
-          </button>
-        </form>
+        <RetailDeleteButton action={deleteOrderBound} />
       </div>
     </div>
   );
