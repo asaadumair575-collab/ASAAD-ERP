@@ -168,21 +168,19 @@ export default async function RetailOrderPage({
       />
 
       {/* Delete order */}
-      {order.status === "PENDING" && (
-        <div className="pt-2">
-          <form action={deleteOrderBound}>
-            <button
-              type="submit"
-              className="text-xs text-gray-400 hover:text-red-500 transition-colors"
-              onClick={(e) => {
-                if (!confirm("This order will be permanently deleted.")) e.preventDefault();
-              }}
-            >
-              Delete Order
-            </button>
-          </form>
-        </div>
-      )}
+      <div className="pt-2">
+        <form action={deleteOrderBound}>
+          <button
+            type="submit"
+            className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+            onClick={(e) => {
+              if (!confirm("This order will be permanently deleted.")) e.preventDefault();
+            }}
+          >
+            Delete Order
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
