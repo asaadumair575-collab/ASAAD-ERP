@@ -31,7 +31,7 @@ export default async function DashboardPage({
   if (!me) redirect("/login");
   const dashboardAllowed = me.isAdmin || canView(parsePermissions(me.permissions), "dashboard", false);
 
-  const [clients, leads, orders] = await Promise.all([
+  const [clients, leads, orders, retailCustomers, retailOrders] = await Promise.all([
     prisma.client.findMany({
       include: { orders: { include: { payments: true } } },
     }),
@@ -41,6 +41,8 @@ export default async function DashboardPage({
       include: { payments: true },
       orderBy: { date: "asc" },
     }),
+    prisma.retailCustomer.count(),
+    prisma.retailOrder.aggregate({ _sum: { totalAmount: true } }),
   ]);
 
   // ── Summary stats ──────────────────────────────────────────────
@@ -130,6 +132,8 @@ export default async function DashboardPage({
     .sort((a, b) => b.sale - a.sale)
     .slice(0, 5);
 
+  const retailSaleTotal = retailOrders._sum.totalAmount ?? 0;
+
   const hasSalesData = orders.length > 0;
   const hasLeadData = leads.length > 0;
 
@@ -169,9 +173,13 @@ export default async function DashboardPage({
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard label="Customers" value={totalClients} />
+          <StatCard label="B2B Customers" value={totalClients} />
+          <StatCard label="Retail Customers" value={retailCustomers} />
+          <StatCard label="Wholesale Sale" value={<Amount value={fmt(totalSale)} />} />
+          <StatCard label="Retail Sale" value={<Amount value={fmt(retailSaleTotal)} />} />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Orders" value={totalOrders} />
-          <StatCard label="Total Sale" value={<Amount value={fmt(totalSale)} />} />
           <StatCard label="Pending" value={<Amount value={fmt(pendingSale)} />} dark />
         </div>
 
