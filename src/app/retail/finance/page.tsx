@@ -27,8 +27,7 @@ export default async function RetailFinancePage({
 
   // KPIs
   const totalRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
-  const totalReceived = orders.reduce((s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0), 0);
-  const totalPending = Math.max(0, totalRevenue - totalReceived);
+  const totalAdvance = orders.reduce((s, o) => s + (o.deliveryCharge ?? 0), 0);
   const COST_PER_DOZEN = 1550;
   const totalCogs = orders.reduce(
     (s, o) => s + o.items.reduce((is, i) => is + i.quantity * COST_PER_DOZEN, 0),
@@ -89,14 +88,9 @@ export default async function RetailFinancePage({
           <p className="text-xs text-gray-400 mt-0.5">{orders.length} orders</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Received</p>
-          <p className="text-xl font-bold tracking-tight text-green-700">Rs {fmt(totalReceived)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">
-            {orders.filter(o => {
-              const rec = o.payments.reduce((s, p) => s + p.amount, 0);
-              return o.totalAmount > rec + 0.01;
-            }).length} pending
-          </p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Advance Received</p>
+          <p className="text-xl font-bold tracking-tight text-green-700">Rs {fmt(totalAdvance)}</p>
+          <p className="text-xs text-gray-400 mt-0.5">collected at dispatch</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Ball Cost</p>
