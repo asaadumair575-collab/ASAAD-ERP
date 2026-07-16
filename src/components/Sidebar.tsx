@@ -256,6 +256,7 @@ export default function Sidebar({
               <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 <NavLink href="/retail" active={pathname === "/retail"} compact onClick={closeMobile}>Overview</NavLink>
                 <NavLink href="/retail/orders" active={pathname.startsWith("/retail/orders")} compact onClick={closeMobile}>Orders</NavLink>
+                <NavLink href="/retail/completed" active={pathname.startsWith("/retail/completed")} compact onClick={closeMobile}>Completed</NavLink>
                 <NavLink href="/retail/customers" active={pathname.startsWith("/retail/customers")} compact onClick={closeMobile}>Customers</NavLink>
                 <NavLink href="/retail/finance" active={pathname.startsWith("/retail/finance")} compact onClick={closeMobile}>Finance</NavLink>
                 <NavLink href="/retail/calculator" active={pathname.startsWith("/retail/calculator")} compact onClick={closeMobile}>Rate Calculator</NavLink>

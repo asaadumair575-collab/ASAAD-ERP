@@ -1256,7 +1256,7 @@ export async function recordRetailPayment(orderId: number, formData: FormData) {
   revalidatePath("/retail/orders");
 
   if (status === "PAID") {
-    redirect("/retail/orders?status=PAID");
+    redirect("/retail/completed");
   } else {
     redirect("/retail/orders");
   }
