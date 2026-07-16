@@ -23,13 +23,19 @@ import {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; from?: string; to?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, from, to } = await searchParams;
 
   const me = await getSessionUser();
   if (!me) redirect("/login");
   const dashboardAllowed = me.isAdmin || canView(parsePermissions(me.permissions), "dashboard", false);
+
+  const fromDate = from ? new Date(`${from}T00:00:00`) : undefined;
+  const toDate = to ? new Date(`${to}T23:59:59.999`) : undefined;
+  const dateFilter = fromDate || toDate
+    ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } }
+    : {};
 
   const [clients, leads, orders, retailCustomers, retailOrders] = await Promise.all([
     prisma.client.findMany({
@@ -37,12 +43,15 @@ export default async function DashboardPage({
     }),
     prisma.lead.findMany({ select: { status: true } }),
     prisma.order.findMany({
-      where: { confirmed: true },
+      where: { confirmed: true, ...dateFilter },
       include: { payments: true },
       orderBy: { date: "asc" },
     }),
     prisma.retailCustomer.count(),
-    prisma.retailOrder.aggregate({ _sum: { totalAmount: true } }),
+    prisma.retailOrder.aggregate({
+      where: dateFilter,
+      _sum: { totalAmount: true },
+    }),
   ]);
 
   // ── Summary stats ──────────────────────────────────────────────
@@ -166,10 +175,38 @@ export default async function DashboardPage({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Overview of your business performance.</p>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {from || to
+                ? `${from ?? "—"} to ${to ?? "—"}`
+                : "Overview of your business performance."}
+            </p>
           </div>
           <AmountToggleButton />
         </div>
+
+        {/* Date filter */}
+        <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
+          <span className="text-xs text-gray-500 px-1">Date range:</span>
+          <input
+            type="date"
+            name="from"
+            defaultValue={from ?? ""}
+            className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          />
+          <span className="text-xs text-gray-400">to</span>
+          <input
+            type="date"
+            name="to"
+            defaultValue={to ?? ""}
+            className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          />
+          <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+            Apply
+          </button>
+          {(from || to) && (
+            <Link href="/" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>
+          )}
+        </form>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
