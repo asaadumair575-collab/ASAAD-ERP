@@ -97,7 +97,7 @@ export default function RetailPaymentSection({
               name="amount"
               min="1"
               step="1"
-              defaultValue={Math.round(balance)}
+              placeholder={String(Math.round(balance))}
               required
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-black"
             />

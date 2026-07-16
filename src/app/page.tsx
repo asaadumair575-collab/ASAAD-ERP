@@ -178,10 +178,6 @@ export default async function DashboardPage({
           <StatCard label="Wholesale Sale" value={<Amount value={fmt(totalSale)} />} />
           <StatCard label="Retail Sale" value={<Amount value={fmt(retailSaleTotal)} />} />
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard label="Orders" value={totalOrders} />
-          <StatCard label="Pending" value={<Amount value={fmt(pendingSale)} />} dark />
-        </div>
 
         {/* Sales trend + Payment status */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
