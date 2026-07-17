@@ -11,10 +11,13 @@ function fmt(n: number) {
 
 export default async function RetailOrderPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ receipt?: string }>;
 }) {
   const { id } = await params;
+  const { receipt } = await searchParams;
   const orderId = parseInt(id, 10);
 
   const order = await prisma.retailOrder.findUnique({
@@ -52,6 +55,55 @@ export default async function RetailOrderPage({
           {order.status}
         </span>
       </div>
+
+      {/* Receipt box — shown after recording payment */}
+      {receipt && (
+        <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="text-center border-b border-dashed border-gray-300 pb-4">
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Payment Receipt</p>
+            <p className="text-2xl font-bold tracking-tight">R-{String(order.id).padStart(3, "0")}</p>
+            <p className="text-sm text-gray-500 mt-0.5">{order.date.toISOString().slice(0, 10)}</p>
+          </div>
+
+          <div>
+            <p className="text-xs text-gray-500 mb-0.5">Customer</p>
+            <p className="font-semibold">{order.customerName}</p>
+            {(order.phone || order.city) && (
+              <p className="text-sm text-gray-500">{[order.phone, order.city].filter(Boolean).join(" · ")}</p>
+            )}
+          </div>
+
+          <div className="border-t border-dashed border-gray-200 pt-3 space-y-1">
+            {order.items.map((item) => (
+              <div key={item.id} className="flex justify-between text-sm">
+                <span className="text-gray-700">{item.description} <span className="text-gray-400">×{item.quantity} doz</span></span>
+                <span className="font-medium tabular-nums">Rs {fmt(item.quantity * item.rate)}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-dashed border-gray-200 pt-3 space-y-1.5">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Total Amount</span>
+              <span className="font-semibold tabular-nums">Rs {fmt(order.totalAmount)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Advance Received</span>
+              <span className="font-semibold text-green-700 tabular-nums">Rs {fmt(order.deliveryCharge ?? 0)}</span>
+            </div>
+            <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-1.5 mt-1.5">
+              <span>Balance Due</span>
+              <span className={balance > 0 ? "text-orange-600" : "text-green-700"}>
+                {balance > 0 ? `Rs ${fmt(balance)}` : "✓ Fully Paid"}
+              </span>
+            </div>
+          </div>
+
+          <p className="text-center text-xs text-gray-400 pt-2 border-t border-dashed border-gray-200">
+            Screenshot karo aur customer ko send karo
+          </p>
+        </div>
+      )}
 
       {/* Customer card */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
