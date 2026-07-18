@@ -99,9 +99,6 @@ export default async function RetailOrderPage({
             </div>
           </div>
 
-          <p className="text-center text-xs text-gray-400 pt-2 border-t border-dashed border-gray-200">
-            Screenshot karo aur customer ko send karo
-          </p>
         </div>
       )}
 

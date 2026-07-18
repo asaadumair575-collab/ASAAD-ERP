@@ -1232,7 +1232,7 @@ export async function createRetailOrder(formData: FormData) {
   });
 
   revalidatePath("/retail/orders");
-  redirect(`/retail/orders/${order.id}`);
+  redirect(`/retail/${order.id}?receipt=1`);
 }
 
 export async function recordRetailPayment(orderId: number, formData: FormData) {
@@ -1255,7 +1255,11 @@ export async function recordRetailPayment(orderId: number, formData: FormData) {
   revalidatePath(`/retail/orders/${orderId}`);
   revalidatePath("/retail/orders");
 
-  redirect(`/retail/${orderId}?receipt=1`);
+  if (status === "PAID") {
+    redirect("/retail/completed");
+  } else {
+    redirect("/retail/orders");
+  }
 }
 
 export async function updateRetailItemCostPrice(orderId: number, itemId: number, formData: FormData) {
