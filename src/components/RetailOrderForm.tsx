@@ -21,7 +21,7 @@ export default function RetailOrderForm({
   customers?: Customer[];
 }) {
   const [rows, setRows] = useState<Row[]>([{ id: 0, description: "", quantity: 0, rate: 0, costPrice: 1550 }]);
-  const [deliveryCharge, setDeliveryCharge] = useState(300);
+  const [deliveryCharge, setDeliveryCharge] = useState(0);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [search, setSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
