@@ -181,8 +181,14 @@ export default async function RetailOrderPage({
         updateCourierAction={updateCourierBound}
       />
 
-      {/* Delete order */}
-      <div className="pt-2">
+      {/* Receipt & Delete */}
+      <div className="pt-2 flex items-center justify-between">
+        <Link
+          href={`/retail/${order.id}?receipt=1`}
+          className="text-xs text-gray-500 hover:text-black underline underline-offset-2"
+        >
+          Open Receipt
+        </Link>
         <RetailDeleteButton action={deleteOrderBound} />
       </div>
     </div>

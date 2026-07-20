@@ -1253,7 +1253,9 @@ export async function recordRetailPayment(orderId: number, formData: FormData) {
   await prisma.retailOrder.update({ where: { id: orderId }, data: { status } });
 
   revalidatePath(`/retail/orders/${orderId}`);
+  revalidatePath(`/retail/${orderId}`);
   revalidatePath("/retail/orders");
+  revalidatePath("/retail/completed");
 
   if (status === "PAID") {
     redirect("/retail/completed");
