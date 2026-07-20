@@ -3,11 +3,22 @@ import Link from "next/link";
 import { deleteRetailCustomer } from "@/lib/actions";
 import DeleteButton from "@/components/DeleteButton";
 
-export default async function RetailCustomersPage() {
-  const customers = await prisma.retailCustomer.findMany({
+export default async function RetailCustomersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ city?: string }>;
+}) {
+  const { city } = await searchParams;
+
+  const allCustomers = await prisma.retailCustomer.findMany({
     include: { _count: { select: { orders: true } } },
     orderBy: { name: "asc" },
   });
+
+  const cities = [...new Set(allCustomers.map((c) => c.city).filter(Boolean) as string[])].sort();
+  const customers = city
+    ? allCustomers.filter((c) => c.city === city)
+    : allCustomers;
 
   return (
     <div className="space-y-6">
@@ -16,6 +27,7 @@ export default async function RetailCustomersPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Retail Customers</h1>
           <p className="text-sm text-gray-500 mt-0.5">
             {customers.length} retail customer{customers.length !== 1 ? "s" : ""}
+            {city ? ` in ${city}` : ""}
           </p>
         </div>
         <Link
@@ -25,6 +37,31 @@ export default async function RetailCustomersPage() {
           + Add Customer
         </Link>
       </div>
+
+      {/* City filter */}
+      {cities.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/retail/customers"
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              !city ? "bg-black text-white border-black" : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+            }`}
+          >
+            All
+          </Link>
+          {cities.map((c) => (
+            <Link
+              key={c}
+              href={`/retail/customers?city=${encodeURIComponent(c)}`}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                city === c ? "bg-black text-white border-black" : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+              }`}
+            >
+              {c}
+            </Link>
+          ))}
+        </div>
+      )}
 
       {customers.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
