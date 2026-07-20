@@ -3,15 +3,9 @@ import Link from "next/link";
 import { deleteRetailCustomer } from "@/lib/actions";
 import DeleteButton from "@/components/DeleteButton";
 
-function fmt(n: number) {
-  return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
-}
-
 export default async function RetailCustomersPage() {
   const customers = await prisma.retailCustomer.findMany({
-    include: {
-      orders: { include: { payments: true } },
-    },
+    include: { _count: { select: { orders: true } } },
     orderBy: { name: "asc" },
   });
 
@@ -48,19 +42,11 @@ export default async function RetailCustomersPage() {
                 <th className="py-3 px-5">Phone</th>
                 <th className="py-3 px-5">City</th>
                 <th className="py-3 px-5 text-right">Orders</th>
-                <th className="py-3 px-5 text-right">Total Billed</th>
-                <th className="py-3 px-5 text-right">Received</th>
-                <th className="py-3 px-5 text-right">Balance</th>
                 <th className="py-3 px-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {customers.map((c) => {
-                const totalBilled = c.orders.reduce((s, o) => s + o.totalAmount, 0);
-                const totalReceived = c.orders.reduce(
-                  (s, o) => s + o.payments.reduce((ps, p) => ps + p.amount, 0), 0
-                );
-                const balance = Math.max(0, totalBilled - totalReceived);
                 const deleteBound = deleteRetailCustomer.bind(null, c.id);
                 return (
                   <tr key={c.id} className="hover:bg-gray-50/70 transition-colors">
@@ -71,12 +57,7 @@ export default async function RetailCustomersPage() {
                     </td>
                     <td className="py-3 px-5 text-gray-500">{c.phone ?? "—"}</td>
                     <td className="py-3 px-5 text-gray-500">{c.city ?? "—"}</td>
-                    <td className="py-3 px-5 text-right text-gray-600">{c.orders.length}</td>
-                    <td className="py-3 px-5 text-right tabular-nums">Rs {fmt(totalBilled)}</td>
-                    <td className="py-3 px-5 text-right tabular-nums text-gray-600">Rs {fmt(totalReceived)}</td>
-                    <td className={`py-3 px-5 text-right tabular-nums font-medium ${balance > 0 ? "text-orange-600" : "text-green-700"}`}>
-                      {balance > 0 ? `Rs ${fmt(balance)}` : "✓"}
-                    </td>
+                    <td className="py-3 px-5 text-right text-gray-600">{c._count.orders}</td>
                     <td className="py-3 px-5 text-right">
                       <DeleteButton action={deleteBound} message="This customer will be unlinked from their orders and removed." />
                     </td>
