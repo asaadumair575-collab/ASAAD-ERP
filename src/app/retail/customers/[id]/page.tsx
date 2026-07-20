@@ -168,11 +168,9 @@ export default async function RetailCustomerDetailPage({
                     </td>
                     <td className="py-3 px-5 text-right">
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                        o.status === "PAID" ? "bg-green-100 text-green-700" :
-                        o.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" :
-                        "bg-gray-100 text-gray-500"
+                        o.status === "PAID" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-600"
                       }`}>
-                        {o.status}
+                        {o.status === "PAID" ? "Delivered" : "Pending"}
                       </span>
                     </td>
                   </tr>
