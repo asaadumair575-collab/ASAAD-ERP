@@ -36,6 +36,18 @@ export default async function RetailFinancePage({
   const totalCourier = orders.reduce((s, o) => s + (o.courierCharge ?? 0), 0);
   const totalProfit = totalRevenue - totalCogs - totalCourier;
 
+  // Settled profit: only orders where courier charge entered AND payment recorded
+  const settledOrders = orders.filter(
+    (o) => (o.courierCharge ?? 0) > 0 && o.payments.length > 0
+  );
+  const settledRevenue = settledOrders.reduce((s, o) => s + o.totalAmount, 0);
+  const settledCogs = settledOrders.reduce(
+    (s, o) => s + o.items.reduce((is, i) => is + i.quantity * COST_PER_DOZEN, 0),
+    0
+  );
+  const settledCourier = settledOrders.reduce((s, o) => s + (o.courierCharge ?? 0), 0);
+  const settledProfit = settledRevenue - settledCogs - settledCourier;
+
   return (
     <div className="space-y-6">
       <div>
@@ -68,15 +80,16 @@ export default async function RetailFinancePage({
       </form>
 
       {/* Profit KPI — prominent */}
-      <div className={`rounded-2xl p-6 shadow-sm border ${totalProfit >= 0 ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
+      <div className={`rounded-2xl p-6 shadow-sm border ${settledProfit >= 0 ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
         <p className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Net Profit</p>
-        <p className={`text-4xl font-bold tracking-tight ${totalProfit >= 0 ? "text-green-700" : "text-red-600"}`}>
-          Rs {fmt(totalProfit)}
+        <p className={`text-4xl font-bold tracking-tight ${settledProfit >= 0 ? "text-green-700" : "text-red-600"}`}>
+          Rs {fmt(settledProfit)}
         </p>
         <div className="flex flex-wrap gap-4 mt-3 text-xs text-gray-500">
-          <span>Revenue <span className="font-semibold text-gray-800">Rs {fmt(totalRevenue)}</span></span>
-          <span>− Ball Cost <span className="font-semibold text-gray-800">Rs {fmt(totalCogs)}</span></span>
-          <span>− Courier <span className="font-semibold text-gray-800">Rs {fmt(totalCourier)}</span></span>
+          <span>Revenue <span className="font-semibold text-gray-800">Rs {fmt(settledRevenue)}</span></span>
+          <span>− Ball Cost <span className="font-semibold text-gray-800">Rs {fmt(settledCogs)}</span></span>
+          <span>− Courier <span className="font-semibold text-gray-800">Rs {fmt(settledCourier)}</span></span>
+          <span className="text-gray-400">({settledOrders.length} settled orders)</span>
         </div>
       </div>
 
