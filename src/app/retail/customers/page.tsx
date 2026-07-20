@@ -6,9 +6,9 @@ import DeleteButton from "@/components/DeleteButton";
 export default async function RetailCustomersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ city?: string }>;
+  searchParams: Promise<{ city?: string; q?: string }>;
 }) {
-  const { city } = await searchParams;
+  const { city, q } = await searchParams;
 
   const allCustomers = await prisma.retailCustomer.findMany({
     include: { _count: { select: { orders: true } } },
@@ -16,9 +16,11 @@ export default async function RetailCustomersPage({
   });
 
   const cities = [...new Set(allCustomers.map((c) => c.city).filter(Boolean) as string[])].sort();
-  const customers = city
-    ? allCustomers.filter((c) => c.city === city)
-    : allCustomers;
+  const customers = allCustomers.filter((c) => {
+    const matchCity = !city || c.city === city;
+    const matchQ = !q || c.name.toLowerCase().includes(q.toLowerCase()) || (c.phone ?? "").includes(q);
+    return matchCity && matchQ;
+  });
 
   return (
     <div className="space-y-6">
@@ -38,30 +40,32 @@ export default async function RetailCustomersPage({
         </Link>
       </div>
 
-      {/* City filter */}
-      {cities.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/retail/customers"
-            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-              !city ? "bg-black text-white border-black" : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-            }`}
-          >
-            All
-          </Link>
+      {/* Search + City filter */}
+      <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
+        <input
+          type="text"
+          name="q"
+          defaultValue={q ?? ""}
+          placeholder="Search name or phone…"
+          className="flex-1 min-w-[160px] bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+        />
+        <select
+          name="city"
+          defaultValue={city ?? ""}
+          className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+        >
+          <option value="">All Cities</option>
           {cities.map((c) => (
-            <Link
-              key={c}
-              href={`/retail/customers?city=${encodeURIComponent(c)}`}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                city === c ? "bg-black text-white border-black" : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-              }`}
-            >
-              {c}
-            </Link>
+            <option key={c} value={c}>{c}</option>
           ))}
-        </div>
-      )}
+        </select>
+        <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+          Filter
+        </button>
+        {(city || q) && (
+          <Link href="/retail/customers" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>
+        )}
+      </form>
 
       {customers.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
