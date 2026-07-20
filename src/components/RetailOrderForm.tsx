@@ -124,13 +124,13 @@ export default function RetailOrderForm({
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">Phone</label>
-              <input type="tel" name="phone" placeholder="03xx-xxxxxxx"
+              <label className="block text-xs text-gray-500 mb-1.5">Phone <span className="text-black">*</span></label>
+              <input type="tel" name="phone" required placeholder="03xx-xxxxxxx"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">City</label>
-              <input type="text" name="city" placeholder="e.g. Lahore"
+              <label className="block text-xs text-gray-500 mb-1.5">City <span className="text-black">*</span></label>
+              <input type="text" name="city" required placeholder="e.g. Lahore"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
             </div>
           </div>
