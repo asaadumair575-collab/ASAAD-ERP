@@ -37,16 +37,6 @@ export default async function RetailPage({
     orderBy: { date: "desc" },
   });
 
-  const pendingCount = await prisma.retailOrder.count({ where: { status: { in: ["PENDING", "PARTIAL"] } } });
-  const pendingAmount = await prisma.retailOrder.findMany({
-    where: { status: { in: ["PENDING", "PARTIAL"] } },
-    include: { payments: true },
-  }).then((rows) =>
-    rows.reduce((s, o) => {
-      const paid = o.payments.reduce((ps, p) => ps + p.amount, 0);
-      return s + Math.max(0, o.totalAmount - paid);
-    }, 0)
-  );
 
   return (
     <div className="space-y-6">
@@ -64,22 +54,6 @@ export default async function RetailPage({
         >
           + New Order
         </Link>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-          <p className="text-xs text-gray-500">Pending Recovery</p>
-          <p className="text-xl font-semibold mt-1 text-orange-600">Rs {fmt(pendingAmount)}</p>
-          <p className="text-xs text-gray-400 mt-1">{pendingCount} orders unpaid / partial</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-          <p className="text-xs text-gray-500">Total Orders</p>
-          <p className="text-xl font-semibold mt-1">{orders.length}</p>
-          <p className="text-xs text-gray-400 mt-1">
-            {orders.filter((o) => o.status === "PAID").length} paid
-          </p>
-        </div>
       </div>
 
       {/* Filter bar */}
