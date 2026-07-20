@@ -63,7 +63,7 @@ export default async function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="h-full overflow-hidden text-black">
+      <body className="h-dvh overflow-hidden text-black">
         <AppShell
           businessName={profile?.name ?? "Trader CRM"}
           isAdmin={me?.isAdmin ?? false}

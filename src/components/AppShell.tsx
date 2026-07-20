@@ -21,7 +21,7 @@ export default function AppShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-dvh overflow-hidden">
       <Sidebar
         businessName={businessName}
         isAdmin={isAdmin}
@@ -34,7 +34,7 @@ export default function AppShell({
           onMenuClick={() => setMobileOpen(true)}
           username={username}
         />
-        <main className="flex-1 overflow-y-auto bg-gray-50">
+        <main className="flex-1 overflow-y-auto overscroll-none bg-gray-50 [-webkit-overflow-scrolling:touch]">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 print:max-w-none print:p-0">
             {children}
           </div>
