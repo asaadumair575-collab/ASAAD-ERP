@@ -1335,9 +1335,10 @@ export async function createRetailCustomer(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const city = String(formData.get("city") ?? "").trim() || null;
+  const address = String(formData.get("address") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
   if (!name) throw new Error("Name is required");
-  const customer = await prisma.retailCustomer.create({ data: { name, phone, city, notes } });
+  const customer = await prisma.retailCustomer.create({ data: { name, phone, city, address, notes } });
   revalidatePath("/retail/customers");
   redirect(`/retail/customers/${customer.id}`);
 }
@@ -1346,9 +1347,10 @@ export async function updateRetailCustomer(id: number, formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const city = String(formData.get("city") ?? "").trim() || null;
+  const address = String(formData.get("address") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
   if (!name) throw new Error("Name is required");
-  await prisma.retailCustomer.update({ where: { id }, data: { name, phone, city, notes } });
+  await prisma.retailCustomer.update({ where: { id }, data: { name, phone, city, address, notes } });
   revalidatePath("/retail/customers");
   revalidatePath(`/retail/customers/${id}`);
   redirect(`/retail/customers/${id}`);

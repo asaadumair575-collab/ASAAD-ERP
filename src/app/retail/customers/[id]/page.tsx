@@ -107,6 +107,16 @@ export default async function RetailCustomerDetailPage({
             </div>
           </div>
           <div>
+            <label className="block text-xs text-gray-500 mb-1.5">Address</label>
+            <input
+              type="text"
+              name="address"
+              defaultValue={(customer as typeof customer & { address?: string }).address ?? ""}
+              placeholder="e.g. Street 5, Block B, Gulberg"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
+            />
+          </div>
+          <div>
             <label className="block text-xs text-gray-500 mb-1.5">Notes</label>
             <textarea
               name="notes"
