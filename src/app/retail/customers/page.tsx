@@ -3,6 +3,13 @@ import Link from "next/link";
 import { deleteRetailCustomer } from "@/lib/actions";
 import DeleteButton from "@/components/DeleteButton";
 
+function daysAgo(date: Date): string {
+  const days = Math.floor((Date.now() - new Date(date).getTime()) / 86400000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  return `${days} days ago`;
+}
+
 export default async function RetailCustomersPage({
   searchParams,
 }: {
@@ -11,7 +18,10 @@ export default async function RetailCustomersPage({
   const { city, q } = await searchParams;
 
   const allCustomers = await prisma.retailCustomer.findMany({
-    include: { _count: { select: { orders: true } } },
+    include: {
+      _count: { select: { orders: true } },
+      orders: { select: { createdAt: true }, orderBy: { createdAt: "desc" }, take: 1 },
+    },
     orderBy: { name: "asc" },
   });
 
@@ -83,6 +93,7 @@ export default async function RetailCustomersPage({
                 <th className="py-3 px-5">Phone</th>
                 <th className="py-3 px-5">City</th>
                 <th className="py-3 px-5 text-right">Orders</th>
+                <th className="py-3 px-5 text-right">Last Order</th>
                 <th className="py-3 px-5"></th>
               </tr>
             </thead>
@@ -99,6 +110,9 @@ export default async function RetailCustomersPage({
                     <td className="py-3 px-5 text-gray-500">{c.phone ?? "—"}</td>
                     <td className="py-3 px-5 text-gray-500">{c.city ?? "—"}</td>
                     <td className="py-3 px-5 text-right text-gray-600">{c._count.orders}</td>
+                    <td className="py-3 px-5 text-right text-gray-500 whitespace-nowrap">
+                      {c.orders[0] ? daysAgo(c.orders[0].createdAt) : "—"}
+                    </td>
                     <td className="py-3 px-5 text-right">
                       <DeleteButton action={deleteBound} message="This customer will be unlinked from their orders and removed." />
                     </td>
