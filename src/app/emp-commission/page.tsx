@@ -150,6 +150,48 @@ export default async function EmpCommissionPage() {
             </div>
           )}
         </div>
+
+        {/* Rejected history */}
+        {(() => {
+          const rejected = entries.filter((e) => e.status === "rejected");
+          if (rejected.length === 0) return null;
+          return (
+            <div className="space-y-2">
+              <h2 className="text-sm font-semibold text-red-600">Rejected Entries ({rejected.length})</h2>
+              <div className="bg-white border border-red-100 rounded-2xl shadow-sm overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left bg-red-50 border-b border-red-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
+                      <th className="py-3 px-5">Employee</th>
+                      <th className="py-3 px-5">Date</th>
+                      <th className="py-3 px-5 text-right">Orders</th>
+                      <th className="py-3 px-5">Note</th>
+                      <th className="py-3 px-5">Reason</th>
+                      <th className="py-3 px-5"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-red-50">
+                    {rejected.map((e) => {
+                      const delBound = deleteEmpCommissionEntry.bind(null, e.id);
+                      return (
+                        <tr key={e.id} className="hover:bg-red-50/50 transition-colors">
+                          <td className="py-3 px-5 font-medium">{e.user.displayName ?? e.user.username}</td>
+                          <td className="py-3 px-5 text-gray-500 whitespace-nowrap">{fmtDate(e.date)}</td>
+                          <td className="py-3 px-5 text-right">{e.orders}</td>
+                          <td className="py-3 px-5 text-gray-500 text-xs">{e.note ?? "—"}</td>
+                          <td className="py-3 px-5 text-red-500 text-xs">{e.adminNote ?? "—"}</td>
+                          <td className="py-3 px-5 text-right">
+                            <DeleteButton action={delBound} message="Remove this rejected entry?" />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     );
   }
