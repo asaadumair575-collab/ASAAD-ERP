@@ -1363,19 +1363,31 @@ export async function deleteRetailCustomer(id: number) {
   redirect("/retail/customers");
 }
 
-export async function createEmpCommissionEntry(formData: FormData) {
+export async function submitEmpCommission(formData: FormData) {
   "use server";
-  const userId = parseInt(String(formData.get("userId") ?? ""), 10);
+  const me = await import("@/lib/auth").then((m) => m.getSessionUser());
+  if (!me) throw new Error("Not logged in");
   const date = String(formData.get("date") ?? "");
   const orders = parseInt(String(formData.get("orders") ?? "0"), 10);
-  const ratePerOrder = parseFloat(String(formData.get("ratePerOrder") ?? "30"));
   const note = String(formData.get("note") ?? "").trim() || null;
-  if (!userId || !date || orders < 1) throw new Error("Invalid entry");
+  if (!date || orders < 1) throw new Error("Invalid entry");
   await prisma.empCommissionEntry.create({
-    data: { userId, date: new Date(date), orders, ratePerOrder, note },
+    data: { userId: me.id, date: new Date(date), orders, note, status: "pending" },
   });
   revalidatePath("/emp-commission");
   redirect("/emp-commission");
+}
+
+export async function approveEmpCommission(id: number) {
+  "use server";
+  await prisma.empCommissionEntry.update({ where: { id }, data: { status: "approved" } });
+  revalidatePath("/emp-commission");
+}
+
+export async function rejectEmpCommission(id: number) {
+  "use server";
+  await prisma.empCommissionEntry.delete({ where: { id } });
+  revalidatePath("/emp-commission");
 }
 
 export async function deleteEmpCommissionEntry(id: number) {
