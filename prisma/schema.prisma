@@ -108,14 +108,15 @@ model User {
 }
 
 model EmpCommissionEntry {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  date      DateTime @db.Date
-  orders    Int
-  note      String?
-  status    String   @default("pending")
-  createdAt DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  date       DateTime @db.Date
+  orders     Int
+  note       String?
+  status     String   @default("pending")
+  adminNote  String?
+  createdAt  DateTime @default(now())
 }
 
 model CommissionRate {

@@ -3,7 +3,6 @@ import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { parsePermissions, canView } from "@/lib/permissions";
 import { approveEmpCommission, rejectEmpCommission, deleteEmpCommissionEntry, submitEmpCommission } from "@/lib/actions";
-import Link from "next/link";
 import DeleteButton from "@/components/DeleteButton";
 import SubmitButton from "@/components/SubmitButton";
 
@@ -27,10 +26,10 @@ export default async function EmpCommissionPage() {
   if (me.isAdmin) {
     const entries = await prisma.empCommissionEntry.findMany({
       include: { user: { select: { id: true, displayName: true, username: true } } },
-      orderBy: [{ createdAt: "desc" }],
+      orderBy: { createdAt: "desc" },
     });
 
-    const pending = entries.filter((e) => e.status === "pending");
+    const pending  = entries.filter((e) => e.status === "pending");
     const approved = entries.filter((e) => e.status === "approved");
 
     const totals: Record<number, { name: string; total: number }> = {};
@@ -43,9 +42,10 @@ export default async function EmpCommissionPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Employee Commission</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Rs 30 per order · approve employee submissions.</p>
+          <p className="text-sm text-gray-500 mt-0.5">Rs 30 per order · approve or reject employee submissions.</p>
         </div>
 
+        {/* Per-employee approved totals */}
         {Object.values(totals).length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {Object.values(totals).map((t) => (
@@ -57,58 +57,59 @@ export default async function EmpCommissionPage() {
           </div>
         )}
 
+        {/* Pending approvals */}
         {pending.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <h2 className="text-sm font-semibold text-orange-600 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-orange-500 inline-block" />
               Pending Approval ({pending.length})
             </h2>
-            <div className="bg-white border border-orange-200 rounded-2xl shadow-sm overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left bg-orange-50 border-b border-orange-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                    <th className="py-3 px-5">Employee</th>
-                    <th className="py-3 px-5">Date</th>
-                    <th className="py-3 px-5 text-right">Orders</th>
-                    <th className="py-3 px-5 text-right">Amount</th>
-                    <th className="py-3 px-5">Note</th>
-                    <th className="py-3 px-5 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-orange-50">
-                  {pending.map((e) => {
-                    const approveBound = approveEmpCommission.bind(null, e.id);
-                    const rejectBound = rejectEmpCommission.bind(null, e.id);
-                    return (
-                      <tr key={e.id} className="hover:bg-orange-50/50 transition-colors">
-                        <td className="py-3 px-5 font-medium">{e.user.displayName ?? e.user.username}</td>
-                        <td className="py-3 px-5 text-gray-500 whitespace-nowrap">{fmtDate(e.date)}</td>
-                        <td className="py-3 px-5 text-right">{e.orders}</td>
-                        <td className="py-3 px-5 text-right font-medium">Rs {fmt(e.orders * RATE)}</td>
-                        <td className="py-3 px-5 text-gray-500 text-xs">{e.note ?? "—"}</td>
-                        <td className="py-3 px-5 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <form action={approveBound}>
-                              <SubmitButton pendingText="…" className="bg-black text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors">
-                                Approve
-                              </SubmitButton>
-                            </form>
-                            <form action={rejectBound}>
-                              <SubmitButton pendingText="…" className="border border-gray-200 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
-                                Reject
-                              </SubmitButton>
-                            </form>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            {pending.map((e) => {
+              const approveBound = approveEmpCommission.bind(null, e.id);
+              const rejectBound = rejectEmpCommission.bind(null, e.id);
+              return (
+                <div key={e.id} className="bg-white border border-orange-200 rounded-2xl p-4 shadow-sm space-y-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-medium text-sm">{e.user.displayName ?? e.user.username}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{fmtDate(e.date)}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-lg font-semibold">Rs {fmt(e.orders * RATE)}</p>
+                      <p className="text-xs text-gray-500">{e.orders} orders × Rs {RATE}</p>
+                    </div>
+                  </div>
+                  {e.note && (
+                    <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">Note: {e.note}</p>
+                  )}
+                  <div className="flex items-end gap-3 pt-1">
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-400 mb-1">Rejection reason (if rejecting)</label>
+                      <form action={rejectBound} className="flex gap-2">
+                        <input
+                          type="text"
+                          name="adminNote"
+                          placeholder="e.g. Orders count mismatch"
+                          className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-black"
+                        />
+                        <SubmitButton pendingText="…" className="border border-gray-200 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
+                          Reject
+                        </SubmitButton>
+                      </form>
+                    </div>
+                    <form action={approveBound}>
+                      <SubmitButton pendingText="…" className="bg-black text-white text-xs font-medium px-4 py-1.5 rounded-lg hover:bg-gray-800 transition-colors whitespace-nowrap">
+                        ✓ Approve
+                      </SubmitButton>
+                    </form>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
+        {/* Approved history */}
         <div className="space-y-2">
           <h2 className="text-sm font-semibold text-gray-700">Approved History</h2>
           {approved.length === 0 ? (
@@ -160,7 +161,9 @@ export default async function EmpCommissionPage() {
   });
 
   const approved = entries.filter((e) => e.status === "approved");
-  const pending = entries.filter((e) => e.status === "pending");
+  const pending  = entries.filter((e) => e.status === "pending");
+  const rejected = entries.filter((e) => e.status === "rejected");
+
   const totalEarned = approved.reduce((s, e) => s + e.orders * RATE, 0);
   const totalOrders = approved.reduce((s, e) => s + e.orders, 0);
   const today = new Date().toISOString().split("T")[0];
@@ -172,21 +175,27 @@ export default async function EmpCommissionPage() {
         <p className="text-sm text-gray-500 mt-0.5">Rs 30 per order · submit daily and wait for admin approval.</p>
       </div>
 
+      {/* Summary */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-black text-white rounded-2xl p-5 shadow-sm">
           <p className="text-xs text-gray-400">Total Earned</p>
           <p className="text-3xl font-bold mt-1">Rs {fmt(totalEarned)}</p>
           <p className="text-xs text-gray-400 mt-1">{totalOrders} orders approved</p>
         </div>
-        {pending.length > 0 && (
-          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 shadow-sm">
-            <p className="text-xs text-orange-600">Pending Approval</p>
-            <p className="text-3xl font-bold mt-1 text-orange-700">
-              Rs {fmt(pending.reduce((s, e) => s + e.orders * RATE, 0))}
-            </p>
-            <p className="text-xs text-orange-500 mt-1">{pending.length} {pending.length === 1 ? "entry" : "entries"} waiting</p>
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-orange-500 font-medium">Pending</span>
+            <span className="text-sm font-semibold text-orange-600">{pending.length}</span>
           </div>
-        )}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-red-500 font-medium">Rejected</span>
+            <span className="text-sm font-semibold text-red-600">{rejected.length}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-green-600 font-medium">Approved</span>
+            <span className="text-sm font-semibold text-green-700">{approved.length}</span>
+          </div>
+        </div>
       </div>
 
       {/* Submit form */}
@@ -216,34 +225,49 @@ export default async function EmpCommissionPage() {
         </form>
       </div>
 
+      {/* All entries as cards */}
       {entries.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                <th className="py-3 px-5">Date</th>
-                <th className="py-3 px-5 text-right">Orders</th>
-                <th className="py-3 px-5 text-right">Amount</th>
-                <th className="py-3 px-5">Note</th>
-                <th className="py-3 px-5 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {entries.map((e) => (
-                <tr key={e.id} className="hover:bg-gray-50/70 transition-colors">
-                  <td className="py-3 px-5 text-gray-700 whitespace-nowrap">{fmtDate(e.date)}</td>
-                  <td className="py-3 px-5 text-right">{e.orders}</td>
-                  <td className="py-3 px-5 text-right font-medium">Rs {fmt(e.orders * RATE)}</td>
-                  <td className="py-3 px-5 text-gray-500 text-xs">{e.note ?? "—"}</td>
-                  <td className="py-3 px-5 text-right">
-                    {e.status === "approved"
-                      ? <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">Approved</span>
-                      : <span className="bg-orange-100 text-orange-600 text-xs font-medium px-2 py-0.5 rounded-full">Pending</span>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-gray-700">My Requests</h2>
+          {entries.map((e) => {
+            const isPending  = e.status === "pending";
+            const isApproved = e.status === "approved";
+            const isRejected = e.status === "rejected";
+            return (
+              <div
+                key={e.id}
+                className={`rounded-2xl p-4 shadow-sm border ${
+                  isApproved ? "bg-white border-green-200" :
+                  isRejected ? "bg-red-50 border-red-200" :
+                  "bg-white border-orange-200"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs text-gray-500">{fmtDate(e.date)}</p>
+                    <p className="text-sm font-medium mt-0.5">{e.orders} orders</p>
+                    {e.note && <p className="text-xs text-gray-400 mt-0.5">Note: {e.note}</p>}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-lg font-semibold">Rs {fmt(e.orders * RATE)}</p>
+                    {isPending  && <span className="inline-block bg-orange-100 text-orange-600 text-xs font-medium px-2 py-0.5 rounded-full mt-1">Pending</span>}
+                    {isApproved && <span className="inline-block bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full mt-1">Approved ✓</span>}
+                    {isRejected && <span className="inline-block bg-red-100 text-red-600 text-xs font-medium px-2 py-0.5 rounded-full mt-1">Rejected ✗</span>}
+                  </div>
+                </div>
+                {isRejected && e.adminNote && (
+                  <div className="mt-2 bg-red-100 text-red-700 text-xs rounded-lg px-3 py-2">
+                    Admin: {e.adminNote}
+                  </div>
+                )}
+                {isRejected && !e.adminNote && (
+                  <div className="mt-2 bg-red-100 text-red-500 text-xs rounded-lg px-3 py-2">
+                    Entry rejected by admin.
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

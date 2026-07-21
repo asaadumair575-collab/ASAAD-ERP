@@ -1384,9 +1384,10 @@ export async function approveEmpCommission(id: number) {
   revalidatePath("/emp-commission");
 }
 
-export async function rejectEmpCommission(id: number) {
+export async function rejectEmpCommission(id: number, formData: FormData) {
   "use server";
-  await prisma.empCommissionEntry.delete({ where: { id } });
+  const adminNote = String(formData.get("adminNote") ?? "").trim() || null;
+  await prisma.empCommissionEntry.update({ where: { id }, data: { status: "rejected", adminNote } });
   revalidatePath("/emp-commission");
 }
 
