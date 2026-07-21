@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getSessionUser } from "@/lib/auth";
 import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, updateRetailCourierCharge } from "@/lib/actions";
 import RetailPaymentSection from "@/components/RetailPaymentSection";
 import RetailDeleteButton from "@/components/RetailDeleteButton";
@@ -16,6 +17,7 @@ export default async function RetailOrderPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ receipt?: string }>;
 }) {
+  const me = await getSessionUser();
   const { id } = await params;
   const { receipt } = await searchParams;
   const orderId = parseInt(id, 10);
@@ -179,6 +181,7 @@ export default async function RetailOrderPage({
         recordAction={recordPaymentBound}
         deleteAction={deleteRetailPayment}
         updateCourierAction={updateCourierBound}
+        isAdmin={me?.isAdmin ?? false}
       />
 
       {/* Receipt & Delete */}

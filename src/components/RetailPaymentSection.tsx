@@ -17,6 +17,7 @@ export default function RetailPaymentSection({
   recordAction,
   deleteAction,
   updateCourierAction,
+  isAdmin = false,
 }: {
   orderId: number;
   balance: number;
@@ -25,6 +26,7 @@ export default function RetailPaymentSection({
   recordAction: (formData: FormData) => void;
   deleteAction: (paymentId: number, orderId: number) => Promise<void>;
   updateCourierAction: (formData: FormData) => void;
+  isAdmin?: boolean;
 }) {
   const [editingCourier, setEditingCourier] = useState(false);
 
@@ -40,7 +42,7 @@ export default function RetailPaymentSection({
             {courierCharge > 0 ? `Rs ${fmt(courierCharge)}` : "Not set"}
           </p>
         </div>
-        {!editingCourier && (
+        {isAdmin && !editingCourier && (
           <button
             type="button"
             onClick={() => setEditingCourier(true)}
@@ -49,7 +51,7 @@ export default function RetailPaymentSection({
             {courierCharge > 0 ? "Update" : "Add"}
           </button>
         )}
-        {editingCourier && (
+        {isAdmin && editingCourier && (
           <form action={updateCourierAction} className="flex items-center gap-2" onSubmit={() => setEditingCourier(false)}>
             <input
               type="number"
@@ -82,13 +84,13 @@ export default function RetailPaymentSection({
       {payments.length > 0 && (
         <div className="space-y-0">
           {payments.map((p) => (
-            <PaymentRow key={p.id} payment={p} orderId={orderId} deleteAction={deleteAction} />
+            <PaymentRow key={p.id} payment={p} orderId={orderId} deleteAction={deleteAction} isAdmin={isAdmin} />
           ))}
         </div>
       )}
 
-      {/* Record payment form */}
-      {balance > 0.01 && (
+      {/* Record payment form — admin only */}
+      {isAdmin && balance > 0.01 && (
         <form action={recordAction} className="flex flex-wrap gap-3 items-end pt-3 border-t border-gray-100">
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">Amount (Rs)</label>
@@ -134,10 +136,12 @@ function PaymentRow({
   payment: p,
   orderId,
   deleteAction,
+  isAdmin,
 }: {
   payment: Payment;
   orderId: number;
   deleteAction: (paymentId: number, orderId: number) => Promise<void>;
+  isAdmin: boolean;
 }) {
   const [confirming, setConfirming] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -152,7 +156,7 @@ function PaymentRow({
       </div>
       <div className="flex items-center gap-3">
         <span className="font-medium">Rs {fmt(p.amount)}</span>
-        {!confirming && (
+        {isAdmin && !confirming && (
           <button
             type="button"
             onClick={() => setConfirming(true)}
