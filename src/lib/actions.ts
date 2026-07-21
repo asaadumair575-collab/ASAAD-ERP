@@ -1362,3 +1362,24 @@ export async function deleteRetailCustomer(id: number) {
   revalidatePath("/retail/customers");
   redirect("/retail/customers");
 }
+
+export async function createEmpCommissionEntry(formData: FormData) {
+  "use server";
+  const userId = parseInt(String(formData.get("userId") ?? ""), 10);
+  const date = String(formData.get("date") ?? "");
+  const orders = parseInt(String(formData.get("orders") ?? "0"), 10);
+  const ratePerOrder = parseFloat(String(formData.get("ratePerOrder") ?? "30"));
+  const note = String(formData.get("note") ?? "").trim() || null;
+  if (!userId || !date || orders < 1) throw new Error("Invalid entry");
+  await prisma.empCommissionEntry.create({
+    data: { userId, date: new Date(date), orders, ratePerOrder, note },
+  });
+  revalidatePath("/emp-commission");
+  redirect("/emp-commission");
+}
+
+export async function deleteEmpCommissionEntry(id: number) {
+  "use server";
+  await prisma.empCommissionEntry.delete({ where: { id } });
+  revalidatePath("/emp-commission");
+}

@@ -7,7 +7,8 @@ export const MODULES = [
   { key: "samples",    label: "Samples",            href: "/samples",        yesNo: false },
   { key: "finance",    label: "Finance",            href: "/finance",        yesNo: false },
   { key: "retail",     label: "Retail / COD",       href: "/retail",         yesNo: false },
-  { key: "commission", label: "Commission",         href: "/commission",     yesNo: false },
+  { key: "commission",     label: "Commission",          href: "/commission",      yesNo: false },
+  { key: "emp_commission", label: "My Commission",        href: "/emp-commission",  yesNo: true  },
 ] as const;
 
 // Sub-pages within each module dropdown
@@ -38,27 +39,29 @@ export const ALL_MODULE_KEYS: ModuleKey[] = MODULES.map((m) => m.key);
 export const ALL_SUB_KEYS: SubModuleKey[] = SUB_MODULES.map((s) => s.key);
 
 export const EMPTY_PERMISSIONS: UserPermissions = {
-  dashboard:  "none",
-  clients:    "none",
-  leads:      "none",
-  sales:      "none",
-  dispatch:   "none",
-  samples:    "none",
-  finance:    "none",
-  retail:     "none",
-  commission: "none",
+  dashboard:      "none",
+  clients:        "none",
+  leads:          "none",
+  sales:          "none",
+  dispatch:       "none",
+  samples:        "none",
+  finance:        "none",
+  retail:         "none",
+  commission:     "none",
+  emp_commission: "none",
 };
 
 export const FULL_PERMISSIONS: UserPermissions = {
-  dashboard:  "view",
-  clients:    "full",
-  leads:      "full",
-  sales:      "full",
-  dispatch:   "full",
-  samples:    "full",
-  finance:    "full",
-  retail:     "full",
-  commission: "full",
+  dashboard:      "view",
+  clients:        "full",
+  leads:          "full",
+  sales:          "full",
+  dispatch:       "full",
+  samples:        "full",
+  finance:        "full",
+  retail:         "full",
+  commission:     "full",
+  emp_commission: "view",
 };
 
 export function parsePermissions(raw: unknown): UserPermissions {

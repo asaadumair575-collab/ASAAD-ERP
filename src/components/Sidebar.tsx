@@ -329,6 +329,12 @@ export default function Sidebar({
           </NavLink>
         )}
 
+        {canView(permissions, "emp_commission", isAdmin) && (
+          <NavLink href="/emp-commission" active={isActive("/emp-commission")} icon={icons.finance} onClick={closeMobile}>
+            {isAdmin ? "Emp Commission" : "My Commission"}
+          </NavLink>
+        )}
+
         {isAdmin && <SectionLabel>Admin</SectionLabel>}
 
         {isAdmin && (
