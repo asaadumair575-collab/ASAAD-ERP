@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import InstallPwaButton from "@/components/InstallPwaButton";
-import { canView, type UserPermissions, EMPTY_PERMISSIONS } from "@/lib/permissions";
+import { canView, canViewSub, type UserPermissions, EMPTY_PERMISSIONS } from "@/lib/permissions";
 
 const icons = {
   dashboard: (
@@ -187,7 +187,9 @@ export default function Sidebar({
             {openSection === "clients" && (
               <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 <NavLink href="/clients" active={pathname === "/clients"} compact onClick={closeMobile}>All Customers</NavLink>
-                <NavLink href="/clients/new" active={pathname === "/clients/new"} icon={icons.plus} compact onClick={closeMobile}>Add Customer</NavLink>
+                {canViewSub(permissions, "clients_add", isAdmin) && (
+                  <NavLink href="/clients/new" active={pathname === "/clients/new"} icon={icons.plus} compact onClick={closeMobile}>Add Customer</NavLink>
+                )}
               </div>
             )}
           </>
@@ -208,8 +210,12 @@ export default function Sidebar({
             </button>
             {openSection === "sales" && (
               <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
-                <NavLink href="/sales/invoices" active={pathname.startsWith("/sales/invoices")} compact onClick={closeMobile}>Invoicing</NavLink>
-                <NavLink href="/sales/products" active={pathname.startsWith("/sales/products")} compact onClick={closeMobile}>Products</NavLink>
+                {canViewSub(permissions, "sales_invoices", isAdmin) && (
+                  <NavLink href="/sales/invoices" active={pathname.startsWith("/sales/invoices")} compact onClick={closeMobile}>Invoicing</NavLink>
+                )}
+                {canViewSub(permissions, "sales_products", isAdmin) && (
+                  <NavLink href="/sales/products" active={pathname.startsWith("/sales/products")} compact onClick={closeMobile}>Products</NavLink>
+                )}
               </div>
             )}
           </>
@@ -230,8 +236,10 @@ export default function Sidebar({
             </button>
             {openSection === "finance" && (
               <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
-                <NavLink href="/finance" active={pathname.startsWith("/finance")} compact onClick={closeMobile}>Finance</NavLink>
-                {canView(permissions, "commission", isAdmin) && (
+                {canViewSub(permissions, "finance_main", isAdmin) && (
+                  <NavLink href="/finance" active={pathname.startsWith("/finance")} compact onClick={closeMobile}>Finance</NavLink>
+                )}
+                {canView(permissions, "commission", isAdmin) && canViewSub(permissions, "finance_commission", isAdmin) && (
                   <NavLink href="/commission" active={pathname.startsWith("/commission")} compact onClick={closeMobile}>Commission</NavLink>
                 )}
               </div>
@@ -255,11 +263,21 @@ export default function Sidebar({
             {openSection === "retail" && (
               <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 <NavLink href="/retail" active={pathname === "/retail"} compact onClick={closeMobile}>Overview</NavLink>
-                <NavLink href="/retail/orders" active={pathname.startsWith("/retail/orders")} compact onClick={closeMobile}>Orders</NavLink>
-                <NavLink href="/retail/completed" active={pathname.startsWith("/retail/completed")} compact onClick={closeMobile}>Completed</NavLink>
-                <NavLink href="/retail/customers" active={pathname.startsWith("/retail/customers")} compact onClick={closeMobile}>Customers</NavLink>
-                <NavLink href="/retail/finance" active={pathname.startsWith("/retail/finance")} compact onClick={closeMobile}>Finance</NavLink>
-                <NavLink href="/retail/calculator" active={pathname.startsWith("/retail/calculator")} compact onClick={closeMobile}>Rate Calculator</NavLink>
+                {canViewSub(permissions, "retail_orders", isAdmin) && (
+                  <NavLink href="/retail/orders" active={pathname.startsWith("/retail/orders")} compact onClick={closeMobile}>Orders</NavLink>
+                )}
+                {canViewSub(permissions, "retail_completed", isAdmin) && (
+                  <NavLink href="/retail/completed" active={pathname.startsWith("/retail/completed")} compact onClick={closeMobile}>Completed</NavLink>
+                )}
+                {canViewSub(permissions, "retail_customers", isAdmin) && (
+                  <NavLink href="/retail/customers" active={pathname.startsWith("/retail/customers")} compact onClick={closeMobile}>Customers</NavLink>
+                )}
+                {canViewSub(permissions, "retail_finance", isAdmin) && (
+                  <NavLink href="/retail/finance" active={pathname.startsWith("/retail/finance")} compact onClick={closeMobile}>Finance</NavLink>
+                )}
+                {canViewSub(permissions, "retail_calculator", isAdmin) && (
+                  <NavLink href="/retail/calculator" active={pathname.startsWith("/retail/calculator")} compact onClick={closeMobile}>Rate Calculator</NavLink>
+                )}
               </div>
             )}
           </>
@@ -286,10 +304,18 @@ export default function Sidebar({
             {openSection === "leads" && (
               <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 <NavLink href="/leads" active={pathname === "/leads"} compact onClick={closeMobile}>All Shops</NavLink>
-                <NavLink href="/leads/not-contacted" active={pathname.startsWith("/leads/not-contacted")} compact onClick={closeMobile}>Not Contacted</NavLink>
-                <NavLink href="/leads/contacted" active={pathname.startsWith("/leads/contacted")} compact onClick={closeMobile}>Contacted</NavLink>
-                <NavLink href="/leads/sample-sent" active={pathname.startsWith("/leads/sample-sent")} compact onClick={closeMobile}>Samples</NavLink>
-                <NavLink href="/leads/new" active={pathname === "/leads/new"} icon={icons.plus} compact onClick={closeMobile}>Add Shop</NavLink>
+                {canViewSub(permissions, "leads_not_contacted", isAdmin) && (
+                  <NavLink href="/leads/not-contacted" active={pathname.startsWith("/leads/not-contacted")} compact onClick={closeMobile}>Not Contacted</NavLink>
+                )}
+                {canViewSub(permissions, "leads_contacted", isAdmin) && (
+                  <NavLink href="/leads/contacted" active={pathname.startsWith("/leads/contacted")} compact onClick={closeMobile}>Contacted</NavLink>
+                )}
+                {canViewSub(permissions, "leads_sample_sent", isAdmin) && (
+                  <NavLink href="/leads/sample-sent" active={pathname.startsWith("/leads/sample-sent")} compact onClick={closeMobile}>Samples</NavLink>
+                )}
+                {canViewSub(permissions, "leads_add", isAdmin) && (
+                  <NavLink href="/leads/new" active={pathname === "/leads/new"} icon={icons.plus} compact onClick={closeMobile}>Add Shop</NavLink>
+                )}
               </div>
             )}
           </>
