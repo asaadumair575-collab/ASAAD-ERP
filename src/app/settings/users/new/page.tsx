@@ -1,6 +1,6 @@
 import { getSessionUser } from "@/lib/auth";
 import { createUser } from "@/lib/actions";
-import { MODULES } from "@/lib/permissions";
+import { MODULES, SUB_MODULES } from "@/lib/permissions";
 import SubmitButton from "@/components/SubmitButton";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -55,24 +55,38 @@ export default async function NewUserPage() {
             <h2 className="text-sm font-semibold">Module Permissions</h2>
             <p className="text-xs text-gray-500 mt-0.5">Ignored if user is Admin.</p>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-3">
             {MODULES.map((m) => {
               const levels = m.yesNo
                 ? ([["none", "No"], ["view", "Yes"]] as const)
                 : ([["none", "None"], ["view", "View"], ["full", "Full"]] as const);
+              const subPages = SUB_MODULES.filter((s) => s.parentKey === m.key);
               return (
-                <div key={m.key} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <span className="text-sm text-gray-700">{m.label}</span>
-                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-                    {levels.map(([value, label]) => (
-                      <label key={value} className="relative cursor-pointer">
-                        <input type="radio" name={`perm_${m.key}`} value={value} defaultChecked={value === "none"} className="sr-only peer" />
-                        <span className="block px-3 py-1 text-xs font-medium rounded-md transition-colors text-gray-500 peer-checked:bg-white peer-checked:text-black peer-checked:shadow-sm">
-                          {label}
-                        </span>
-                      </label>
-                    ))}
+                <div key={m.key} className="border border-gray-100 rounded-xl overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50">
+                    <span className="text-sm font-medium text-gray-700">{m.label}</span>
+                    <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-0.5">
+                      {levels.map(([value, label]) => (
+                        <label key={value} className="relative cursor-pointer">
+                          <input type="radio" name={`perm_${m.key}`} value={value} defaultChecked={value === "none"} className="sr-only peer" />
+                          <span className="block px-3 py-1 text-xs font-medium rounded-md transition-colors text-gray-500 peer-checked:bg-zinc-900 peer-checked:text-white">
+                            {label}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
+                  {subPages.length > 0 && (
+                    <div className="px-4 py-2.5 flex flex-wrap gap-x-4 gap-y-2 border-t border-gray-100">
+                      <p className="w-full text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">Sub-pages</p>
+                      {subPages.map((s) => (
+                        <label key={s.key} className="flex items-center gap-1.5 cursor-pointer">
+                          <input type="checkbox" name={`sub_${s.key}`} value="1" defaultChecked className="w-3.5 h-3.5 accent-black rounded" />
+                          <span className="text-xs text-gray-600">{s.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}

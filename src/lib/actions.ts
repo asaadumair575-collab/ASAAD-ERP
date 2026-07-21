@@ -826,8 +826,20 @@ export async function createUser(formData: FormData) {
   const existing = await prisma.user.findUnique({ where: { username } });
   if (existing) throw new Error("That username is already taken");
 
+  const { MODULES, SUB_MODULES } = await import("@/lib/permissions");
+  const permissions: Record<string, unknown> = {};
+  for (const m of MODULES) {
+    const val = String(formData.get(`perm_${m.key}`) ?? "none");
+    permissions[m.key] = ["none", "view", "full"].includes(val) ? val : "none";
+  }
+  const sub: Record<string, boolean> = {};
+  for (const s of SUB_MODULES) {
+    if (formData.get(`sub_${s.key}`) === "1") sub[s.key] = true;
+  }
+  if (Object.keys(sub).length > 0) permissions.sub = sub;
+
   await prisma.user.create({
-    data: { username, passwordHash: hashPassword(password), displayName, isAdmin, permissions: {} },
+    data: { username, passwordHash: hashPassword(password), displayName, isAdmin, permissions },
   });
 
   revalidatePath("/settings");
@@ -839,12 +851,17 @@ export async function updateUser(id: number, formData: FormData) {
   const displayName = String(formData.get("displayName") ?? "").trim() || null;
   const isAdmin = formData.get("isAdmin") === "1";
 
-  const { MODULES } = await import("@/lib/permissions");
-  const permissions: Record<string, string> = {};
+  const { MODULES, SUB_MODULES } = await import("@/lib/permissions");
+  const permissions: Record<string, unknown> = {};
   for (const m of MODULES) {
     const val = String(formData.get(`perm_${m.key}`) ?? "none");
     permissions[m.key] = ["none", "view", "full"].includes(val) ? val : "none";
   }
+  const sub: Record<string, boolean> = {};
+  for (const s of SUB_MODULES) {
+    if (formData.get(`sub_${s.key}`) === "1") sub[s.key] = true;
+  }
+  if (Object.keys(sub).length > 0) permissions.sub = sub;
 
   await prisma.user.update({
     where: { id },
