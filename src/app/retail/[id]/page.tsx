@@ -177,6 +177,7 @@ export default async function RetailOrderPage({
           amount: p.amount,
           note: p.note,
           date: p.date.toISOString(),
+          screenshot: p.screenshot,
         }))}
         recordAction={recordPaymentBound}
         deleteAction={deleteRetailPayment}

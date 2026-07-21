@@ -193,12 +193,13 @@ model RetailOrderItem {
 }
 
 model RetailPayment {
-  id        Int         @id @default(autoincrement())
-  order     RetailOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId   Int
-  amount    Float
-  note      String?
-  date      DateTime    @default(now())
+  id         Int         @id @default(autoincrement())
+  order      RetailOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId    Int
+  amount     Float
+  note       String?
+  screenshot String?
+  date       DateTime    @default(now())
 }
 
 model Lead {

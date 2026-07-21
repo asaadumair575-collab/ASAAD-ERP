@@ -1257,13 +1257,22 @@ export async function recordRetailPayment(orderId: number, formData: FormData) {
   const note = String(formData.get("note") ?? "").trim() || null;
   if (isNaN(amount) || amount <= 0) throw new Error("Enter a valid amount");
 
+  const screenshotFile = formData.get("screenshot");
+  let screenshot: string | null = null;
+  if (screenshotFile instanceof File && screenshotFile.size > 0) {
+    const buffer = Buffer.from(await screenshotFile.arrayBuffer());
+    screenshot = `data:${screenshotFile.type};base64,${buffer.toString("base64")}`;
+  } else {
+    throw new Error("Payment screenshot is required");
+  }
+
   const order = await prisma.retailOrder.findUnique({
     where: { id: orderId },
     include: { payments: true },
   });
   if (!order) throw new Error("Order not found");
 
-  await prisma.retailPayment.create({ data: { orderId, amount, note } });
+  await prisma.retailPayment.create({ data: { orderId, amount, note, screenshot } });
 
   const totalPaid = order.payments.reduce((s, p) => s + p.amount, 0) + amount;
   const status = totalPaid >= order.totalAmount - 0.01 ? "PAID" : "PARTIAL";
