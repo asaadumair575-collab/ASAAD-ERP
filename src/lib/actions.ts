@@ -839,7 +839,7 @@ export async function createUser(formData: FormData) {
   if (Object.keys(sub).length > 0) permissions.sub = sub;
 
   await prisma.user.create({
-    data: { username, passwordHash: hashPassword(password), displayName, isAdmin, permissions },
+    data: { username, passwordHash: hashPassword(password), displayName, isAdmin, permissions: permissions as never },
   });
 
   revalidatePath("/settings");
@@ -865,7 +865,7 @@ export async function updateUser(id: number, formData: FormData) {
 
   await prisma.user.update({
     where: { id },
-    data: { displayName, isAdmin, permissions },
+    data: { displayName, isAdmin, permissions: permissions as never },
   });
 
   revalidatePath("/settings/users");
