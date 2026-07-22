@@ -10,7 +10,20 @@ import {
   setSessionCookie,
   clearSessionCookie,
   getSessionUsername,
+  getSessionUser,
 } from "@/lib/auth";
+
+async function requireAuth() {
+  const me = await getSessionUser();
+  if (!me) throw new Error("Not authenticated");
+  return me;
+}
+
+async function requireAdmin() {
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Admin access required");
+  return me;
+}
 
 function round2(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -109,6 +122,7 @@ export async function updateClient(id: number, formData: FormData) {
 }
 
 export async function deleteClient(id: number) {
+  await requireAdmin();
   await prisma.sample.deleteMany({ where: { clientId: id } });
   await prisma.order.deleteMany({ where: { clientId: id } });
   await prisma.client.delete({ where: { id } });
@@ -259,6 +273,7 @@ export async function updateOrderItem(
 }
 
 export async function deleteOrder(orderId: number, clientId: number) {
+  await requireAdmin();
   await prisma.order.delete({ where: { id: orderId } });
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/clients");
@@ -533,6 +548,7 @@ export async function recordPayment(
 
 export async function deletePayment(paymentId: number, orderId: number, clientId: number) {
   "use server";
+  await requireAdmin();
   await prisma.payment.delete({ where: { id: paymentId } });
 
   const order = await prisma.order.findUnique({
@@ -815,6 +831,7 @@ export async function logoutAction() {
 }
 
 export async function createUser(formData: FormData) {
+  await requireAdmin();
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const displayName = String(formData.get("displayName") ?? "").trim() || null;
@@ -848,6 +865,7 @@ export async function createUser(formData: FormData) {
 }
 
 export async function updateUser(id: number, formData: FormData) {
+  await requireAdmin();
   const displayName = String(formData.get("displayName") ?? "").trim() || null;
   const isAdmin = formData.get("isAdmin") === "1";
 
@@ -880,6 +898,7 @@ export async function changeUserPassword(id: number, formData: FormData) {
 }
 
 export async function deleteUser(id: number) {
+  await requireAdmin();
   const count = await prisma.user.count();
   if (count <= 1) throw new Error("Cannot delete the last remaining user");
   await prisma.user.delete({ where: { id } });
@@ -888,6 +907,7 @@ export async function deleteUser(id: number) {
 }
 
 export async function resetAllData(formData: FormData) {
+  await requireAdmin();
   const confirmation = String(formData.get("confirmation") ?? "");
   if (confirmation !== "DELETE") {
     throw new Error('Type "DELETE" to confirm');
@@ -1207,6 +1227,7 @@ export async function updateSampleResponse(sampleId: number, formData: FormData)
 // ── Retail / COD ──────────────────────────────────────────────────────────────
 
 export async function createRetailOrder(formData: FormData) {
+  await requireAuth();
   const retailCustomerIdRaw = formData.get("retailCustomerId");
   const retailCustomerId = retailCustomerIdRaw ? parseInt(String(retailCustomerIdRaw), 10) : null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
@@ -1314,6 +1335,7 @@ export async function updateRetailCourierCharge(orderId: number, formData: FormD
 }
 
 export async function deleteRetailPayment(paymentId: number, orderId: number) {
+  await requireAdmin();
   await prisma.retailPayment.delete({ where: { id: paymentId } });
   const order = await prisma.retailOrder.findUnique({
     where: { id: orderId },
@@ -1328,6 +1350,7 @@ export async function deleteRetailPayment(paymentId: number, orderId: number) {
 }
 
 export async function deleteRetailOrder(orderId: number) {
+  await requireAdmin();
   await prisma.retailOrder.delete({ where: { id: orderId } });
   revalidatePath("/retail/orders");
   redirect("/retail/orders");
@@ -1373,6 +1396,7 @@ export async function updateRetailCustomer(id: number, formData: FormData) {
 }
 
 export async function deleteRetailCustomer(id: number) {
+  await requireAdmin();
   await prisma.retailOrder.updateMany({ where: { retailCustomerId: id }, data: { retailCustomerId: null } });
   await prisma.retailCustomer.delete({ where: { id } });
   revalidatePath("/retail/customers");
@@ -1395,12 +1419,14 @@ export async function submitEmpCommission(formData: FormData) {
 }
 
 export async function approveEmpCommission(id: number) {
+  await requireAdmin();
   "use server";
   await prisma.empCommissionEntry.update({ where: { id }, data: { status: "approved" } });
   revalidatePath("/emp-commission");
 }
 
 export async function rejectEmpCommission(id: number, formData: FormData) {
+  await requireAdmin();
   "use server";
   const adminNote = String(formData.get("adminNote") ?? "").trim() || null;
   await prisma.empCommissionEntry.update({ where: { id }, data: { status: "rejected", adminNote } });
@@ -1408,6 +1434,7 @@ export async function rejectEmpCommission(id: number, formData: FormData) {
 }
 
 export async function deleteEmpCommissionEntry(id: number) {
+  await requireAdmin();
   "use server";
   await prisma.empCommissionEntry.delete({ where: { id } });
   revalidatePath("/emp-commission");

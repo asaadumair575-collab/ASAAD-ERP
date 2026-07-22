@@ -208,69 +208,94 @@ export default async function EmpCommissionPage() {
 
   const totalEarned = approved.reduce((s, e) => s + e.orders * RATE, 0);
   const totalOrders = approved.reduce((s, e) => s + e.orders, 0);
+  const thisMonthOrders = approved
+    .filter((e) => new Date(e.date).getMonth() === new Date().getMonth() &&
+                   new Date(e.date).getFullYear() === new Date().getFullYear())
+    .reduce((s, e) => s + e.orders, 0);
   const today = new Date().toISOString().split("T")[0];
+  const name = me.displayName || me.username;
+
+  const motivations = [
+    "Mehnat ka phal meetha hota hai 💪",
+    "Har order aik qadam aage hai 🚀",
+    "Aaj bhi kamaal karo! ⭐",
+    "Consistency hi success hai 🏆",
+    "Aapki محنت rang laayegi! 🌟",
+  ];
+  const msg = motivations[new Date().getDay() % motivations.length];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">My Commission</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Rs 30 per order · submit daily and wait for admin approval.</p>
+    <div className="space-y-5">
+
+      {/* Hero greeting */}
+      <div className="bg-gradient-to-br from-zinc-900 to-zinc-700 text-white rounded-3xl p-6 shadow-lg">
+        <p className="text-sm text-zinc-400 mb-0.5">Assalamu Alaikum,</p>
+        <h1 className="text-2xl font-bold tracking-tight">{name} 👋</h1>
+        <p className="text-zinc-300 text-sm mt-2">{msg}</p>
+        <div className="mt-5 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-xs text-zinc-400 uppercase tracking-wide">Total Kamai</p>
+            <p className="text-4xl font-extrabold tracking-tight mt-0.5">Rs {fmt(totalEarned)}</p>
+            <p className="text-xs text-zinc-400 mt-1">{totalOrders} orders approved</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-zinc-400 uppercase tracking-wide">Is Mahine</p>
+            <p className="text-2xl font-bold text-green-400 mt-0.5">{thisMonthOrders} orders</p>
+            <p className="text-xs text-zinc-400 mt-1">Rs {fmt(thisMonthOrders * RATE)}</p>
+          </div>
+        </div>
       </div>
 
-      {/* Summary */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-black text-white rounded-2xl p-5 shadow-sm">
-          <p className="text-xs text-gray-400">Total Earned</p>
-          <p className="text-3xl font-bold mt-1">Rs {fmt(totalEarned)}</p>
-          <p className="text-xs text-gray-400 mt-1">{totalOrders} orders approved</p>
+      {/* Status pills */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 text-center shadow-sm">
+          <p className="text-2xl font-bold text-green-700">{approved.length}</p>
+          <p className="text-xs text-green-600 font-medium mt-1">Approved ✓</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-orange-500 font-medium">Pending</span>
-            <span className="text-sm font-semibold text-orange-600">{pending.length}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-red-500 font-medium">Rejected</span>
-            <span className="text-sm font-semibold text-red-600">{rejected.length}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-green-600 font-medium">Approved</span>
-            <span className="text-sm font-semibold text-green-700">{approved.length}</span>
-          </div>
+        <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 text-center shadow-sm">
+          <p className="text-2xl font-bold text-orange-600">{pending.length}</p>
+          <p className="text-xs text-orange-500 font-medium mt-1">Pending ⏳</p>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center shadow-sm">
+          <p className="text-2xl font-bold text-red-600">{rejected.length}</p>
+          <p className="text-xs text-red-500 font-medium mt-1">Rejected ✗</p>
         </div>
       </div>
 
       {/* Submit form */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
-        <h2 className="text-sm font-semibold">Submit Today&apos;s Orders</h2>
+        <div className="flex items-center gap-2">
+          <span className="text-lg">📋</span>
+          <h2 className="text-sm font-semibold">Aaj ke Orders Submit Karo</h2>
+        </div>
         <form action={submitEmpCommission} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">Date <span className="text-black">*</span></label>
+              <label className="block text-xs text-gray-500 mb-1.5">Taareekh <span className="text-black">*</span></label>
               <input type="date" name="date" required defaultValue={today}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">Orders <span className="text-black">*</span></label>
-              <input type="number" name="orders" required min={1} placeholder="e.g. 12"
+              <label className="block text-xs text-gray-500 mb-1.5">Orders ki tadad <span className="text-black">*</span></label>
+              <input type="number" name="orders" required min={1} placeholder="jaise 12"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
             </div>
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">Note (optional)</label>
-            <input type="text" name="note" placeholder="e.g. half day"
+            <input type="text" name="note" placeholder="jaise: half day, extra kaam"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
           </div>
-          <SubmitButton pendingText="Submitting…" className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors">
-            Submit for Approval
+          <SubmitButton pendingText="Submit ho raha hai…" className="w-full bg-black text-white text-sm font-semibold px-5 py-3 rounded-xl hover:bg-gray-800 transition-colors">
+            ✓ Submit for Approval
           </SubmitButton>
         </form>
       </div>
 
-      {/* All entries as cards */}
+      {/* Entries */}
       {entries.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-gray-700">My Requests</h2>
+          <h2 className="text-sm font-semibold text-gray-700">Meri Requests</h2>
           {entries.map((e) => {
             const isPending  = e.status === "pending";
             const isApproved = e.status === "approved";
@@ -286,30 +311,33 @@ export default async function EmpCommissionPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs text-gray-500">{fmtDate(e.date)}</p>
-                    <p className="text-sm font-medium mt-0.5">{e.orders} orders</p>
-                    {e.note && <p className="text-xs text-gray-400 mt-0.5">Note: {e.note}</p>}
+                    <p className="text-xs text-gray-400">{fmtDate(e.date)}</p>
+                    <p className="text-base font-semibold mt-0.5">{e.orders} orders</p>
+                    {e.note && <p className="text-xs text-gray-400 mt-0.5">{e.note}</p>}
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-lg font-semibold">Rs {fmt(e.orders * RATE)}</p>
-                    {isPending  && <span className="inline-block bg-orange-100 text-orange-600 text-xs font-medium px-2 py-0.5 rounded-full mt-1">Pending</span>}
-                    {isApproved && <span className="inline-block bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full mt-1">Approved ✓</span>}
-                    {isRejected && <span className="inline-block bg-red-100 text-red-600 text-xs font-medium px-2 py-0.5 rounded-full mt-1">Rejected ✗</span>}
+                    <p className="text-xl font-bold">Rs {fmt(e.orders * RATE)}</p>
+                    {isPending  && <span className="inline-block bg-orange-100 text-orange-600 text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1">⏳ Pending</span>}
+                    {isApproved && <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1">✓ Approved</span>}
+                    {isRejected && <span className="inline-block bg-red-100 text-red-600 text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1">✗ Rejected</span>}
                   </div>
                 </div>
-                {isRejected && e.adminNote && (
-                  <div className="mt-2 bg-red-100 text-red-700 text-xs rounded-lg px-3 py-2">
-                    Admin: {e.adminNote}
-                  </div>
-                )}
-                {isRejected && !e.adminNote && (
-                  <div className="mt-2 bg-red-100 text-red-500 text-xs rounded-lg px-3 py-2">
-                    Entry rejected by admin.
+                {isRejected && (
+                  <div className="mt-2.5 bg-red-100 text-red-700 text-xs rounded-xl px-3 py-2">
+                    <span className="font-semibold">Admin note:</span> {e.adminNote ?? "Entry reject kar di gayi."}
                   </div>
                 )}
               </div>
             );
           })}
+        </div>
+      )}
+
+      {entries.length === 0 && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-10 text-center shadow-sm">
+          <p className="text-3xl mb-2">🚀</p>
+          <p className="text-sm font-medium text-gray-700">Pehli entry submit karo!</p>
+          <p className="text-xs text-gray-400 mt-1">Upar form bhar ke shuru karo.</p>
         </div>
       )}
     </div>
