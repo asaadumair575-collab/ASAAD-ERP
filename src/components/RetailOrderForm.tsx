@@ -56,7 +56,7 @@ export default function RetailOrderForm({
   const balanceAfterAdvance = Math.max(0, total - deliveryCharge);
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} encType="multipart/form-data" className="space-y-5">
       {/* Customer info */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
         <h2 className="text-sm font-semibold text-gray-700">Customer</h2>
@@ -242,6 +242,17 @@ export default function RetailOrderForm({
             <p className="text-xs text-orange-500 mt-0.5">This will be collected later — use Record Payment.</p>
           </div>
         </div>
+        {deliveryCharge > 0 && (
+          <div>
+            <label className="block text-xs text-orange-700 mb-1.5">Screenshot (optional)</label>
+            <input
+              type="file"
+              name="advanceScreenshot"
+              accept="image/*"
+              className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 file:mr-3 file:border-0 file:bg-orange-100 file:text-xs file:font-medium file:px-3 file:py-1 file:rounded-md"
+            />
+          </div>
+        )}
       </div>
 
       {/* Notes */}

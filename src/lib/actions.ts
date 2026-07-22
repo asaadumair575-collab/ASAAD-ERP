@@ -1236,6 +1236,13 @@ export async function createRetailOrder(formData: FormData) {
 
   const totalAmount = round2(items.reduce((s, i) => s + i.quantity * i.rate, 0));
 
+  let advanceScreenshot: string | null = null;
+  const advScreenshotFile = formData.get("advanceScreenshot");
+  if (advScreenshotFile instanceof File && advScreenshotFile.size > 0) {
+    const buffer = Buffer.from(await advScreenshotFile.arrayBuffer());
+    advanceScreenshot = `data:${advScreenshotFile.type};base64,${buffer.toString("base64")}`;
+  }
+
   const order = await prisma.retailOrder.create({
     data: {
       customerName, phone, city, notes, deliveryCharge, totalAmount,
@@ -1243,7 +1250,7 @@ export async function createRetailOrder(formData: FormData) {
       status: deliveryCharge > 0 ? "PARTIAL" : "PENDING",
       items: { create: items },
       payments: deliveryCharge > 0
-        ? { create: [{ amount: deliveryCharge, note: "Delivery Advance" }] }
+        ? { create: [{ amount: deliveryCharge, note: "Delivery Advance", screenshot: advanceScreenshot }] }
         : undefined,
     },
   });
