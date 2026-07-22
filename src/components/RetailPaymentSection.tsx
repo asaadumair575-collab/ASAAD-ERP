@@ -124,11 +124,10 @@ export default function RetailPaymentSection({
             </div>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">Screenshot <span className="text-black">*</span></label>
+            <label className="block text-xs text-gray-500 mb-1.5">Screenshot (optional)</label>
             <input
               type="file"
               name="screenshot"
-              required
               accept="image/*"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black file:mr-3 file:border-0 file:bg-gray-100 file:text-xs file:font-medium file:px-3 file:py-1 file:rounded-md"
             />

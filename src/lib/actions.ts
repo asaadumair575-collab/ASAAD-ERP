@@ -1262,8 +1262,6 @@ export async function recordRetailPayment(orderId: number, formData: FormData) {
   if (screenshotFile instanceof File && screenshotFile.size > 0) {
     const buffer = Buffer.from(await screenshotFile.arrayBuffer());
     screenshot = `data:${screenshotFile.type};base64,${buffer.toString("base64")}`;
-  } else {
-    throw new Error("Payment screenshot is required");
   }
 
   const order = await prisma.retailOrder.findUnique({
