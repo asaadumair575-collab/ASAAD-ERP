@@ -1419,23 +1419,23 @@ export async function submitEmpCommission(formData: FormData) {
 }
 
 export async function approveEmpCommission(id: number) {
-  await requireAdmin();
   "use server";
+  await requireAdmin();
   await prisma.empCommissionEntry.update({ where: { id }, data: { status: "approved" } });
   revalidatePath("/emp-commission");
 }
 
 export async function rejectEmpCommission(id: number, formData: FormData) {
-  await requireAdmin();
   "use server";
+  await requireAdmin();
   const adminNote = String(formData.get("adminNote") ?? "").trim() || null;
   await prisma.empCommissionEntry.update({ where: { id }, data: { status: "rejected", adminNote } });
   revalidatePath("/emp-commission");
 }
 
 export async function deleteEmpCommissionEntry(id: number) {
-  await requireAdmin();
   "use server";
+  await requireAdmin();
   await prisma.empCommissionEntry.delete({ where: { id } });
   revalidatePath("/emp-commission");
 }
