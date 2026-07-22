@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
-  const [status, setStatus] = useState<"idle" | "copying" | "done" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "copying" | "done" | "fallback" | "error">("idle");
 
   async function handleCopy() {
     const el = document.getElementById(targetId);
@@ -17,11 +17,33 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
         useCORS: true,
         logging: false,
       });
-      const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/png"));
-      if (!blob) throw new Error("Canvas toBlob failed");
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-      setStatus("done");
-      setTimeout(() => setStatus("idle"), 2500);
+
+      // Try native clipboard first (Chrome desktop)
+      const clipboardSupported =
+        typeof ClipboardItem !== "undefined" &&
+        navigator.clipboard &&
+        typeof navigator.clipboard.write === "function";
+
+      if (clipboardSupported) {
+        const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/png"));
+        if (!blob) throw new Error("toBlob failed");
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        setStatus("done");
+        setTimeout(() => setStatus("idle"), 2500);
+      } else {
+        // Fallback: open image in new tab — user can long-press / right-click to save/share
+        const dataUrl = canvas.toDataURL("image/png");
+        const win = window.open();
+        if (win) {
+          win.document.write(
+            `<html><head><title>Receipt</title><meta name="viewport" content="width=device-width,initial-scale=1"></head>` +
+            `<body style="margin:0;background:#000;display:flex;justify-content:center;align-items:flex-start;">` +
+            `<img src="${dataUrl}" style="max-width:100%;display:block;" /></body></html>`
+          );
+        }
+        setStatus("fallback");
+        setTimeout(() => setStatus("idle"), 3000);
+      }
     } catch {
       setStatus("error");
       setTimeout(() => setStatus("idle"), 2500);
@@ -44,13 +66,10 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
           Copy as Image
         </>
       )}
-      {status === "copying" && "Copying…"}
-      {status === "done" && (
-        <span className="text-green-600">✓ Copied!</span>
-      )}
-      {status === "error" && (
-        <span className="text-red-500">Failed — try again</span>
-      )}
+      {status === "copying" && "Generating…"}
+      {status === "done" && <span className="text-green-600">✓ Copied!</span>}
+      {status === "fallback" && <span className="text-blue-600">✓ Image opened — press & hold to save</span>}
+      {status === "error" && <span className="text-red-500">Failed — try again</span>}
     </button>
   );
 }
