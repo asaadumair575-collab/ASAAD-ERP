@@ -22,7 +22,7 @@ export default async function RetailPage({
   const orders = await prisma.retailOrder.findMany({
     where: {
       ...(fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {}),
-      status: status || { not: "PAID" },
+      ...(status ? { status } : {}),
       ...(q
         ? {
             OR: [
@@ -82,9 +82,10 @@ export default async function RetailPage({
           defaultValue={status ?? ""}
           className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
         >
-          <option value="">All active</option>
+          <option value="">All orders</option>
           <option value="PENDING">Pending</option>
           <option value="PARTIAL">Partial</option>
+          <option value="PAID">Delivered</option>
         </select>
         <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
           Filter
@@ -149,7 +150,7 @@ export default async function RetailPage({
                         o.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" :
                         "bg-gray-100 text-gray-500"
                       }`}>
-                        {o.status}
+                        {o.status === "PAID" ? "Delivered" : o.status === "PARTIAL" ? "Partial" : "Pending"}
                       </span>
                     </td>
                   </tr>

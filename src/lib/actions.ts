@@ -1309,13 +1309,8 @@ export async function recordRetailPayment(orderId: number, formData: FormData) {
   revalidatePath(`/retail/orders/${orderId}`);
   revalidatePath(`/retail/${orderId}`);
   revalidatePath("/retail/orders");
-  revalidatePath("/retail/completed");
 
-  if (status === "PAID") {
-    redirect("/retail/completed");
-  } else {
-    redirect("/retail/orders");
-  }
+  redirect(`/retail/orders/${orderId}?receipt=1`);
 }
 
 export async function updateRetailItemCostPrice(orderId: number, itemId: number, formData: FormData) {
