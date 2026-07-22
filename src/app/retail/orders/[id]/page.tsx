@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, setRetailDispatched, updateRetailCourierCharge } from "@/lib/actions";
+import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, setRetailDispatched, updateRetailCourierCharge, markRetailOrderReturned } from "@/lib/actions";
 import { getSessionUser } from "@/lib/auth";
 import { parsePermissions, canDoSub } from "@/lib/permissions";
 import RetailPaymentSection from "@/components/RetailPaymentSection";
 import RetailDeleteButton from "@/components/RetailDeleteButton";
 import ReceiptCopyButton from "@/components/ReceiptCopyButton";
+import RetailReturnModal from "@/components/RetailReturnModal";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -45,6 +46,7 @@ export default async function RetailOrderPage({
   const deleteOrderBound = deleteRetailOrder.bind(null, order.id);
   const toggleDispatchBound = setRetailDispatched.bind(null, order.id, !order.dispatched);
   const updateCourierBound = updateRetailCourierCharge.bind(null, order.id);
+  const markReturnedBound = markRetailOrderReturned.bind(null, order.id);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -62,10 +64,11 @@ export default async function RetailOrderPage({
         <div className="flex flex-col items-end gap-1.5 mt-1">
           <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
             order.status === "PAID" ? "bg-green-100 text-green-700" :
+            order.status === "RETURNED" ? "bg-red-100 text-red-700" :
             order.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" :
             "bg-gray-100 text-gray-500"
           }`}>
-            {order.status}
+            {order.status === "PAID" ? "Delivered" : order.status === "RETURNED" ? "Returned" : order.status === "PARTIAL" ? "Partial" : "Pending"}
           </span>
           <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
             order.dispatched ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-600"
@@ -74,6 +77,38 @@ export default async function RetailOrderPage({
           </span>
         </div>
       </div>
+
+      {/* Returned order — net P&L summary */}
+      {order.status === "RETURNED" && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-5 space-y-3">
+          <p className="text-sm font-semibold text-red-700">Parcel Returned</p>
+          <div className="space-y-1.5 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Advance liya hua</span>
+              <span className="font-medium text-green-700">+ Rs {fmt(order.deliveryCharge)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Return Delivery Cost</span>
+              <span className="font-medium text-red-600">− Rs {fmt(order.returnDeliveryCost)}</span>
+            </div>
+            <div className={`flex justify-between font-bold border-t pt-2 mt-1 ${
+              order.deliveryCharge - order.returnDeliveryCost >= 0 ? "text-green-700 border-green-200" : "text-red-600 border-red-200"
+            }`}>
+              <span>Net {order.deliveryCharge - order.returnDeliveryCost >= 0 ? "Profit" : "Loss"}</span>
+              <span>
+                {order.deliveryCharge - order.returnDeliveryCost >= 0 ? "+" : ""}Rs {fmt(Math.abs(order.deliveryCharge - order.returnDeliveryCost))}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mark as Returned button — only when not already returned/paid */}
+      {order.status !== "RETURNED" && order.status !== "PAID" && isAdmin && (
+        <div className="flex justify-end">
+          <RetailReturnModal action={markReturnedBound} advance={order.deliveryCharge} />
+        </div>
+      )}
 
       {/* Receipt box — shown after recording payment */}
       {receipt && (

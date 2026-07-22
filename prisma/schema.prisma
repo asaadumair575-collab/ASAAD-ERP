@@ -171,8 +171,9 @@ model RetailOrder {
   city             String?
   totalAmount      Float
   deliveryCharge   Float            @default(0)
-  courierCharge    Float            @default(0)
-  status           String           @default("PENDING")
+  courierCharge        Float            @default(0)
+  returnDeliveryCost   Float            @default(0)
+  status               String           @default("PENDING")
   dispatched       Boolean          @default(false)
   dispatchedAt     DateTime?
   notes            String?
