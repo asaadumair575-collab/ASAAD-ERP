@@ -6,6 +6,7 @@ import { parsePermissions, canDoSub } from "@/lib/permissions";
 import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, updateRetailCourierCharge } from "@/lib/actions";
 import RetailPaymentSection from "@/components/RetailPaymentSection";
 import RetailDeleteButton from "@/components/RetailDeleteButton";
+import ReceiptCopyButton from "@/components/ReceiptCopyButton";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -68,7 +69,8 @@ export default async function RetailOrderPage({
 
       {/* Receipt box — shown after recording payment */}
       {receipt && (
-        <div className="bg-white border-2 border-black rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="space-y-3">
+        <div id="retail-receipt" className="bg-white border-2 border-black rounded-2xl p-6 shadow-sm space-y-4">
           <div className="text-center border-b border-dashed border-gray-300 pb-4">
             <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Payment Receipt</p>
             <p className="text-2xl font-bold tracking-tight">R-{String(order.id).padStart(3, "0")}</p>
@@ -109,6 +111,10 @@ export default async function RetailOrderPage({
             </div>
           </div>
 
+        </div>
+        <div className="flex justify-end">
+          <ReceiptCopyButton targetId="retail-receipt" />
+        </div>
         </div>
       )}
 
