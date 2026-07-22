@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, setRetailDispatched, updateRetailCourierCharge } from "@/lib/actions";
+import { getSessionUser } from "@/lib/auth";
+import { parsePermissions, canDoSub } from "@/lib/permissions";
 import RetailPaymentSection from "@/components/RetailPaymentSection";
 import RetailDeleteButton from "@/components/RetailDeleteButton";
 
@@ -16,6 +18,14 @@ export default async function RetailOrderPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ receipt?: string }>;
 }) {
+  const me = await getSessionUser();
+  const isAdmin = me?.isAdmin ?? false;
+  const perms = parsePermissions(me?.permissions ?? {});
+  const hasSub = perms.sub && Object.keys(perms.sub).length > 0;
+  const canRecordPayment = isAdmin || (!hasSub || perms.sub?.["retail_record_payment"] === true);
+  const canSetCourier    = isAdmin || (!hasSub || perms.sub?.["retail_set_courier"] === true);
+  const canSeeCharges    = isAdmin || (!hasSub || perms.sub?.["retail_see_charges"] === true);
+
   const { id } = await params;
   const { receipt } = await searchParams;
   const orderId = parseInt(id, 10);
@@ -211,16 +221,23 @@ export default async function RetailOrderPage({
           amount: p.amount,
           note: p.note,
           date: p.date.toISOString(),
+          screenshot: p.screenshot,
         }))}
         recordAction={recordPaymentBound}
         deleteAction={deleteRetailPayment}
         updateCourierAction={updateCourierBound}
+        isAdmin={isAdmin}
+        canRecordPayment={canRecordPayment}
+        canSetCourier={canSetCourier}
+        canSeeCharges={canSeeCharges}
       />
 
-      {/* Delete order */}
-      <div className="pt-2">
-        <RetailDeleteButton action={deleteOrderBound} />
-      </div>
+      {/* Delete order — admin only */}
+      {isAdmin && (
+        <div className="pt-2">
+          <RetailDeleteButton action={deleteOrderBound} />
+        </div>
+      )}
     </div>
   );
 }
