@@ -5,9 +5,9 @@ import { useState, useTransition } from "react";
 const PRESET_REASONS = [
   "Interested",
   "Not Interested",
-  "Not Working in Balls",
+  "Number Off",
+  "Double Gas Not Available",
   "Will Contact Later",
-  "Wrong Number",
   "No Response",
   "Others",
 ];
