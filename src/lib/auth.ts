@@ -2,7 +2,7 @@ import { randomBytes, scryptSync, createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 
 const SESSION_COOKIE = "session";
-const SESSION_MAX_AGE_SECONDS = 60 * 60 * 8; // 8 hours — expires after office hours
+const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 365; // 1 year
 
 function getSecret() {
   const secret = process.env.SESSION_SECRET;
