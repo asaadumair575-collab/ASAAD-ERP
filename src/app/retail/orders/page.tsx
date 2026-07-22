@@ -33,7 +33,7 @@ export default async function RetailPage({
           }
         : {}),
     },
-    include: { items: true, payments: true },
+    include: { items: true },
     orderBy: { date: "desc" },
   });
 
@@ -112,17 +112,12 @@ export default async function RetailPage({
                 <th className="py-3 px-5">Date</th>
                 <th className="py-3 px-5">Items</th>
                 <th className="py-3 px-5 text-right">Total</th>
-                <th className="py-3 px-5 text-right">Advance</th>
-                <th className="py-3 px-5 text-right">Received</th>
-                <th className="py-3 px-5 text-right">Balance</th>
                 <th className="py-3 px-5 text-right">Dispatch</th>
                 <th className="py-3 px-5 text-right">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {orders.map((o) => {
-                const received = o.payments.reduce((s, p) => s + p.amount, 0);
-                const balance = Math.max(0, o.totalAmount - received);
                 return (
                   <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
                     <td className="py-3 px-5">
@@ -141,18 +136,11 @@ export default async function RetailPage({
                       {o.items.map((i) => `${i.description} ×${i.quantity}`).join(", ")}
                     </td>
                     <td className="py-3 px-5 text-right tabular-nums font-medium">Rs {fmt(o.totalAmount)}</td>
-                    <td className="py-3 px-5 text-right tabular-nums text-gray-500">
-                      {o.deliveryCharge > 0 ? `Rs ${fmt(o.deliveryCharge)}` : "—"}
-                    </td>
-                    <td className="py-3 px-5 text-right tabular-nums text-gray-600">Rs {fmt(received)}</td>
-                    <td className={`py-3 px-5 text-right tabular-nums font-medium ${balance > 0 ? "text-orange-600" : "text-green-700"}`}>
-                      {balance > 0 ? `Rs ${fmt(balance)}` : "✓"}
-                    </td>
                     <td className="py-3 px-5 text-right">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         o.dispatched ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-600"
                       }`}>
-                        {o.dispatched ? "Dispatched" : "Not Dispatched"}
+                        {o.dispatched ? "Dispatched" : "Pending"}
                       </span>
                     </td>
                     <td className="py-3 px-5 text-right">

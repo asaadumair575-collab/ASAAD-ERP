@@ -8,9 +8,9 @@ function fmt(n: number) {
 export default async function RetailFinancePage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; status?: string }>;
 }) {
-  const { from, to } = await searchParams;
+  const { from, to, status } = await searchParams;
 
   const fromDate = from ? new Date(`${from}T00:00:00`) : undefined;
   const toDate = to ? new Date(`${to}T23:59:59.999`) : undefined;
@@ -20,6 +20,7 @@ export default async function RetailFinancePage({
       ...(fromDate || toDate
         ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } }
         : {}),
+      ...(status ? { status } : {}),
     },
     include: { payments: true, items: true },
     orderBy: { date: "desc" },
@@ -55,9 +56,8 @@ export default async function RetailFinancePage({
         <p className="text-sm text-gray-500 mt-0.5">Profit = Revenue − Ball Cost (Rs 1,550/doz) − Postex Charges</p>
       </div>
 
-      {/* Date filter */}
+      {/* Filters */}
       <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
-        <span className="text-xs text-gray-500 px-1">Date range:</span>
         <input
           type="date"
           name="from"
@@ -71,10 +71,20 @@ export default async function RetailFinancePage({
           defaultValue={to ?? ""}
           className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
         />
+        <select
+          name="status"
+          defaultValue={status ?? ""}
+          className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+        >
+          <option value="">All orders</option>
+          <option value="PAID">Paid</option>
+          <option value="PARTIAL">Partial</option>
+          <option value="PENDING">Unpaid</option>
+        </select>
         <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
           Apply
         </button>
-        {(from || to) && (
+        {(from || to || status) && (
           <Link href="/retail/finance" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>
         )}
       </form>
@@ -131,6 +141,8 @@ export default async function RetailFinancePage({
                   <th className="py-2 px-4">Customer</th>
                   <th className="py-2 px-4">Date</th>
                   <th className="py-2 px-4 text-right">Revenue</th>
+                  <th className="py-2 px-4 text-right">Received</th>
+                  <th className="py-2 px-4 text-right">Balance</th>
                   <th className="py-2 px-4 text-right">Ball Cost</th>
                   <th className="py-2 px-4 text-right">Courier</th>
                   <th className="py-2 px-4 text-right">Profit</th>
@@ -139,6 +151,8 @@ export default async function RetailFinancePage({
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {orders.map((o) => {
+                  const received = o.payments.reduce((s, p) => s + p.amount, 0);
+                  const balance = Math.max(0, o.totalAmount - received);
                   const cogs = o.items.reduce((s, i) => s + i.quantity * COST_PER_DOZEN, 0);
                   const courier = o.courierCharge ?? 0;
                   const profit = o.totalAmount - cogs - courier;
@@ -155,6 +169,10 @@ export default async function RetailFinancePage({
                       </td>
                       <td className="py-3 px-4 text-gray-500 text-xs">{o.date.toISOString().slice(0, 10)}</td>
                       <td className="py-3 px-4 text-right tabular-nums font-medium">Rs {fmt(o.totalAmount)}</td>
+                      <td className="py-3 px-4 text-right tabular-nums text-green-700">Rs {fmt(received)}</td>
+                      <td className={`py-3 px-4 text-right tabular-nums font-medium ${balance > 0 ? "text-orange-600" : "text-green-700"}`}>
+                        {balance > 0 ? `Rs ${fmt(balance)}` : "✓"}
+                      </td>
                       <td className="py-3 px-4 text-right tabular-nums text-gray-500">
                         {cogs > 0 ? `Rs ${fmt(cogs)}` : "—"}
                       </td>
@@ -181,6 +199,8 @@ export default async function RetailFinancePage({
                 <tr className="border-t-2 border-gray-200 bg-gray-50 font-semibold text-sm">
                   <td className="py-3 px-4" colSpan={3}>Total</td>
                   <td className="py-3 px-4 text-right tabular-nums">Rs {fmt(totalRevenue)}</td>
+                  <td className="py-3 px-4 text-right tabular-nums text-green-700">Rs {fmt(orders.reduce((s,o)=>s+o.payments.reduce((ps,p)=>ps+p.amount,0),0))}</td>
+                  <td className="py-3 px-4 text-right tabular-nums text-orange-600">Rs {fmt(Math.max(0,totalRevenue-orders.reduce((s,o)=>s+o.payments.reduce((ps,p)=>ps+p.amount,0),0)))}</td>
                   <td className="py-3 px-4 text-right tabular-nums text-gray-500">Rs {fmt(totalCogs)}</td>
                   <td className="py-3 px-4 text-right tabular-nums text-blue-700">Rs {fmt(totalCourier)}</td>
                   <td className={`py-3 px-4 text-right tabular-nums ${totalProfit >= 0 ? "text-green-700" : "text-red-600"}`}>
