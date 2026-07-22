@@ -41,7 +41,7 @@ export default function RetailPaymentSection({
       <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Payments</p>
 
       {/* Postex courier charge */}
-      {(canSeeCharges || canSetCourier) && (
+      {(isAdmin || canSeeCharges || canSetCourier) && (
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between gap-3">
         <div>
           <p className="text-xs text-blue-700 font-medium">Postex Delivery Charges</p>
@@ -49,7 +49,7 @@ export default function RetailPaymentSection({
             {courierCharge > 0 ? `Rs ${fmt(courierCharge)}` : "Not set"}
           </p>
         </div>
-        {canSetCourier && !editingCourier && (
+        {(isAdmin || canSetCourier) && !editingCourier && (
           <button
             type="button"
             onClick={() => setEditingCourier(true)}
@@ -58,7 +58,7 @@ export default function RetailPaymentSection({
             {courierCharge > 0 ? "Update" : "Add"}
           </button>
         )}
-        {canSetCourier && editingCourier && (
+        {(isAdmin || canSetCourier) && editingCourier && (
           <form action={updateCourierAction} className="flex items-center gap-2" onSubmit={() => setEditingCourier(false)}>
             <input
               type="number"
@@ -98,7 +98,7 @@ export default function RetailPaymentSection({
       )}
 
       {/* Record payment form */}
-      {canRecordPayment && balance > 0.01 && (
+      {(isAdmin || canRecordPayment) && balance > 0.01 && (
         <form action={recordAction} encType="multipart/form-data" className="space-y-3 pt-3 border-t border-gray-100">
           <div className="flex flex-wrap gap-3 items-end">
             <div>
