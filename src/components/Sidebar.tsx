@@ -268,9 +268,7 @@ export default function Sidebar({
                 {canViewSub(permissions, "retail_orders", isAdmin) && (
                   <NavLink href="/retail/orders" active={pathname.startsWith("/retail/orders")} compact onClick={closeMobile}>Orders</NavLink>
                 )}
-                {canViewSub(permissions, "retail_completed", isAdmin) && (
-                  <NavLink href="/retail/completed" active={pathname.startsWith("/retail/completed")} compact onClick={closeMobile}>Completed</NavLink>
-                )}
+
                 {canViewSub(permissions, "retail_customers", isAdmin) && (
                   <NavLink href="/retail/customers" active={pathname.startsWith("/retail/customers")} compact onClick={closeMobile}>Customers</NavLink>
                 )}
