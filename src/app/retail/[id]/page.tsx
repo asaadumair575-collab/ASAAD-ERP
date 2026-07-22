@@ -35,9 +35,12 @@ export default async function RetailOrderPage({
 
   const perms = parsePermissions(me?.permissions ?? {});
   const isAdmin = me?.isAdmin ?? false;
-  const canRecordPayment = canDoSub(perms, "retail_record_payment", isAdmin);
-  const canSetCourier    = canDoSub(perms, "retail_set_courier", isAdmin);
-  const canSeeCharges    = canDoSub(perms, "retail_see_charges", isAdmin);
+  const hasSub = perms.sub && Object.keys(perms.sub).length > 0;
+  // If no sub-permissions configured at all, default to true (backward compat).
+  // Otherwise check the specific permission.
+  const canRecordPayment = isAdmin || (!hasSub ? true : perms.sub?.["retail_record_payment"] === true);
+  const canSetCourier    = isAdmin || (!hasSub ? true : perms.sub?.["retail_set_courier"] === true);
+  const canSeeCharges    = isAdmin || (!hasSub ? true : perms.sub?.["retail_see_charges"] === true);
 
   const recordPaymentBound = recordRetailPayment.bind(null, order.id);
   const updateCourierBound = updateRetailCourierCharge.bind(null, order.id);
