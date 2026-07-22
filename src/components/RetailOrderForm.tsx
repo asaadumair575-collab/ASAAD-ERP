@@ -244,10 +244,11 @@ export default function RetailOrderForm({
         </div>
         {deliveryCharge > 0 && (
           <div>
-            <label className="block text-xs text-orange-700 mb-1.5">Screenshot (optional)</label>
+            <label className="block text-xs text-orange-700 mb-1.5">Screenshot <span className="text-red-600">*</span></label>
             <input
               type="file"
               name="advanceScreenshot"
+              required
               accept="image/*"
               className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 file:mr-3 file:border-0 file:bg-orange-100 file:text-xs file:font-medium file:px-3 file:py-1 file:rounded-md"
             />

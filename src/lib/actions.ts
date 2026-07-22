@@ -1241,6 +1241,8 @@ export async function createRetailOrder(formData: FormData) {
   if (advScreenshotFile instanceof File && advScreenshotFile.size > 0) {
     const buffer = Buffer.from(await advScreenshotFile.arrayBuffer());
     advanceScreenshot = `data:${advScreenshotFile.type};base64,${buffer.toString("base64")}`;
+  } else if (deliveryCharge > 0) {
+    throw new Error("Advance screenshot is required");
   }
 
   const order = await prisma.retailOrder.create({
