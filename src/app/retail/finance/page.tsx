@@ -26,10 +26,16 @@ export default async function RetailFinancePage({
     orderBy: { date: "desc" },
   });
 
+  // Always fetch ALL returned orders regardless of filter
+  const allReturnedOrders = await prisma.retailOrder.findMany({
+    where: { status: "RETURNED" },
+    orderBy: { date: "desc" },
+  });
+
   const COST_PER_DOZEN = 1550;
 
-  // Split returned vs normal orders
-  const returnedOrders = orders.filter((o) => o.status === "RETURNED");
+  // Split returned vs normal orders (from filtered set)
+  const returnedOrders = allReturnedOrders;
   const normalOrders = orders.filter((o) => o.status !== "RETURNED");
 
   // Return losses: only when delivery cost > advance (else no profit no loss)
