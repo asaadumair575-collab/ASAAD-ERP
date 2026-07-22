@@ -18,12 +18,15 @@ export const SUB_MODULES = [
   { parentKey: "sales",   key: "sales_products",       label: "Products"        },
   { parentKey: "finance", key: "finance_main",         label: "Finance"         },
   { parentKey: "finance", key: "finance_commission",   label: "Commission"      },
-  { parentKey: "retail",  key: "retail_overview",      label: "Overview"        },
-  { parentKey: "retail",  key: "retail_orders",        label: "Orders"          },
-  { parentKey: "retail",  key: "retail_completed",     label: "Completed"       },
-  { parentKey: "retail",  key: "retail_customers",     label: "Customers"       },
-  { parentKey: "retail",  key: "retail_finance",       label: "Finance"         },
-  { parentKey: "retail",  key: "retail_calculator",    label: "Rate Calculator" },
+  { parentKey: "retail",  key: "retail_overview",        label: "Overview"          },
+  { parentKey: "retail",  key: "retail_orders",          label: "Orders"            },
+  { parentKey: "retail",  key: "retail_completed",       label: "Completed"         },
+  { parentKey: "retail",  key: "retail_customers",       label: "Customers"         },
+  { parentKey: "retail",  key: "retail_finance",         label: "Finance"           },
+  { parentKey: "retail",  key: "retail_calculator",      label: "Rate Calculator"   },
+  { parentKey: "retail",  key: "retail_record_payment",  label: "Record Payment"    },
+  { parentKey: "retail",  key: "retail_set_courier",     label: "Set Delivery Charges" },
+  { parentKey: "retail",  key: "retail_see_charges",     label: "See Charges"       },
   { parentKey: "leads",   key: "leads_not_contacted",  label: "Not Contacted"   },
   { parentKey: "leads",   key: "leads_contacted",      label: "Contacted"       },
   { parentKey: "leads",   key: "leads_sample_sent",    label: "Samples"         },
@@ -101,4 +104,11 @@ export function canViewSub(perms: UserPermissions, subKey: SubModuleKey, isAdmin
   if (isAdmin) return true;
   if (!perms.sub || Object.keys(perms.sub).length === 0) return true;
   return perms.sub[subKey] === true;
+}
+
+// Strict version — defaults to false if permission not explicitly granted.
+// Use for action-level permissions (record payment, set courier, etc.).
+export function canDoSub(perms: UserPermissions, subKey: SubModuleKey, isAdmin: boolean): boolean {
+  if (isAdmin) return true;
+  return perms.sub?.[subKey] === true;
 }

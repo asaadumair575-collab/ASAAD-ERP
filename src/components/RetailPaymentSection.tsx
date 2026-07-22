@@ -17,6 +17,9 @@ export default function RetailPaymentSection({
   recordAction,
   deleteAction,
   updateCourierAction,
+  canRecordPayment = false,
+  canSetCourier = false,
+  canSeeCharges = false,
   isAdmin = false,
 }: {
   orderId: number;
@@ -26,6 +29,9 @@ export default function RetailPaymentSection({
   recordAction: (formData: FormData) => void;
   deleteAction: (paymentId: number, orderId: number) => Promise<void>;
   updateCourierAction: (formData: FormData) => void;
+  canRecordPayment?: boolean;
+  canSetCourier?: boolean;
+  canSeeCharges?: boolean;
   isAdmin?: boolean;
 }) {
   const [editingCourier, setEditingCourier] = useState(false);
@@ -35,6 +41,7 @@ export default function RetailPaymentSection({
       <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Payments</p>
 
       {/* Postex courier charge */}
+      {(canSeeCharges || canSetCourier) && (
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between gap-3">
         <div>
           <p className="text-xs text-blue-700 font-medium">Postex Delivery Charges</p>
@@ -42,7 +49,7 @@ export default function RetailPaymentSection({
             {courierCharge > 0 ? `Rs ${fmt(courierCharge)}` : "Not set"}
           </p>
         </div>
-        {isAdmin && !editingCourier && (
+        {canSetCourier && !editingCourier && (
           <button
             type="button"
             onClick={() => setEditingCourier(true)}
@@ -51,7 +58,7 @@ export default function RetailPaymentSection({
             {courierCharge > 0 ? "Update" : "Add"}
           </button>
         )}
-        {isAdmin && editingCourier && (
+        {canSetCourier && editingCourier && (
           <form action={updateCourierAction} className="flex items-center gap-2" onSubmit={() => setEditingCourier(false)}>
             <input
               type="number"
@@ -79,6 +86,7 @@ export default function RetailPaymentSection({
           </form>
         )}
       </div>
+      )}
 
       {/* Payment history */}
       {payments.length > 0 && (
@@ -89,8 +97,8 @@ export default function RetailPaymentSection({
         </div>
       )}
 
-      {/* Record payment form — admin only */}
-      {isAdmin && balance > 0.01 && (
+      {/* Record payment form */}
+      {canRecordPayment && balance > 0.01 && (
         <form action={recordAction} encType="multipart/form-data" className="space-y-3 pt-3 border-t border-gray-100">
           <div className="flex flex-wrap gap-3 items-end">
             <div>

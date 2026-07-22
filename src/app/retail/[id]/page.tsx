@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
+import { parsePermissions, canDoSub } from "@/lib/permissions";
 import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, updateRetailCourierCharge } from "@/lib/actions";
 import RetailPaymentSection from "@/components/RetailPaymentSection";
 import RetailDeleteButton from "@/components/RetailDeleteButton";
@@ -31,6 +32,12 @@ export default async function RetailOrderPage({
 
   const received = order.payments.reduce((s, p) => s + p.amount, 0);
   const balance = Math.max(0, order.totalAmount - received);
+
+  const perms = parsePermissions(me?.permissions ?? {});
+  const isAdmin = me?.isAdmin ?? false;
+  const canRecordPayment = canDoSub(perms, "retail_record_payment", isAdmin);
+  const canSetCourier    = canDoSub(perms, "retail_set_courier", isAdmin);
+  const canSeeCharges    = canDoSub(perms, "retail_see_charges", isAdmin);
 
   const recordPaymentBound = recordRetailPayment.bind(null, order.id);
   const updateCourierBound = updateRetailCourierCharge.bind(null, order.id);
@@ -182,7 +189,10 @@ export default async function RetailOrderPage({
         recordAction={recordPaymentBound}
         deleteAction={deleteRetailPayment}
         updateCourierAction={updateCourierBound}
-        isAdmin={me?.isAdmin ?? false}
+        canRecordPayment={canRecordPayment}
+        canSetCourier={canSetCourier}
+        canSeeCharges={canSeeCharges}
+        isAdmin={isAdmin}
       />
 
       {/* Receipt & Delete */}
