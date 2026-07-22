@@ -1366,10 +1366,9 @@ export async function setRetailDispatched(orderId: number, dispatched: boolean) 
 export async function markRetailOrderReturned(orderId: number, formData: FormData) {
   "use server";
   await requireAuth();
-  const returnDeliveryCost = parseFloat(String(formData.get("returnDeliveryCost") ?? "0")) || 0;
   await prisma.retailOrder.update({
     where: { id: orderId },
-    data: { status: "RETURNED", returnDeliveryCost },
+    data: { status: "RETURNED" },
   });
   revalidatePath(`/retail/orders/${orderId}`);
   revalidatePath("/retail/orders");

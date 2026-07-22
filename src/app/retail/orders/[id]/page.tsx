@@ -78,40 +78,17 @@ export default async function RetailOrderPage({
         </div>
       </div>
 
-      {/* Returned order — net P&L summary */}
+      {/* Returned banner */}
       {order.status === "RETURNED" && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-5 space-y-3">
+        <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
           <p className="text-sm font-semibold text-red-700">Parcel Returned</p>
-          <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Advance liya hua</span>
-              <span className="font-medium text-green-700">+ Rs {fmt(order.deliveryCharge)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Return Delivery Cost</span>
-              <span className="font-medium text-red-600">− Rs {fmt(order.returnDeliveryCost)}</span>
-            </div>
-            {order.deliveryCharge - order.returnDeliveryCost >= 0 ? (
-              <div className="flex justify-between font-bold border-t pt-2 mt-1 border-gray-200 text-gray-600 text-sm">
-                <span>No Profit / No Loss</span>
-                <span className="text-xs font-normal text-gray-400">
-                  (Rs {fmt(order.deliveryCharge - order.returnDeliveryCost)} customer ko wapas)
-                </span>
-              </div>
-            ) : (
-              <div className="flex justify-between font-bold border-t pt-2 mt-1 border-red-200 text-red-600 text-sm">
-                <span>Net Loss</span>
-                <span>Rs {fmt(Math.abs(order.deliveryCharge - order.returnDeliveryCost))}</span>
-              </div>
-            )}
-          </div>
         </div>
       )}
 
       {/* Mark as Returned button — only when not already returned/paid */}
       {order.status !== "RETURNED" && order.status !== "PAID" && isAdmin && (
         <div className="flex justify-end">
-          <RetailReturnModal action={markReturnedBound} advance={order.deliveryCharge} />
+          <RetailReturnModal action={markReturnedBound} />
         </div>
       )}
 
