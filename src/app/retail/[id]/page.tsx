@@ -206,7 +206,7 @@ export default async function RetailOrderPage({
         >
           Open Receipt
         </Link>
-        <RetailDeleteButton action={deleteOrderBound} />
+        {isAdmin && <RetailDeleteButton action={deleteOrderBound} />}
       </div>
     </div>
   );

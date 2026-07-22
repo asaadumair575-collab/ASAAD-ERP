@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getSessionUser } from "@/lib/auth";
 import { deleteRetailCustomer, updateRetailCustomer } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 import DeleteButton from "@/components/DeleteButton";
@@ -14,6 +15,8 @@ export default async function RetailCustomerDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const me = await getSessionUser();
+  const isAdmin = me?.isAdmin ?? false;
   const { id } = await params;
   const customerId = parseInt(id, 10);
 
@@ -51,7 +54,7 @@ export default async function RetailCustomerDetailPage({
             </p>
           )}
         </div>
-        <DeleteButton action={deleteBound} message="This customer will be unlinked from their orders and removed." />
+        {isAdmin && <DeleteButton action={deleteBound} message="This customer will be unlinked from their orders and removed." />}
       </div>
 
       {/* Stats */}
