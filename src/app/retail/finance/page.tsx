@@ -17,7 +17,7 @@ export default async function RetailFinancePage({
 
   const orders = await prisma.retailOrder.findMany({
     where: {
-      status: { not: "RETURNED" },
+      
       ...(fromDate || toDate
         ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } }
         : {}),
@@ -82,7 +82,6 @@ export default async function RetailFinancePage({
           <option value="PAID">Paid</option>
           <option value="PARTIAL">Partial</option>
           <option value="PENDING">Unpaid</option>
-          <option value="RETURNED">Returned</option>
         </select>
         <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
           Apply
@@ -188,11 +187,10 @@ export default async function RetailFinancePage({
                       <td className="py-3 px-4 text-right">
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                           o.status === "PAID" ? "bg-green-100 text-green-700" :
-                          o.status === "RETURNED" ? "bg-red-100 text-red-700" :
                           o.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" :
                           "bg-gray-100 text-gray-500"
                         }`}>
-                          {o.status === "PAID" ? "Delivered" : o.status === "RETURNED" ? "Returned" : o.status === "PARTIAL" ? "Partial" : "Pending"}
+                          {o.status === "PAID" ? "Delivered" : o.status === "PARTIAL" ? "Partial" : "Pending"}
                         </span>
                       </td>
                     </tr>

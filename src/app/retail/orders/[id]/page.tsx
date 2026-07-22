@@ -1,13 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, setRetailDispatched, updateRetailCourierCharge, markRetailOrderReturned } from "@/lib/actions";
+import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, setRetailDispatched, updateRetailCourierCharge } from "@/lib/actions";
 import { getSessionUser } from "@/lib/auth";
 import { parsePermissions, canDoSub } from "@/lib/permissions";
 import RetailPaymentSection from "@/components/RetailPaymentSection";
 import RetailDeleteButton from "@/components/RetailDeleteButton";
 import ReceiptCopyButton from "@/components/ReceiptCopyButton";
-import RetailReturnModal from "@/components/RetailReturnModal";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -46,7 +45,7 @@ export default async function RetailOrderPage({
   const deleteOrderBound = deleteRetailOrder.bind(null, order.id);
   const toggleDispatchBound = setRetailDispatched.bind(null, order.id, !order.dispatched);
   const updateCourierBound = updateRetailCourierCharge.bind(null, order.id);
-  const markReturnedBound = markRetailOrderReturned.bind(null, order.id);
+
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -64,11 +63,11 @@ export default async function RetailOrderPage({
         <div className="flex flex-col items-end gap-1.5 mt-1">
           <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
             order.status === "PAID" ? "bg-green-100 text-green-700" :
-            order.status === "RETURNED" ? "bg-red-100 text-red-700" :
+
             order.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" :
             "bg-gray-100 text-gray-500"
           }`}>
-            {order.status === "PAID" ? "Delivered" : order.status === "RETURNED" ? "Returned" : order.status === "PARTIAL" ? "Partial" : "Pending"}
+            {order.status === "PAID" ? "Delivered" : order.status === "PARTIAL" ? "Partial" : "Pending"}
           </span>
           <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
             order.dispatched ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-600"
@@ -78,19 +77,6 @@ export default async function RetailOrderPage({
         </div>
       </div>
 
-      {/* Returned banner */}
-      {order.status === "RETURNED" && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
-          <p className="text-sm font-semibold text-red-700">Parcel Returned</p>
-        </div>
-      )}
-
-      {/* Mark as Returned button — only when not already returned/paid */}
-      {order.status !== "RETURNED" && order.status !== "PAID" && isAdmin && (
-        <div className="flex justify-end">
-          <RetailReturnModal action={markReturnedBound} />
-        </div>
-      )}
 
       {/* Receipt box — shown after recording payment */}
       {receipt && (

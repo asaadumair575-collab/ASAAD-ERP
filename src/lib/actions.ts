@@ -1363,18 +1363,6 @@ export async function setRetailDispatched(orderId: number, dispatched: boolean) 
   revalidatePath("/retail/orders");
 }
 
-export async function markRetailOrderReturned(orderId: number, formData: FormData) {
-  "use server";
-  await requireAuth();
-  await prisma.retailOrder.update({
-    where: { id: orderId },
-    data: { status: "RETURNED" },
-  });
-  revalidatePath(`/retail/orders/${orderId}`);
-  revalidatePath("/retail/orders");
-  redirect(`/retail/orders/${orderId}`);
-}
-
 // ── Retail Customers ──────────────────────────────────────────────────────────
 
 export async function createRetailCustomer(formData: FormData) {
