@@ -26,19 +26,30 @@ export default async function RetailFinancePage({
     orderBy: { date: "desc" },
   });
 
-  // KPIs
-  const totalRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
-  const totalAdvance = orders.reduce((s, o) => s + (o.deliveryCharge ?? 0), 0);
   const COST_PER_DOZEN = 1550;
-  const totalCogs = orders.reduce(
+
+  // Split returned vs normal orders
+  const returnedOrders = orders.filter((o) => o.status === "RETURNED");
+  const normalOrders = orders.filter((o) => o.status !== "RETURNED");
+
+  // Return losses: only when delivery cost > advance (else no profit no loss)
+  const totalReturnLoss = returnedOrders.reduce((s, o) => {
+    const loss = (o.returnDeliveryCost ?? 0) - (o.deliveryCharge ?? 0);
+    return s + (loss > 0 ? loss : 0);
+  }, 0);
+
+  // KPIs — normal orders only
+  const totalRevenue = normalOrders.reduce((s, o) => s + o.totalAmount, 0);
+  const totalAdvance = normalOrders.reduce((s, o) => s + (o.deliveryCharge ?? 0), 0);
+  const totalCogs = normalOrders.reduce(
     (s, o) => s + o.items.reduce((is, i) => is + i.quantity * COST_PER_DOZEN, 0),
     0
   );
-  const totalCourier = orders.reduce((s, o) => s + (o.courierCharge ?? 0), 0);
+  const totalCourier = normalOrders.reduce((s, o) => s + (o.courierCharge ?? 0), 0);
   const totalProfit = totalRevenue - totalCogs - totalCourier;
 
   // Settled profit: only orders where courier charge entered AND payment recorded
-  const settledOrders = orders.filter(
+  const settledOrders = normalOrders.filter(
     (o) => (o.courierCharge ?? 0) > 0 && o.payments.length > 0
   );
   const settledRevenue = settledOrders.reduce((s, o) => s + o.totalAmount, 0);
@@ -47,7 +58,7 @@ export default async function RetailFinancePage({
     0
   );
   const settledCourier = settledOrders.reduce((s, o) => s + (o.courierCharge ?? 0), 0);
-  const settledProfit = settledRevenue - settledCogs - settledCourier;
+  const settledProfit = settledRevenue - settledCogs - settledCourier - totalReturnLoss;
 
   return (
     <div className="space-y-6">
@@ -80,6 +91,7 @@ export default async function RetailFinancePage({
           <option value="PAID">Paid</option>
           <option value="PARTIAL">Partial</option>
           <option value="PENDING">Unpaid</option>
+          <option value="RETURNED">Returned</option>
         </select>
         <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
           Apply
@@ -102,6 +114,41 @@ export default async function RetailFinancePage({
           <span className="text-gray-400">({settledOrders.length} settled orders)</span>
         </div>
       </div>
+
+      {/* Return losses card */}
+      {returnedOrders.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-red-700 mb-1">Returns ({returnedOrders.length})</p>
+            <p className="text-2xl font-bold text-red-600">
+              {totalReturnLoss > 0 ? `− Rs ${fmt(totalReturnLoss)}` : "No Loss"}
+            </p>
+            <p className="text-xs text-red-400 mt-0.5">
+              {totalReturnLoss > 0
+                ? "Return delivery cost jo advance se zyada tha"
+                : "Advance ne delivery cost cover kar liya"}
+            </p>
+          </div>
+          <div className="space-y-0.5 text-sm">
+            {returnedOrders.map((o) => {
+              const net = (o.deliveryCharge ?? 0) - (o.returnDeliveryCost ?? 0);
+              return (
+                <div key={o.id} className="flex gap-3 items-center">
+                  <a href={`/retail/orders/${o.id}`} className="text-red-700 hover:underline font-medium text-xs">
+                    R-{String(o.id).padStart(3, "0")}
+                  </a>
+                  <span className="text-xs text-gray-600">{o.customerName}</span>
+                  {net >= 0 ? (
+                    <span className="text-xs text-gray-500">No Profit / No Loss</span>
+                  ) : (
+                    <span className="text-xs text-red-600 font-medium">Loss Rs {fmt(Math.abs(net))}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Summary KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -128,7 +175,7 @@ export default async function RetailFinancePage({
       </div>
 
       {/* Per-order breakdown */}
-      {orders.length > 0 && (
+      {normalOrders.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-3 border-b border-gray-100">
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Order Breakdown</p>
@@ -150,7 +197,7 @@ export default async function RetailFinancePage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {orders.map((o) => {
+                {normalOrders.map((o) => {
                   const received = o.payments.reduce((s, p) => s + p.amount, 0);
                   const balance = Math.max(0, o.totalAmount - received);
                   const cogs = o.items.reduce((s, i) => s + i.quantity * COST_PER_DOZEN, 0);
@@ -185,10 +232,11 @@ export default async function RetailFinancePage({
                       <td className="py-3 px-4 text-right">
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                           o.status === "PAID" ? "bg-green-100 text-green-700" :
+                          o.status === "RETURNED" ? "bg-red-100 text-red-700" :
                           o.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" :
                           "bg-gray-100 text-gray-500"
                         }`}>
-                          {o.status}
+                          {o.status === "PAID" ? "Delivered" : o.status === "RETURNED" ? "Returned" : o.status === "PARTIAL" ? "Partial" : "Pending"}
                         </span>
                       </td>
                     </tr>
@@ -199,8 +247,8 @@ export default async function RetailFinancePage({
                 <tr className="border-t-2 border-gray-200 bg-gray-50 font-semibold text-sm">
                   <td className="py-3 px-4" colSpan={3}>Total</td>
                   <td className="py-3 px-4 text-right tabular-nums">Rs {fmt(totalRevenue)}</td>
-                  <td className="py-3 px-4 text-right tabular-nums text-green-700">Rs {fmt(orders.reduce((s,o)=>s+o.payments.reduce((ps,p)=>ps+p.amount,0),0))}</td>
-                  <td className="py-3 px-4 text-right tabular-nums text-orange-600">Rs {fmt(Math.max(0,totalRevenue-orders.reduce((s,o)=>s+o.payments.reduce((ps,p)=>ps+p.amount,0),0)))}</td>
+                  <td className="py-3 px-4 text-right tabular-nums text-green-700">Rs {fmt(normalOrders.reduce((s,o)=>s+o.payments.reduce((ps,p)=>ps+p.amount,0),0))}</td>
+                  <td className="py-3 px-4 text-right tabular-nums text-orange-600">Rs {fmt(Math.max(0,totalRevenue-normalOrders.reduce((s,o)=>s+o.payments.reduce((ps,p)=>ps+p.amount,0),0)))}</td>
                   <td className="py-3 px-4 text-right tabular-nums text-gray-500">Rs {fmt(totalCogs)}</td>
                   <td className="py-3 px-4 text-right tabular-nums text-blue-700">Rs {fmt(totalCourier)}</td>
                   <td className={`py-3 px-4 text-right tabular-nums ${totalProfit >= 0 ? "text-green-700" : "text-red-600"}`}>

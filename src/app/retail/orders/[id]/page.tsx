@@ -91,14 +91,19 @@ export default async function RetailOrderPage({
               <span className="text-gray-600">Return Delivery Cost</span>
               <span className="font-medium text-red-600">− Rs {fmt(order.returnDeliveryCost)}</span>
             </div>
-            <div className={`flex justify-between font-bold border-t pt-2 mt-1 ${
-              order.deliveryCharge - order.returnDeliveryCost >= 0 ? "text-green-700 border-green-200" : "text-red-600 border-red-200"
-            }`}>
-              <span>Net {order.deliveryCharge - order.returnDeliveryCost >= 0 ? "Profit" : "Loss"}</span>
-              <span>
-                {order.deliveryCharge - order.returnDeliveryCost >= 0 ? "+" : ""}Rs {fmt(Math.abs(order.deliveryCharge - order.returnDeliveryCost))}
-              </span>
-            </div>
+            {order.deliveryCharge - order.returnDeliveryCost >= 0 ? (
+              <div className="flex justify-between font-bold border-t pt-2 mt-1 border-gray-200 text-gray-600 text-sm">
+                <span>No Profit / No Loss</span>
+                <span className="text-xs font-normal text-gray-400">
+                  (Rs {fmt(order.deliveryCharge - order.returnDeliveryCost)} customer ko wapas)
+                </span>
+              </div>
+            ) : (
+              <div className="flex justify-between font-bold border-t pt-2 mt-1 border-red-200 text-red-600 text-sm">
+                <span>Net Loss</span>
+                <span>Rs {fmt(Math.abs(order.deliveryCharge - order.returnDeliveryCost))}</span>
+              </div>
+            )}
           </div>
         </div>
       )}
