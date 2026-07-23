@@ -34,6 +34,8 @@ export default async function EcomFinancePage({
   ]);
 
   const orderCount = orders.length;
+  const deliveredOrders = orders.filter((o) => !o.returned);
+  const deliveredCount = deliveredOrders.length;
 
   // Expense totals by category
   const expByCategory = new Map<string, number>();
@@ -46,21 +48,21 @@ export default async function EcomFinancePage({
   const otherTotal = expByCategory.get("Other") ?? 0;
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
 
-  const adsPerOrder = orderCount > 0 ? adsTotal / orderCount : 0;
-  const agencyPerOrder = orderCount > 0 ? agencyTotal / orderCount : 0;
-  const shopifyPerOrder = orderCount > 0 ? shopifyTotal / orderCount : 0;
-  const otherPerOrder = orderCount > 0 ? otherTotal / orderCount : 0;
-  const expensesPerOrder = orderCount > 0 ? totalExpenses / orderCount : 0;
+  const adsPerOrder = deliveredCount > 0 ? adsTotal / deliveredCount : 0;
+  const agencyPerOrder = deliveredCount > 0 ? agencyTotal / deliveredCount : 0;
+  const shopifyPerOrder = deliveredCount > 0 ? shopifyTotal / deliveredCount : 0;
+  const otherPerOrder = deliveredCount > 0 ? otherTotal / deliveredCount : 0;
 
-  const totalRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
-  const totalBallCost = orders.reduce(
+  const totalRevenue = deliveredOrders.reduce((s, o) => s + o.totalAmount, 0);
+  const totalBallCost = deliveredOrders.reduce(
     (s, o) => s + o.items.reduce((is, i) => is + i.quantity, 0) * BALL_COST_PER_DOZ,
     0
   );
-  const totalShipping = orders.reduce((s, o) => s + o.shippingCost, 0);
-  const totalPackaging = orderCount * PACKAGING_COST;
-  const totalReturn = orders.reduce((s, o) => s + o.returnCost, 0);
-  const totalGrossProfit = totalRevenue - totalBallCost - totalShipping - totalPackaging - totalReturn;
+  const totalShipping = deliveredOrders.reduce((s, o) => s + o.shippingCost, 0);
+  const totalPackaging = deliveredCount * PACKAGING_COST;
+  const totalReturnShipping = orders.filter((o) => o.returned).reduce((s, o) => s + o.returnCost, 0);
+  const returnPerDelivered = deliveredCount > 0 ? totalReturnShipping / deliveredCount : 0;
+  const totalGrossProfit = totalRevenue - totalBallCost - totalShipping - totalPackaging - totalReturnShipping;
   const totalNetProfit = totalGrossProfit - totalExpenses;
 
   return (
@@ -94,9 +96,9 @@ export default async function EcomFinancePage({
           <span>− Ball Cost <span className="font-semibold text-gray-800">Rs {fmt(totalBallCost)}</span></span>
           <span>− Shipping <span className="font-semibold text-gray-800">Rs {fmt(totalShipping)}</span></span>
           <span>− Packaging <span className="font-semibold text-gray-800">Rs {fmt(totalPackaging)}</span></span>
-          {totalReturn > 0 && <span>− Returns <span className="font-semibold text-gray-800">Rs {fmt(totalReturn)}</span></span>}
+          {totalReturnShipping > 0 && <span>− Return Shipping <span className="font-semibold text-gray-800">Rs {fmt(totalReturnShipping)}</span></span>}
           {totalExpenses > 0 && <span>− Expenses <span className="font-semibold text-gray-800">Rs {fmt(totalExpenses)}</span></span>}
-          <span className="text-gray-400">({orderCount} orders)</span>
+          <span className="text-gray-400">({deliveredCount} delivered · {orderCount - deliveredCount} returned)</span>
         </div>
       </div>
 
@@ -105,7 +107,7 @@ export default async function EcomFinancePage({
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Revenue</p>
           <p className="text-xl font-bold tracking-tight">Rs {fmt(totalRevenue)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">{orderCount} orders</p>
+          <p className="text-xs text-gray-400 mt-0.5">{deliveredCount} delivered · {orderCount - deliveredCount} returned</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Ball Cost</p>
@@ -175,7 +177,7 @@ export default async function EcomFinancePage({
                   <th className="py-2 px-4 text-right">Shipping</th>
                   {adsTotal > 0 && <th className="py-2 px-4 text-right">Ads</th>}
                   <th className="py-2 px-4 text-right">Pack</th>
-                  <th className="py-2 px-4 text-right">Return</th>
+                  {totalReturnShipping > 0 && <th className="py-2 px-4 text-right">Return Ship.</th>}
                   <th className="py-2 px-4 text-right">Gross P.</th>
                   {agencyTotal > 0 && <th className="py-2 px-4 text-right">Agency</th>}
                   {shopifyTotal > 0 && <th className="py-2 px-4 text-right">Shopify</th>}
@@ -185,9 +187,29 @@ export default async function EcomFinancePage({
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {orders.map((o) => {
+                  if (o.returned) {
+                    const colCount = 7 + (adsTotal > 0 ? 1 : 0) + (totalReturnShipping > 0 ? 1 : 0) + (agencyTotal > 0 ? 1 : 0) + (shopifyTotal > 0 ? 1 : 0) + (otherTotal > 0 ? 1 : 0) + 2;
+                    return (
+                      <tr key={o.id} className="bg-red-50/40">
+                        <td className="py-3 px-4">
+                          <Link href={`/ecommerce/orders/${o.id}`} className="font-medium hover:underline text-gray-400">E-{String(o.id).padStart(3, "0")}</Link>
+                        </td>
+                        <td className="py-3 px-4">
+                          <p className="font-medium text-gray-400">{o.customerName}</p>
+                          {o.city && <p className="text-xs text-gray-300">{o.city}</p>}
+                        </td>
+                        <td className="py-3 px-4 text-gray-400 text-xs">{o.date.toISOString().slice(0, 10)}</td>
+                        <td colSpan={colCount - 3} className="py-3 px-4 text-center">
+                          <span className="text-xs font-semibold text-red-500 bg-red-100 px-2 py-0.5 rounded-full">
+                            Returned · Ship: {o.returnCost > 0 ? `Rs ${fmt(o.returnCost)}` : "—"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  }
                   const dozens = o.items.reduce((s, i) => s + i.quantity, 0);
                   const ballCost = dozens * BALL_COST_PER_DOZ;
-                  const grossProfit = o.totalAmount - ballCost - PACKAGING_COST - o.shippingCost - o.returnCost;
+                  const grossProfit = o.totalAmount - ballCost - PACKAGING_COST - o.shippingCost - returnPerDelivered;
                   const netProfit = grossProfit - adsPerOrder - agencyPerOrder - shopifyPerOrder - otherPerOrder;
                   return (
                     <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
@@ -204,7 +226,7 @@ export default async function EcomFinancePage({
                       <td className="py-3 px-4 text-right tabular-nums text-blue-600">{o.shippingCost > 0 ? `Rs ${fmt(o.shippingCost)}` : "—"}</td>
                       {adsTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-purple-600">Rs {fmt(adsPerOrder)}</td>}
                       <td className="py-3 px-4 text-right tabular-nums text-orange-500">Rs 15</td>
-                      <td className="py-3 px-4 text-right tabular-nums text-red-500">{o.returnCost > 0 ? `Rs ${fmt(o.returnCost)}` : "—"}</td>
+                      {totalReturnShipping > 0 && <td className="py-3 px-4 text-right tabular-nums text-red-500">Rs {fmt(returnPerDelivered)}</td>}
                       <td className={`py-3 px-4 text-right tabular-nums font-semibold ${grossProfit >= 0 ? "text-green-700" : "text-red-600"}`}>Rs {fmt(grossProfit)}</td>
                       {agencyTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-blue-600">Rs {fmt(agencyPerOrder)}</td>}
                       {shopifyTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-green-600">Rs {fmt(shopifyPerOrder)}</td>}
@@ -222,7 +244,7 @@ export default async function EcomFinancePage({
                   <td className="py-3 px-4 text-right tabular-nums text-blue-600">Rs {fmt(totalShipping)}</td>
                   {adsTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-purple-600">Rs {fmt(adsTotal)}</td>}
                   <td className="py-3 px-4 text-right tabular-nums text-orange-500">Rs {fmt(totalPackaging)}</td>
-                  <td className="py-3 px-4 text-right tabular-nums text-red-500">Rs {fmt(totalReturn)}</td>
+                  {totalReturnShipping > 0 && <td className="py-3 px-4 text-right tabular-nums text-red-500">Rs {fmt(totalReturnShipping)}</td>}
                   <td className={`py-3 px-4 text-right tabular-nums ${totalGrossProfit >= 0 ? "text-green-700" : "text-red-600"}`}>Rs {fmt(totalGrossProfit)}</td>
                   {agencyTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-blue-600">Rs {fmt(agencyTotal)}</td>}
                   {shopifyTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-green-600">Rs {fmt(shopifyTotal)}</td>}

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { deleteEcomOrder, updateEcomOrderCosts, recordEcomPayment, deleteEcomPayment } from "@/lib/actions";
+import { deleteEcomOrder, updateEcomOrderCosts, recordEcomPayment, deleteEcomPayment, toggleEcomOrderReturned } from "@/lib/actions";
 import { getSessionUser } from "@/lib/auth";
 import EcomCostsForm from "@/components/EcomCostsForm";
 import EcomPaymentSection from "@/components/EcomPaymentSection";
@@ -34,6 +34,7 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
   const updateCostsBound = updateEcomOrderCosts.bind(null, order.id);
   const recordPaymentBound = recordEcomPayment.bind(null, order.id);
   const deleteOrderBound = deleteEcomOrder.bind(null, order.id);
+  const toggleReturnedBound = toggleEcomOrderReturned.bind(null, order.id, !order.returned);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -43,9 +44,14 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
           <h1 className="text-2xl font-semibold tracking-tight mt-1">E-{String(order.id).padStart(3, "0")}</h1>
           <p className="text-sm text-gray-500 mt-0.5">{order.date.toISOString().slice(0, 10)}</p>
         </div>
-        <span className={`text-xs font-semibold px-3 py-1.5 rounded-full mt-1 ${order.status === "PAID" ? "bg-green-100 text-green-700" : order.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-500"}`}>
-          {order.status === "PAID" ? "Paid" : order.status === "PARTIAL" ? "Partial" : "Pending"}
-        </span>
+        <div className="flex items-center gap-2 mt-1">
+          <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${order.status === "PAID" ? "bg-green-100 text-green-700" : order.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-500"}`}>
+            {order.status === "PAID" ? "Paid" : order.status === "PARTIAL" ? "Partial" : "Pending"}
+          </span>
+          {order.returned && (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-red-100 text-red-600">Returned</span>
+          )}
+        </div>
       </div>
 
       {/* Customer */}
@@ -109,8 +115,39 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
       <EcomCostsForm
         action={updateCostsBound}
         shippingCost={order.shippingCost}
-        returnCost={order.returnCost}
       />
+
+      {/* Return section */}
+      <div className={`rounded-2xl p-5 shadow-sm border ${order.returned ? "bg-red-50 border-red-200" : "bg-white border-gray-200"}`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-gray-800">
+              {order.returned ? "This order was returned" : "Mark as Returned?"}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {order.returned
+                ? `Return shipping: Rs ${fmt(order.returnCost)} — this cost is divided across delivered orders in Finance`
+                : "Return shipping cost will be shared across all delivered orders in Finance"}
+            </p>
+          </div>
+          <form action={toggleReturnedBound}>
+            <button type="submit" className={`text-sm font-medium px-4 py-2 rounded-xl transition-colors ${order.returned ? "bg-white border border-red-200 text-red-600 hover:bg-red-50" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+              {order.returned ? "Unmark Return" : "Mark as Returned"}
+            </button>
+          </form>
+        </div>
+        {order.returned && (
+          <form action={updateCostsBound} className="mt-3 pt-3 border-t border-red-100 flex items-end gap-3">
+            <input type="hidden" name="shippingCost" value={order.shippingCost} />
+            <div className="flex-1">
+              <label className="text-xs font-medium text-gray-600 mb-1 block">Return Shipping Cost (Rs)</label>
+              <input name="returnCost" type="number" step="1" min="0" defaultValue={order.returnCost || ""} placeholder="0"
+                className="w-full bg-white border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+            </div>
+            <button type="submit" className="bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-red-700 transition-colors">Save</button>
+          </form>
+        )}
+      </div>
 
       {/* Payment summary */}
       <div className="grid grid-cols-3 gap-3">

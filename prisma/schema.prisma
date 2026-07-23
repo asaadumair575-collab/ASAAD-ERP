@@ -224,6 +224,7 @@ model EcomOrder {
   notes         String?
   totalAmount   Float
   status        String          @default("PENDING")
+  returned      Boolean         @default(false)
   shippingCost  Float           @default(0)
   adCost        Float           @default(0)
   packagingCost Float           @default(0)

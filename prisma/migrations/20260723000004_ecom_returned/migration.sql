@@ -1,0 +1,1 @@
+ALTER TABLE "EcomOrder" ADD COLUMN "returned" BOOLEAN NOT NULL DEFAULT false;
