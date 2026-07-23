@@ -132,7 +132,13 @@ export default async function RetailOrderPage({
       {/* Customer card */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
         <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Customer</p>
-        <p className="text-base font-semibold">{order.customerName}</p>
+        {order.retailCustomerId ? (
+          <Link href={`/retail/customers/${order.retailCustomerId}`} className="text-base font-semibold hover:underline">
+            {order.customerName}
+          </Link>
+        ) : (
+          <p className="text-base font-semibold">{order.customerName}</p>
+        )}
         {(order.phone || order.city) && (
           <p className="text-sm text-gray-500 mt-0.5">{[order.phone, order.city].filter(Boolean).join(" · ")}</p>
         )}
