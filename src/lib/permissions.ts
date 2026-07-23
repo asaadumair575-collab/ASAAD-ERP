@@ -24,6 +24,7 @@ export const SUB_MODULES = [
   { parentKey: "retail",  key: "retail_customers",       label: "Customers"         },
   { parentKey: "retail",  key: "retail_finance",         label: "Finance"           },
   { parentKey: "retail",  key: "retail_calculator",      label: "Rate Calculator"   },
+  { parentKey: "retail",  key: "retail_dispatch",         label: "Dispatch"           },
   { parentKey: "retail",  key: "retail_record_payment",  label: "Record Payment"    },
   { parentKey: "retail",  key: "retail_set_courier",     label: "Set Delivery Charges" },
   { parentKey: "retail",  key: "retail_see_charges",     label: "See Charges"       },
