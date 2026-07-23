@@ -21,7 +21,7 @@ export default function RetailOrderForm({
   customers?: Customer[];
 }) {
   const [rows, setRows] = useState<Row[]>([{ id: 0, description: "", quantity: 0, rate: 0, costPrice: 1550 }]);
-  const [deliveryCharge, setDeliveryCharge] = useState(0);
+  const [deliveryCharge, setDeliveryCharge] = useState<number | "">("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [search, setSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -53,7 +53,7 @@ export default function RetailOrderForm({
   }
 
   const total = round2(rows.reduce((s, r) => s + r.quantity * r.rate, 0));
-  const balanceAfterAdvance = Math.max(0, total - deliveryCharge);
+  const balanceAfterAdvance = Math.max(0, total - (deliveryCharge || 0));
 
   return (
     <form action={action} encType="multipart/form-data" className="space-y-5">
@@ -232,7 +232,8 @@ export default function RetailOrderForm({
               min="0"
               step="1"
               value={deliveryCharge}
-              onChange={(e) => setDeliveryCharge(parseFloat(e.target.value) || 0)}
+              onChange={(e) => setDeliveryCharge(e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
+              placeholder="0"
               className="border border-orange-200 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
             />
           </div>
@@ -242,7 +243,7 @@ export default function RetailOrderForm({
             <p className="text-xs text-orange-500 mt-0.5">This will be collected later — use Record Payment.</p>
           </div>
         </div>
-        {deliveryCharge > 0 && (
+        {(deliveryCharge || 0) > 0 && (
           <div>
             <label className="block text-xs text-orange-700 mb-1.5">Screenshot <span className="text-red-600">*</span></label>
             <input
