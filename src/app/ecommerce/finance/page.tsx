@@ -45,6 +45,11 @@ export default async function EcomFinancePage({
   const shopifyTotal = expByCategory.get("Shopify") ?? 0;
   const otherTotal = expByCategory.get("Other") ?? 0;
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+
+  const adsPerOrder = orderCount > 0 ? adsTotal / orderCount : 0;
+  const agencyPerOrder = orderCount > 0 ? agencyTotal / orderCount : 0;
+  const shopifyPerOrder = orderCount > 0 ? shopifyTotal / orderCount : 0;
+  const otherPerOrder = orderCount > 0 ? otherTotal / orderCount : 0;
   const expensesPerOrder = orderCount > 0 ? totalExpenses / orderCount : 0;
 
   const totalRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
@@ -174,7 +179,10 @@ export default async function EcomFinancePage({
                   <th className="py-2 px-4 text-right">Pack</th>
                   <th className="py-2 px-4 text-right">Return</th>
                   <th className="py-2 px-4 text-right">Gross P.</th>
-                  {totalExpenses > 0 && <th className="py-2 px-4 text-right">Expenses</th>}
+                  {adsTotal > 0 && <th className="py-2 px-4 text-right">Ads</th>}
+                  {agencyTotal > 0 && <th className="py-2 px-4 text-right">Agency</th>}
+                  {shopifyTotal > 0 && <th className="py-2 px-4 text-right">Shopify</th>}
+                  {otherTotal > 0 && <th className="py-2 px-4 text-right">Other</th>}
                   <th className="py-2 px-4 text-right">Net P.</th>
                 </tr>
               </thead>
@@ -201,7 +209,10 @@ export default async function EcomFinancePage({
                       <td className="py-3 px-4 text-right tabular-nums text-orange-500">Rs 15</td>
                       <td className="py-3 px-4 text-right tabular-nums text-red-500">{o.returnCost > 0 ? `Rs ${fmt(o.returnCost)}` : "—"}</td>
                       <td className={`py-3 px-4 text-right tabular-nums font-semibold ${grossProfit >= 0 ? "text-green-700" : "text-red-600"}`}>Rs {fmt(grossProfit)}</td>
-                      {totalExpenses > 0 && <td className="py-3 px-4 text-right tabular-nums text-gray-500">Rs {fmt(expensesPerOrder)}</td>}
+                      {adsTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-purple-600">Rs {fmt(adsPerOrder)}</td>}
+                      {agencyTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-blue-600">Rs {fmt(agencyPerOrder)}</td>}
+                      {shopifyTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-green-600">Rs {fmt(shopifyPerOrder)}</td>}
+                      {otherTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-gray-500">Rs {fmt(otherPerOrder)}</td>}
                       <td className={`py-3 px-4 text-right tabular-nums font-bold ${netProfit >= 0 ? "text-green-700" : "text-red-600"}`}>Rs {fmt(netProfit)}</td>
                     </tr>
                   );
@@ -217,7 +228,10 @@ export default async function EcomFinancePage({
                   <td className="py-3 px-4 text-right tabular-nums text-orange-500">Rs {fmt(totalPackaging)}</td>
                   <td className="py-3 px-4 text-right tabular-nums text-red-500">Rs {fmt(totalReturn)}</td>
                   <td className={`py-3 px-4 text-right tabular-nums ${totalGrossProfit >= 0 ? "text-green-700" : "text-red-600"}`}>Rs {fmt(totalGrossProfit)}</td>
-                  {totalExpenses > 0 && <td className="py-3 px-4 text-right tabular-nums text-gray-500">Rs {fmt(totalExpenses)}</td>}
+                  {adsTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-purple-600">Rs {fmt(adsTotal)}</td>}
+                  {agencyTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-blue-600">Rs {fmt(agencyTotal)}</td>}
+                  {shopifyTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-green-600">Rs {fmt(shopifyTotal)}</td>}
+                  {otherTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-gray-500">Rs {fmt(otherTotal)}</td>}
                   <td className={`py-3 px-4 text-right tabular-nums ${totalNetProfit >= 0 ? "text-green-700" : "text-red-600"}`}>Rs {fmt(totalNetProfit)}</td>
                 </tr>
               </tfoot>
