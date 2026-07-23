@@ -11,6 +11,7 @@ export default function CprImportForm() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<CPRRow[]>([]);
   const [result, setResult] = useState<{ payments: number; returned: number; notFound: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [parsing, startParsing] = useTransition();
   const [applying, startApplying] = useTransition();
 
@@ -18,20 +19,33 @@ export default function CprImportForm() {
     const file = e.target.files?.[0];
     if (!file) return;
     setResult(null);
+    setError(null);
     startParsing(async () => {
-      const arrayBuffer = await file.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-      const parsed = await parseCPRPDF(base64);
-      setRows(parsed);
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = "";
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        const base64 = btoa(binary);
+        const parsed = await parseCPRPDF(base64);
+        setRows(parsed);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      }
     });
   }
 
   function handleApply() {
+    setError(null);
     startApplying(async () => {
-      const res = await applyCPR(rows);
-      setResult(res);
-      setRows([]);
-      if (fileRef.current) fileRef.current.value = "";
+      try {
+        const res = await applyCPR(rows);
+        setResult(res);
+        setRows([]);
+        if (fileRef.current) fileRef.current.value = "";
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      }
     });
   }
 
@@ -52,6 +66,13 @@ export default function CprImportForm() {
         />
         {parsing && <p className="text-sm text-gray-400 mt-2">PDF parse ho raha hai...</p>}
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+          <p className="text-sm font-semibold text-red-700">Error</p>
+          <p className="text-xs text-red-600 mt-1 font-mono break-all">{error}</p>
+        </div>
+      )}
 
       {result && (
         <div className="bg-green-50 border border-green-200 rounded-2xl p-4 space-y-1">
