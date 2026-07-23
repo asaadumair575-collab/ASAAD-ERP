@@ -29,7 +29,7 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
   const balance = Math.max(0, order.totalAmount - received);
   const dozens = order.items.reduce((s, i) => s + i.quantity, 0);
   const ballCost = dozens * BALL_COST_PER_DOZ;
-  const grossProfit = order.totalAmount - ballCost - PACKAGING_COST - order.shippingCost - order.adCost - order.returnCost;
+  const grossProfit = order.totalAmount - ballCost - PACKAGING_COST - order.shippingCost - order.returnCost;
 
   const updateCostsBound = updateEcomOrderCosts.bind(null, order.id);
   const recordPaymentBound = recordEcomPayment.bind(null, order.id);
@@ -97,7 +97,6 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
           <div className="flex justify-between"><span className="text-gray-600">Ball Cost ({dozens} doz × 1,450)</span><span className="font-medium text-gray-600">− Rs {fmt(ballCost)}</span></div>
           <div className="flex justify-between"><span className="text-gray-600">Packaging (fixed)</span><span className="font-medium text-gray-600">− Rs 15</span></div>
           {order.shippingCost > 0 && <div className="flex justify-between"><span className="text-gray-600">Shipping</span><span className="font-medium text-gray-600">− Rs {fmt(order.shippingCost)}</span></div>}
-          {order.adCost > 0 && <div className="flex justify-between"><span className="text-gray-600">Ad Cost</span><span className="font-medium text-gray-600">− Rs {fmt(order.adCost)}</span></div>}
           {order.returnCost > 0 && <div className="flex justify-between"><span className="text-gray-600">Return Cost</span><span className="font-medium text-gray-600">− Rs {fmt(order.returnCost)}</span></div>}
           <div className={`flex justify-between border-t pt-1.5 mt-1 font-bold text-base ${grossProfit >= 0 ? "border-green-200 text-green-700" : "border-red-200 text-red-600"}`}>
             <span>Gross Profit</span>
@@ -110,7 +109,6 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
       <EcomCostsForm
         action={updateCostsBound}
         shippingCost={order.shippingCost}
-        adCost={order.adCost}
         returnCost={order.returnCost}
       />
 

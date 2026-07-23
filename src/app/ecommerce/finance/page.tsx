@@ -58,10 +58,9 @@ export default async function EcomFinancePage({
     0
   );
   const totalShipping = orders.reduce((s, o) => s + o.shippingCost, 0);
-  const totalAdCost = orders.reduce((s, o) => s + o.adCost, 0);
   const totalPackaging = orderCount * PACKAGING_COST;
   const totalReturn = orders.reduce((s, o) => s + o.returnCost, 0);
-  const totalGrossProfit = totalRevenue - totalBallCost - totalShipping - totalAdCost - totalPackaging - totalReturn;
+  const totalGrossProfit = totalRevenue - totalBallCost - totalShipping - totalPackaging - totalReturn;
   const totalNetProfit = totalGrossProfit - totalExpenses;
 
   return (
@@ -94,7 +93,6 @@ export default async function EcomFinancePage({
           <span>Revenue <span className="font-semibold text-gray-800">Rs {fmt(totalRevenue)}</span></span>
           <span>− Ball Cost <span className="font-semibold text-gray-800">Rs {fmt(totalBallCost)}</span></span>
           <span>− Shipping <span className="font-semibold text-gray-800">Rs {fmt(totalShipping)}</span></span>
-          <span>− Ad Cost <span className="font-semibold text-gray-800">Rs {fmt(totalAdCost)}</span></span>
           <span>− Packaging <span className="font-semibold text-gray-800">Rs {fmt(totalPackaging)}</span></span>
           {totalReturn > 0 && <span>− Returns <span className="font-semibold text-gray-800">Rs {fmt(totalReturn)}</span></span>}
           {totalExpenses > 0 && <span>− Expenses <span className="font-semibold text-gray-800">Rs {fmt(totalExpenses)}</span></span>}
@@ -175,7 +173,7 @@ export default async function EcomFinancePage({
                   <th className="py-2 px-4 text-right">Revenue</th>
                   <th className="py-2 px-4 text-right">Ball Cost</th>
                   <th className="py-2 px-4 text-right">Shipping</th>
-                  <th className="py-2 px-4 text-right">Ad</th>
+                  {adsTotal > 0 && <th className="py-2 px-4 text-right">Ads</th>}
                   <th className="py-2 px-4 text-right">Pack</th>
                   <th className="py-2 px-4 text-right">Return</th>
                   <th className="py-2 px-4 text-right">Gross P.</th>
@@ -189,7 +187,7 @@ export default async function EcomFinancePage({
                 {orders.map((o) => {
                   const dozens = o.items.reduce((s, i) => s + i.quantity, 0);
                   const ballCost = dozens * BALL_COST_PER_DOZ;
-                  const grossProfit = o.totalAmount - ballCost - PACKAGING_COST - o.shippingCost - o.adCost - o.returnCost;
+                  const grossProfit = o.totalAmount - ballCost - PACKAGING_COST - o.shippingCost - o.returnCost;
                   const netProfit = grossProfit - adsPerOrder - agencyPerOrder - shopifyPerOrder - otherPerOrder;
                   return (
                     <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
@@ -204,7 +202,7 @@ export default async function EcomFinancePage({
                       <td className="py-3 px-4 text-right tabular-nums font-medium">Rs {fmt(o.totalAmount)}</td>
                       <td className="py-3 px-4 text-right tabular-nums text-gray-500">{ballCost > 0 ? `Rs ${fmt(ballCost)}` : "—"}</td>
                       <td className="py-3 px-4 text-right tabular-nums text-blue-600">{o.shippingCost > 0 ? `Rs ${fmt(o.shippingCost)}` : "—"}</td>
-                      <td className="py-3 px-4 text-right tabular-nums text-purple-600">{(o.adCost + adsPerOrder) > 0 ? `Rs ${fmt(o.adCost + adsPerOrder)}` : "—"}</td>
+                      {adsTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-purple-600">Rs {fmt(adsPerOrder)}</td>}
                       <td className="py-3 px-4 text-right tabular-nums text-orange-500">Rs 15</td>
                       <td className="py-3 px-4 text-right tabular-nums text-red-500">{o.returnCost > 0 ? `Rs ${fmt(o.returnCost)}` : "—"}</td>
                       <td className={`py-3 px-4 text-right tabular-nums font-semibold ${grossProfit >= 0 ? "text-green-700" : "text-red-600"}`}>Rs {fmt(grossProfit)}</td>
@@ -222,7 +220,7 @@ export default async function EcomFinancePage({
                   <td className="py-3 px-4 text-right tabular-nums">Rs {fmt(totalRevenue)}</td>
                   <td className="py-3 px-4 text-right tabular-nums text-gray-500">Rs {fmt(totalBallCost)}</td>
                   <td className="py-3 px-4 text-right tabular-nums text-blue-600">Rs {fmt(totalShipping)}</td>
-                  <td className="py-3 px-4 text-right tabular-nums text-purple-600">Rs {fmt(totalAdCost + adsTotal)}</td>
+                  {adsTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-purple-600">Rs {fmt(adsTotal)}</td>}
                   <td className="py-3 px-4 text-right tabular-nums text-orange-500">Rs {fmt(totalPackaging)}</td>
                   <td className="py-3 px-4 text-right tabular-nums text-red-500">Rs {fmt(totalReturn)}</td>
                   <td className={`py-3 px-4 text-right tabular-nums ${totalGrossProfit >= 0 ? "text-green-700" : "text-red-600"}`}>Rs {fmt(totalGrossProfit)}</td>
