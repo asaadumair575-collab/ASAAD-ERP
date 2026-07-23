@@ -95,21 +95,7 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
         </table>
       </div>
 
-      {/* Profit preview */}
-      <div className={`rounded-2xl p-5 shadow-sm border ${grossProfit >= 0 ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-2">Profit Preview</p>
-        <div className="space-y-1.5 text-sm">
-          <div className="flex justify-between"><span className="text-gray-600">Revenue</span><span className="font-medium">Rs {fmt(order.totalAmount)}</span></div>
-          <div className="flex justify-between"><span className="text-gray-600">Ball Cost ({dozens} doz × 1,450)</span><span className="font-medium text-gray-600">− Rs {fmt(ballCost)}</span></div>
-          <div className="flex justify-between"><span className="text-gray-600">Packaging (fixed)</span><span className="font-medium text-gray-600">− Rs 15</span></div>
-          {order.shippingCost > 0 && <div className="flex justify-between"><span className="text-gray-600">Shipping</span><span className="font-medium text-gray-600">− Rs {fmt(order.shippingCost)}</span></div>}
-          {order.returnCost > 0 && <div className="flex justify-between"><span className="text-gray-600">Return Cost</span><span className="font-medium text-gray-600">− Rs {fmt(order.returnCost)}</span></div>}
-          <div className={`flex justify-between border-t pt-1.5 mt-1 font-bold text-base ${grossProfit >= 0 ? "border-green-200 text-green-700" : "border-red-200 text-red-600"}`}>
-            <span>Gross Profit</span>
-            <span>Rs {fmt(grossProfit)}</span>
-          </div>
-        </div>
-      </div>
+
 
       {/* Costs form */}
       <EcomCostsForm
