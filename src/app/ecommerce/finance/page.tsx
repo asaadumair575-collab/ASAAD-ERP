@@ -20,7 +20,9 @@ export default async function EcomFinancePage({
 
   const orders = await prisma.ecomOrder.findMany({
     where: {
-      ...(fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {}),
+      ...(fromDate || toDate
+        ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } }
+        : {}),
     },
     include: { items: true, payments: true },
     orderBy: { date: "desc" },
@@ -30,9 +32,11 @@ export default async function EcomFinancePage({
   const agencyPerOrder = orderCount > 0 ? agencyTotal / orderCount : 0;
   const otherPerOrder = orderCount > 0 ? otherTotal / orderCount : 0;
 
-  // KPIs
   const totalRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
-  const totalBallCost = orders.reduce((s, o) => s + o.items.reduce((is, i) => is + i.quantity, 0) * BALL_COST_PER_DOZ, 0);
+  const totalBallCost = orders.reduce(
+    (s, o) => s + o.items.reduce((is, i) => is + i.quantity, 0) * BALL_COST_PER_DOZ,
+    0
+  );
   const totalShipping = orders.reduce((s, o) => s + o.shippingCost, 0);
   const totalAd = orders.reduce((s, o) => s + o.adCost, 0);
   const totalPackaging = orders.reduce((s, o) => s + o.packagingCost, 0);
@@ -44,19 +48,23 @@ export default async function EcomFinancePage({
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Ecommerce Finance</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Ball Cost: Rs 1,450/doz · Shared expenses divided equally across orders</p>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Ball Cost: Rs 1,450/doz · Shared expenses divided equally across orders in range
+        </p>
       </div>
 
-      {/* Filters + shared expenses */}
-      <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
+      <form
+        method="GET"
+        className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5"
+      >
         <input type="date" name="from" defaultValue={from ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
         <span className="text-xs text-gray-400">to</span>
         <input type="date" name="to" defaultValue={to ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <label className="text-xs text-gray-500 whitespace-nowrap">Agency Commission:</label>
           <input type="number" name="agency" step="1" min="0" defaultValue={agency ?? ""} placeholder="0" className="w-28 bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <label className="text-xs text-gray-500 whitespace-nowrap">Other Expenses:</label>
           <input type="number" name="other" step="1" min="0" defaultValue={other ?? ""} placeholder="0" className="w-28 bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
         </div>
@@ -64,12 +72,9 @@ export default async function EcomFinancePage({
         {(from || to) && <Link href="/ecommerce/finance" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>}
       </form>
 
-      {/* Net Profit hero */}
       <div className={`rounded-2xl p-6 shadow-sm border ${totalNetProfit >= 0 ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}`}>
         <p className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Net Profit</p>
-        <p className={`text-4xl font-bold tracking-tight ${totalNetProfit >= 0 ? "text-green-700" : "text-red-600"}`}>
-          Rs {fmt(totalNetProfit)}
-        </p>
+        <p className={`text-4xl font-bold tracking-tight ${totalNetProfit >= 0 ? "text-green-700" : "text-red-600"}`}>Rs {fmt(totalNetProfit)}</p>
         <div className="flex flex-wrap gap-4 mt-3 text-xs text-gray-500">
           <span>Revenue <span className="font-semibold text-gray-800">Rs {fmt(totalRevenue)}</span></span>
           <span>− Ball Cost <span className="font-semibold text-gray-800">Rs {fmt(totalBallCost)}</span></span>
@@ -83,7 +88,6 @@ export default async function EcomFinancePage({
         </div>
       </div>
 
-      {/* KPI cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Revenue</p>
@@ -107,7 +111,6 @@ export default async function EcomFinancePage({
         </div>
       </div>
 
-      {/* Per-order breakdown */}
       {orders.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-3 border-b border-gray-100">
@@ -154,14 +157,10 @@ export default async function EcomFinancePage({
                       <td className="py-3 px-4 text-right tabular-nums text-purple-600">{o.adCost > 0 ? `Rs ${fmt(o.adCost)}` : "—"}</td>
                       <td className="py-3 px-4 text-right tabular-nums text-orange-500">{o.packagingCost > 0 ? `Rs ${fmt(o.packagingCost)}` : "—"}</td>
                       <td className="py-3 px-4 text-right tabular-nums text-red-500">{o.returnCost > 0 ? `Rs ${fmt(o.returnCost)}` : "—"}</td>
-                      <td className={`py-3 px-4 text-right tabular-nums font-semibold ${grossProfit >= 0 ? "text-green-700" : "text-red-600"}`}>
-                        Rs {fmt(grossProfit)}
-                      </td>
+                      <td className={`py-3 px-4 text-right tabular-nums font-semibold ${grossProfit >= 0 ? "text-green-700" : "text-red-600"}`}>Rs {fmt(grossProfit)}</td>
                       {agencyTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-gray-500">Rs {fmt(agencyPerOrder)}</td>}
                       {otherTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-gray-500">Rs {fmt(otherPerOrder)}</td>}
-                      <td className={`py-3 px-4 text-right tabular-nums font-bold ${netProfit >= 0 ? "text-green-700" : "text-red-600"}`}>
-                        Rs {fmt(netProfit)}
-                      </td>
+                      <td className={`py-3 px-4 text-right tabular-nums font-bold ${netProfit >= 0 ? "text-green-700" : "text-red-600"}`}>Rs {fmt(netProfit)}</td>
                     </tr>
                   );
                 })}
@@ -189,6 +188,7 @@ export default async function EcomFinancePage({
       {orders.length === 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
           <p className="text-gray-400 text-sm">No orders found for this date range.</p>
+          <Link href="/ecommerce/orders/new" className="mt-3 inline-block text-sm font-medium text-black hover:underline">+ Create your first order</Link>
         </div>
       )}
     </div>
