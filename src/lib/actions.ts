@@ -1683,13 +1683,9 @@ function parseCPRText(text: string): CPRRow[] {
   return rows;
 }
 
-export async function parseCPRPDF(base64: string): Promise<CPRRow[]> {
+export async function parseCPRText_action(text: string): Promise<CPRRow[]> {
   await requireAuth();
-  const buffer = Buffer.from(base64, "base64");
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>;
-  const data = await pdfParse(buffer);
-  return parseCPRText(data.text);
+  return parseCPRText(text);
 }
 
 export async function applyCPR(rows: CPRRow[]): Promise<{ payments: number; returned: number; notFound: number }> {

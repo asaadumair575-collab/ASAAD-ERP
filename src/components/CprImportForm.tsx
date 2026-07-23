@@ -1,10 +1,24 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { parseCPRPDF, applyCPR, type CPRRow } from "@/lib/actions";
+import { parseCPRText_action, applyCPR, type CPRRow } from "@/lib/actions";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
+}
+
+async function extractPdfText(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer), useWorkerFetch: false, useSystemFonts: true }).promise;
+  const parts: string[] = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    parts.push(content.items.map((it) => ("str" in it ? it.str : "")).join("\n"));
+  }
+  return parts.join("\n");
 }
 
 export default function CprImportForm() {
@@ -22,12 +36,8 @@ export default function CprImportForm() {
     setError(null);
     startParsing(async () => {
       try {
-        const arrayBuffer = await file.arrayBuffer();
-        const bytes = new Uint8Array(arrayBuffer);
-        let binary = "";
-        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-        const base64 = btoa(binary);
-        const parsed = await parseCPRPDF(base64);
+        const text = await extractPdfText(file);
+        const parsed = await parseCPRText_action(text);
         setRows(parsed);
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
