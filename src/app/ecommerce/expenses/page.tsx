@@ -75,13 +75,24 @@ export default async function EcomExpensesPage({
 
       {/* Category summary */}
       {expenses.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {Array.from(categoryTotals.entries()).map(([cat, total]) => (
-            <div key={cat} className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${CATEGORY_COLORS[cat] ?? "bg-gray-100 text-gray-500"}`}>{cat}</span>
-              <p className="text-xl font-bold mt-2">Rs {fmt(total)}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {(["Ads", "Agency Commission", "Shopify", "Other"] as const).map((cat) => {
+            const total = categoryTotals.get(cat) ?? 0;
+            if (total === 0) return null;
+            const styles: Record<string, { card: string; badge: string; label: string }> = {
+              Ads:                  { card: "bg-purple-50 border-purple-100", badge: "bg-purple-100 text-purple-700", label: "text-purple-600" },
+              "Agency Commission":  { card: "bg-blue-50 border-blue-100",   badge: "bg-blue-100 text-blue-700",   label: "text-blue-600"   },
+              Shopify:              { card: "bg-green-50 border-green-100",  badge: "bg-green-100 text-green-700", label: "text-green-600"  },
+              Other:                { card: "bg-gray-50 border-gray-200",    badge: "bg-gray-100 text-gray-600",   label: "text-gray-700"   },
+            };
+            const s = styles[cat];
+            return (
+              <div key={cat} className={`border rounded-2xl p-4 shadow-sm ${s.card}`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${s.badge}`}>{cat}</span>
+                <p className={`text-xl font-bold mt-2 ${s.label}`}>Rs {fmt(total)}</p>
+              </div>
+            );
+          })}
           <div className="bg-gray-900 text-white rounded-2xl p-4 shadow-sm">
             <p className="text-xs font-medium text-gray-400">Total</p>
             <p className="text-xl font-bold mt-2">Rs {fmt(grandTotal)}</p>
