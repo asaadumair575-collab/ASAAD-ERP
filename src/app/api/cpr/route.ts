@@ -10,10 +10,20 @@ export async function POST(req: NextRequest) {
     const file = formData.get("cpr") as File | null;
     if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buf: Buffer) => Promise<{ text: string }>;
-    const { text } = await pdfParse(buffer);
+    const buffer = new Uint8Array(await file.arrayBuffer());
+
+    const pdfjsLib = await import("pdfjs-dist");
+    // No worker in Node.js — runs in main thread
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+
+    const pdf = await pdfjsLib.getDocument({ data: buffer, useSystemFonts: true }).promise;
+    const parts: string[] = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      parts.push(content.items.map((it) => ("str" in it ? it.str : "")).join("\n"));
+    }
+    const text = parts.join("\n");
 
     const rows = parseCPRText(text);
     return NextResponse.json(rows);
