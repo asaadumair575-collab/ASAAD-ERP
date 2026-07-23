@@ -1532,3 +1532,29 @@ export async function deleteEcomPayment(paymentId: number) {
   await prisma.ecomOrder.update({ where: { id: payment.orderId }, data: { status } });
   revalidatePath(`/ecommerce/orders/${payment.orderId}`);
 }
+
+// ── Ecommerce Expenses ────────────────────────────────────────────────────────
+
+export async function createEcomExpense(formData: FormData) {
+  await requireAuth();
+  const dateRaw = String(formData.get("date") ?? "").trim();
+  if (!dateRaw) throw new Error("Date is required");
+  const category = String(formData.get("category") ?? "").trim();
+  if (!category) throw new Error("Category is required");
+  const amount = parseFloat(String(formData.get("amount") ?? "0"));
+  if (isNaN(amount) || amount <= 0) throw new Error("Invalid amount");
+  const note = String(formData.get("note") ?? "").trim() || null;
+
+  await prisma.ecomExpense.create({
+    data: { date: new Date(dateRaw), category, amount, note },
+  });
+  revalidatePath("/ecommerce/expenses");
+  revalidatePath("/ecommerce/finance");
+}
+
+export async function deleteEcomExpense(id: number) {
+  await requireAuth();
+  await prisma.ecomExpense.delete({ where: { id } });
+  revalidatePath("/ecommerce/expenses");
+  revalidatePath("/ecommerce/finance");
+}

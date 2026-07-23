@@ -250,3 +250,12 @@ model EcomPayment {
   note    String?
   date    DateTime  @default(now())
 }
+
+model EcomExpense {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @db.Date
+  category  String
+  amount    Float
+  note      String?
+  createdAt DateTime @default(now())
+}
