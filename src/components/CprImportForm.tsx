@@ -111,8 +111,8 @@ export default function CprImportForm() {
                   <tr className="bg-gray-50 text-xs text-gray-400 uppercase tracking-wide text-left">
                     <th className="py-2 px-4">Tracking</th>
                     <th className="py-2 px-4 text-right">COD</th>
-                    <th className="py-2 px-4 text-right">Shipping</th>
-                    <th className="py-2 px-4 text-right">Net (Payment)</th>
+                    <th className="py-2 px-4 text-right">PostEx Deduction</th>
+                    <th className="py-2 px-4 text-right">Net (Milenge)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -120,7 +120,7 @@ export default function CprImportForm() {
                     <tr key={r.trackingNumber}>
                       <td className="py-2 px-4 font-mono text-xs text-gray-600">{r.trackingNumber}</td>
                       <td className="py-2 px-4 text-right tabular-nums">Rs {fmt(r.codAmount)}</td>
-                      <td className="py-2 px-4 text-right tabular-nums text-gray-400">− Rs {fmt(r.shippingCharges)}</td>
+                      <td className="py-2 px-4 text-right tabular-nums text-gray-400">− Rs {fmt(r.codAmount - r.netAmount)}</td>
                       <td className="py-2 px-4 text-right tabular-nums font-semibold text-green-700">Rs {fmt(r.netAmount)}</td>
                     </tr>
                   ))}
