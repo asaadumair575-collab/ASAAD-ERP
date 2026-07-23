@@ -1434,3 +1434,101 @@ export async function deleteEmpCommissionEntry(id: number) {
   await prisma.empCommissionEntry.delete({ where: { id } });
   revalidatePath("/emp-commission");
 }
+
+// ── Ecommerce ─────────────────────────────────────────────────────────────────
+
+export async function createEcomOrder(formData: FormData) {
+  await requireAuth();
+  const customerName = String(formData.get("customerName") ?? "").trim();
+  if (!customerName) throw new Error("Customer name is required");
+  const phone = String(formData.get("phone") ?? "").trim() || null;
+  const city = String(formData.get("city") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+  const dateRaw = String(formData.get("date") ?? "").trim();
+  const date = dateRaw ? new Date(`${dateRaw}T12:00:00`) : new Date();
+
+  const descriptions = formData.getAll("itemDescription").map((v) => String(v).trim());
+  const quantities = formData.getAll("itemQuantity").map((v) => parseFloat(String(v)));
+  const rates = formData.getAll("itemRate").map((v) => parseFloat(String(v)));
+
+  const items = descriptions
+    .map((description, i) => ({ description, quantity: quantities[i], rate: rates[i] }))
+    .filter((it) => it.description && !isNaN(it.quantity) && !isNaN(it.rate));
+
+  if (items.length === 0) throw new Error("At least one item is required");
+
+  const totalAmount = round2(items.reduce((s, i) => s + i.quantity * i.rate, 0));
+
+  const order = await prisma.ecomOrder.create({
+    data: {
+      customerName,
+      phone,
+      city,
+      notes,
+      date,
+      totalAmount,
+      items: { create: items },
+    },
+  });
+
+  revalidatePath("/ecommerce");
+  revalidatePath("/ecommerce/orders");
+  redirect(`/ecommerce/orders/${order.id}`);
+}
+
+export async function deleteEcomOrder(orderId: number) {
+  await requireAdmin();
+  await prisma.ecomOrder.delete({ where: { id: orderId } });
+  revalidatePath("/ecommerce");
+  revalidatePath("/ecommerce/orders");
+  redirect("/ecommerce/orders");
+}
+
+export async function updateEcomOrderCosts(orderId: number, formData: FormData) {
+  await requireAuth();
+  const shippingCost = parseFloat(String(formData.get("shippingCost") ?? "0")) || 0;
+  const adCost = parseFloat(String(formData.get("adCost") ?? "0")) || 0;
+  const packagingCost = parseFloat(String(formData.get("packagingCost") ?? "0")) || 0;
+  const returnCost = parseFloat(String(formData.get("returnCost") ?? "0")) || 0;
+
+  await prisma.ecomOrder.update({
+    where: { id: orderId },
+    data: { shippingCost, adCost, packagingCost, returnCost },
+  });
+  revalidatePath(`/ecommerce/orders/${orderId}`);
+  revalidatePath("/ecommerce/finance");
+}
+
+export async function recordEcomPayment(orderId: number, formData: FormData) {
+  await requireAuth();
+  const amount = parseFloat(String(formData.get("amount") ?? "0"));
+  if (isNaN(amount) || amount <= 0) throw new Error("Invalid amount");
+  const note = String(formData.get("note") ?? "").trim() || null;
+
+  await prisma.ecomPayment.create({ data: { orderId, amount, note } });
+
+  const order = await prisma.ecomOrder.findUnique({
+    where: { id: orderId },
+    include: { payments: true },
+  });
+  if (order) {
+    const received = order.payments.reduce((s, p) => s + p.amount, 0);
+    const status = received >= order.totalAmount ? "PAID" : received > 0 ? "PARTIAL" : "PENDING";
+    await prisma.ecomOrder.update({ where: { id: orderId }, data: { status } });
+  }
+
+  revalidatePath(`/ecommerce/orders/${orderId}`);
+  revalidatePath("/ecommerce/finance");
+}
+
+export async function deleteEcomPayment(paymentId: number) {
+  await requireAdmin();
+  const payment = await prisma.ecomPayment.findUnique({ where: { id: paymentId }, include: { order: { include: { payments: true } } } });
+  if (!payment) return;
+  await prisma.ecomPayment.delete({ where: { id: paymentId } });
+  const remaining = payment.order.payments.filter((p) => p.id !== paymentId);
+  const received = remaining.reduce((s, p) => s + p.amount, 0);
+  const status = received >= payment.order.totalAmount ? "PAID" : received > 0 ? "PARTIAL" : "PENDING";
+  await prisma.ecomOrder.update({ where: { id: payment.orderId }, data: { status } });
+  revalidatePath(`/ecommerce/orders/${payment.orderId}`);
+}

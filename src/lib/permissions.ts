@@ -9,6 +9,7 @@ export const MODULES = [
   { key: "retail",     label: "Retail / COD",       href: "/retail",         yesNo: false },
   { key: "commission",     label: "Commission",          href: "/commission",      yesNo: false },
   { key: "emp_commission", label: "My Commission",        href: "/emp-commission",  yesNo: true  },
+  { key: "ecommerce",      label: "Ecommerce",            href: "/ecommerce",       yesNo: false },
 ] as const;
 
 // Sub-pages within each module dropdown
@@ -31,7 +32,9 @@ export const SUB_MODULES = [
   { parentKey: "leads",   key: "leads_not_contacted",  label: "Not Contacted"   },
   { parentKey: "leads",   key: "leads_contacted",      label: "Contacted"       },
   { parentKey: "leads",   key: "leads_sample_sent",    label: "Samples"         },
-  { parentKey: "leads",   key: "leads_add",            label: "Add Shop"        },
+  { parentKey: "leads",      key: "leads_add",            label: "Add Shop"        },
+  { parentKey: "ecommerce", key: "ecom_orders",          label: "Orders"          },
+  { parentKey: "ecommerce", key: "ecom_finance",         label: "Finance"         },
 ] as const;
 
 export type SubModuleKey = (typeof SUB_MODULES)[number]["key"];
@@ -53,6 +56,7 @@ export const EMPTY_PERMISSIONS: UserPermissions = {
   retail:         "none",
   commission:     "none",
   emp_commission: "none",
+  ecommerce:      "none",
 };
 
 export const FULL_PERMISSIONS: UserPermissions = {
@@ -66,6 +70,7 @@ export const FULL_PERMISSIONS: UserPermissions = {
   retail:         "full",
   commission:     "full",
   emp_commission: "view",
+  ecommerce:      "full",
 };
 
 export function parsePermissions(raw: unknown): UserPermissions {

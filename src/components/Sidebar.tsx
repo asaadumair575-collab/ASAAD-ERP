@@ -109,14 +109,16 @@ export default function Sidebar({
   const isOnFinance = pathname.startsWith("/finance") || pathname.startsWith("/commission");
   const isOnRetail = pathname.startsWith("/retail");
   const isOnLeads = pathname.startsWith("/leads");
+  const isOnEcommerce = pathname.startsWith("/ecommerce");
 
-  type Section = "clients" | "sales" | "finance" | "retail" | "leads" | null;
+  type Section = "clients" | "sales" | "finance" | "retail" | "leads" | "ecommerce" | null;
   function sectionForPath(): Section {
     if (isOnClients) return "clients";
     if (isOnSales) return "sales";
     if (isOnFinance) return "finance";
     if (isOnRetail) return "retail";
     if (isOnLeads) return "leads";
+    if (isOnEcommerce) return "ecommerce";
     return null;
   }
   const [openSection, setOpenSection] = useState<Section>(sectionForPath());
@@ -280,6 +282,28 @@ export default function Sidebar({
                 )}
                 {canViewSub(permissions, "retail_dispatch", isAdmin) && (
                   <NavLink href="/retail/dispatch" active={pathname.startsWith("/retail/dispatch")} compact onClick={closeMobile}>Dispatch</NavLink>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Ecommerce */}
+        {canView(permissions, "ecommerce", isAdmin) && (
+          <>
+            <button type="button" onClick={() => toggleSection("ecommerce")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEcommerce ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}>
+              <span className="flex items-center gap-2.5">{icons.retail} Ecommerce</span>
+              <span className={`transition-transform text-gray-400 ${openSection === "ecommerce" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+            </button>
+            {openSection === "ecommerce" && (
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+                <NavLink href="/ecommerce" active={pathname === "/ecommerce"} compact onClick={closeMobile}>Daily Orders</NavLink>
+                {canViewSub(permissions, "ecom_orders", isAdmin) && (
+                  <NavLink href="/ecommerce/orders" active={pathname.startsWith("/ecommerce/orders")} compact onClick={closeMobile}>Orders</NavLink>
+                )}
+                {canViewSub(permissions, "ecom_finance", isAdmin) && (
+                  <NavLink href="/ecommerce/finance" active={pathname.startsWith("/ecommerce/finance")} compact onClick={closeMobile}>Finance</NavLink>
                 )}
               </div>
             )}

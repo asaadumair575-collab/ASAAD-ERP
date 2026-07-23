@@ -214,3 +214,39 @@ model Lead {
   createdAt  DateTime @default(now())
   samples    Sample[]
 }
+
+model EcomOrder {
+  id            Int             @id @default(autoincrement())
+  date          DateTime        @default(now())
+  customerName  String
+  phone         String?
+  city          String?
+  notes         String?
+  totalAmount   Float
+  status        String          @default("PENDING")
+  shippingCost  Float           @default(0)
+  adCost        Float           @default(0)
+  packagingCost Float           @default(0)
+  returnCost    Float           @default(0)
+  createdAt     DateTime        @default(now())
+  items         EcomOrderItem[]
+  payments      EcomPayment[]
+}
+
+model EcomOrderItem {
+  id          Int        @id @default(autoincrement())
+  order       EcomOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId     Int
+  description String
+  quantity    Float
+  rate        Float
+}
+
+model EcomPayment {
+  id      Int       @id @default(autoincrement())
+  order   EcomOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId Int
+  amount  Float
+  note    String?
+  date    DateTime  @default(now())
+}

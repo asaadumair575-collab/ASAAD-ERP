@@ -1,0 +1,37 @@
+CREATE TABLE "EcomOrder" (
+    "id" SERIAL NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "customerName" TEXT NOT NULL,
+    "phone" TEXT,
+    "city" TEXT,
+    "notes" TEXT,
+    "totalAmount" DOUBLE PRECISION NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "shippingCost" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "adCost" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "packagingCost" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "returnCost" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "EcomOrder_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "EcomOrderItem" (
+    "id" SERIAL NOT NULL,
+    "orderId" INTEGER NOT NULL,
+    "description" TEXT NOT NULL,
+    "quantity" DOUBLE PRECISION NOT NULL,
+    "rate" DOUBLE PRECISION NOT NULL,
+    CONSTRAINT "EcomOrderItem_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "EcomPayment" (
+    "id" SERIAL NOT NULL,
+    "orderId" INTEGER NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "note" TEXT,
+    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "EcomPayment_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "EcomOrderItem" ADD CONSTRAINT "EcomOrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "EcomOrder"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "EcomPayment" ADD CONSTRAINT "EcomPayment_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "EcomOrder"("id") ON DELETE CASCADE ON UPDATE CASCADE;
