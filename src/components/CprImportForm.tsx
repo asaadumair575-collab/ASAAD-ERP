@@ -28,7 +28,9 @@ export default function CprImportForm() {
       const data = new Uint8Array(arrayBuffer);
 
       const pdfjs = await import("pdfjs-dist");
-      pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+      const workerUrl = new URL("/pdf.worker.min.mjs", window.location.href).href;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (pdfjs.GlobalWorkerOptions as any).workerPort = new Worker(workerUrl, { type: "module" });
 
       const pdf = await pdfjs.getDocument({ data, useSystemFonts: true }).promise;
       const parts: string[] = [];
