@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
 import * as XLSX from "xlsx";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>;
 import {
   hashPassword,
   verifyPassword,
@@ -1689,6 +1688,8 @@ export async function parseCPRPDF(formData: FormData): Promise<CPRRow[]> {
   const file = formData.get("cpr") as File;
   if (!file) throw new Error("No file provided");
   const buffer = Buffer.from(await file.arrayBuffer());
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>;
   const data = await pdfParse(buffer);
   return parseCPRText(data.text);
 }
