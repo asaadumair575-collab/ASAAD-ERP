@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState } from "react";
 import { parseCPRText_action, applyCPR, type CPRRow } from "@/lib/actions";
 
 function fmt(n: number) {
@@ -26,37 +26,33 @@ export default function CprImportForm() {
   const [rows, setRows] = useState<CPRRow[]>([]);
   const [result, setResult] = useState<{ payments: number; returned: number; notFound: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [parsing, startParsing] = useTransition();
-  const [applying, startApplying] = useTransition();
+  const [parsing, setParsing] = useState(false);
+  const [applying, setApplying] = useState(false);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setResult(null);
     setError(null);
-    startParsing(async () => {
-      try {
-        const text = await extractPdfText(file);
-        const parsed = await parseCPRText_action(text);
-        setRows(parsed);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-      }
-    });
+    setParsing(true);
+    extractPdfText(file)
+      .then((text) => parseCPRText_action(text))
+      .then((parsed) => { setRows(parsed); })
+      .catch((e) => { setError(e instanceof Error ? e.message : String(e)); })
+      .finally(() => setParsing(false));
   }
 
   function handleApply() {
     setError(null);
-    startApplying(async () => {
-      try {
-        const res = await applyCPR(rows);
+    setApplying(true);
+    applyCPR(rows)
+      .then((res) => {
         setResult(res);
         setRows([]);
         if (fileRef.current) fileRef.current.value = "";
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-      }
-    });
+      })
+      .catch((e) => { setError(e instanceof Error ? e.message : String(e)); })
+      .finally(() => setApplying(false));
   }
 
   const delivered = rows.filter((r) => r.status === "Delivered");
