@@ -12,8 +12,8 @@ export async function POST(req: NextRequest) {
     if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const text = extractPdfText(buffer);
-    const rows = parseCPRText(text);
+    const texts = extractPdfTokens(buffer);
+    const rows = parseCPRText(texts);
     return NextResponse.json(rows);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -21,44 +21,41 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function extractPdfText(buffer: Buffer): string {
+function extractPdfTokens(buffer: Buffer): string[] {
   const pdf = buffer.toString("binary");
-  const texts: string[] = [];
-
-  // Linear scan for all stream...endstream blocks (no XRef needed)
+  const tokens: string[] = [];
   const streamRe = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
   let m: RegExpExecArray | null;
 
   while ((m = streamRe.exec(pdf)) !== null) {
     let data = Buffer.from(m[1], "binary");
-
-    // Try FlateDecode decompression
     try { data = inflateSync(data); } catch { /* not compressed */ }
 
     const content = data.toString("latin1");
-
-    // Extract text from BT...ET blocks
     const btRe = /BT([\s\S]*?)ET/g;
     let bt: RegExpExecArray | null;
     while ((bt = btRe.exec(content)) !== null) {
       const block = bt[1];
-      // (text) Tj  or  (text) Tj'
       const tjRe = /\(([^)]*)\)\s*Tj/g;
       let tj: RegExpExecArray | null;
-      while ((tj = tjRe.exec(block)) !== null) texts.push(decodePdfString(tj[1]));
-      // [(text) ...] TJ
+      while ((tj = tjRe.exec(block)) !== null) {
+        const t = decodePdfString(tj[1]).trim();
+        if (t) tokens.push(t);
+      }
       const arrRe = /\[([\s\S]*?)\]\s*TJ/g;
       let arr: RegExpExecArray | null;
       while ((arr = arrRe.exec(block)) !== null) {
-        const inner = arr[1];
         const strRe = /\(([^)]*)\)/g;
         let s: RegExpExecArray | null;
-        while ((s = strRe.exec(inner)) !== null) texts.push(decodePdfString(s[1]));
+        while ((s = strRe.exec(arr[1])) !== null) {
+          const t = decodePdfString(s[1]).trim();
+          if (t) tokens.push(t);
+        }
       }
     }
   }
 
-  return texts.join("\n");
+  return tokens;
 }
 
 function decodePdfString(s: string): string {
@@ -74,41 +71,41 @@ type CPRRow = {
   netAmount: number;
 };
 
-function parseCPRText(text: string): CPRRow[] {
-  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+function parseCPRText(texts: string[]): CPRRow[] {
   const rows: CPRRow[] = [];
-  const statusRe = /^(Return|Delivered)(\d[\d,]*\.\d{2})(\d[\d,]*\.\d{2})/;
+  const isDecimal = (s: string) => /^[\d,]+\.\d+$/.test(s);
+  const parseNum = (s: string) => parseFloat(s.replace(/,/g, ""));
 
-  for (let i = 0; i < lines.length; i++) {
-    if (!/^\d{14}$/.test(lines[i])) continue;
-    const tracking = lines[i];
+  for (let i = 0; i < texts.length; i++) {
+    if (!/^\d{14}$/.test(texts[i])) continue;
+    const tracking = texts[i];
 
-    for (let j = i + 1; j < Math.min(i + 8, lines.length); j++) {
-      const sm = lines[j].match(statusRe);
-      if (!sm) continue;
-
-      const isReturn = sm[1] === "Return";
-      const shippingCharges = parseFloat(sm[2].replace(/,/g, ""));
-      const codAmount = parseFloat(sm[3].replace(/,/g, ""));
-
-      for (let k = j + 1; k < Math.min(j + 5, lines.length); k++) {
-        const aLine = lines[k];
-        if (!/^\d/.test(aLine) || /\d{2}\/\d{2}\/\d{4}/.test(aLine)) continue;
-        const parenMatch = aLine.match(/\(([\d,]+\.?\d*)\)/);
-        let netAmount: number;
-        if (parenMatch) {
-          netAmount = -parseFloat(parenMatch[1].replace(/,/g, ""));
-        } else {
-          const nums = aLine.match(/\d[\d,]*\.\d{2}/g) ?? [];
-          netAmount = nums.length >= 3 ? parseFloat(nums[2].replace(/,/g, "")) : 0;
-        }
-        if (!isNaN(netAmount)) {
-          rows.push({ trackingNumber: tracking, status: isReturn ? "Return" : "Delivered", codAmount, shippingCharges, netAmount });
-        }
+    // Find status token within next 6 tokens
+    let statusIdx = -1;
+    let status: "Return" | "Delivered" | null = null;
+    for (let j = i + 1; j < Math.min(i + 7, texts.length); j++) {
+      if (texts[j] === "Return" || texts[j] === "Delivered") {
+        status = texts[j] as "Return" | "Delivered";
+        statusIdx = j;
         break;
       }
-      break;
     }
+    if (!status || statusIdx < 0) continue;
+
+    // Collect decimal numbers after status until SR number (integer, no decimal)
+    const nums: number[] = [];
+    for (let j = statusIdx + 1; j < Math.min(statusIdx + 8, texts.length); j++) {
+      if (isDecimal(texts[j])) nums.push(parseNum(texts[j]));
+      else break;
+    }
+
+    // nums: [shipping, cod, upfront(0), reserve/0, net(delivered only)]
+    const shippingCharges = nums[0] ?? 0;
+    const codAmount = nums[1] ?? 0;
+    const netAmount = status === "Delivered" ? (nums[nums.length - 1] ?? 0) : -shippingCharges;
+
+    rows.push({ trackingNumber: tracking, status, codAmount, shippingCharges, netAmount });
+    i = statusIdx;
   }
 
   return rows;
