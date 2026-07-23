@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { applyCPR, type CPRRow } from "@/lib/actions";
+import { applyCPR, parseCPRText_action, type CPRRow } from "@/lib/actions";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -15,7 +15,7 @@ export default function CprImportForm() {
   const [parsing, setParsing] = useState(false);
   const [applying, setApplying] = useState(false);
 
-  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setResult(null);
@@ -23,18 +23,28 @@ export default function CprImportForm() {
     setRows([]);
     setParsing(true);
 
-    const fd = new FormData();
-    fd.append("cpr", file);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const data = new Uint8Array(arrayBuffer);
 
-    fetch("/api/cpr", { method: "POST", body: fd })
-      .then(async (res) => {
-        const body = await res.json();
-        if (!res.ok) throw new Error(`Error ${res.status}: ${(body as { error?: string }).error ?? JSON.stringify(body)}`);
-        return body as CPRRow[];
-      })
-      .then((parsed) => setRows(parsed))
-      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
-      .finally(() => setParsing(false));
+      const pdfjs = await import("pdfjs-dist");
+      pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+
+      const pdf = await pdfjs.getDocument({ data, useSystemFonts: true }).promise;
+      const parts: string[] = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        parts.push(content.items.map((it) => ("str" in it ? it.str : "")).join("\n"));
+      }
+
+      const parsed = await parseCPRText_action(parts.join("\n"));
+      setRows(parsed);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setParsing(false);
+    }
   }
 
   function handleApply() {
