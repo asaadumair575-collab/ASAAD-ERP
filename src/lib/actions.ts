@@ -1683,11 +1683,9 @@ function parseCPRText(text: string): CPRRow[] {
   return rows;
 }
 
-export async function parseCPRPDF(formData: FormData): Promise<CPRRow[]> {
+export async function parseCPRPDF(base64: string): Promise<CPRRow[]> {
   await requireAuth();
-  const file = formData.get("cpr") as File;
-  if (!file) throw new Error("No file provided");
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = Buffer.from(base64, "base64");
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>;
   const data = await pdfParse(buffer);

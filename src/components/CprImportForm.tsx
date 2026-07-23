@@ -17,11 +17,11 @@ export default function CprImportForm() {
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const fd = new FormData();
-    fd.append("cpr", file);
     setResult(null);
     startParsing(async () => {
-      const parsed = await parseCPRPDF(fd);
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      const parsed = await parseCPRPDF(base64);
       setRows(parsed);
     });
   }
