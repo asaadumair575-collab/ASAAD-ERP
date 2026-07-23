@@ -122,7 +122,7 @@ export default async function EcomFinancePage({
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Expenses</p>
           <p className="text-xl font-bold tracking-tight text-orange-600">Rs {fmt(totalExpenses)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">÷ {orderCount} = Rs {fmt(expensesPerOrder)}/order</p>
+          <p className="text-xs text-gray-400 mt-0.5">÷ {deliveredCount} = Rs {fmt(deliveredCount > 0 ? totalExpenses / deliveredCount : 0)}/order</p>
         </div>
       </div>
 
