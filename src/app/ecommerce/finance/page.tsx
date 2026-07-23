@@ -6,6 +6,7 @@ function fmt(n: number) {
 }
 
 const BALL_COST_PER_DOZ = 1450;
+const PACKAGING_COST = 15;
 
 export default async function EcomFinancePage({
   searchParams,
@@ -39,7 +40,7 @@ export default async function EcomFinancePage({
   );
   const totalShipping = orders.reduce((s, o) => s + o.shippingCost, 0);
   const totalAd = orders.reduce((s, o) => s + o.adCost, 0);
-  const totalPackaging = orders.reduce((s, o) => s + o.packagingCost, 0);
+  const totalPackaging = orderCount * PACKAGING_COST;
   const totalReturn = orders.reduce((s, o) => s + o.returnCost, 0);
   const totalGrossProfit = totalRevenue - totalBallCost - totalShipping - totalAd - totalPackaging - totalReturn;
   const totalNetProfit = totalGrossProfit - agencyTotal - otherTotal;
@@ -49,7 +50,7 @@ export default async function EcomFinancePage({
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Ecommerce Finance</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Ball Cost: Rs 1,450/doz · Shared expenses divided equally across orders in range
+          Ball Cost: Rs 1,450/doz · Packaging: Rs 15/order · Shared expenses divided equally across orders
         </p>
       </div>
 
@@ -139,7 +140,7 @@ export default async function EcomFinancePage({
                 {orders.map((o) => {
                   const dozens = o.items.reduce((s, i) => s + i.quantity, 0);
                   const ballCost = dozens * BALL_COST_PER_DOZ;
-                  const grossProfit = o.totalAmount - ballCost - o.shippingCost - o.adCost - o.packagingCost - o.returnCost;
+                  const grossProfit = o.totalAmount - ballCost - PACKAGING_COST - o.shippingCost - o.adCost - o.returnCost;
                   const netProfit = grossProfit - agencyPerOrder - otherPerOrder;
                   return (
                     <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
@@ -155,7 +156,7 @@ export default async function EcomFinancePage({
                       <td className="py-3 px-4 text-right tabular-nums text-gray-500">{ballCost > 0 ? `Rs ${fmt(ballCost)}` : "—"}</td>
                       <td className="py-3 px-4 text-right tabular-nums text-blue-600">{o.shippingCost > 0 ? `Rs ${fmt(o.shippingCost)}` : "—"}</td>
                       <td className="py-3 px-4 text-right tabular-nums text-purple-600">{o.adCost > 0 ? `Rs ${fmt(o.adCost)}` : "—"}</td>
-                      <td className="py-3 px-4 text-right tabular-nums text-orange-500">{o.packagingCost > 0 ? `Rs ${fmt(o.packagingCost)}` : "—"}</td>
+                      <td className="py-3 px-4 text-right tabular-nums text-orange-500">Rs 15</td>
                       <td className="py-3 px-4 text-right tabular-nums text-red-500">{o.returnCost > 0 ? `Rs ${fmt(o.returnCost)}` : "—"}</td>
                       <td className={`py-3 px-4 text-right tabular-nums font-semibold ${grossProfit >= 0 ? "text-green-700" : "text-red-600"}`}>Rs {fmt(grossProfit)}</td>
                       {agencyTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-gray-500">Rs {fmt(agencyPerOrder)}</td>}
