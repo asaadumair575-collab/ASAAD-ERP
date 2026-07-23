@@ -2,20 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  const me = await getSessionUser();
-  if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const me = await getSessionUser();
+    if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const formData = await req.formData();
-  const file = formData.get("cpr") as File | null;
-  if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
+    const formData = await req.formData();
+    const file = formData.get("cpr") as File | null;
+    if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buf: Buffer) => Promise<{ text: string }>;
-  const { text } = await pdfParse(buffer);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buf: Buffer) => Promise<{ text: string }>;
+    const { text } = await pdfParse(buffer);
 
-  const rows = parseCPRText(text);
-  return NextResponse.json(rows);
+    const rows = parseCPRText(text);
+    return NextResponse.json(rows);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }
 
 type CPRRow = {

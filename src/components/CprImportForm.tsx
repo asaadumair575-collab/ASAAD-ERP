@@ -28,11 +28,9 @@ export default function CprImportForm() {
 
     fetch("/api/cpr", { method: "POST", body: fd })
       .then(async (res) => {
-        if (!res.ok) {
-          const body = await res.text();
-          throw new Error(`Server error ${res.status}: ${body}`);
-        }
-        return res.json() as Promise<CPRRow[]>;
+        const body = await res.json();
+        if (!res.ok) throw new Error(`Error ${res.status}: ${(body as { error?: string }).error ?? JSON.stringify(body)}`);
+        return body as CPRRow[];
       })
       .then((parsed) => setRows(parsed))
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))
