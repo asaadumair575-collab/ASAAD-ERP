@@ -1,34 +1,40 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { applyCPR, parseCPRText_action, type CPRRow } from "@/lib/actions";
+import { applyCPR, type CPRRow } from "@/lib/actions";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
 }
 
 export default function CprImportForm() {
-  const textRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<CPRRow[]>([]);
   const [result, setResult] = useState<{ payments: number; returned: number; notFound: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
   const [applying, setApplying] = useState(false);
 
-  function handleParse() {
-    const text = textRef.current?.value?.trim();
-    if (!text) return;
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
     setResult(null);
     setError(null);
     setRows([]);
     setParsing(true);
-    parseCPRText_action(text)
+
+    const fd = new FormData();
+    fd.append("cpr", file);
+
+    fetch("/api/cpr", { method: "POST", body: fd })
+      .then(async (res) => {
+        const body = await res.json();
+        if (!res.ok) throw new Error((body as { error?: string }).error ?? `Error ${res.status}`);
+        return body as CPRRow[];
+      })
       .then((parsed) => {
-        if (parsed.length === 0) {
-          setError("Koi orders nahi mile. Text check karo — pura CPR copy hua hai?");
-        } else {
-          setRows(parsed);
-        }
+        if (parsed.length === 0) setError("Koi orders nahi mile — PDF check karo");
+        else setRows(parsed);
       })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setParsing(false));
@@ -41,7 +47,7 @@ export default function CprImportForm() {
       .then((res) => {
         setResult(res);
         setRows([]);
-        if (textRef.current) textRef.current.value = "";
+        if (fileRef.current) fileRef.current.value = "";
       })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setApplying(false));
@@ -52,24 +58,17 @@ export default function CprImportForm() {
 
   return (
     <div className="space-y-5">
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-3">
-        <div>
-          <p className="text-sm font-medium text-gray-700 mb-1">CPR PDF Text</p>
-          <p className="text-xs text-gray-400">PostEx CPR PDF kholein → Ctrl+A (sab select) → Ctrl+C (copy) → yahan paste karein</p>
-        </div>
-        <textarea
-          ref={textRef}
-          rows={6}
-          placeholder="CPR ka text yahan paste karein..."
-          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-black resize-none"
-        />
-        <button
-          onClick={handleParse}
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+        <label className="text-sm font-medium text-gray-700 mb-2 block">CPR PDF File</label>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".pdf"
+          onChange={handleFile}
           disabled={parsing}
-          className="w-full bg-black text-white text-sm font-medium py-2.5 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50"
-        >
-          {parsing ? "Parse ho raha hai..." : "Parse CPR"}
-        </button>
+          className="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-black file:text-white hover:file:bg-gray-800 disabled:opacity-50"
+        />
+        {parsing && <p className="text-sm text-gray-400 mt-2">PDF parse ho raha hai...</p>}
       </div>
 
       {error && (

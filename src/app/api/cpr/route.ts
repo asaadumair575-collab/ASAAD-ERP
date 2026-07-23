@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { inflateSync } from "zlib";
 import { getSessionUser } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
@@ -10,27 +11,59 @@ export async function POST(req: NextRequest) {
     const file = formData.get("cpr") as File | null;
     if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
 
-    const buffer = new Uint8Array(await file.arrayBuffer());
-
-    const pdfjsLib = await import("pdfjs-dist");
-    // No worker in Node.js — runs in main thread
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "";
-
-    const pdf = await pdfjsLib.getDocument({ data: buffer, useSystemFonts: true }).promise;
-    const parts: string[] = [];
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      parts.push(content.items.map((it) => ("str" in it ? it.str : "")).join("\n"));
-    }
-    const text = parts.join("\n");
-
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const text = extractPdfText(buffer);
     const rows = parseCPRText(text);
     return NextResponse.json(rows);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
+}
+
+function extractPdfText(buffer: Buffer): string {
+  const pdf = buffer.toString("binary");
+  const texts: string[] = [];
+
+  // Linear scan for all stream...endstream blocks (no XRef needed)
+  const streamRe = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+  let m: RegExpExecArray | null;
+
+  while ((m = streamRe.exec(pdf)) !== null) {
+    let data = Buffer.from(m[1], "binary");
+
+    // Try FlateDecode decompression
+    try { data = inflateSync(data); } catch { /* not compressed */ }
+
+    const content = data.toString("latin1");
+
+    // Extract text from BT...ET blocks
+    const btRe = /BT([\s\S]*?)ET/g;
+    let bt: RegExpExecArray | null;
+    while ((bt = btRe.exec(content)) !== null) {
+      const block = bt[1];
+      // (text) Tj  or  (text) Tj'
+      const tjRe = /\(([^)]*)\)\s*Tj/g;
+      let tj: RegExpExecArray | null;
+      while ((tj = tjRe.exec(block)) !== null) texts.push(decodePdfString(tj[1]));
+      // [(text) ...] TJ
+      const arrRe = /\[([\s\S]*?)\]\s*TJ/g;
+      let arr: RegExpExecArray | null;
+      while ((arr = arrRe.exec(block)) !== null) {
+        const inner = arr[1];
+        const strRe = /\(([^)]*)\)/g;
+        let s: RegExpExecArray | null;
+        while ((s = strRe.exec(inner)) !== null) texts.push(decodePdfString(s[1]));
+      }
+    }
+  }
+
+  return texts.join("\n");
+}
+
+function decodePdfString(s: string): string {
+  return s.replace(/\\n/g, "\n").replace(/\\r/g, "\r").replace(/\\t/g, "\t")
+    .replace(/\\\(/g, "(").replace(/\\\)/g, ")").replace(/\\\\/g, "\\");
 }
 
 type CPRRow = {
@@ -47,14 +80,11 @@ function parseCPRText(text: string): CPRRow[] {
   const statusRe = /^(Return|Delivered)(\d[\d,]*\.\d{2})(\d[\d,]*\.\d{2})/;
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (!/^\d{14}$/.test(line)) continue;
-
-    const tracking = line;
+    if (!/^\d{14}$/.test(lines[i])) continue;
+    const tracking = lines[i];
 
     for (let j = i + 1; j < Math.min(i + 8, lines.length); j++) {
-      const sLine = lines[j];
-      const sm = sLine.match(statusRe);
+      const sm = lines[j].match(statusRe);
       if (!sm) continue;
 
       const isReturn = sm[1] === "Return";
