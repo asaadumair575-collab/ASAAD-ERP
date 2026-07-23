@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
 import * as XLSX from "xlsx";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>;
 import {
   hashPassword,
   verifyPassword,
@@ -1616,4 +1618,113 @@ export async function importEcomOrdersFromCSV(rows: {
   revalidatePath("/ecommerce");
   revalidatePath("/ecommerce/orders");
   return { created, skipped };
+}
+
+export type CPRRow = {
+  trackingNumber: string;
+  status: "Delivered" | "Return";
+  codAmount: number;
+  shippingCharges: number;
+  netAmount: number;
+};
+
+function parseCPRText(text: string): CPRRow[] {
+  // PDF text format per order:
+  // Line 0: 14-digit tracking number
+  // Line 1: "X.XX kgDD/MM/YYYY"
+  // Line 2: Origin city
+  // Line 3: "Return<shipping><COD>" or "Delivered<shipping><COD>"  (numbers run together)
+  // Line 4: "DD/MM/YYYY (D/R)"
+  // Line 5: "upfront reserve net SR"  (net may be in parens e.g. (250.13))
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  const rows: CPRRow[] = [];
+
+  // Numbers in PDF text are concatenated with exactly 2 decimal places each
+  const statusRe = /^(Return|Delivered)(\d[\d,]*\.\d{2})(\d[\d,]*\.\d{2})/;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!/^\d{14}$/.test(line)) continue;
+
+    const tracking = line;
+
+    for (let j = i + 1; j < Math.min(i + 8, lines.length); j++) {
+      const sLine = lines[j];
+      const sm = sLine.match(statusRe);
+      if (!sm) continue;
+
+      const isReturn = sm[1] === "Return";
+      const shippingCharges = parseFloat(sm[2].replace(/,/g, ""));
+      const codAmount = parseFloat(sm[3].replace(/,/g, ""));
+
+      // Next line after date is the amounts line
+      for (let k = j + 1; k < Math.min(j + 5, lines.length); k++) {
+        const aLine = lines[k];
+        // skip date lines like "15/07/2026 (D/R)"
+        if (!/^\d/.test(aLine) || /\d{2}\/\d{2}\/\d{4}/.test(aLine)) continue;
+        // Extract the net amount — it's wrapped in parens if negative
+        const parenMatch = aLine.match(/\(([\d,]+\.?\d*)\)/);
+        let netAmount: number;
+        if (parenMatch) {
+          netAmount = -parseFloat(parenMatch[1].replace(/,/g, ""));
+        } else {
+          // Positive net: numbers have exactly 2 decimal places, SR digit appended at end
+          const nums = aLine.match(/\d[\d,]*\.\d{2}/g) ?? [];
+          netAmount = nums.length >= 3 ? parseFloat(nums[2].replace(/,/g, "")) : 0;
+        }
+        if (!isNaN(netAmount)) {
+          rows.push({ trackingNumber: tracking, status: isReturn ? "Return" : "Delivered", codAmount, shippingCharges, netAmount });
+        }
+        break;
+      }
+      break;
+    }
+  }
+
+  return rows;
+}
+
+export async function parseCPRPDF(formData: FormData): Promise<CPRRow[]> {
+  await requireAuth();
+  const file = formData.get("cpr") as File;
+  if (!file) throw new Error("No file provided");
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const data = await pdfParse(buffer);
+  return parseCPRText(data.text);
+}
+
+export async function applyCPR(rows: CPRRow[]): Promise<{ payments: number; returned: number; notFound: number }> {
+  await requireAuth();
+
+  let payments = 0;
+  let returned = 0;
+  let notFound = 0;
+
+  for (const row of rows) {
+    const order = await prisma.ecomOrder.findFirst({ where: { trackingNumber: row.trackingNumber } });
+    if (!order) { notFound++; continue; }
+
+    if (row.status === "Delivered" && row.netAmount > 0) {
+      await prisma.ecomPayment.create({
+        data: { orderId: order.id, amount: row.netAmount, note: "CPR settlement" },
+      });
+      // update order status
+      const received = (await prisma.ecomPayment.aggregate({ where: { orderId: order.id }, _sum: { amount: true } }))._sum.amount ?? 0;
+      const newReceived = received;
+      const status = newReceived >= order.totalAmount ? "PAID" : newReceived > 0 ? "PARTIAL" : "PENDING";
+      await prisma.ecomOrder.update({ where: { id: order.id }, data: { status } });
+      payments++;
+    } else if (row.status === "Return") {
+      await prisma.ecomOrder.update({
+        where: { id: order.id },
+        data: { returned: true, returnCost: row.shippingCharges },
+      });
+      returned++;
+    }
+  }
+
+  revalidatePath("/ecommerce");
+  revalidatePath("/ecommerce/orders");
+  revalidatePath("/ecommerce/finance");
+  return { payments, returned, notFound };
 }
