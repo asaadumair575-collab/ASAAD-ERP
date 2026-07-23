@@ -34,7 +34,7 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
   const updateCostsBound = updateEcomOrderCosts.bind(null, order.id);
   const recordPaymentBound = recordEcomPayment.bind(null, order.id);
   const deleteOrderBound = deleteEcomOrder.bind(null, order.id);
-  const toggleReturnedBound = toggleEcomOrderReturned.bind(null, order.id, !order.returned);
+  const toggleReturnedBound = toggleEcomOrderReturned.bind(null, order.id);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -131,6 +131,7 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
             </p>
           </div>
           <form action={toggleReturnedBound}>
+            <input type="hidden" name="returned" value={order.returned ? "false" : "true"} />
             <button type="submit" className={`text-sm font-medium px-4 py-2 rounded-xl transition-colors ${order.returned ? "bg-white border border-red-200 text-red-600 hover:bg-red-50" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
               {order.returned ? "Unmark Return" : "Mark as Returned"}
             </button>

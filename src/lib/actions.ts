@@ -1559,8 +1559,9 @@ export async function deleteEcomExpense(id: number) {
   revalidatePath("/ecommerce/finance");
 }
 
-export async function toggleEcomOrderReturned(orderId: number, returned: boolean) {
+export async function toggleEcomOrderReturned(orderId: number, formData: FormData) {
   await requireAuth();
+  const returned = formData.get("returned") === "true";
   await prisma.ecomOrder.update({ where: { id: orderId }, data: { returned } });
   revalidatePath(`/ecommerce/orders/${orderId}`);
   revalidatePath("/ecommerce/finance");
