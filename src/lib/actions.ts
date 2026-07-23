@@ -1444,6 +1444,7 @@ export async function createEcomOrder(formData: FormData) {
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const city = String(formData.get("city") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
+  const trackingNumber = String(formData.get("trackingNumber") ?? "").trim() || null;
   const dateRaw = String(formData.get("date") ?? "").trim();
   const date = dateRaw ? new Date(`${dateRaw}T12:00:00`) : new Date();
 
@@ -1465,6 +1466,7 @@ export async function createEcomOrder(formData: FormData) {
       phone,
       city,
       notes,
+      trackingNumber,
       date,
       totalAmount,
       items: { create: items },
@@ -1566,4 +1568,52 @@ export async function toggleEcomOrderReturned(orderId: number, formData: FormDat
   revalidatePath(`/ecommerce/orders/${orderId}`);
   revalidatePath("/ecommerce/finance");
   revalidatePath("/ecommerce");
+}
+
+export async function importEcomOrdersFromCSV(rows: {
+  customerName: string;
+  phone: string | null;
+  city: string | null;
+  trackingNumber: string | null;
+  totalAmount: number;
+  date: Date;
+  description: string;
+}[]): Promise<{ created: number; skipped: number }> {
+  await requireAuth();
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    if (!row.customerName || !row.totalAmount) { skipped++; continue; }
+
+    // skip if tracking number already exists
+    if (row.trackingNumber) {
+      const existing = await prisma.ecomOrder.findFirst({ where: { trackingNumber: row.trackingNumber } });
+      if (existing) { skipped++; continue; }
+    }
+
+    await prisma.ecomOrder.create({
+      data: {
+        customerName: row.customerName,
+        phone: row.phone,
+        city: row.city,
+        trackingNumber: row.trackingNumber,
+        totalAmount: row.totalAmount,
+        date: row.date,
+        items: {
+          create: [{
+            description: row.description || "Product",
+            quantity: 1,
+            rate: row.totalAmount,
+          }],
+        },
+      },
+    });
+    created++;
+  }
+
+  revalidatePath("/ecommerce");
+  revalidatePath("/ecommerce/orders");
+  return { created, skipped };
 }

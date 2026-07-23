@@ -59,6 +59,7 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
         <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Customer</p>
         <p className="text-base font-semibold">{order.customerName}</p>
         {(order.phone || order.city) && <p className="text-sm text-gray-500 mt-0.5">{[order.phone, order.city].filter(Boolean).join(" · ")}</p>}
+        {order.trackingNumber && <p className="text-xs text-gray-500 mt-1 font-mono bg-gray-50 rounded-lg px-3 py-1.5">Tracking: {order.trackingNumber}</p>}
         {order.notes && <p className="text-xs text-gray-400 mt-2 bg-gray-50 rounded-lg px-3 py-2">{order.notes}</p>}
       </div>
 

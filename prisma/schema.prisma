@@ -216,20 +216,21 @@ model Lead {
 }
 
 model EcomOrder {
-  id            Int             @id @default(autoincrement())
-  date          DateTime        @default(now())
-  customerName  String
-  phone         String?
-  city          String?
-  notes         String?
-  totalAmount   Float
-  status        String          @default("PENDING")
-  returned      Boolean         @default(false)
-  shippingCost  Float           @default(0)
-  adCost        Float           @default(0)
-  packagingCost Float           @default(0)
-  returnCost    Float           @default(0)
-  createdAt     DateTime        @default(now())
+  id              Int             @id @default(autoincrement())
+  date            DateTime        @default(now())
+  customerName    String
+  phone           String?
+  city            String?
+  notes           String?
+  totalAmount     Float
+  status          String          @default("PENDING")
+  returned        Boolean         @default(false)
+  shippingCost    Float           @default(0)
+  adCost          Float           @default(0)
+  packagingCost   Float           @default(0)
+  returnCost      Float           @default(0)
+  trackingNumber  String?
+  createdAt       DateTime        @default(now())
   items         EcomOrderItem[]
   payments      EcomPayment[]
 }

@@ -47,6 +47,10 @@ export default function EcomOrderForm({ action }: { action: (formData: FormData)
             <input name="city" placeholder="City" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
           </div>
           <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Tracking Number</label>
+            <input name="trackingNumber" placeholder="PostEx tracking number" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+          </div>
+          <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">Notes</label>
             <input name="notes" placeholder="Optional notes" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
           </div>
