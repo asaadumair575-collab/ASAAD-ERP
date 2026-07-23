@@ -8,45 +8,30 @@ function fmt(n: number) {
 }
 
 export default function CprImportForm() {
-  const fileRef = useRef<HTMLInputElement>(null);
+  const textRef = useRef<HTMLTextAreaElement>(null);
   const [rows, setRows] = useState<CPRRow[]>([]);
   const [result, setResult] = useState<{ payments: number; returned: number; notFound: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
   const [applying, setApplying] = useState(false);
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function handleParse() {
+    const text = textRef.current?.value?.trim();
+    if (!text) return;
     setResult(null);
     setError(null);
     setRows([]);
     setParsing(true);
-
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const data = new Uint8Array(arrayBuffer);
-
-      const pdfjs = await import("pdfjs-dist");
-      const workerUrl = new URL("/pdf.worker.min.mjs", window.location.href).href;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (pdfjs.GlobalWorkerOptions as any).workerPort = new Worker(workerUrl, { type: "module" });
-
-      const pdf = await pdfjs.getDocument({ data, useSystemFonts: true }).promise;
-      const parts: string[] = [];
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        parts.push(content.items.map((it) => ("str" in it ? it.str : "")).join("\n"));
-      }
-
-      const parsed = await parseCPRText_action(parts.join("\n"));
-      setRows(parsed);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setParsing(false);
-    }
+    parseCPRText_action(text)
+      .then((parsed) => {
+        if (parsed.length === 0) {
+          setError("Koi orders nahi mile. Text check karo — pura CPR copy hua hai?");
+        } else {
+          setRows(parsed);
+        }
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
+      .finally(() => setParsing(false));
   }
 
   function handleApply() {
@@ -56,7 +41,7 @@ export default function CprImportForm() {
       .then((res) => {
         setResult(res);
         setRows([]);
-        if (fileRef.current) fileRef.current.value = "";
+        if (textRef.current) textRef.current.value = "";
       })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setApplying(false));
@@ -67,23 +52,30 @@ export default function CprImportForm() {
 
   return (
     <div className="space-y-5">
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <label className="text-sm font-medium text-gray-700 mb-2 block">CPR PDF File</label>
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".pdf"
-          onChange={handleFile}
-          disabled={parsing}
-          className="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-black file:text-white hover:file:bg-gray-800 disabled:opacity-50"
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-3">
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-1">CPR PDF Text</p>
+          <p className="text-xs text-gray-400">PostEx CPR PDF kholein → Ctrl+A (sab select) → Ctrl+C (copy) → yahan paste karein</p>
+        </div>
+        <textarea
+          ref={textRef}
+          rows={6}
+          placeholder="CPR ka text yahan paste karein..."
+          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-black resize-none"
         />
-        {parsing && <p className="text-sm text-gray-400 mt-2">PDF parse ho raha hai...</p>}
+        <button
+          onClick={handleParse}
+          disabled={parsing}
+          className="w-full bg-black text-white text-sm font-medium py-2.5 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50"
+        >
+          {parsing ? "Parse ho raha hai..." : "Parse CPR"}
+        </button>
       </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
           <p className="text-sm font-semibold text-red-700">Error</p>
-          <p className="text-xs text-red-600 mt-1 font-mono break-all">{error}</p>
+          <p className="text-xs text-red-600 mt-1 break-all">{error}</p>
         </div>
       )}
 
