@@ -1,24 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { parseCPRText_action, applyCPR, type CPRRow } from "@/lib/actions";
+import { applyCPR, type CPRRow } from "@/lib/actions";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
-}
-
-async function extractPdfText(file: File): Promise<string> {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer), useWorkerFetch: false, useSystemFonts: true }).promise;
-  const parts: string[] = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    parts.push(content.items.map((it) => ("str" in it ? it.str : "")).join("\n"));
-  }
-  return parts.join("\n");
 }
 
 export default function CprImportForm() {
@@ -34,11 +20,22 @@ export default function CprImportForm() {
     if (!file) return;
     setResult(null);
     setError(null);
+    setRows([]);
     setParsing(true);
-    extractPdfText(file)
-      .then((text) => parseCPRText_action(text))
-      .then((parsed) => { setRows(parsed); })
-      .catch((e) => { setError(e instanceof Error ? e.message : String(e)); })
+
+    const fd = new FormData();
+    fd.append("cpr", file);
+
+    fetch("/api/cpr", { method: "POST", body: fd })
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.text();
+          throw new Error(`Server error ${res.status}: ${body}`);
+        }
+        return res.json() as Promise<CPRRow[]>;
+      })
+      .then((parsed) => setRows(parsed))
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setParsing(false));
   }
 
@@ -51,7 +48,7 @@ export default function CprImportForm() {
         setRows([]);
         if (fileRef.current) fileRef.current.value = "";
       })
-      .catch((e) => { setError(e instanceof Error ? e.message : String(e)); })
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setApplying(false));
   }
 
