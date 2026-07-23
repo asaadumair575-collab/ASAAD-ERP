@@ -56,7 +56,7 @@ export default function EcomPaymentSection({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Amount</label>
-              <input name="amount" type="number" step="1" min="1" defaultValue={balance || ""} placeholder="Amount" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+              <input name="amount" type="number" step="1" min="1" placeholder="Amount" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
             </div>
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Note (optional)</label>
