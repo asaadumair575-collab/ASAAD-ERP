@@ -143,7 +143,7 @@ export default function RetailOrderForm({
         <div className="space-y-2">
           <div className="grid grid-cols-[1fr_80px_96px_80px] gap-2 text-xs text-gray-400 px-1">
             <span>Product / Description</span>
-            <span>Qty</span>
+            <span>Qty (doz)</span>
             <span>Rate (Rs)</span>
             <span className="text-right">Amount</span>
           </div>
@@ -175,7 +175,7 @@ export default function RetailOrderForm({
                 type="number"
                 name="itemQuantity"
                 min="0"
-                step="0.5"
+                step="0.25"
                 value={row.quantity || ""}
                 placeholder="0"
                 onChange={(e) => updateRow(row.id, { quantity: parseFloat(e.target.value) || 0 })}
