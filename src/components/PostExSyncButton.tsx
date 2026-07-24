@@ -17,8 +17,9 @@ export default function PostExSyncButton() {
       } else {
         const returned = json.results.filter((r: { action: string }) => r.action.startsWith("marked_returned")).length;
         const updated = json.results.filter((r: { action: string }) => r.action.startsWith("updated_")).length;
-        const failed = json.results.filter((r: { action: string }) => r.action === "fetch_failed").length;
-        setResult(`✓ ${json.synced} orders checked · ${returned} returned · ${updated} updated · ${failed} failed`);
+        const failed = json.results.filter((r: { action: string }) => r.action.startsWith("fetch_failed"));
+        const firstError = failed[0]?.action ?? "";
+        setResult(`✓ ${json.synced} orders · ${returned} returned · ${updated} updated · ${failed.length} failed${firstError ? ` — ${firstError}` : ""}`);
         if (returned > 0 || updated > 0) setTimeout(() => window.location.reload(), 1200);
       }
     } catch {

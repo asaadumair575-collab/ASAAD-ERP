@@ -8,9 +8,11 @@ async function fetchPostExStatus(trackingNumber: string): Promise<{
   status: string;
   shippingCharges: number;
   codAmount: number;
+  raw?: unknown;
+  error?: string;
 } | null> {
   const key = process.env.POSTEX_API_KEY;
-  if (!key) return null;
+  if (!key) return { status: "", shippingCharges: 0, codAmount: 0, error: "POSTEX_API_KEY not set" };
 
   try {
     const res = await fetch(`${POSTEX_API}/${trackingNumber}`, {
@@ -18,18 +20,21 @@ async function fetchPostExStatus(trackingNumber: string): Promise<{
       headers: { token: key, "Content-Type": "application/json" },
       cache: "no-store",
     });
-    if (!res.ok) return null;
-    const json = await res.json();
+    const text = await res.text();
+    if (!res.ok) return { status: "", shippingCharges: 0, codAmount: 0, error: `HTTP ${res.status}: ${text.slice(0, 200)}` };
 
-    // PostEx response: json.dist.orderStatus / shippingCharges / invoicePayment
-    const dist = json?.dist ?? json;
-    const status: string = dist?.orderStatus ?? dist?.status ?? "";
-    const shippingCharges: number = parseFloat(dist?.shippingCharges ?? dist?.deliveryCharges ?? 0) || 0;
-    const codAmount: number = parseFloat(dist?.invoicePayment ?? dist?.codAmount ?? dist?.amount ?? 0) || 0;
+    let json: unknown;
+    try { json = JSON.parse(text); } catch { return { status: "", shippingCharges: 0, codAmount: 0, error: `Not JSON: ${text.slice(0, 200)}` }; }
 
-    return { status, shippingCharges, codAmount };
-  } catch {
-    return null;
+    const dist = (json as Record<string, unknown>)?.dist ?? json;
+    const d = dist as Record<string, unknown>;
+    const status: string = String(d?.orderStatus ?? d?.status ?? "");
+    const shippingCharges: number = parseFloat(String(d?.shippingCharges ?? d?.deliveryCharges ?? 0)) || 0;
+    const codAmount: number = parseFloat(String(d?.invoicePayment ?? d?.codAmount ?? d?.amount ?? 0)) || 0;
+
+    return { status, shippingCharges, codAmount, raw: json };
+  } catch (e) {
+    return { status: "", shippingCharges: 0, codAmount: 0, error: String(e) };
   }
 }
 
@@ -50,7 +55,11 @@ export async function POST() {
     const tracking = order.trackingNumber!;
     const data = await fetchPostExStatus(tracking);
     if (!data) {
-      results.push({ id: order.id, tracking, action: "fetch_failed" });
+      results.push({ id: order.id, tracking, action: "fetch_failed: null response" });
+      continue;
+    }
+    if (data.error) {
+      results.push({ id: order.id, tracking, action: `fetch_failed: ${data.error}` });
       continue;
     }
 
