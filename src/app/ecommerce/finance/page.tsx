@@ -6,6 +6,7 @@ function fmt(n: number) {
 }
 
 const BALL_COST_PER_DOZ = 1450;
+const COST_PER_BALL = BALL_COST_PER_DOZ / 12;
 const PACKAGING_COST = 15;
 
 export default async function EcomFinancePage({
@@ -55,7 +56,7 @@ export default async function EcomFinancePage({
 
   const totalRevenue = deliveredOrders.reduce((s, o) => s + o.totalAmount, 0);
   const totalBallCost = deliveredOrders.reduce(
-    (s, o) => s + o.items.reduce((is, i) => is + i.quantity, 0) * BALL_COST_PER_DOZ,
+    (s, o) => s + o.items.reduce((is, i) => is + i.quantity * i.packSize * COST_PER_BALL, 0),
     0
   );
   const totalShipping = deliveredOrders.reduce((s, o) => s + o.shippingCost, 0);
@@ -207,8 +208,7 @@ export default async function EcomFinancePage({
                       </tr>
                     );
                   }
-                  const dozens = o.items.reduce((s, i) => s + i.quantity, 0);
-                  const ballCost = dozens * BALL_COST_PER_DOZ;
+                  const ballCost = o.items.reduce((s, i) => s + i.quantity * i.packSize * COST_PER_BALL, 0);
                   const grossProfit = o.totalAmount - ballCost - PACKAGING_COST - o.shippingCost - returnPerDelivered;
                   const netProfit = grossProfit - adsPerOrder - agencyPerOrder - shopifyPerOrder - otherPerOrder;
                   return (

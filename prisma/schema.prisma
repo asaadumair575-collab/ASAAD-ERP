@@ -241,6 +241,7 @@ model EcomOrderItem {
   orderId     Int
   description String
   quantity    Float
+  packSize    Int        @default(12)
   rate        Float
 }
 

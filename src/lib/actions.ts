@@ -1451,10 +1451,11 @@ export async function createEcomOrder(formData: FormData) {
 
   const descriptions = formData.getAll("itemDescription").map((v) => String(v).trim());
   const quantities = formData.getAll("itemQuantity").map((v) => parseFloat(String(v)));
+  const packSizes = formData.getAll("itemPackSize").map((v) => parseInt(String(v)) || 12);
   const rates = formData.getAll("itemRate").map((v) => parseFloat(String(v)));
 
   const items = descriptions
-    .map((description, i) => ({ description, quantity: quantities[i], rate: rates[i] }))
+    .map((description, i) => ({ description, quantity: quantities[i], packSize: packSizes[i], rate: rates[i] }))
     .filter((it) => it.description && !isNaN(it.quantity) && !isNaN(it.rate));
 
   if (items.length === 0) throw new Error("At least one item is required");

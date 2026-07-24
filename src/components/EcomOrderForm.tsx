@@ -3,11 +3,11 @@
 import { useState, useTransition } from "react";
 
 export default function EcomOrderForm({ action }: { action: (formData: FormData) => Promise<void> }) {
-  const [items, setItems] = useState([{ description: "", quantity: "", rate: "" }]);
+  const [items, setItems] = useState([{ description: "", quantity: "", packSize: "12", rate: "" }]);
   const [pending, startTransition] = useTransition();
 
   function addItem() {
-    setItems([...items, { description: "", quantity: "", rate: "" }]);
+    setItems([...items, { description: "", quantity: "", packSize: "12", rate: "" }]);
   }
   function removeItem(i: number) {
     setItems(items.filter((_, idx) => idx !== i));
@@ -65,14 +65,22 @@ export default function EcomOrderForm({ action }: { action: (formData: FormData)
         </div>
         <div className="divide-y divide-gray-50">
           {items.map((item, i) => (
-            <div key={i} className="px-5 py-4 grid grid-cols-12 gap-3 items-end">
-              <div className="col-span-5">
+            <div key={i} className="px-5 py-4 grid grid-cols-12 gap-2 items-end">
+              <div className="col-span-4">
                 {i === 0 && <label className="text-xs text-gray-400 mb-1 block">Description</label>}
                 <input name="itemDescription" value={item.description} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, description: e.target.value } : it))} placeholder="Product name" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
               </div>
-              <div className="col-span-3">
-                {i === 0 && <label className="text-xs text-gray-400 mb-1 block">Qty (doz) — p3=0.25 p6=0.5 p12=1</label>}
-                <input name="itemQuantity" type="number" step="0.25" min="0" value={item.quantity} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, quantity: e.target.value } : it))} placeholder="0" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+              <div className="col-span-2">
+                {i === 0 && <label className="text-xs text-gray-400 mb-1 block">Pack</label>}
+                <select name="itemPackSize" value={item.packSize} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, packSize: e.target.value } : it))} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+                  <option value="3">3</option>
+                  <option value="6">6</option>
+                  <option value="12">12</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                {i === 0 && <label className="text-xs text-gray-400 mb-1 block">Qty</label>}
+                <input name="itemQuantity" type="number" step="1" min="1" value={item.quantity} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, quantity: e.target.value } : it))} placeholder="1" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
               </div>
               <div className="col-span-3">
                 {i === 0 && <label className="text-xs text-gray-400 mb-1 block">Rate (Rs)</label>}
