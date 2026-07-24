@@ -19,11 +19,20 @@ async function fetchPostExStatus(trackingNumber: string): Promise<{
   if (!key) return { status: "", shippingCharges: 0, codAmount: 0, error: "POSTEX_API_KEY not set — go to /ecommerce/settings to add it" };
 
   try {
-    const res = await fetch(`${POSTEX_API}/${trackingNumber}`, {
+    // Try GET first, fallback to POST
+    let res = await fetch(`${POSTEX_API}/${trackingNumber}`, {
       method: "GET",
       headers: { token: key, "Content-Type": "application/json" },
       cache: "no-store",
     });
+    if (res.status === 404) {
+      res = await fetch(POSTEX_API, {
+        method: "POST",
+        headers: { token: key, "Content-Type": "application/json" },
+        body: JSON.stringify({ trackingNumber }),
+        cache: "no-store",
+      });
+    }
     const text = await res.text();
     if (!res.ok) return { status: "", shippingCharges: 0, codAmount: 0, error: `HTTP ${res.status}: ${text.slice(0, 200)}` };
 
