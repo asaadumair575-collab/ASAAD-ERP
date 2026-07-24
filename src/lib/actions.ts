@@ -1558,6 +1558,15 @@ export async function createEcomExpense(formData: FormData) {
   revalidatePath("/ecommerce/finance");
 }
 
+export async function deleteAllEcomOrders() {
+  await requireAdmin();
+  await prisma.ecomOrderItem.deleteMany({});
+  await prisma.ecomPayment.deleteMany({});
+  await prisma.ecomOrder.deleteMany({});
+  revalidatePath("/ecommerce/orders");
+  revalidatePath("/ecommerce/finance");
+}
+
 export async function deleteEcomExpense(id: number) {
   await requireAuth();
   await prisma.ecomExpense.delete({ where: { id } });

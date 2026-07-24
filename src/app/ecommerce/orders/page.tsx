@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { deleteAllEcomOrders } from "@/lib/actions";
+import { getSessionUser } from "@/lib/auth";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -11,6 +13,8 @@ export default async function EcomOrdersPage({
   searchParams: Promise<{ q?: string; from?: string; to?: string; status?: string }>;
 }) {
   const { q, from, to, status } = await searchParams;
+  const me = await getSessionUser();
+  const isAdmin = me?.isAdmin ?? false;
   const fromDate = from ? new Date(`${from}T00:00:00`) : undefined;
   const toDate = to ? new Date(`${to}T23:59:59.999`) : undefined;
 
@@ -31,9 +35,18 @@ export default async function EcomOrdersPage({
           <h1 className="text-2xl font-semibold tracking-tight">Ecommerce Orders</h1>
           <p className="text-sm text-gray-500 mt-0.5">All ecommerce orders</p>
         </div>
-        <Link href="/ecommerce/orders/new" className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-          + New Order
-        </Link>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <form action={deleteAllEcomOrders} onSubmit={() => confirm("Saare ecommerce orders delete ho jayenge. Sure ho?") || event?.preventDefault()}>
+              <button type="submit" className="shrink-0 bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                Delete All Orders
+              </button>
+            </form>
+          )}
+          <Link href="/ecommerce/orders/new" className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+            + New Order
+          </Link>
+        </div>
       </div>
 
       <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
