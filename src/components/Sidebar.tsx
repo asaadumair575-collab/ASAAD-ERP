@@ -375,6 +375,10 @@ export default function Sidebar({
           </NavLink>
         )}
 
+        <NavLink href="/performance" active={pathname.startsWith("/performance")} icon={icons.sales} onClick={closeMobile}>
+          Performance
+        </NavLink>
+
         {isAdmin && <SectionLabel>Admin</SectionLabel>}
 
         {isAdmin && (

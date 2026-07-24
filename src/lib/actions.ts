@@ -1558,6 +1558,44 @@ export async function createEcomExpense(formData: FormData) {
   revalidatePath("/ecommerce/finance");
 }
 
+// ── Employee Performance ──────────────────────────────────────────────────────
+
+export async function logEmpPerformance(formData: FormData) {
+  await requireAuth();
+  const me = await getSessionUser();
+  if (!me) throw new Error("Not logged in");
+  const date = String(formData.get("date") ?? "").trim();
+  if (!date) throw new Error("Date required");
+  const calls = parseInt(String(formData.get("calls") ?? "0")) || 0;
+  const confirmations = parseInt(String(formData.get("confirmations") ?? "0")) || 0;
+  const newOrders = parseInt(String(formData.get("newOrders") ?? "0")) || 0;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  const userId = me.isAdmin && formData.get("userId")
+    ? parseInt(String(formData.get("userId")))
+    : me.id;
+
+  await prisma.empPerformance.create({
+    data: { userId, date: new Date(date), calls, confirmations, newOrders, notes },
+  });
+  revalidatePath("/performance");
+}
+
+export async function deleteEmpPerformance(id: number) {
+  await requireAdmin();
+  await prisma.empPerformance.delete({ where: { id } });
+  revalidatePath("/performance");
+}
+
+export async function savePerformanceTarget(formData: FormData) {
+  await requireAdmin();
+  const calls = parseInt(String(formData.get("calls") ?? "0")) || 0;
+  const confirmations = parseInt(String(formData.get("confirmations") ?? "0")) || 0;
+  const newOrders = parseInt(String(formData.get("newOrders") ?? "0")) || 0;
+  await prisma.performanceTarget.create({ data: { calls, confirmations, newOrders } });
+  revalidatePath("/performance");
+}
+
 export async function saveAppSetting(key: string, formData: FormData) {
   await requireAdmin();
   const value = String(formData.get("value") ?? "").trim();

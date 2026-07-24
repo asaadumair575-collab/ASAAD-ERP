@@ -1,0 +1,19 @@
+CREATE TABLE "EmpPerformance" (
+  "id" SERIAL PRIMARY KEY,
+  "userId" INTEGER NOT NULL REFERENCES "User"("id"),
+  "date" DATE NOT NULL,
+  "calls" INTEGER NOT NULL DEFAULT 0,
+  "confirmations" INTEGER NOT NULL DEFAULT 0,
+  "newOrders" INTEGER NOT NULL DEFAULT 0,
+  "notes" TEXT,
+  "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE "PerformanceTarget" (
+  "id" SERIAL PRIMARY KEY,
+  "calls" INTEGER NOT NULL DEFAULT 0,
+  "confirmations" INTEGER NOT NULL DEFAULT 0,
+  "newOrders" INTEGER NOT NULL DEFAULT 0,
+  "effectiveFrom" TIMESTAMP NOT NULL DEFAULT NOW(),
+  "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
+);
