@@ -9,6 +9,12 @@ const BALL_COST_PER_DOZ = 1450;
 const COST_PER_BALL = BALL_COST_PER_DOZ / 12;
 const PACKAGING_COST = 15;
 
+function getPackSize(item: { packSize: number; description: string }): number {
+  const m = item.description.match(/pack\s*of\s*(3|6|12)/i);
+  if (m) return parseInt(m[1]);
+  return item.packSize;
+}
+
 export default async function EcomFinancePage({
   searchParams,
 }: {
@@ -56,7 +62,7 @@ export default async function EcomFinancePage({
 
   const totalRevenue = deliveredOrders.reduce((s, o) => s + o.totalAmount, 0);
   const totalBallCost = deliveredOrders.reduce(
-    (s, o) => s + o.items.reduce((is, i) => is + i.quantity * i.packSize * COST_PER_BALL, 0),
+    (s, o) => s + o.items.reduce((is, i) => is + i.quantity * getPackSize(i) * COST_PER_BALL, 0),
     0
   );
   const totalShipping = deliveredOrders.reduce((s, o) => s + o.shippingCost, 0);
@@ -209,8 +215,8 @@ export default async function EcomFinancePage({
                       </tr>
                     );
                   }
-                  const ballCost = o.items.reduce((s, i) => s + i.quantity * i.packSize * COST_PER_BALL, 0);
-                  const totalBalls = o.items.reduce((s, i) => s + i.quantity * i.packSize, 0);
+                  const ballCost = o.items.reduce((s, i) => s + i.quantity * getPackSize(i) * COST_PER_BALL, 0);
+                  const totalBalls = o.items.reduce((s, i) => s + i.quantity * getPackSize(i), 0);
                   const grossProfit = o.totalAmount - ballCost - PACKAGING_COST - o.shippingCost - returnPerDelivered;
                   const netProfit = grossProfit - adsPerOrder - agencyPerOrder - shopifyPerOrder - otherPerOrder;
                   return (
@@ -242,7 +248,7 @@ export default async function EcomFinancePage({
               <tfoot>
                 <tr className="border-t-2 border-gray-200 bg-gray-50 font-semibold text-sm">
                   <td className="py-3 px-4" colSpan={3}>Total</td>
-                  <td className="py-3 px-4 text-right tabular-nums text-gray-700">{deliveredOrders.reduce((s, o) => s + o.items.reduce((is, i) => is + i.quantity * i.packSize, 0), 0)}</td>
+                  <td className="py-3 px-4 text-right tabular-nums text-gray-700">{deliveredOrders.reduce((s, o) => s + o.items.reduce((is, i) => is + i.quantity * getPackSize(i), 0), 0)}</td>
                   <td className="py-3 px-4 text-right tabular-nums">Rs {fmt(totalRevenue)}</td>
                   <td className="py-3 px-4 text-right tabular-nums text-gray-500">Rs {fmt(totalBallCost)}</td>
                   <td className="py-3 px-4 text-right tabular-nums text-blue-600">Rs {fmt(totalShipping)}</td>
