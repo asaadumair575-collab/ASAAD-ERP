@@ -1558,6 +1558,18 @@ export async function createEcomExpense(formData: FormData) {
   revalidatePath("/ecommerce/finance");
 }
 
+export async function saveAppSetting(key: string, formData: FormData) {
+  await requireAdmin();
+  const value = String(formData.get("value") ?? "").trim();
+  if (!value) throw new Error("Value required");
+  await prisma.appSetting.upsert({
+    where: { key },
+    create: { key, value },
+    update: { value },
+  });
+  revalidatePath("/ecommerce/settings");
+}
+
 export async function deleteAllEcomOrders() {
   await requireAdmin();
   await prisma.ecomOrderItem.deleteMany({});

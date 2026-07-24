@@ -11,8 +11,12 @@ async function fetchPostExStatus(trackingNumber: string): Promise<{
   raw?: unknown;
   error?: string;
 } | null> {
-  const key = process.env.POSTEX_API_KEY;
-  if (!key) return { status: "", shippingCharges: 0, codAmount: 0, error: "POSTEX_API_KEY not set" };
+  let key = process.env.POSTEX_API_KEY;
+  if (!key) {
+    const setting = await prisma.appSetting.findUnique({ where: { key: "POSTEX_API_KEY" } });
+    key = setting?.value ?? undefined;
+  }
+  if (!key) return { status: "", shippingCharges: 0, codAmount: 0, error: "POSTEX_API_KEY not set — go to /ecommerce/settings to add it" };
 
   try {
     const res = await fetch(`${POSTEX_API}/${trackingNumber}`, {

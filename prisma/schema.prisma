@@ -254,6 +254,12 @@ model EcomPayment {
   date    DateTime  @default(now())
 }
 
+model AppSetting {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String @db.Text
+}
+
 model EcomExpense {
   id        Int      @id @default(autoincrement())
   date      DateTime @db.Date
