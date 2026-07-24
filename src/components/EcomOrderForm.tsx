@@ -71,8 +71,8 @@ export default function EcomOrderForm({ action }: { action: (formData: FormData)
                 <input name="itemDescription" value={item.description} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, description: e.target.value } : it))} placeholder="Product name" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
               </div>
               <div className="col-span-3">
-                {i === 0 && <label className="text-xs text-gray-400 mb-1 block">Qty (doz)</label>}
-                <input name="itemQuantity" type="number" step="0.5" min="0" value={item.quantity} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, quantity: e.target.value } : it))} placeholder="0" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+                {i === 0 && <label className="text-xs text-gray-400 mb-1 block">Qty (doz) — p3=0.25 p6=0.5 p12=1</label>}
+                <input name="itemQuantity" type="number" step="0.25" min="0" value={item.quantity} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, quantity: e.target.value } : it))} placeholder="0" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
               </div>
               <div className="col-span-3">
                 {i === 0 && <label className="text-xs text-gray-400 mb-1 block">Rate (Rs)</label>}
