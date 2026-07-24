@@ -27,7 +27,7 @@ export default async function RetailFinancePage({
     orderBy: { date: "desc" },
   });
 
-  const COST_PER_DOZEN = 1450;
+  const COST_PER_DOZEN = 1550;
 
   // KPIs
   const totalRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
