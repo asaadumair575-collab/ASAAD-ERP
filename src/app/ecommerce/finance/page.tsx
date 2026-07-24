@@ -196,7 +196,7 @@ export default async function EcomFinancePage({
               <tbody className="divide-y divide-gray-50">
                 {orders.map((o) => {
                   if (o.returned) {
-                    const colCount = 8 + (adsTotal > 0 ? 1 : 0) + (totalReturnShipping > 0 ? 1 : 0) + (agencyTotal > 0 ? 1 : 0) + (shopifyTotal > 0 ? 1 : 0) + (otherTotal > 0 ? 1 : 0) + 2;
+                    const returnLoss = -(o.returnCost + PACKAGING_COST + adsPerOrder + agencyPerOrder + shopifyPerOrder + otherPerOrder);
                     return (
                       <tr key={o.id} className="bg-red-50/40">
                         <td className="py-3 px-4">
@@ -207,11 +207,20 @@ export default async function EcomFinancePage({
                           {o.city && <p className="text-xs text-gray-300">{o.city}</p>}
                         </td>
                         <td className="py-3 px-4 text-gray-400 text-xs">{o.date.toISOString().slice(0, 10)}</td>
-                        <td colSpan={colCount - 3} className="py-3 px-4 text-center">
-                          <span className="text-xs font-semibold text-red-500 bg-red-100 px-2 py-0.5 rounded-full">
-                            Returned · Ship: {o.returnCost > 0 ? `Rs ${fmt(o.returnCost)}` : "—"}
-                          </span>
+                        <td className="py-3 px-4 text-center">
+                          <span className="text-xs font-semibold text-red-500 bg-red-100 px-2 py-0.5 rounded-full">Returned</span>
                         </td>
+                        <td className="py-3 px-4 text-right tabular-nums text-gray-400">—</td>
+                        <td className="py-3 px-4 text-right tabular-nums text-gray-400">—</td>
+                        <td className="py-3 px-4 text-right tabular-nums text-red-500">{o.returnCost > 0 ? `Rs ${fmt(o.returnCost)}` : "—"}</td>
+                        {adsTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-red-400">Rs {fmt(adsPerOrder)}</td>}
+                        <td className="py-3 px-4 text-right tabular-nums text-red-400">Rs {PACKAGING_COST}</td>
+                        {totalReturnShipping > 0 && <td className="py-3 px-4 text-right tabular-nums text-gray-300">—</td>}
+                        <td className="py-3 px-4 text-right tabular-nums font-semibold text-red-600">Rs {fmt(returnLoss)}</td>
+                        {agencyTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-red-400">Rs {fmt(agencyPerOrder)}</td>}
+                        {shopifyTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-red-400">Rs {fmt(shopifyPerOrder)}</td>}
+                        {otherTotal > 0 && <td className="py-3 px-4 text-right tabular-nums text-red-400">Rs {fmt(otherPerOrder)}</td>}
+                        <td className="py-3 px-4 text-right tabular-nums font-bold text-red-600">Rs {fmt(returnLoss - agencyPerOrder - shopifyPerOrder - otherPerOrder)}</td>
                       </tr>
                     );
                   }
