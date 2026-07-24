@@ -314,6 +314,9 @@ export default function Sidebar({
                 {isAdmin && (
                   <NavLink href="/ecommerce/cpr" active={pathname.startsWith("/ecommerce/cpr")} compact onClick={closeMobile}>CPR Settlement</NavLink>
                 )}
+                {isAdmin && (
+                  <NavLink href="/ecommerce/settings" active={pathname.startsWith("/ecommerce/settings")} compact onClick={closeMobile}>Settings</NavLink>
+                )}
               </div>
             )}
           </>
