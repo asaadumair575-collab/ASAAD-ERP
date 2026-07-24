@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { deleteAllEcomOrders } from "@/lib/actions";
 import { getSessionUser } from "@/lib/auth";
+import DeleteAllEcomOrdersButton from "@/components/DeleteAllEcomOrdersButton";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -36,13 +37,7 @@ export default async function EcomOrdersPage({
           <p className="text-sm text-gray-500 mt-0.5">All ecommerce orders</p>
         </div>
         <div className="flex items-center gap-2">
-          {isAdmin && (
-            <form action={deleteAllEcomOrders} onSubmit={() => confirm("Saare ecommerce orders delete ho jayenge. Sure ho?") || event?.preventDefault()}>
-              <button type="submit" className="shrink-0 bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
-                Delete All Orders
-              </button>
-            </form>
-          )}
+          {isAdmin && <DeleteAllEcomOrdersButton action={deleteAllEcomOrders} />}
           <Link href="/ecommerce/orders/new" className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
             + New Order
           </Link>
