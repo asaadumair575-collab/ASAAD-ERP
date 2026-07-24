@@ -76,6 +76,7 @@ export default function EcomOrderForm({ action }: { action: (formData: FormData)
                   <option value="3">3</option>
                   <option value="6">6</option>
                   <option value="12">12</option>
+                  <option value="24">24</option>
                 </select>
               </div>
               <div className="col-span-2">
