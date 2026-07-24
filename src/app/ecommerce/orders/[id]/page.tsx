@@ -15,7 +15,7 @@ const COST_PER_BALL = BALL_COST_PER_DOZ / 12;
 const PACKAGING_COST = 15;
 
 function getPackSize(item: { packSize: number; description: string }): number {
-  const m = item.description.match(/pack\s*of\s*(3|6|12)/i);
+  const m = item.description.match(/pack\s*(?:of\s*)?(3|6|12)/i);
   if (m) return parseInt(m[1]);
   return item.packSize;
 }
