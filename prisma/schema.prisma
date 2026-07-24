@@ -258,6 +258,7 @@ model EcomExpense {
   id        Int      @id @default(autoincrement())
   date      DateTime @db.Date
   category  String
+  type      String   @default("VARIABLE")
   amount    Float
   note      String?
   createdAt DateTime @default(now())

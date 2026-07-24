@@ -31,112 +31,132 @@ export default async function EcomExpensesPage({
     orderBy: [{ date: "desc" }, { createdAt: "desc" }],
   });
 
-  // Group by date
-  const groups = new Map<string, typeof expenses>();
-  for (const e of expenses) {
+  const fixedExpenses = expenses.filter((e) => e.type === "FIXED");
+  const variableExpenses = expenses.filter((e) => e.type !== "FIXED");
+
+  const fixedTotal = fixedExpenses.reduce((s, e) => s + e.amount, 0);
+  const variableTotal = variableExpenses.reduce((s, e) => s + e.amount, 0);
+  const grandTotal = fixedTotal + variableTotal;
+
+  // Group variable expenses by date
+  const groups = new Map<string, typeof variableExpenses>();
+  for (const e of variableExpenses) {
     const key = e.date.toISOString().slice(0, 10);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(e);
   }
   const sortedDates = Array.from(groups.keys()).sort((a, b) => b.localeCompare(a));
 
-  // Category totals
-  const categoryTotals = new Map<string, number>();
-  for (const e of expenses) {
-    categoryTotals.set(e.category, (categoryTotals.get(e.category) ?? 0) + e.amount);
-  }
-  const grandTotal = expenses.reduce((s, e) => s + e.amount, 0);
-
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Ecommerce Expenses</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Log daily ad spend and other costs — these are divided across orders in Finance
+          Fixed costs entered once · Variable (Ads) added daily — both divided across orders in Finance
         </p>
       </div>
 
       {/* Filters */}
-      <form
-        method="GET"
-        className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5"
-      >
+      <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
         <input type="date" name="from" defaultValue={from ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
         <span className="text-xs text-gray-400">to</span>
         <input type="date" name="to" defaultValue={to ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
         <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">Filter</button>
-        {(from || to) && (
-          <a href="/ecommerce/expenses" className="text-sm text-gray-400 hover:text-black px-2">Clear</a>
-        )}
+        {(from || to) && <a href="/ecommerce/expenses" className="text-sm text-gray-400 hover:text-black px-2">Clear</a>}
       </form>
 
       {/* Add expense form */}
       <EcomExpenseForm action={createEcomExpense} />
 
-      {/* Category summary */}
+      {/* Summary cards */}
       {expenses.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {(["Ads", "Agency Commission", "Shopify", "Other"] as const).map((cat) => {
-            const total = categoryTotals.get(cat) ?? 0;
-            if (total === 0) return null;
-            const styles: Record<string, { card: string; badge: string; label: string }> = {
-              Ads:                  { card: "bg-purple-50 border-purple-100", badge: "bg-purple-100 text-purple-700", label: "text-purple-600" },
-              "Agency Commission":  { card: "bg-blue-50 border-blue-100",   badge: "bg-blue-100 text-blue-700",   label: "text-blue-600"   },
-              Shopify:              { card: "bg-green-50 border-green-100",  badge: "bg-green-100 text-green-700", label: "text-green-600"  },
-              Other:                { card: "bg-gray-50 border-gray-200",    badge: "bg-gray-100 text-gray-600",   label: "text-gray-700"   },
-            };
-            const s = styles[cat];
-            return (
-              <div key={cat} className={`border rounded-2xl p-4 shadow-sm ${s.card}`}>
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${s.badge}`}>{cat}</span>
-                <p className={`text-xl font-bold mt-2 ${s.label}`}>Rs {fmt(total)}</p>
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 shadow-sm">
+            <p className="text-xs font-medium text-purple-600">Variable (Ads)</p>
+            <p className="text-xl font-bold text-purple-700 mt-1">Rs {fmt(variableTotal)}</p>
+          </div>
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 shadow-sm">
+            <p className="text-xs font-medium text-blue-600">Fixed Costs</p>
+            <p className="text-xl font-bold text-blue-700 mt-1">Rs {fmt(fixedTotal)}</p>
+          </div>
           <div className="bg-gray-900 text-white rounded-2xl p-4 shadow-sm">
             <p className="text-xs font-medium text-gray-400">Total</p>
-            <p className="text-xl font-bold mt-2">Rs {fmt(grandTotal)}</p>
+            <p className="text-xl font-bold mt-1">Rs {fmt(grandTotal)}</p>
           </div>
         </div>
       )}
 
-      {/* Grouped list */}
-      {sortedDates.length === 0 && (
+      {/* Fixed expenses */}
+      {fixedExpenses.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Fixed Costs</p>
+            <p className="text-sm font-semibold text-gray-700">Rs {fmt(fixedTotal)}</p>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {fixedExpenses.map((e) => (
+              <div key={e.id} className="px-5 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${CATEGORY_COLORS[e.category] ?? "bg-gray-100 text-gray-500"}`}>
+                    {e.category}
+                  </span>
+                  <span className="text-xs text-gray-400">{e.date.toISOString().slice(0, 7)}</span>
+                  {e.note && <span className="text-sm text-gray-500">{e.note}</span>}
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold tabular-nums">Rs {fmt(e.amount)}</span>
+                  <form action={deleteEcomExpense.bind(null, e.id)}>
+                    <button type="submit" className="text-xs text-red-400 hover:text-red-600 transition-colors">Delete</button>
+                  </form>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Variable expenses grouped by date */}
+      {sortedDates.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide px-1">Variable Expenses (Daily)</p>
+          {sortedDates.map((date) => {
+            const dayExpenses = groups.get(date)!;
+            const dayTotal = dayExpenses.reduce((s, e) => s + e.amount, 0);
+            return (
+              <div key={date} className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-gray-800">{date}</p>
+                  <p className="text-sm font-semibold text-gray-700">Rs {fmt(dayTotal)}</p>
+                </div>
+                <div className="divide-y divide-gray-50">
+                  {dayExpenses.map((e) => (
+                    <div key={e.id} className="px-5 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${CATEGORY_COLORS[e.category] ?? "bg-gray-100 text-gray-500"}`}>
+                          {e.category}
+                        </span>
+                        {e.note && <span className="text-sm text-gray-500">{e.note}</span>}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-semibold tabular-nums">Rs {fmt(e.amount)}</span>
+                        <form action={deleteEcomExpense.bind(null, e.id)}>
+                          <button type="submit" className="text-xs text-red-400 hover:text-red-600 transition-colors">Delete</button>
+                        </form>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {expenses.length === 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
           <p className="text-gray-400 text-sm">No expenses logged yet.</p>
         </div>
       )}
-
-      {sortedDates.map((date) => {
-        const dayExpenses = groups.get(date)!;
-        const dayTotal = dayExpenses.reduce((s, e) => s + e.amount, 0);
-        return (
-          <div key={date} className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-              <p className="text-sm font-semibold text-gray-800">{date}</p>
-              <p className="text-sm font-semibold text-gray-700">Rs {fmt(dayTotal)}</p>
-            </div>
-            <div className="divide-y divide-gray-50">
-              {dayExpenses.map((e) => (
-                <div key={e.id} className="px-5 py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${CATEGORY_COLORS[e.category] ?? "bg-gray-100 text-gray-500"}`}>
-                      {e.category}
-                    </span>
-                    {e.note && <span className="text-sm text-gray-500">{e.note}</span>}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold tabular-nums">Rs {fmt(e.amount)}</span>
-                    <form action={deleteEcomExpense.bind(null, e.id)}>
-                      <button type="submit" className="text-xs text-red-400 hover:text-red-600 transition-colors">Delete</button>
-                    </form>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }

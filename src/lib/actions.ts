@@ -1548,9 +1548,11 @@ export async function createEcomExpense(formData: FormData) {
   const amount = parseFloat(String(formData.get("amount") ?? "0"));
   if (isNaN(amount) || amount <= 0) throw new Error("Invalid amount");
   const note = String(formData.get("note") ?? "").trim() || null;
+  const type = String(formData.get("type") ?? "VARIABLE").trim();
+  const dateStr = dateRaw.length === 7 ? `${dateRaw}-01` : dateRaw;
 
   await prisma.ecomExpense.create({
-    data: { date: new Date(dateRaw), category, amount, note },
+    data: { date: new Date(dateStr), category, type, amount, note },
   });
   revalidatePath("/ecommerce/expenses");
   revalidatePath("/ecommerce/finance");
