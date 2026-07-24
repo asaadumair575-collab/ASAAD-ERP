@@ -11,7 +11,14 @@ function fmt(n: number) {
 }
 
 const BALL_COST_PER_DOZ = 1450;
+const COST_PER_BALL = BALL_COST_PER_DOZ / 12;
 const PACKAGING_COST = 15;
+
+function getPackSize(item: { packSize: number; description: string }): number {
+  const m = item.description.match(/pack\s*of\s*(3|6|12)/i);
+  if (m) return parseInt(m[1]);
+  return item.packSize;
+}
 
 export default async function EcomOrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,8 +34,8 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
 
   const received = order.payments.reduce((s, p) => s + p.amount, 0);
   const balance = Math.max(0, order.totalAmount - received);
-  const dozens = order.items.reduce((s, i) => s + i.quantity, 0);
-  const ballCost = dozens * BALL_COST_PER_DOZ;
+  const totalBalls = order.items.reduce((s, i) => s + i.quantity * getPackSize(i), 0);
+  const ballCost = totalBalls * COST_PER_BALL;
   const grossProfit = order.totalAmount - ballCost - PACKAGING_COST - order.shippingCost - order.returnCost;
 
   const updateCostsBound = updateEcomOrderCosts.bind(null, order.id);
