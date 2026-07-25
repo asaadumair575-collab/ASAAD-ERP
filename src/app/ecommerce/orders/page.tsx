@@ -23,7 +23,7 @@ export default async function EcomOrdersPage({
   const orders = await prisma.ecomOrder.findMany({
     where: {
       ...(fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {}),
-      ...(status ? { status } : {}),
+      ...(status === "RETURNED" ? { returned: true } : status ? { status } : {}),
       ...(q ? { OR: [{ customerName: { contains: q, mode: "insensitive" } }, { phone: { contains: q } }, { city: { contains: q, mode: "insensitive" } }] } : {}),
     },
     include: { items: true, payments: true },
@@ -54,7 +54,8 @@ export default async function EcomOrdersPage({
           <option value="">All orders</option>
           <option value="PENDING">Pending</option>
           <option value="PARTIAL">Partial</option>
-          <option value="PAID">Paid</option>
+          <option value="PAID">Delivered</option>
+          <option value="RETURNED">Returned</option>
         </select>
         <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">Filter</button>
         {(status || q || from || to) && <Link href="/ecommerce/orders" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>}
@@ -92,9 +93,15 @@ export default async function EcomOrdersPage({
                   <td className="py-3 px-5 text-gray-500 text-xs">{o.items.map((i) => `${i.description} ×${i.quantity}`).join(", ")}</td>
                   <td className="py-3 px-5 text-right tabular-nums font-medium">Rs {fmt(o.totalAmount)}</td>
                   <td className="py-3 px-5 text-right">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${o.status === "PAID" ? "bg-green-100 text-green-700" : o.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-500"}`}>
-                      {o.status === "PAID" ? "Paid" : o.status === "PARTIAL" ? "Partial" : "Pending"}
-                    </span>
+                    {o.returned ? (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-600">Returned</span>
+                    ) : o.status === "PAID" ? (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">Delivered</span>
+                    ) : o.status === "PARTIAL" ? (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Partial</span>
+                    ) : (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Pending</span>
+                    )}
                   </td>
                 </tr>
               ))}
