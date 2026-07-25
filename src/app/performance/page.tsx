@@ -61,6 +61,12 @@ export default async function PerformancePage({
   );
   const showTargetWarning = target && todayEntry && todayEntry.newOrders < target.newOrders;
 
+  const scoreCallsPct = target?.calls && days > 0 ? Math.min(100, Math.round((totalCalls / days / target.calls) * 100)) : null;
+  const scoreOrdersPct = target?.newOrders && days > 0 ? Math.min(100, Math.round((totalOrders / days / target.newOrders) * 100)) : null;
+  const overallScore = scoreCallsPct !== null && scoreOrdersPct !== null
+    ? Math.round((scoreCallsPct + scoreOrdersPct) / 2)
+    : null;
+
   const byUser = new Map<number, { name: string; calls: number; orders: number; days: number }>();
   for (const e of entries) {
     const existing = byUser.get(e.userId) ?? { name: e.user.displayName ?? e.user.username, calls: 0, orders: 0, days: 0 };
@@ -106,6 +112,56 @@ export default async function PerformancePage({
           <p className="text-sm text-orange-700">
             <span className="font-bold">{pendingDelivery}</span> retail orders pending delivery
           </p>
+        </div>
+      )}
+
+      {overallScore !== null && (
+        <div className={`bg-white border rounded-2xl shadow-sm p-5 flex items-center gap-6 ${overallScore >= 80 ? "border-green-200" : overallScore >= 50 ? "border-yellow-200" : "border-red-200"}`}>
+          <div className="shrink-0 relative w-20 h-20">
+            <svg viewBox="0 0 80 80" className="w-20 h-20 -rotate-90">
+              <circle cx="40" cy="40" r="34" fill="none" stroke="#f3f4f6" strokeWidth="8" />
+              <circle cx="40" cy="40" r="34" fill="none"
+                stroke={overallScore >= 80 ? "#22c55e" : overallScore >= 50 ? "#eab308" : "#ef4444"}
+                strokeWidth="8"
+                strokeDasharray={`${(overallScore / 100) * 213.6} 213.6`}
+                strokeLinecap="round" />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className={`text-xl font-bold ${overallScore >= 80 ? "text-green-600" : overallScore >= 50 ? "text-yellow-600" : "text-red-600"}`}>
+                {overallScore}
+              </span>
+            </div>
+          </div>
+          <div className="flex-1 space-y-2">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">
+                {overallScore >= 80 ? "On Track" : overallScore >= 50 ? "Needs Improvement" : "Behind Target"}
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">Score based on avg daily performance vs targets</p>
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-500 w-16 shrink-0">Calls</span>
+                <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                  <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${scoreCallsPct}%` }} />
+                </div>
+                <span className="text-xs font-semibold text-blue-600 w-10 text-right">{scoreCallsPct}%</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-500 w-16 shrink-0">Orders</span>
+                <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                  <div className="h-1.5 rounded-full bg-purple-500" style={{ width: `${scoreOrdersPct}%` }} />
+                </div>
+                <span className="text-xs font-semibold text-purple-600 w-10 text-right">{scoreOrdersPct}%</span>
+              </div>
+            </div>
+            {overallScore < 100 && (
+              <p className="text-xs text-gray-400">
+                {scoreOrdersPct! < scoreCallsPct! ? "Orders are lagging behind" : "Calls are lagging behind"}
+                {" — "}target: {target!.calls} calls / {target!.newOrders} orders per day
+              </p>
+            )}
+          </div>
         </div>
       )}
 

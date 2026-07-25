@@ -141,7 +141,6 @@ export default function Sidebar({
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      {/* Header */}
       <div className="h-14 flex items-center justify-between px-4 border-b border-gray-100 shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-7 h-7 rounded-lg bg-zinc-900 flex items-center justify-center shrink-0">
@@ -162,18 +161,15 @@ export default function Sidebar({
         </button>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
         <NavLink href="/" active={isActive("/")} icon={icons.dashboard} onClick={closeMobile}>
           Dashboard
         </NavLink>
 
-        {/* Operations section — only show if user has access to at least one */}
         {(canView(permissions, "clients", isAdmin) || canView(permissions, "sales", isAdmin) || canView(permissions, "finance", isAdmin)) && (
           <SectionLabel>Operations</SectionLabel>
         )}
 
-        {/* Customers */}
         {canView(permissions, "clients", isAdmin) && (
           <>
             <button
@@ -197,7 +193,6 @@ export default function Sidebar({
           </>
         )}
 
-        {/* Sales */}
         {canView(permissions, "sales", isAdmin) && (
           <>
             <button
@@ -223,7 +218,6 @@ export default function Sidebar({
           </>
         )}
 
-        {/* Finance */}
         {canView(permissions, "finance", isAdmin) && (
           <>
             <button
@@ -249,7 +243,6 @@ export default function Sidebar({
           </>
         )}
 
-        {/* Retail / COD */}
         {canView(permissions, "retail", isAdmin) && (
           <>
             <button
@@ -270,7 +263,6 @@ export default function Sidebar({
                 {canViewSub(permissions, "retail_orders", isAdmin) && (
                   <NavLink href="/retail/orders" active={pathname.startsWith("/retail/orders")} compact onClick={closeMobile}>Orders</NavLink>
                 )}
-
                 {canViewSub(permissions, "retail_customers", isAdmin) && (
                   <NavLink href="/retail/customers" active={pathname.startsWith("/retail/customers")} compact onClick={closeMobile}>Customers</NavLink>
                 )}
@@ -288,7 +280,6 @@ export default function Sidebar({
           </>
         )}
 
-        {/* Ecommerce */}
         {canView(permissions, "ecommerce", isAdmin) && (
           <>
             <button type="button" onClick={() => toggleSection("ecommerce")}
@@ -315,9 +306,6 @@ export default function Sidebar({
                   <NavLink href="/ecommerce/cpr" active={pathname.startsWith("/ecommerce/cpr")} compact onClick={closeMobile}>CPR Settlement</NavLink>
                 )}
                 {isAdmin && (
-                  <NavLink href="/ecommerce/postex" active={pathname.startsWith("/ecommerce/postex")} compact onClick={closeMobile}>PostEx Sync</NavLink>
-                )}
-                {isAdmin && (
                   <NavLink href="/ecommerce/settings" active={pathname.startsWith("/ecommerce/settings")} compact onClick={closeMobile}>Settings</NavLink>
                 )}
               </div>
@@ -325,12 +313,10 @@ export default function Sidebar({
           </>
         )}
 
-        {/* CRM section */}
         {(canView(permissions, "leads", isAdmin) || canView(permissions, "dispatch", isAdmin)) && (
           <SectionLabel>CRM</SectionLabel>
         )}
 
-        {/* Leads */}
         {canView(permissions, "leads", isAdmin) && (
           <>
             <button
@@ -403,7 +389,6 @@ export default function Sidebar({
         )}
       </nav>
 
-      {/* Footer */}
       <div className="px-3 py-3 border-t border-gray-100 space-y-0.5 shrink-0">
         <InstallPwaButton />
         <p className="px-3 py-1.5 text-xs text-gray-400">ASAAD ERP · v1.0</p>
@@ -413,12 +398,10 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Desktop sidebar */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col h-screen border-r border-gray-100 bg-white print:hidden sticky top-0">
         {sidebarContent}
       </aside>
 
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-40 md:hidden"
@@ -426,7 +409,6 @@ export default function Sidebar({
         />
       )}
 
-      {/* Mobile off-canvas drawer */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white flex flex-col md:hidden transform transition-transform duration-300 ease-in-out print:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
