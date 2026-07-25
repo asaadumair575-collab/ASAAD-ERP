@@ -100,12 +100,14 @@ export default async function PerformancePage({
         </div>
       )}
 
-      <div className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
-        <span className="text-orange-400 text-lg">📦</span>
-        <p className="text-sm text-orange-700">
-          <span className="font-bold">{pendingDelivery}</span> retail orders pending delivery
-        </p>
-      </div>
+      {pendingDelivery > 0 && (
+        <div className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
+          <span className="text-orange-400 text-lg">📦</span>
+          <p className="text-sm text-orange-700">
+            <span className="font-bold">{pendingDelivery}</span> retail orders pending delivery
+          </p>
+        </div>
+      )}
 
       <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
         {isAdmin && (
