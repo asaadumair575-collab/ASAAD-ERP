@@ -73,7 +73,7 @@ export default async function PerformancePage({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Employee Performance</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Daily calls aur new orders track karo</p>
+          <p className="text-sm text-gray-500 mt-0.5">Track daily calls and new orders</p>
         </div>
         {isAdmin && (
           <Link href="/performance/targets" className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
@@ -86,9 +86,9 @@ export default async function PerformancePage({
         <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
           <span className="text-red-500 text-lg">⚠️</span>
           <div>
-            <p className="text-sm font-semibold text-red-700">Aaj ka target pura nahi hua!</p>
+            <p className="text-sm font-semibold text-red-700">Today's target not fulfilled!</p>
             <p className="text-xs text-red-500 mt-0.5">
-              Aaj {todayEntry.newOrders} orders liye — target {target.newOrders} ka hai. {target.newOrders - todayEntry.newOrders} aur chahiye.
+              {todayEntry.newOrders} orders logged today — target is {target.newOrders}. {target.newOrders - todayEntry.newOrders} more needed.
             </p>
           </div>
         </div>
@@ -110,7 +110,7 @@ export default async function PerformancePage({
 
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Log Today's Performance</p>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Log Performance</p>
         </div>
         <form action={logEmpPerformance} className="p-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
@@ -121,7 +121,7 @@ export default async function PerformancePage({
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">Employee</label>
               <select name="userId" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-                <option value="">Apna (self)</option>
+                <option value="">Self</option>
                 {users.map((u) => <option key={u.id} value={u.id}>{u.displayName ?? u.username}</option>)}
               </select>
             </div>
@@ -147,7 +147,7 @@ export default async function PerformancePage({
       <div className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
         <span className="text-orange-400 text-lg">📦</span>
         <p className="text-sm text-orange-700">
-          <span className="font-bold">{pendingDelivery}</span> orders abhi deliver hone baaki hain
+          <span className="font-bold">{pendingDelivery}</span> retail orders pending delivery
         </p>
       </div>
 
@@ -270,7 +270,7 @@ export default async function PerformancePage({
 
       {entries.length === 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
-          <p className="text-gray-400 text-sm">Koi entry nahi — upar se log karo</p>
+          <p className="text-gray-400 text-sm">No entries yet — log performance above</p>
         </div>
       )}
     </div>
