@@ -54,7 +54,6 @@ export default async function PerformancePage({
   const totalOrders = entries.reduce((s, e) => s + e.newOrders, 0);
   const days = entries.length;
 
-  // Check today's entry for target warning
   const todayStr = new Date().toISOString().slice(0, 10);
   const myUserId = filterUserId ?? me?.id;
   const todayEntry = entries.find(e =>
@@ -83,7 +82,6 @@ export default async function PerformancePage({
         )}
       </div>
 
-      {/* Target warning */}
       {showTargetWarning && (
         <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
           <span className="text-red-500 text-lg">⚠️</span>
@@ -96,7 +94,6 @@ export default async function PerformancePage({
         </div>
       )}
 
-      {/* Filters */}
       <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
         {isAdmin && (
           <select name="user" defaultValue={user ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
@@ -111,7 +108,6 @@ export default async function PerformancePage({
         {(from || to || user) && <Link href="/performance" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>}
       </form>
 
-      {/* Log form */}
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Log Today's Performance</p>
@@ -148,7 +144,6 @@ export default async function PerformancePage({
         </form>
       </div>
 
-      {/* Pending delivery banner */}
       <div className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
         <span className="text-orange-400 text-lg">📦</span>
         <p className="text-sm text-orange-700">
@@ -156,7 +151,6 @@ export default async function PerformancePage({
         </p>
       </div>
 
-      {/* Summary cards */}
       {days > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {[
@@ -184,7 +178,6 @@ export default async function PerformancePage({
         </div>
       )}
 
-      {/* Per-user breakdown (admin) */}
       {isAdmin && !filterUserId && byUser.size > 1 && (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-3 border-b border-gray-100">
@@ -220,7 +213,6 @@ export default async function PerformancePage({
         </div>
       )}
 
-      {/* Daily log */}
       {entries.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-3 border-b border-gray-100">
