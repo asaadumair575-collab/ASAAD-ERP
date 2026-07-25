@@ -35,6 +35,10 @@ export default async function PerformancePage({
   const target = await prisma.performanceTarget.findFirst({ orderBy: { effectiveFrom: "desc" } });
   const users = isAdmin ? await prisma.user.findMany({ orderBy: { displayName: "asc" } }) : [];
 
+  const pendingDelivery = await prisma.ecomOrder.count({
+    where: { returned: false, status: { notIn: ["CANCELLED", "DELIVERED"] } },
+  });
+
   const filterUserId = isAdmin && user ? parseInt(user) : (!isAdmin ? me?.id : undefined);
 
   const entries = await prisma.empPerformance.findMany({
@@ -142,6 +146,14 @@ export default async function PerformancePage({
             <button type="submit" className="w-full bg-black text-white text-sm font-medium py-2.5 rounded-xl hover:bg-gray-800 transition-colors">Log Performance</button>
           </div>
         </form>
+      </div>
+
+      {/* Pending delivery banner */}
+      <div className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
+        <span className="text-orange-400 text-lg">📦</span>
+        <p className="text-sm text-orange-700">
+          <span className="font-bold">{pendingDelivery}</span> orders abhi deliver hone baaki hain
+        </p>
       </div>
 
       {/* Summary cards */}
