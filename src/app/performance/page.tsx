@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { logEmpPerformance, deleteEmpPerformance } from "@/lib/actions";
 import Link from "next/link";
 
 function pct(val: number, target: number) {
@@ -75,11 +74,18 @@ export default async function PerformancePage({
           <h1 className="text-2xl font-semibold tracking-tight">Employee Performance</h1>
           <p className="text-sm text-gray-500 mt-0.5">Track daily calls and new orders</p>
         </div>
-        {isAdmin && (
-          <Link href="/performance/targets" className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-            Set Targets
+        <div className="flex items-center gap-2 shrink-0">
+          <Link href="/performance/log"
+            className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+            + Log Entry
           </Link>
-        )}
+          {isAdmin && (
+            <Link href="/performance/targets"
+              className="border border-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+              Set Targets
+            </Link>
+          )}
+        </div>
       </div>
 
       {showTargetWarning && (
@@ -94,6 +100,13 @@ export default async function PerformancePage({
         </div>
       )}
 
+      <div className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
+        <span className="text-orange-400 text-lg">📦</span>
+        <p className="text-sm text-orange-700">
+          <span className="font-bold">{pendingDelivery}</span> retail orders pending delivery
+        </p>
+      </div>
+
       <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
         {isAdmin && (
           <select name="user" defaultValue={user ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
@@ -107,49 +120,6 @@ export default async function PerformancePage({
         <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">Filter</button>
         {(from || to || user) && <Link href="/performance" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>}
       </form>
-
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-100">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Log Performance</p>
-        </div>
-        <form action={logEmpPerformance} className="p-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Date</label>
-            <input name="date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-          </div>
-          {isAdmin && (
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Employee</label>
-              <select name="userId" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-                <option value="">Self</option>
-                {users.map((u) => <option key={u.id} value={u.id}>{u.displayName ?? u.username}</option>)}
-              </select>
-            </div>
-          )}
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Calls</label>
-            <input name="calls" type="number" min="0" defaultValue="0" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">New Orders</label>
-            <input name="newOrders" type="number" min="0" defaultValue="0" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-          </div>
-          <div className={isAdmin ? "col-span-2 sm:col-span-4" : "col-span-2"}>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Notes</label>
-            <input name="notes" type="text" placeholder="Optional" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-          </div>
-          <div className={isAdmin ? "col-span-2 sm:col-span-4" : "col-span-2"}>
-            <button type="submit" className="w-full bg-black text-white text-sm font-medium py-2.5 rounded-xl hover:bg-gray-800 transition-colors">Log Performance</button>
-          </div>
-        </form>
-      </div>
-
-      <div className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
-        <span className="text-orange-400 text-lg">📦</span>
-        <p className="text-sm text-orange-700">
-          <span className="font-bold">{pendingDelivery}</span> retail orders pending delivery
-        </p>
-      </div>
 
       {days > 0 && (
         <div className="grid grid-cols-3 gap-3">
@@ -229,7 +199,6 @@ export default async function PerformancePage({
                   <th className="py-2 px-4 text-right">Conversion</th>
                   {target && <th className="py-2 px-4 text-right">Target %</th>}
                   <th className="py-2 px-4">Notes</th>
-                  {isAdmin && <th className="py-2 px-4" />}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -252,13 +221,6 @@ export default async function PerformancePage({
                         </td>
                       )}
                       <td className="py-3 px-4 text-xs text-gray-400">{e.notes ?? "—"}</td>
-                      {isAdmin && (
-                        <td className="py-3 px-4">
-                          <form action={deleteEmpPerformance.bind(null, e.id)}>
-                            <button type="submit" className="text-xs text-red-400 hover:text-red-600">Delete</button>
-                          </form>
-                        </td>
-                      )}
                     </tr>
                   );
                 })}
@@ -270,7 +232,10 @@ export default async function PerformancePage({
 
       {entries.length === 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
-          <p className="text-gray-400 text-sm">No entries yet — log performance above</p>
+          <p className="text-gray-400 text-sm">No entries yet</p>
+          <Link href="/performance/log" className="mt-3 inline-block text-sm font-medium text-black underline underline-offset-2">
+            Log your first entry →
+          </Link>
         </div>
       )}
     </div>
