@@ -35,8 +35,8 @@ export default async function PerformancePage({
   const target = await prisma.performanceTarget.findFirst({ orderBy: { effectiveFrom: "desc" } });
   const users = isAdmin ? await prisma.user.findMany({ orderBy: { displayName: "asc" } }) : [];
 
-  const pendingDelivery = await prisma.ecomOrder.count({
-    where: { returned: false, status: { notIn: ["CANCELLED", "DELIVERED"] } },
+  const pendingDelivery = await prisma.retailOrder.count({
+    where: { dispatched: false, status: { notIn: ["CANCELLED", "DELIVERED"] } },
   });
 
   const filterUserId = isAdmin && user ? parseInt(user) : (!isAdmin ? me?.id : undefined);
