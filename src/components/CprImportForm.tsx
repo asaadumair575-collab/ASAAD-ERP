@@ -147,7 +147,7 @@ export default function CprImportForm() {
                         <td className="py-2 px-4 font-mono text-xs text-gray-600">{r.trackingNumber}</td>
                         <td className="py-2 px-4 font-medium text-gray-700">E-{String(r.orderId).padStart(3, "0")} · {r.customerName}</td>
                         <td className="py-2 px-4 text-right tabular-nums text-gray-500">Rs {fmt(r.codAmount)}</td>
-                        <td className="py-2 px-4 text-right tabular-nums text-red-400">− Rs {fmt(r.shippingCharges)}</td>
+                        <td className="py-2 px-4 text-right tabular-nums text-red-400">− Rs {fmt(r.codAmount - r.netAmount)}</td>
                         <td className="py-2 px-4 text-right tabular-nums font-semibold text-green-700">Rs {fmt(r.netAmount)}</td>
                       </tr>
                     ))}
