@@ -299,9 +299,6 @@ export default function Sidebar({
                   <NavLink href="/ecommerce/expenses" active={pathname.startsWith("/ecommerce/expenses")} compact onClick={closeMobile}>Expenses</NavLink>
                 )}
                 {isAdmin && (
-                  <NavLink href="/ecommerce/import" active={pathname.startsWith("/ecommerce/import")} compact onClick={closeMobile}>Import CSV</NavLink>
-                )}
-                {isAdmin && (
                   <NavLink href="/ecommerce/cpr" active={pathname.startsWith("/ecommerce/cpr")} compact onClick={closeMobile}>CPR Settlement</NavLink>
                 )}
                 {isAdmin && (
