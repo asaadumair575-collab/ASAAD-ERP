@@ -3,7 +3,6 @@ import Link from "next/link";
 import { deleteAllEcomOrders } from "@/lib/actions";
 import { getSessionUser } from "@/lib/auth";
 import DeleteAllEcomOrdersButton from "@/components/DeleteAllEcomOrdersButton";
-import PostExSyncButton from "@/components/PostExSyncButton";
 import EcomImportModal from "@/components/EcomImportModal";
 
 function fmt(n: number) {
@@ -39,7 +38,6 @@ export default async function EcomOrdersPage({
           <p className="text-sm text-gray-500 mt-0.5">All ecommerce orders</p>
         </div>
         <div className="flex items-center gap-2">
-          <PostExSyncButton />
           <EcomImportModal />
           {isAdmin && <DeleteAllEcomOrdersButton action={deleteAllEcomOrders} />}
           <Link href="/ecommerce/orders/new" className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
