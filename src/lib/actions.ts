@@ -1769,7 +1769,7 @@ export async function applyCPR(rows: CPRRow[]): Promise<{ payments: number; retu
       const received = (await prisma.ecomPayment.aggregate({ where: { orderId: order.id }, _sum: { amount: true } }))._sum.amount ?? 0;
       const newReceived = received;
       const status = newReceived >= order.totalAmount ? "PAID" : newReceived > 0 ? "PARTIAL" : "PENDING";
-      await prisma.ecomOrder.update({ where: { id: order.id }, data: { status } });
+      await prisma.ecomOrder.update({ where: { id: order.id }, data: { status, shippingCost: row.shippingCharges } });
       payments++;
     } else if (row.status === "Return") {
       await prisma.ecomOrder.update({
