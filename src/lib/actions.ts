@@ -1758,17 +1758,20 @@ export async function applyCPR(rows: CPRRow[]): Promise<{ payments: number; retu
   let notFound = 0;
 
   for (const row of rows) {
-    const order = await prisma.ecomOrder.findFirst({ where: { trackingNumber: row.trackingNumber } });
+    const order = await prisma.ecomOrder.findFirst({
+      where: { trackingNumber: row.trackingNumber.trim() },
+    });
     if (!order) { notFound++; continue; }
 
-    if (row.status === "Delivered" && row.netAmount > 0) {
-      await prisma.ecomPayment.create({
-        data: { orderId: order.id, amount: row.netAmount, note: "CPR settlement" },
-      });
-      // update order status
+    if (row.status === "Delivered") {
+      // Always save shipping cost regardless of netAmount
+      if (row.netAmount > 0) {
+        await prisma.ecomPayment.create({
+          data: { orderId: order.id, amount: row.netAmount, note: "CPR settlement" },
+        });
+      }
       const received = (await prisma.ecomPayment.aggregate({ where: { orderId: order.id }, _sum: { amount: true } }))._sum.amount ?? 0;
-      const newReceived = received;
-      const status = newReceived >= order.totalAmount ? "PAID" : newReceived > 0 ? "PARTIAL" : "PENDING";
+      const status = received >= order.totalAmount ? "PAID" : received > 0 ? "PARTIAL" : "PENDING";
       await prisma.ecomOrder.update({ where: { id: order.id }, data: { status, shippingCost: row.shippingCharges } });
       payments++;
     } else if (row.status === "Return") {
