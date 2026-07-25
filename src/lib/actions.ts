@@ -1750,6 +1750,30 @@ export async function parseCPRText_action(text: string): Promise<CPRRow[]> {
   return parseCPRText(text);
 }
 
+export type CPRPreviewRow = CPRRow & {
+  found: boolean;
+  customerName: string | null;
+  orderId: number | null;
+};
+
+export async function previewCPR(rows: CPRRow[]): Promise<CPRPreviewRow[]> {
+  await requireAuth();
+  const result: CPRPreviewRow[] = [];
+  for (const row of rows) {
+    const order = await prisma.ecomOrder.findFirst({
+      where: { trackingNumber: row.trackingNumber.trim() },
+      select: { id: true, customerName: true },
+    });
+    result.push({
+      ...row,
+      found: !!order,
+      customerName: order?.customerName ?? null,
+      orderId: order?.id ?? null,
+    });
+  }
+  return result;
+}
+
 export async function applyCPR(rows: CPRRow[]): Promise<{ payments: number; returned: number; notFound: number }> {
   await requireAuth();
 
