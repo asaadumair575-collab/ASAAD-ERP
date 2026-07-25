@@ -50,6 +50,15 @@ export default async function PerformancePage({
   const totalOrders = entries.reduce((s, e) => s + e.newOrders, 0);
   const days = entries.length;
 
+  // Check today's entry for target warning
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const myUserId = filterUserId ?? me?.id;
+  const todayEntry = entries.find(e =>
+    e.date.toISOString().slice(0, 10) === todayStr &&
+    (!myUserId || e.userId === myUserId)
+  );
+  const showTargetWarning = target && todayEntry && todayEntry.newOrders < target.newOrders;
+
   const byUser = new Map<number, { name: string; calls: number; orders: number; days: number }>();
   for (const e of entries) {
     const existing = byUser.get(e.userId) ?? { name: e.user.displayName ?? e.user.username, calls: 0, orders: 0, days: 0 };
@@ -69,6 +78,19 @@ export default async function PerformancePage({
           </Link>
         )}
       </div>
+
+      {/* Target warning */}
+      {showTargetWarning && (
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          <span className="text-red-500 text-lg">⚠️</span>
+          <div>
+            <p className="text-sm font-semibold text-red-700">Aaj ka target pura nahi hua!</p>
+            <p className="text-xs text-red-500 mt-0.5">
+              Aaj {todayEntry.newOrders} orders liye — target {target.newOrders} ka hai. {target.newOrders - todayEntry.newOrders} aur chahiye.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
@@ -124,17 +146,27 @@ export default async function PerformancePage({
 
       {/* Summary cards */}
       {days > 0 && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {[
             { label: "Total Calls", val: totalCalls, daily: Math.round(totalCalls / days), target: target?.calls ?? 0, color: "bg-blue-500" },
             { label: "New Orders", val: totalOrders, daily: Math.round(totalOrders / days), target: target?.newOrders ?? 0, color: "bg-purple-500" },
+            {
+              label: "Conversion Rate",
+              val: totalCalls > 0 ? Math.round((totalOrders / totalCalls) * 100) : 0,
+              suffix: "%",
+              sub: `${totalOrders} orders / ${totalCalls} calls`,
+              color: "bg-green-500",
+            },
           ].map((c) => (
             <div key={c.label} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-2">
               <p className="text-xs text-gray-500 uppercase tracking-wide">{c.label}</p>
-              <p className="text-2xl font-bold tracking-tight">{c.val}</p>
-              <p className="text-xs text-gray-400">Avg {c.daily}/day · {days} days</p>
-              {c.target > 0 && <Bar value={c.daily} target={c.target} color={c.color} />}
-              {c.target > 0 && <p className="text-xs text-gray-400">Daily target: {c.target}</p>}
+              <p className="text-2xl font-bold tracking-tight">{c.val}{"suffix" in c ? c.suffix : ""}</p>
+              {"sub" in c
+                ? <p className="text-xs text-gray-400">{c.sub}</p>
+                : <p className="text-xs text-gray-400">Avg {"daily" in c ? c.daily : 0}/day · {days} days</p>
+              }
+              {"target" in c && (c.target ?? 0) > 0 && "daily" in c && <Bar value={c.daily as number} target={c.target as number} color={c.color} />}
+              {"target" in c && (c.target ?? 0) > 0 && <p className="text-xs text-gray-400">Daily target: {c.target}</p>}
             </div>
           ))}
         </div>
@@ -153,22 +185,23 @@ export default async function PerformancePage({
                   <th className="py-2 px-4">Employee</th>
                   <th className="py-2 px-4 text-right">Days</th>
                   <th className="py-2 px-4 text-right">Calls</th>
-                  <th className="py-2 px-4 text-right">Avg Calls/day</th>
-                  <th className="py-2 px-4 text-right">New Orders</th>
-                  <th className="py-2 px-4 text-right">Avg Orders/day</th>
+                  <th className="py-2 px-4 text-right">Orders</th>
+                  <th className="py-2 px-4 text-right">Conversion</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {Array.from(byUser.values()).sort((a, b) => b.orders - a.orders).map((u) => (
-                  <tr key={u.name} className="hover:bg-gray-50/70">
-                    <td className="py-3 px-4 font-medium">{u.name}</td>
-                    <td className="py-3 px-4 text-right text-gray-500">{u.days}</td>
-                    <td className="py-3 px-4 text-right font-semibold text-blue-600">{u.calls}</td>
-                    <td className="py-3 px-4 text-right text-gray-500">{Math.round(u.calls / u.days)}</td>
-                    <td className="py-3 px-4 text-right font-semibold text-purple-600">{u.orders}</td>
-                    <td className="py-3 px-4 text-right text-gray-500">{Math.round(u.orders / u.days)}</td>
-                  </tr>
-                ))}
+                {Array.from(byUser.values()).sort((a, b) => b.orders - a.orders).map((u) => {
+                  const conv = u.calls > 0 ? Math.round((u.orders / u.calls) * 100) : 0;
+                  return (
+                    <tr key={u.name} className="hover:bg-gray-50/70">
+                      <td className="py-3 px-4 font-medium">{u.name}</td>
+                      <td className="py-3 px-4 text-right text-gray-500">{u.days}</td>
+                      <td className="py-3 px-4 text-right font-semibold text-blue-600">{u.calls}</td>
+                      <td className="py-3 px-4 text-right font-semibold text-purple-600">{u.orders}</td>
+                      <td className="py-3 px-4 text-right font-semibold text-green-600">{conv}%</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -188,30 +221,25 @@ export default async function PerformancePage({
                   <th className="py-2 px-4">Date</th>
                   {isAdmin && <th className="py-2 px-4">Employee</th>}
                   <th className="py-2 px-4 text-right">Calls</th>
-                  {target && <th className="py-2 px-4 text-right">Calls %</th>}
-                  <th className="py-2 px-4 text-right">New Orders</th>
-                  {target && <th className="py-2 px-4 text-right">Orders %</th>}
+                  <th className="py-2 px-4 text-right">Orders</th>
+                  <th className="py-2 px-4 text-right">Conversion</th>
+                  {target && <th className="py-2 px-4 text-right">Target %</th>}
                   <th className="py-2 px-4">Notes</th>
                   {isAdmin && <th className="py-2 px-4" />}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {entries.map((e) => {
-                  const callPct = pct(e.calls, target?.calls ?? 0);
+                  const conv = e.calls > 0 ? Math.round((e.newOrders / e.calls) * 100) : 0;
                   const orderPct = pct(e.newOrders, target?.newOrders ?? 0);
+                  const isToday = e.date.toISOString().slice(0, 10) === todayStr;
                   return (
-                    <tr key={e.id} className="hover:bg-gray-50/70">
+                    <tr key={e.id} className={`hover:bg-gray-50/70 ${isToday && target && e.newOrders < target.newOrders ? "bg-red-50/40" : ""}`}>
                       <td className="py-3 px-4 text-gray-600 text-xs">{e.date.toISOString().slice(0, 10)}</td>
                       {isAdmin && <td className="py-3 px-4 font-medium">{e.user.displayName ?? e.user.username}</td>}
                       <td className="py-3 px-4 text-right font-semibold text-blue-600 tabular-nums">{e.calls}</td>
-                      {target && (
-                        <td className="py-3 px-4 text-right">
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${callPct >= 100 ? "bg-green-100 text-green-700" : callPct >= 70 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-600"}`}>
-                            {callPct}%
-                          </span>
-                        </td>
-                      )}
                       <td className="py-3 px-4 text-right font-semibold text-purple-600 tabular-nums">{e.newOrders}</td>
+                      <td className="py-3 px-4 text-right font-semibold text-green-600 tabular-nums">{conv}%</td>
                       {target && (
                         <td className="py-3 px-4 text-right">
                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${orderPct >= 100 ? "bg-green-100 text-green-700" : orderPct >= 70 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-600"}`}>
