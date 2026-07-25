@@ -17,7 +17,7 @@ export default async function PerformanceTargetsPage() {
         <Link href="/performance" className="text-gray-400 hover:text-black text-sm">← Back</Link>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Set Performance Targets</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Daily targets for calls, confirmations, and new orders</p>
+          <p className="text-sm text-gray-500 mt-0.5">Daily targets for calls and new orders</p>
         </div>
       </div>
 
@@ -29,11 +29,6 @@ export default async function PerformanceTargetsPage() {
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">Daily Calls Target</label>
             <input name="calls" type="number" min="0" defaultValue={latest?.calls ?? 50} required
-              className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Daily Confirmations Target</label>
-            <input name="confirmations" type="number" min="0" defaultValue={latest?.confirmations ?? 10} required
               className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
           </div>
           <div>
@@ -57,7 +52,6 @@ export default async function PerformanceTargetsPage() {
               <tr className="text-left bg-gray-50 text-xs text-gray-400 uppercase tracking-wide">
                 <th className="py-2 px-4">Effective From</th>
                 <th className="py-2 px-4 text-right">Calls</th>
-                <th className="py-2 px-4 text-right">Confirmations</th>
                 <th className="py-2 px-4 text-right">New Orders</th>
               </tr>
             </thead>
@@ -66,7 +60,6 @@ export default async function PerformanceTargetsPage() {
                 <tr key={t.id} className="hover:bg-gray-50/70">
                   <td className="py-3 px-4 text-gray-600 text-xs">{t.effectiveFrom.toISOString().slice(0, 10)}</td>
                   <td className="py-3 px-4 text-right font-semibold text-blue-600">{t.calls}</td>
-                  <td className="py-3 px-4 text-right font-semibold text-green-600">{t.confirmations}</td>
                   <td className="py-3 px-4 text-right font-semibold text-purple-600">{t.newOrders}</td>
                 </tr>
               ))}
