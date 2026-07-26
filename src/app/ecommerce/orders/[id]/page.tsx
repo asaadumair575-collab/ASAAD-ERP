@@ -34,6 +34,7 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
 
   const received = order.payments.reduce((s, p) => s + p.amount, 0);
   const balance = Math.max(0, order.totalAmount - received);
+  const cprSettled = order.payments.some((p) => p.note === "CPR settlement");
   const totalBalls = order.items.reduce((s, i) => s + i.quantity * getPackSize(i), 0);
   const ballCost = totalBalls * COST_PER_BALL;
   const grossProfit = order.totalAmount - ballCost - PACKAGING_COST - order.shippingCost - order.returnCost - order.adCost;
@@ -163,6 +164,7 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
       <EcomPaymentSection
         orderId={order.id}
         balance={balance}
+        cprSettled={cprSettled}
         payments={order.payments.map((p) => ({ id: p.id, amount: p.amount, note: p.note, date: p.date.toISOString() }))}
         recordAction={recordPaymentBound}
         deleteAction={deleteEcomPayment}

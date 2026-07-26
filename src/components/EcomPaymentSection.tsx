@@ -7,6 +7,7 @@ type Payment = { id: number; amount: number; note: string | null; date: string }
 export default function EcomPaymentSection({
   orderId,
   balance,
+  cprSettled,
   payments,
   recordAction,
   deleteAction,
@@ -14,6 +15,7 @@ export default function EcomPaymentSection({
 }: {
   orderId: number;
   balance: number;
+  cprSettled: boolean;
   payments: Payment[];
   recordAction: (formData: FormData) => Promise<void>;
   deleteAction: (paymentId: number) => Promise<void>;
@@ -50,7 +52,7 @@ export default function EcomPaymentSection({
         </div>
       )}
 
-      {balance > 0 && (
+      {balance > 0 && !cprSettled && (
         <form action={(fd) => startTransition(() => recordAction(fd))} className="p-5 space-y-3 border-t border-gray-100">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Record Payment</p>
           <div className="grid grid-cols-2 gap-3">
