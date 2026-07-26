@@ -1693,6 +1693,22 @@ export async function importEcomOrdersFromCSV(rows: {
   return { created, skipped };
 }
 
+export async function backfillShopifyOrderIds(rows: { trackingNumber: string | null; shopifyOrderId: string | null }[]): Promise<{ updated: number; skipped: number }> {
+  await requireAuth();
+  let updated = 0, skipped = 0;
+  for (const row of rows) {
+    if (!row.trackingNumber || !row.shopifyOrderId) { skipped++; continue; }
+    const order = await prisma.ecomOrder.findFirst({
+      where: { trackingNumber: row.trackingNumber, shopifyOrderId: null },
+    });
+    if (!order) { skipped++; continue; }
+    await prisma.ecomOrder.update({ where: { id: order.id }, data: { shopifyOrderId: row.shopifyOrderId } });
+    updated++;
+  }
+  revalidatePath("/ecommerce/orders");
+  return { updated, skipped };
+}
+
 export type CPRRow = {
   trackingNumber: string;
   status: "Delivered" | "Return";
