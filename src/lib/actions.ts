@@ -1771,14 +1771,31 @@ export type CPRPreviewRow = CPRRow & {
   alreadyProcessed: boolean;
 };
 
+async function findOrderByTracking(cprTracking: string) {
+  const t = cprTracking.trim();
+  // 1. exact match
+  const exact = await prisma.ecomOrder.findFirst({ where: { trackingNumber: t } });
+  if (exact) return exact;
+  // 2. DB tracking contains CPR tracking (e.g. DB has longer string)
+  const contains = await prisma.ecomOrder.findFirst({ where: { trackingNumber: { contains: t } } });
+  if (contains) return contains;
+  // 3. CPR tracking contains DB tracking (DB has short form)
+  const candidates = await prisma.ecomOrder.findMany({
+    where: { trackingNumber: { not: null } },
+    select: { id: true, trackingNumber: true },
+  });
+  return candidates.find((o) => o.trackingNumber && t.includes(o.trackingNumber)) ?? null;
+}
+
 export async function previewCPR(rows: CPRRow[]): Promise<CPRPreviewRow[]> {
   await requireAuth();
   const result: CPRPreviewRow[] = [];
   for (const row of rows) {
-    const order = await prisma.ecomOrder.findFirst({
-      where: { trackingNumber: row.trackingNumber.trim() },
+    const found = await findOrderByTracking(row.trackingNumber);
+    const order = found ? await prisma.ecomOrder.findUnique({
+      where: { id: found.id },
       select: { id: true, customerName: true, status: true, returned: true, shippingCost: true, payments: { where: { note: "CPR settlement" }, select: { id: true } } },
-    });
+    }) : null;
     const alreadyProcessed = !!order && (
       (row.status === "Delivered" && order.payments.length > 0) ||
       (row.status === "Return" && order.returned)
@@ -1802,9 +1819,7 @@ export async function applyCPR(rows: CPRRow[]): Promise<{ payments: number; retu
   let notFound = 0;
 
   for (const row of rows) {
-    const order = await prisma.ecomOrder.findFirst({
-      where: { trackingNumber: row.trackingNumber.trim() },
-    });
+    const order = await findOrderByTracking(row.trackingNumber);
     if (!order) { notFound++; continue; }
 
     if (row.status === "Delivered") {
