@@ -195,7 +195,8 @@ export default async function EcomFinancePage({
               <tbody className="divide-y divide-gray-50">
                 {orders.map((o) => {
                   if (o.returned) {
-                    const returnLoss = -(o.returnCost + PACKAGING_COST + adsPerOrder + agencyPerOrder + shopifyPerOrder + otherPerOrder);
+                    const returnGross = -(o.returnCost + PACKAGING_COST);
+                    const returnNet = returnGross - adsPerOrder - agencyPerOrder - shopifyPerOrder - otherPerOrder;
                     return (
                       <tr key={o.id} className="bg-red-50/40">
                         <td className="py-2 px-3">
@@ -212,11 +213,11 @@ export default async function EcomFinancePage({
                         {adsTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-red-400">{fmt(adsPerOrder)}</td>}
                         <td className="py-2 px-3 text-right tabular-nums text-red-400">{PACKAGING_COST}</td>
                         {totalReturnShipping > 0 && <td className="py-2 px-3 text-right tabular-nums text-gray-300">—</td>}
-                        <td className="py-2 px-3 text-right tabular-nums font-semibold text-red-600">{fmt(returnLoss)}</td>
+                        <td className="py-2 px-3 text-right tabular-nums font-semibold text-red-600">{fmt(returnGross)}</td>
                         {agencyTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-red-400">{fmt(agencyPerOrder)}</td>}
                         {shopifyTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-red-400">{fmt(shopifyPerOrder)}</td>}
                         {otherTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-red-400">{fmt(otherPerOrder)}</td>}
-                        <td className="py-2 px-3 text-right tabular-nums font-bold text-red-600">{fmt(returnLoss - agencyPerOrder - shopifyPerOrder - otherPerOrder)}</td>
+                        <td className="py-2 px-3 text-right tabular-nums font-bold text-red-600">{fmt(returnNet)}</td>
                       </tr>
                     );
                   }

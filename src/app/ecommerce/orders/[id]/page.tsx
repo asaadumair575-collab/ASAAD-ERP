@@ -36,7 +36,7 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
   const balance = Math.max(0, order.totalAmount - received);
   const totalBalls = order.items.reduce((s, i) => s + i.quantity * getPackSize(i), 0);
   const ballCost = totalBalls * COST_PER_BALL;
-  const grossProfit = order.totalAmount - ballCost - PACKAGING_COST - order.shippingCost - order.returnCost;
+  const grossProfit = order.totalAmount - ballCost - PACKAGING_COST - order.shippingCost - order.returnCost - order.adCost;
 
   const updateCostsBound = updateEcomOrderCosts.bind(null, order.id);
   const recordPaymentBound = recordEcomPayment.bind(null, order.id);
@@ -133,7 +133,6 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
         </div>
         {order.returned && (
           <form action={updateCostsBound} className="mt-3 pt-3 border-t border-red-100 flex items-end gap-3">
-            <input type="hidden" name="shippingCost" value={order.shippingCost} />
             <div className="flex-1">
               <label className="text-xs font-medium text-gray-600 mb-1 block">Return Shipping Cost (Rs)</label>
               <input name="returnCost" type="number" step="1" min="0" defaultValue={order.returnCost || ""} placeholder="0"

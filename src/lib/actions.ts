@@ -1490,15 +1490,13 @@ export async function deleteEcomOrder(orderId: number) {
 
 export async function updateEcomOrderCosts(orderId: number, formData: FormData) {
   await requireAuth();
-  const shippingCost = parseFloat(String(formData.get("shippingCost") ?? "0")) || 0;
-  const adCost = parseFloat(String(formData.get("adCost") ?? "0")) || 0;
-  const packagingCost = parseFloat(String(formData.get("packagingCost") ?? "0")) || 0;
-  const returnCost = parseFloat(String(formData.get("returnCost") ?? "0")) || 0;
-
-  await prisma.ecomOrder.update({
-    where: { id: orderId },
-    data: { shippingCost, adCost, packagingCost, returnCost },
-  });
+  const data: Record<string, number> = {};
+  if (formData.has("shippingCost")) data.shippingCost = parseFloat(String(formData.get("shippingCost"))) || 0;
+  if (formData.has("adCost")) data.adCost = parseFloat(String(formData.get("adCost"))) || 0;
+  if (formData.has("packagingCost")) data.packagingCost = parseFloat(String(formData.get("packagingCost"))) || 0;
+  if (formData.has("returnCost")) data.returnCost = parseFloat(String(formData.get("returnCost"))) || 0;
+  if (Object.keys(data).length === 0) return;
+  await prisma.ecomOrder.update({ where: { id: orderId }, data });
   revalidatePath(`/ecommerce/orders/${orderId}`);
   revalidatePath("/ecommerce/finance");
 }
@@ -1610,9 +1608,11 @@ export async function saveAppSetting(key: string, formData: FormData) {
 
 export async function deleteAllEcomOrders() {
   await requireAdmin();
-  await prisma.ecomOrderItem.deleteMany({});
-  await prisma.ecomPayment.deleteMany({});
-  await prisma.ecomOrder.deleteMany({});
+  await prisma.$transaction([
+    prisma.ecomOrderItem.deleteMany({}),
+    prisma.ecomPayment.deleteMany({}),
+    prisma.ecomOrder.deleteMany({}),
+  ]);
   revalidatePath("/ecommerce/orders");
   revalidatePath("/ecommerce/finance");
 }
@@ -1648,11 +1648,18 @@ export async function importEcomOrdersFromCSV(rows: {
   let skipped = 0;
 
   for (const row of rows) {
-    if (!row.customerName || !row.totalAmount) { skipped++; continue; }
+    if (!row.customerName || row.totalAmount == null) { skipped++; continue; }
 
     // skip if tracking number already exists
     if (row.trackingNumber) {
       const existing = await prisma.ecomOrder.findFirst({ where: { trackingNumber: row.trackingNumber } });
+      if (existing) { skipped++; continue; }
+    } else {
+      const dayStart = new Date(row.date); dayStart.setHours(0,0,0,0);
+      const dayEnd = new Date(row.date); dayEnd.setHours(23,59,59,999);
+      const existing = await prisma.ecomOrder.findFirst({
+        where: { customerName: row.customerName, totalAmount: row.totalAmount, date: { gte: dayStart, lte: dayEnd }, trackingNumber: null },
+      });
       if (existing) { skipped++; continue; }
     }
 
@@ -1763,10 +1770,10 @@ export async function previewCPR(rows: CPRRow[]): Promise<CPRPreviewRow[]> {
   for (const row of rows) {
     const order = await prisma.ecomOrder.findFirst({
       where: { trackingNumber: row.trackingNumber.trim() },
-      select: { id: true, customerName: true, status: true, returned: true, shippingCost: true },
+      select: { id: true, customerName: true, status: true, returned: true, shippingCost: true, payments: { where: { note: "CPR settlement" }, select: { id: true } } },
     });
     const alreadyProcessed = !!order && (
-      (row.status === "Delivered" && (order.status === "PAID" || order.shippingCost > 0)) ||
+      (row.status === "Delivered" && order.payments.length > 0) ||
       (row.status === "Return" && order.returned)
     );
     result.push({
@@ -1794,7 +1801,10 @@ export async function applyCPR(rows: CPRRow[]): Promise<{ payments: number; retu
     if (!order) { notFound++; continue; }
 
     if (row.status === "Delivered") {
-      if (order.status === "PAID" || order.shippingCost > 0) continue; // already settled
+      const existingCprPayment = await prisma.ecomPayment.findFirst({
+        where: { orderId: order.id, note: "CPR settlement" },
+      });
+      if (existingCprPayment) continue;
       const actualShipping = row.codAmount - row.netAmount;
       if (row.netAmount > 0) {
         await prisma.ecomPayment.create({
