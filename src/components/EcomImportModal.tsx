@@ -139,14 +139,10 @@ export default function EcomImportModal() {
               )}
 
               {preview.length > 0 && (() => {
-                // warn only when same phone has DIFFERENT order IDs (genuine separate orders)
-                const phoneOrders = new Map<string, Set<string>>();
-                preview.forEach((r) => {
-                  if (!r.phone) return;
-                  if (!phoneOrders.has(r.phone)) phoneOrders.set(r.phone, new Set());
-                  phoneOrders.get(r.phone)!.add(r.shopifyOrderId ?? r.trackingNumber ?? "unknown");
-                });
-                const dupPhones = new Set([...phoneOrders.entries()].filter(([, ids]) => ids.size > 1).map(([p]) => p));
+                // warn when same phone appears more than once in this CSV
+                const phoneCount = new Map<string, number>();
+                preview.forEach((r) => { if (r.phone) phoneCount.set(r.phone, (phoneCount.get(r.phone) ?? 0) + 1); });
+                const dupPhones = new Set([...phoneCount.entries()].filter(([, c]) => c > 1).map(([p]) => p));
                 const dupRows = preview.filter((r) => r.phone && dupPhones.has(r.phone));
 
                 return (
