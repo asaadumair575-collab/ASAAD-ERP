@@ -231,6 +231,7 @@ model EcomOrder {
   packagingCost   Float           @default(0)
   returnCost      Float           @default(0)
   trackingNumber  String?
+  shopifyOrderId  String?
   createdAt       DateTime        @default(now())
   items         EcomOrderItem[]
   payments      EcomPayment[]

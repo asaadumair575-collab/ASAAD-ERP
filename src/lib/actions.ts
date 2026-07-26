@@ -1638,6 +1638,7 @@ export async function importEcomOrdersFromCSV(rows: {
   phone: string | null;
   city: string | null;
   trackingNumber: string | null;
+  shopifyOrderId: string | null;
   totalAmount: number;
   date: Date;
   description: string;
@@ -1650,8 +1651,11 @@ export async function importEcomOrdersFromCSV(rows: {
   for (const row of rows) {
     if (!row.customerName || row.totalAmount == null) { skipped++; continue; }
 
-    // skip if tracking number already exists
-    if (row.trackingNumber) {
+    // prefer shopifyOrderId for dedup, fall back to trackingNumber, then name+date+amount
+    if (row.shopifyOrderId) {
+      const existing = await prisma.ecomOrder.findFirst({ where: { shopifyOrderId: row.shopifyOrderId } });
+      if (existing) { skipped++; continue; }
+    } else if (row.trackingNumber) {
       const existing = await prisma.ecomOrder.findFirst({ where: { trackingNumber: row.trackingNumber } });
       if (existing) { skipped++; continue; }
     } else {
@@ -1669,6 +1673,7 @@ export async function importEcomOrdersFromCSV(rows: {
         phone: row.phone,
         city: row.city,
         trackingNumber: row.trackingNumber,
+        shopifyOrderId: row.shopifyOrderId,
         totalAmount: row.totalAmount,
         date: row.date,
         items: {

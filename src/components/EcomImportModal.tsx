@@ -8,6 +8,7 @@ type ParsedRow = {
   phone: string | null;
   city: string | null;
   trackingNumber: string | null;
+  shopifyOrderId: string | null;
   totalAmount: number;
   date: Date;
   description: string;
@@ -18,6 +19,7 @@ function parseCSV(text: string): ParsedRow[] {
   if (lines.length < 2) return [];
   const header = lines[0].split(",").map((h) => h.replace(/^"|"$/g, "").trim());
   const idx = (name: string) => header.findIndex((h) => h === name);
+  const iRef = idx("ORDER_REFERENCE_NUMBER");
   const iName = idx("CUSTOMER_NAME");
   const iPhone = idx("CUSTOMER_PHONE");
   const iCity = idx("CITY_NAME");
@@ -50,6 +52,7 @@ function parseCSV(text: string): ParsedRow[] {
       phone: get(iPhone).replace(/\s+/g, "") || null,
       city: get(iCity) || null,
       trackingNumber: get(iTracking) || null,
+      shopifyOrderId: get(iRef) || null,
       totalAmount: amount,
       date,
       description: get(iDetail) || "Product",
@@ -141,6 +144,7 @@ export default function EcomImportModal() {
                       <table className="w-full text-sm">
                         <thead className="sticky top-0 bg-gray-50">
                           <tr className="text-xs text-gray-400 uppercase tracking-wide text-left">
+                            <th className="py-2 px-3">Order #</th>
                             <th className="py-2 px-3">Customer</th>
                             <th className="py-2 px-3">City</th>
                             <th className="py-2 px-3">Tracking</th>
@@ -151,6 +155,7 @@ export default function EcomImportModal() {
                         <tbody className="divide-y divide-gray-50">
                           {preview.map((r, i) => (
                             <tr key={i}>
+                              <td className="py-2 px-3 font-mono text-xs text-gray-600">{r.shopifyOrderId ?? "—"}</td>
                               <td className="py-2 px-3 font-medium">{r.customerName}<br /><span className="text-xs text-gray-400">{r.phone}</span></td>
                               <td className="py-2 px-3 text-gray-500">{r.city ?? "—"}</td>
                               <td className="py-2 px-3 text-gray-500 font-mono text-xs">{r.trackingNumber ?? "—"}</td>
