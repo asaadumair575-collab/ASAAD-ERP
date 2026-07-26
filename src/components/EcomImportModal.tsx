@@ -42,7 +42,15 @@ function parseCSV(text: string): ParsedRow[] {
       else { cur += ch; }
     }
     cols.push(cur);
-    const get = (i: number) => (cols[i] ?? "").replace(/^"|"$/g, "").trim();
+    const get = (i: number) => {
+      const v = (cols[i] ?? "").replace(/^"|"$/g, "").trim();
+      // expand scientific notation (e.g. 2.54E+13 → "25400000000000")
+      if (/^-?\d+(\.\d+)?[eE][+-]?\d+$/.test(v)) {
+        const n = Number(v);
+        if (!isNaN(n) && isFinite(n)) return n.toFixed(0);
+      }
+      return v;
+    };
     const customerName = get(iName);
     if (!customerName) continue;
     const amount = parseFloat(get(iAmount));

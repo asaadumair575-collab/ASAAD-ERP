@@ -1773,18 +1773,17 @@ export type CPRPreviewRow = CPRRow & {
 
 async function findOrderByTracking(cprTracking: string) {
   const t = cprTracking.trim();
-  // 1. exact match
   const exact = await prisma.ecomOrder.findFirst({ where: { trackingNumber: t } });
   if (exact) return exact;
-  // 2. DB tracking contains CPR tracking (e.g. DB has longer string)
   const contains = await prisma.ecomOrder.findFirst({ where: { trackingNumber: { contains: t } } });
   if (contains) return contains;
-  // 3. CPR tracking contains DB tracking (DB has short form)
   const candidates = await prisma.ecomOrder.findMany({
     where: { trackingNumber: { not: null } },
     select: { id: true, trackingNumber: true },
   });
-  return candidates.find((o) => o.trackingNumber && t.includes(o.trackingNumber)) ?? null;
+  const partial = candidates.find((o) => o.trackingNumber && t.includes(o.trackingNumber));
+  if (!partial) return null;
+  return prisma.ecomOrder.findUnique({ where: { id: partial.id } });
 }
 
 export async function previewCPR(rows: CPRRow[]): Promise<CPRPreviewRow[]> {
