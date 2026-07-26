@@ -1794,9 +1794,7 @@ export async function applyCPR(rows: CPRRow[]): Promise<{ payments: number; retu
           data: { orderId: order.id, amount: row.netAmount, note: "CPR settlement" },
         });
       }
-      const received = (await prisma.ecomPayment.aggregate({ where: { orderId: order.id }, _sum: { amount: true } }))._sum.amount ?? 0;
-      const status = received >= order.totalAmount ? "PAID" : received > 0 ? "PARTIAL" : "PENDING";
-      await prisma.ecomOrder.update({ where: { id: order.id }, data: { status, shippingCost: actualShipping } });
+      await prisma.ecomOrder.update({ where: { id: order.id }, data: { status: "PAID", shippingCost: actualShipping } });
       payments++;
     } else if (row.status === "Return") {
       await prisma.ecomOrder.update({
