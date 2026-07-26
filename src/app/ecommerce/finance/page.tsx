@@ -172,24 +172,24 @@ export default async function EcomFinancePage({
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Order Breakdown</p>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-sm">
               <thead>
-                <tr className="text-left bg-gray-50 text-[10px] text-gray-400 uppercase tracking-wide">
-                  <th className="py-2 px-2">#</th>
-                  <th className="py-2 px-2">Customer</th>
-                  <th className="py-2 px-2">Date</th>
-                  <th className="py-2 px-2 text-right">Balls</th>
-                  <th className="py-2 px-2 text-right">Revenue</th>
-                  <th className="py-2 px-2 text-right">Ball Cost</th>
-                  <th className="py-2 px-2 text-right">Ship.</th>
-                  {adsTotal > 0 && <th className="py-2 px-2 text-right">Ads</th>}
-                  <th className="py-2 px-2 text-right">Pack</th>
-                  {totalReturnShipping > 0 && <th className="py-2 px-2 text-right">Ret.Ship</th>}
-                  <th className="py-2 px-2 text-right">Gross</th>
-                  {agencyTotal > 0 && <th className="py-2 px-2 text-right">Agency</th>}
-                  {shopifyTotal > 0 && <th className="py-2 px-2 text-right">Shopify</th>}
-                  {otherTotal > 0 && <th className="py-2 px-2 text-right">Other</th>}
-                  <th className="py-2 px-2 text-right font-bold text-gray-600">Net</th>
+                <tr className="text-left bg-gray-50 text-xs text-gray-400 uppercase tracking-wide">
+                  <th className="py-2 px-3">#</th>
+                  <th className="py-2 px-3">Customer</th>
+                  <th className="py-2 px-3">Date</th>
+                  <th className="py-2 px-3 text-right">Balls</th>
+                  <th className="py-2 px-3 text-right">Revenue</th>
+                  <th className="py-2 px-3 text-right">Ball Cost</th>
+                  <th className="py-2 px-3 text-right">Shipping</th>
+                  {adsTotal > 0 && <th className="py-2 px-3 text-right">Ads</th>}
+                  <th className="py-2 px-3 text-right">Pack</th>
+                  {totalReturnShipping > 0 && <th className="py-2 px-3 text-right">Ret. Ship</th>}
+                  <th className="py-2 px-3 text-right">Gross P.</th>
+                  {agencyTotal > 0 && <th className="py-2 px-3 text-right">Agency</th>}
+                  {shopifyTotal > 0 && <th className="py-2 px-3 text-right">Shopify</th>}
+                  {otherTotal > 0 && <th className="py-2 px-3 text-right">Other</th>}
+                  <th className="py-2 px-3 text-right font-bold text-gray-600">Net P.</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -198,25 +198,25 @@ export default async function EcomFinancePage({
                     const returnLoss = -(o.returnCost + PACKAGING_COST + adsPerOrder + agencyPerOrder + shopifyPerOrder + otherPerOrder);
                     return (
                       <tr key={o.id} className="bg-red-50/40">
-                        <td className="py-2 px-2">
+                        <td className="py-2 px-3">
                           <Link href={`/ecommerce/orders/${o.id}`} className="font-medium hover:underline text-gray-400">E-{String(o.id).padStart(3, "0")}</Link>
                         </td>
-                        <td className="py-2 px-2 text-gray-400 max-w-[90px] truncate">{o.customerName}</td>
-                        <td className="py-2 px-2 text-gray-400 whitespace-nowrap">{o.date.toISOString().slice(5, 10)}</td>
-                        <td className="py-2 px-2 text-center">
-                          <span className="text-[10px] font-semibold text-red-500 bg-red-100 px-1.5 py-0.5 rounded-full">Ret.</span>
+                        <td className="py-2 px-3 text-gray-400">{o.customerName}</td>
+                        <td className="py-2 px-3 text-gray-400 whitespace-nowrap">{o.date.toISOString().slice(0, 10)}</td>
+                        <td className="py-2 px-3 text-center">
+                          <span className="text-xs font-semibold text-red-500 bg-red-100 px-1.5 py-0.5 rounded-full">Ret.</span>
                         </td>
-                        <td className="py-2 px-2 text-right tabular-nums text-gray-300">—</td>
-                        <td className="py-2 px-2 text-right tabular-nums text-gray-300">—</td>
-                        <td className="py-2 px-2 text-right tabular-nums text-red-500">{o.returnCost > 0 ? fmt(o.returnCost) : "—"}</td>
-                        {adsTotal > 0 && <td className="py-2 px-2 text-right tabular-nums text-red-400">{fmt(adsPerOrder)}</td>}
-                        <td className="py-2 px-2 text-right tabular-nums text-red-400">{PACKAGING_COST}</td>
-                        {totalReturnShipping > 0 && <td className="py-2 px-2 text-right tabular-nums text-gray-300">—</td>}
-                        <td className="py-2 px-2 text-right tabular-nums font-semibold text-red-600">{fmt(returnLoss)}</td>
-                        {agencyTotal > 0 && <td className="py-2 px-2 text-right tabular-nums text-red-400">{fmt(agencyPerOrder)}</td>}
-                        {shopifyTotal > 0 && <td className="py-2 px-2 text-right tabular-nums text-red-400">{fmt(shopifyPerOrder)}</td>}
-                        {otherTotal > 0 && <td className="py-2 px-2 text-right tabular-nums text-red-400">{fmt(otherPerOrder)}</td>}
-                        <td className="py-2 px-2 text-right tabular-nums font-bold text-red-600">{fmt(returnLoss - agencyPerOrder - shopifyPerOrder - otherPerOrder)}</td>
+                        <td className="py-2 px-3 text-right tabular-nums text-gray-300">—</td>
+                        <td className="py-2 px-3 text-right tabular-nums text-gray-300">—</td>
+                        <td className="py-2 px-3 text-right tabular-nums text-red-500">{o.returnCost > 0 ? fmt(o.returnCost) : "—"}</td>
+                        {adsTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-red-400">{fmt(adsPerOrder)}</td>}
+                        <td className="py-2 px-3 text-right tabular-nums text-red-400">{PACKAGING_COST}</td>
+                        {totalReturnShipping > 0 && <td className="py-2 px-3 text-right tabular-nums text-gray-300">—</td>}
+                        <td className="py-2 px-3 text-right tabular-nums font-semibold text-red-600">{fmt(returnLoss)}</td>
+                        {agencyTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-red-400">{fmt(agencyPerOrder)}</td>}
+                        {shopifyTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-red-400">{fmt(shopifyPerOrder)}</td>}
+                        {otherTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-red-400">{fmt(otherPerOrder)}</td>}
+                        <td className="py-2 px-3 text-right tabular-nums font-bold text-red-600">{fmt(returnLoss - agencyPerOrder - shopifyPerOrder - otherPerOrder)}</td>
                       </tr>
                     );
                   }
@@ -226,45 +226,45 @@ export default async function EcomFinancePage({
                   const netProfit = grossProfit - adsPerOrder - agencyPerOrder - shopifyPerOrder - otherPerOrder;
                   return (
                     <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
-                      <td className="py-2 px-2">
+                      <td className="py-2 px-3">
                         <Link href={`/ecommerce/orders/${o.id}`} className="font-medium hover:underline text-gray-700">E-{String(o.id).padStart(3, "0")}</Link>
                       </td>
-                      <td className="py-2 px-2 max-w-[90px] truncate">
+                      <td className="py-2 px-3">
                         <span className="font-medium">{o.customerName}</span>
                         {o.city && <span className="text-gray-400 ml-1">· {o.city}</span>}
                       </td>
-                      <td className="py-2 px-2 text-gray-500 whitespace-nowrap">{o.date.toISOString().slice(5, 10)}</td>
-                      <td className="py-2 px-2 text-right tabular-nums text-gray-700 font-medium">{totalBalls}</td>
-                      <td className="py-2 px-2 text-right tabular-nums font-medium">{fmt(o.totalAmount)}</td>
-                      <td className="py-2 px-2 text-right tabular-nums text-gray-500">{ballCost > 0 ? fmt(ballCost) : "—"}</td>
-                      <td className="py-2 px-2 text-right tabular-nums text-blue-600">{o.shippingCost > 0 ? fmt(o.shippingCost) : "—"}</td>
-                      {adsTotal > 0 && <td className="py-2 px-2 text-right tabular-nums text-purple-600">{fmt(adsPerOrder)}</td>}
-                      <td className="py-2 px-2 text-right tabular-nums text-orange-500">15</td>
-                      {totalReturnShipping > 0 && <td className="py-2 px-2 text-right tabular-nums text-red-500">{fmt(returnPerDelivered)}</td>}
-                      <td className={`py-2 px-2 text-right tabular-nums font-semibold ${grossProfit >= 0 ? "text-green-700" : "text-red-600"}`}>{fmt(grossProfit)}</td>
-                      {agencyTotal > 0 && <td className="py-2 px-2 text-right tabular-nums text-blue-600">{fmt(agencyPerOrder)}</td>}
-                      {shopifyTotal > 0 && <td className="py-2 px-2 text-right tabular-nums text-green-600">{fmt(shopifyPerOrder)}</td>}
-                      {otherTotal > 0 && <td className="py-2 px-2 text-right tabular-nums text-gray-500">{fmt(otherPerOrder)}</td>}
-                      <td className={`py-2 px-2 text-right tabular-nums font-bold ${netProfit >= 0 ? "text-green-700" : "text-red-600"}`}>{fmt(netProfit)}</td>
+                      <td className="py-2 px-3 text-gray-500 whitespace-nowrap">{o.date.toISOString().slice(0, 10)}</td>
+                      <td className="py-2 px-3 text-right tabular-nums text-gray-700 font-medium">{totalBalls}</td>
+                      <td className="py-2 px-3 text-right tabular-nums font-medium">{fmt(o.totalAmount)}</td>
+                      <td className="py-2 px-3 text-right tabular-nums text-gray-500">{ballCost > 0 ? fmt(ballCost) : "—"}</td>
+                      <td className="py-2 px-3 text-right tabular-nums text-blue-600">{o.shippingCost > 0 ? fmt(o.shippingCost) : "—"}</td>
+                      {adsTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-purple-600">{fmt(adsPerOrder)}</td>}
+                      <td className="py-2 px-3 text-right tabular-nums text-orange-500">15</td>
+                      {totalReturnShipping > 0 && <td className="py-2 px-3 text-right tabular-nums text-red-500">{fmt(returnPerDelivered)}</td>}
+                      <td className={`py-2 px-3 text-right tabular-nums font-semibold ${grossProfit >= 0 ? "text-green-700" : "text-red-600"}`}>{fmt(grossProfit)}</td>
+                      {agencyTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-blue-600">{fmt(agencyPerOrder)}</td>}
+                      {shopifyTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-green-600">{fmt(shopifyPerOrder)}</td>}
+                      {otherTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-gray-500">{fmt(otherPerOrder)}</td>}
+                      <td className={`py-2 px-3 text-right tabular-nums font-bold ${netProfit >= 0 ? "text-green-700" : "text-red-600"}`}>{fmt(netProfit)}</td>
                     </tr>
                   );
                 })}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-gray-200 bg-gray-50 font-semibold text-xs">
-                  <td className="py-2 px-2" colSpan={3}>Total</td>
-                  <td className="py-2 px-2 text-right tabular-nums text-gray-700">{deliveredOrders.reduce((s, o) => s + o.items.reduce((is, i) => is + i.quantity * getPackSize(i), 0), 0)}</td>
-                  <td className="py-2 px-2 text-right tabular-nums">{fmt(totalRevenue)}</td>
-                  <td className="py-2 px-2 text-right tabular-nums text-gray-500">{fmt(totalBallCost)}</td>
-                  <td className="py-2 px-2 text-right tabular-nums text-blue-600">{fmt(totalShipping)}</td>
-                  {adsTotal > 0 && <td className="py-2 px-2 text-right tabular-nums text-purple-600">{fmt(adsTotal)}</td>}
-                  <td className="py-2 px-2 text-right tabular-nums text-orange-500">{fmt(totalPackaging)}</td>
-                  {totalReturnShipping > 0 && <td className="py-2 px-2 text-right tabular-nums text-red-500">{fmt(totalReturnShipping)}</td>}
-                  <td className={`py-2 px-2 text-right tabular-nums ${totalGrossProfit >= 0 ? "text-green-700" : "text-red-600"}`}>{fmt(totalGrossProfit)}</td>
-                  {agencyTotal > 0 && <td className="py-2 px-2 text-right tabular-nums text-blue-600">{fmt(agencyTotal)}</td>}
-                  {shopifyTotal > 0 && <td className="py-2 px-2 text-right tabular-nums text-green-600">{fmt(shopifyTotal)}</td>}
-                  {otherTotal > 0 && <td className="py-2 px-2 text-right tabular-nums text-gray-500">{fmt(otherTotal)}</td>}
-                  <td className={`py-2 px-2 text-right tabular-nums font-bold ${totalNetProfit >= 0 ? "text-green-700" : "text-red-600"}`}>{fmt(totalNetProfit)}</td>
+                <tr className="border-t-2 border-gray-200 bg-gray-50 font-semibold text-sm">
+                  <td className="py-2 px-3" colSpan={3}>Total</td>
+                  <td className="py-2 px-3 text-right tabular-nums text-gray-700">{deliveredOrders.reduce((s, o) => s + o.items.reduce((is, i) => is + i.quantity * getPackSize(i), 0), 0)}</td>
+                  <td className="py-2 px-3 text-right tabular-nums">{fmt(totalRevenue)}</td>
+                  <td className="py-2 px-3 text-right tabular-nums text-gray-500">{fmt(totalBallCost)}</td>
+                  <td className="py-2 px-3 text-right tabular-nums text-blue-600">{fmt(totalShipping)}</td>
+                  {adsTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-purple-600">{fmt(adsTotal)}</td>}
+                  <td className="py-2 px-3 text-right tabular-nums text-orange-500">{fmt(totalPackaging)}</td>
+                  {totalReturnShipping > 0 && <td className="py-2 px-3 text-right tabular-nums text-red-500">{fmt(totalReturnShipping)}</td>}
+                  <td className={`py-2 px-3 text-right tabular-nums ${totalGrossProfit >= 0 ? "text-green-700" : "text-red-600"}`}>{fmt(totalGrossProfit)}</td>
+                  {agencyTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-blue-600">{fmt(agencyTotal)}</td>}
+                  {shopifyTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-green-600">{fmt(shopifyTotal)}</td>}
+                  {otherTotal > 0 && <td className="py-2 px-3 text-right tabular-nums text-gray-500">{fmt(otherTotal)}</td>}
+                  <td className={`py-2 px-3 text-right tabular-nums font-bold ${totalNetProfit >= 0 ? "text-green-700" : "text-red-600"}`}>{fmt(totalNetProfit)}</td>
                 </tr>
               </tfoot>
             </table>
