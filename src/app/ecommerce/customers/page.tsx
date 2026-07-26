@@ -142,14 +142,19 @@ export default async function EcomCustomersPage({
                 <th className="py-3 px-5 text-center">Returned</th>
                 <th className="py-3 px-5 text-right">Total Spent</th>
                 <th className="py-3 px-5">Last Order</th>
+                <th className="py-3 px-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {customers.map((c) => (
-                <tr key={c.key} className="hover:bg-gray-50/70 transition-colors">
+              {customers.map((c) => {
+                const href = `/ecommerce/customers/${encodeURIComponent(c.phone ?? `name:${c.customerName}`)}`;
+                return (
+                <tr key={c.key} className="hover:bg-gray-50/70 transition-colors cursor-pointer">
                   <td className="py-3 px-5">
-                    <p className="font-medium">{c.customerName}</p>
-                    {c.phone && <p className="text-xs text-gray-400">{c.phone}</p>}
+                    <Link href={href} className="hover:underline">
+                      <p className="font-medium">{c.customerName}</p>
+                      {c.phone && <p className="text-xs text-gray-400">{c.phone}</p>}
+                    </Link>
                   </td>
                   <td className="py-3 px-5 text-gray-500">{c.city ?? "—"}</td>
                   <td className="py-3 px-5 text-center tabular-nums font-medium">{c.orderCount}</td>
@@ -165,8 +170,12 @@ export default async function EcomCustomersPage({
                   </td>
                   <td className="py-3 px-5 text-right tabular-nums font-medium">Rs {fmt(c.totalSpent)}</td>
                   <td className="py-3 px-5 text-gray-400 text-xs">{c.lastOrderDate.toISOString().slice(0, 10)}</td>
+                  <td className="py-3 px-5 text-right">
+                    <Link href={href} className="text-xs text-gray-400 hover:text-black hover:underline">View →</Link>
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
