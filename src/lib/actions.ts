@@ -1651,14 +1651,26 @@ export async function importEcomOrdersFromCSV(rows: {
   for (const row of rows) {
     if (!row.customerName || row.totalAmount == null) { skipped++; continue; }
 
-    // prefer shopifyOrderId for dedup, fall back to trackingNumber, then name+date+amount
+    // If tracking matches an existing order, backfill shopifyOrderId and skip creating
+    if (row.trackingNumber) {
+      const byTracking = await prisma.ecomOrder.findFirst({ where: { trackingNumber: row.trackingNumber } });
+      if (byTracking) {
+        if (row.shopifyOrderId && !byTracking.shopifyOrderId) {
+          await prisma.ecomOrder.update({ where: { id: byTracking.id }, data: { shopifyOrderId: row.shopifyOrderId } });
+        }
+        skipped++;
+        continue;
+      }
+    }
+
+    // If shopifyOrderId matches, skip
     if (row.shopifyOrderId) {
-      const existing = await prisma.ecomOrder.findFirst({ where: { shopifyOrderId: row.shopifyOrderId } });
-      if (existing) { skipped++; continue; }
-    } else if (row.trackingNumber) {
-      const existing = await prisma.ecomOrder.findFirst({ where: { trackingNumber: row.trackingNumber } });
-      if (existing) { skipped++; continue; }
-    } else {
+      const bySid = await prisma.ecomOrder.findFirst({ where: { shopifyOrderId: row.shopifyOrderId } });
+      if (bySid) { skipped++; continue; }
+    }
+
+    // Fallback dedup: same name+date+amount with no tracking
+    if (!row.trackingNumber && !row.shopifyOrderId) {
       const dayStart = new Date(row.date); dayStart.setHours(0,0,0,0);
       const dayEnd = new Date(row.date); dayEnd.setHours(23,59,59,999);
       const existing = await prisma.ecomOrder.findFirst({

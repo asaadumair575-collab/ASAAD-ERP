@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { importEcomOrdersFromCSV, backfillShopifyOrderIds } from "@/lib/actions";
+import { importEcomOrdersFromCSV } from "@/lib/actions";
 
 type ParsedRow = {
   customerName: string;
@@ -65,7 +65,7 @@ export default function EcomImportModal() {
   const [open, setOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<ParsedRow[]>([]);
-  const [result, setResult] = useState<{ created: number; skipped: number } | { updated: number; skipped: number } | null>(null);
+  const [result, setResult] = useState<{ created: number; skipped: number } | null>(null);
   const [pending, startTransition] = useTransition();
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -83,16 +83,6 @@ export default function EcomImportModal() {
     if (!preview.length) return;
     startTransition(async () => {
       const res = await importEcomOrdersFromCSV(preview);
-      setResult(res);
-      setPreview([]);
-      if (fileRef.current) fileRef.current.value = "";
-    });
-  }
-
-  function handleBackfill() {
-    if (!preview.length) return;
-    startTransition(async () => {
-      const res = await backfillShopifyOrderIds(preview.map((r) => ({ trackingNumber: r.trackingNumber, shopifyOrderId: r.shopifyOrderId })));
       setResult(res);
       setPreview([]);
       if (fileRef.current) fileRef.current.value = "";
@@ -140,9 +130,7 @@ export default function EcomImportModal() {
 
               {result && (
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-700 font-medium">
-                  {"created" in result
-                    ? `✓ ${result.created} orders imported · ${result.skipped} skipped`
-                    : `✓ ${result.updated} orders updated with Shopify ID · ${result.skipped} skipped`}
+                  {`✓ ${result.created} orders imported · ${result.skipped} skipped`}
                 </div>
               )}
 
@@ -179,22 +167,13 @@ export default function EcomImportModal() {
                       </table>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleImport}
-                      disabled={pending}
-                      className="flex-1 bg-black text-white text-sm font-medium py-2.5 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50"
-                    >
-                      {pending ? "Importing..." : `Import ${preview.length} Orders`}
-                    </button>
-                    <button
-                      onClick={handleBackfill}
-                      disabled={pending}
-                      className="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2.5 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
-                    >
-                      {pending ? "Updating..." : "Fill Shopify IDs (existing orders)"}
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleImport}
+                    disabled={pending}
+                    className="w-full bg-black text-white text-sm font-medium py-2.5 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50"
+                  >
+                    {pending ? "Importing..." : `Import ${preview.length} Orders`}
+                  </button>
                 </div>
               )}
             </div>
