@@ -83,12 +83,13 @@ export default async function EcomOrdersPage({
               {orders.map((o) => (
                 <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
                   <td className="py-3 px-5">
-                    <Link href={`/ecommerce/orders/${o.id}`} className="font-medium hover:underline text-gray-700">E-{String(o.id).padStart(3, "0")}</Link>
+                    <Link href={`/ecommerce/orders/${o.id}`} className="font-medium hover:underline text-gray-700 font-mono">
+                      {o.shopifyOrderId ?? `E-${String(o.id).padStart(3, "0")}`}
+                    </Link>
                   </td>
                   <td className="py-3 px-5">
                     <p className="font-medium">{o.customerName}</p>
                     {(o.phone || o.city) && <p className="text-xs text-gray-400">{[o.phone, o.city].filter(Boolean).join(" · ")}</p>}
-                    {o.shopifyOrderId && <p className="text-xs text-gray-400 font-mono">{o.shopifyOrderId}</p>}
                   </td>
                   <td className="py-3 px-5 text-gray-500">{o.date.toISOString().slice(0, 10)}</td>
                   <td className="py-3 px-5 text-gray-500 text-xs">{o.items.map((i) => `${i.description} ×${i.quantity}`).join(", ")}</td>
