@@ -59,7 +59,8 @@ function parseCSV(text: string): ParsedRow[] {
     if (!amount || isNaN(amount)) continue;
 
     const dateStr = get(iDate).slice(0, 10);
-    const date = dateStr ? new Date(`${dateStr}T12:00:00`) : new Date();
+    const dateParsed = dateStr ? new Date(`${dateStr}T12:00:00`) : new Date();
+    const date = isNaN(dateParsed.getTime()) ? new Date() : dateParsed;
 
     rows.push({
       customerName,
