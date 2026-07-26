@@ -1637,6 +1637,7 @@ export async function importEcomOrdersFromCSV(rows: {
   customerName: string;
   phone: string | null;
   city: string | null;
+  address: string | null;
   trackingNumber: string | null;
   shopifyOrderId: string | null;
   totalAmount: number;
@@ -1655,8 +1656,11 @@ export async function importEcomOrdersFromCSV(rows: {
     if (row.trackingNumber) {
       const byTracking = await prisma.ecomOrder.findFirst({ where: { trackingNumber: row.trackingNumber } });
       if (byTracking) {
-        if (row.shopifyOrderId && !byTracking.shopifyOrderId) {
-          await prisma.ecomOrder.update({ where: { id: byTracking.id }, data: { shopifyOrderId: row.shopifyOrderId } });
+        const updateData: Record<string, string> = {};
+        if (row.shopifyOrderId && !byTracking.shopifyOrderId) updateData.shopifyOrderId = row.shopifyOrderId;
+        if (row.address && !byTracking.address) updateData.address = row.address;
+        if (Object.keys(updateData).length > 0) {
+          await prisma.ecomOrder.update({ where: { id: byTracking.id }, data: updateData });
         }
         skipped++;
         continue;
@@ -1684,6 +1688,7 @@ export async function importEcomOrdersFromCSV(rows: {
         customerName: row.customerName,
         phone: row.phone,
         city: row.city,
+        address: row.address,
         trackingNumber: row.trackingNumber,
         shopifyOrderId: row.shopifyOrderId,
         totalAmount: row.totalAmount,

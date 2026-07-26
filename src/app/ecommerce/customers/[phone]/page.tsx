@@ -50,6 +50,10 @@ export default async function EcomCustomerDetailPage({
             <p className="text-xs text-gray-400 mb-0.5">City</p>
             <p className="font-medium">{latest.city ?? "—"}</p>
           </div>
+          <div className="col-span-2">
+            <p className="text-xs text-gray-400 mb-0.5">Delivery Address</p>
+            <p className="text-sm text-gray-700">{latest.address ?? "—"}</p>
+          </div>
           {latest.notes && (
             <div className="col-span-2">
               <p className="text-xs text-gray-400 mb-0.5">Notes</p>

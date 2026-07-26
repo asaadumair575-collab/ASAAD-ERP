@@ -7,6 +7,7 @@ type ParsedRow = {
   customerName: string;
   phone: string | null;
   city: string | null;
+  address: string | null;
   trackingNumber: string | null;
   shopifyOrderId: string | null;
   totalAmount: number;
@@ -23,6 +24,7 @@ function parseCSV(text: string): ParsedRow[] {
   const iName = idx("CUSTOMER_NAME");
   const iPhone = idx("CUSTOMER_PHONE");
   const iCity = idx("CITY_NAME");
+  const iAddress = idx("DELIVERY_ADDRESS");
   const iTracking = idx("TRACKING_NUMBER");
   const iAmount = idx("INVOICE_PAYMENT");
   const iDate = idx("TRANSACTION_DATE");
@@ -51,6 +53,7 @@ function parseCSV(text: string): ParsedRow[] {
       customerName,
       phone: get(iPhone).replace(/\s+/g, "") || null,
       city: get(iCity) || null,
+      address: get(iAddress) || null,
       trackingNumber: get(iTracking) || null,
       shopifyOrderId: get(iRef) || null,
       totalAmount: amount,

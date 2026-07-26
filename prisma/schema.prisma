@@ -230,6 +230,7 @@ model EcomOrder {
   adCost          Float           @default(0)
   packagingCost   Float           @default(0)
   returnCost      Float           @default(0)
+  address         String?
   trackingNumber  String?
   shopifyOrderId  String?
   createdAt       DateTime        @default(now())
