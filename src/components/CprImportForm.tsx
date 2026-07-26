@@ -139,16 +139,22 @@ export default function CprImportForm() {
                       <th className="py-2 px-4 text-right">COD</th>
                       <th className="py-2 px-4 text-right">Shipping</th>
                       <th className="py-2 px-4 text-right">Net (Receive)</th>
+                      <th className="py-2 px-4"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {deliveredFound.map((r) => (
-                      <tr key={r.trackingNumber}>
+                      <tr key={r.trackingNumber} className={r.alreadyProcessed ? "bg-yellow-50" : ""}>
                         <td className="py-2 px-4 font-mono text-xs text-gray-600">{r.trackingNumber}</td>
                         <td className="py-2 px-4 font-medium text-gray-700">E-{String(r.orderId).padStart(3, "0")} · {r.customerName}</td>
                         <td className="py-2 px-4 text-right tabular-nums text-gray-500">Rs {fmt(r.codAmount)}</td>
                         <td className="py-2 px-4 text-right tabular-nums text-red-400">− Rs {fmt(r.codAmount - r.netAmount)}</td>
                         <td className="py-2 px-4 text-right tabular-nums font-semibold text-green-700">Rs {fmt(r.netAmount)}</td>
+                        <td className="py-2 px-4 text-right">
+                          {r.alreadyProcessed && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Already settled</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -170,14 +176,20 @@ export default function CprImportForm() {
                       <th className="py-2 px-4">Tracking</th>
                       <th className="py-2 px-4">Customer</th>
                       <th className="py-2 px-4 text-right">Return Shipping Cost</th>
+                      <th className="py-2 px-4"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {returnedFound.map((r) => (
-                      <tr key={r.trackingNumber}>
+                      <tr key={r.trackingNumber} className={r.alreadyProcessed ? "bg-yellow-50" : ""}>
                         <td className="py-2 px-4 font-mono text-xs text-gray-600">{r.trackingNumber}</td>
                         <td className="py-2 px-4 font-medium text-gray-700">E-{String(r.orderId).padStart(3, "0")} · {r.customerName}</td>
                         <td className="py-2 px-4 text-right tabular-nums font-medium text-red-600">Rs {fmt(r.shippingCharges)}</td>
+                        <td className="py-2 px-4 text-right">
+                          {r.alreadyProcessed && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Already returned</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

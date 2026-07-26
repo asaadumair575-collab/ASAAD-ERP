@@ -1754,6 +1754,7 @@ export type CPRPreviewRow = CPRRow & {
   found: boolean;
   customerName: string | null;
   orderId: number | null;
+  alreadyProcessed: boolean;
 };
 
 export async function previewCPR(rows: CPRRow[]): Promise<CPRPreviewRow[]> {
@@ -1762,13 +1763,18 @@ export async function previewCPR(rows: CPRRow[]): Promise<CPRPreviewRow[]> {
   for (const row of rows) {
     const order = await prisma.ecomOrder.findFirst({
       where: { trackingNumber: row.trackingNumber.trim() },
-      select: { id: true, customerName: true },
+      select: { id: true, customerName: true, status: true, returned: true, shippingCost: true },
     });
+    const alreadyProcessed = !!order && (
+      (row.status === "Delivered" && (order.status === "PAID" || order.shippingCost > 0)) ||
+      (row.status === "Return" && order.returned)
+    );
     result.push({
       ...row,
       found: !!order,
       customerName: order?.customerName ?? null,
       orderId: order?.id ?? null,
+      alreadyProcessed,
     });
   }
   return result;
