@@ -137,11 +137,32 @@ export default function EcomImportModal() {
                 </div>
               )}
 
-              {preview.length > 0 && (
+              {preview.length > 0 && (() => {
+                // detect duplicate phones within this CSV
+                const phoneCount = new Map<string, number>();
+                preview.forEach((r) => { if (r.phone) phoneCount.set(r.phone, (phoneCount.get(r.phone) ?? 0) + 1); });
+                const dupPhones = new Set([...phoneCount.entries()].filter(([, c]) => c > 1).map(([p]) => p));
+                const dupRows = preview.filter((r) => r.phone && dupPhones.has(r.phone));
+
+                return (
                 <div className="space-y-3">
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-blue-700">
                     {preview.length} orders ready to import
                   </div>
+
+                  {dupPhones.size > 0 && (
+                    <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 space-y-2">
+                      <p className="text-sm font-semibold text-yellow-800">⚠️ {dupPhones.size} customer{dupPhones.size > 1 ? "s" : ""} ke do ya zyada orders hain is file mein — check karo:</p>
+                      <ul className="space-y-1">
+                        {dupRows.map((r, i) => (
+                          <li key={i} className="text-xs text-yellow-700 font-mono bg-yellow-100 rounded px-2 py-1">
+                            {r.customerName} · {r.phone} · {r.shopifyOrderId ?? r.trackingNumber ?? "—"} · Rs {r.totalAmount.toLocaleString("en-PK", { maximumFractionDigits: 0 })}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   <div className="border border-gray-200 rounded-xl overflow-hidden">
                     <div className="overflow-x-auto max-h-64">
                       <table className="w-full text-sm">
@@ -156,16 +177,22 @@ export default function EcomImportModal() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                          {preview.map((r, i) => (
-                            <tr key={i}>
+                          {preview.map((r, i) => {
+                            const isDup = !!(r.phone && dupPhones.has(r.phone));
+                            return (
+                            <tr key={i} className={isDup ? "bg-yellow-50" : ""}>
                               <td className="py-2 px-3 font-mono text-xs text-gray-600">{r.shopifyOrderId ?? "—"}</td>
-                              <td className="py-2 px-3 font-medium">{r.customerName}<br /><span className="text-xs text-gray-400">{r.phone}</span></td>
+                              <td className="py-2 px-3 font-medium">
+                                {isDup && <span className="text-yellow-600 mr-1">⚠</span>}
+                                {r.customerName}<br /><span className="text-xs text-gray-400">{r.phone}</span>
+                              </td>
                               <td className="py-2 px-3 text-gray-500">{r.city ?? "—"}</td>
                               <td className="py-2 px-3 text-gray-500 font-mono text-xs">{r.trackingNumber ?? "—"}</td>
                               <td className="py-2 px-3 text-right tabular-nums font-medium">Rs {r.totalAmount.toLocaleString("en-PK", { maximumFractionDigits: 0 })}</td>
                               <td className="py-2 px-3 text-gray-400 text-xs">{r.date.toISOString().slice(0, 10)}</td>
                             </tr>
-                          ))}
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -178,7 +205,8 @@ export default function EcomImportModal() {
                     {pending ? "Importing..." : `Import ${preview.length} Orders`}
                   </button>
                 </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         </div>
