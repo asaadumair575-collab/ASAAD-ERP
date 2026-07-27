@@ -330,6 +330,11 @@ export default function Sidebar({
           </NavLink>
         )}
         {isAdmin && (
+          <NavLink href="/backup" active={pathname.startsWith("/backup")} icon={icons.dispatch} onClick={closeMobile}>
+            Backup
+          </NavLink>
+        )}
+        {isAdmin && (
           <NavLink
             href="/settings/users"
             active={pathname.startsWith("/settings/users")}
