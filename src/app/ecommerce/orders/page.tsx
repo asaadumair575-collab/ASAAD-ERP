@@ -1,8 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { deleteAllEcomOrders } from "@/lib/actions";
 import { getSessionUser } from "@/lib/auth";
-import DeleteAllEcomOrdersButton from "@/components/DeleteAllEcomOrdersButton";
 import EcomImportModal from "@/components/EcomImportModal";
 import DateRangeFilter from "@/components/DateRangeFilter";
 
@@ -40,7 +38,6 @@ export default async function EcomOrdersPage({
         </div>
         <div className="flex items-center gap-2">
           <EcomImportModal />
-          {isAdmin && <DeleteAllEcomOrdersButton action={deleteAllEcomOrders} />}
           <Link href="/ecommerce/orders/new" className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
             + New Order
           </Link>
