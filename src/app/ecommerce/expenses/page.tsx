@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { createEcomExpense, deleteEcomExpense } from "@/lib/actions";
 import EcomExpenseForm from "@/components/EcomExpenseForm";
+import DateRangeFilter from "@/components/DateRangeFilter";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -58,9 +59,7 @@ export default async function EcomExpensesPage({
 
       {/* Filters */}
       <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
-        <input type="date" name="from" defaultValue={from ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-        <span className="text-xs text-gray-400">to</span>
-        <input type="date" name="to" defaultValue={to ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+        <DateRangeFilter from={from} to={to} />
         <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">Filter</button>
         {(from || to) && <a href="/ecommerce/expenses" className="text-sm text-gray-400 hover:text-black px-2">Clear</a>}
       </form>

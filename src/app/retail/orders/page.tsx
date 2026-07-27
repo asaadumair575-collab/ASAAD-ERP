@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import DateRangeFilter from "@/components/DateRangeFilter";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -65,18 +66,7 @@ export default async function RetailPage({
           placeholder="Search customer, phone, city..."
           className="flex-1 min-w-[180px] bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white"
         />
-        <input
-          type="date"
-          name="from"
-          defaultValue={from ?? ""}
-          className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-        />
-        <input
-          type="date"
-          name="to"
-          defaultValue={to ?? ""}
-          className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-        />
+        <DateRangeFilter from={from} to={to} />
         <select
           name="status"
           defaultValue={status ?? ""}

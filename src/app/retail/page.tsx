@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import DateRangeFilter from "@/components/DateRangeFilter";
 import {
   RetailDailyChart,
   RetailProductChart,
@@ -101,16 +102,7 @@ export default async function RetailOverviewPage({
 
       {/* Date filter */}
       <form method="GET" className="flex flex-wrap gap-3 items-end bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <div>
-          <label className="block text-xs text-gray-500 mb-1.5">From</label>
-          <input type="date" name="from" defaultValue={from}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1.5">To</label>
-          <input type="date" name="to" defaultValue={to}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
-        </div>
+        <DateRangeFilter from={from} to={to} />
         <button type="submit" className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors">
           Apply
         </button>

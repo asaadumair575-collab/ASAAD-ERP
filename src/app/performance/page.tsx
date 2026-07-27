@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import Link from "next/link";
+import DateRangeFilter from "@/components/DateRangeFilter";
 
 function pct(val: number, target: number) {
   if (!target) return 0;
@@ -172,9 +173,7 @@ export default async function PerformancePage({
             {users.map((u) => <option key={u.id} value={u.id}>{u.displayName ?? u.username}</option>)}
           </select>
         )}
-        <input type="date" name="from" defaultValue={from ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-        <span className="text-xs text-gray-400">to</span>
-        <input type="date" name="to" defaultValue={to ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+        <DateRangeFilter from={from} to={to} />
         <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">Filter</button>
         {(from || to || user) && <Link href="/performance" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>}
       </form>

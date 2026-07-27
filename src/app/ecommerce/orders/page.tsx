@@ -4,6 +4,7 @@ import { deleteAllEcomOrders } from "@/lib/actions";
 import { getSessionUser } from "@/lib/auth";
 import DeleteAllEcomOrdersButton from "@/components/DeleteAllEcomOrdersButton";
 import EcomImportModal from "@/components/EcomImportModal";
+import DateRangeFilter from "@/components/DateRangeFilter";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -48,8 +49,7 @@ export default async function EcomOrdersPage({
 
       <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
         <input type="text" name="q" defaultValue={q ?? ""} placeholder="Search customer, phone, city..." className="flex-1 min-w-[180px] bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-        <input type="date" name="from" defaultValue={from ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-        <input type="date" name="to" defaultValue={to ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+        <DateRangeFilter from={from} to={to} />
         <select name="status" defaultValue={status ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
           <option value="">All orders</option>
           <option value="PENDING">Pending</option>
