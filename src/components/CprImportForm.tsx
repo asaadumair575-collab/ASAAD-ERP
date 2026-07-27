@@ -17,30 +17,41 @@ export default function CprImportForm() {
   const [matching, setMatching] = useState(false);
   const [applying, setApplying] = useState(false);
 
-  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const [progress, setProgress] = useState<string | null>(null);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
     reset();
     setParsing(true);
-
-    const fd = new FormData();
-    fd.append("cpr", file);
-
-    fetch("/api/cpr", { method: "POST", body: fd })
-      .then(async (res) => {
+    const allRows: CPRRow[] = [];
+    try {
+      for (let i = 0; i < files.length; i++) {
+        setProgress(`Reading file ${i + 1} of ${files.length}...`);
+        const fd = new FormData();
+        fd.append("cpr", files[i]);
+        const res = await fetch("/api/cpr", { method: "POST", body: fd });
         const body = await res.json();
         if (!res.ok) throw new Error((body as { error?: string }).error ?? `Error ${res.status}`);
-        return body as CPRRow[];
-      })
-      .then(async (parsed) => {
-        if (parsed.length === 0) { setError("No orders found in PDF — check the file"); return; }
-        setRawRows(parsed);
-        setMatching(true);
-        const matched = await previewCPR(parsed);
-        setPreview(matched);
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
-      .finally(() => { setParsing(false); setMatching(false); });
+        allRows.push(...(body as CPRRow[]));
+      }
+      // deduplicate by trackingNumber — keep last seen
+      const seen = new Map<string, CPRRow>();
+      for (const r of allRows) seen.set(r.trackingNumber, r);
+      const merged = [...seen.values()];
+      if (merged.length === 0) { setError("No orders found in PDFs — check the files"); return; }
+      setRawRows(merged);
+      setProgress(null);
+      setMatching(true);
+      const matched = await previewCPR(merged);
+      setPreview(matched);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setParsing(false);
+      setMatching(false);
+      setProgress(null);
+    }
   }
 
   function handleApply() {
@@ -73,16 +84,18 @@ export default function CprImportForm() {
   return (
     <div className="space-y-5">
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <label className="text-sm font-medium text-gray-700 mb-2 block">CPR PDF File</label>
+        <label className="text-sm font-medium text-gray-700 mb-2 block">CPR PDF Files</label>
         <input
           ref={fileRef}
           type="file"
           accept=".pdf"
+          multiple
           onChange={handleFile}
           disabled={parsing || matching || applying}
           className="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-black file:text-white hover:file:bg-gray-800 disabled:opacity-50"
         />
-        {parsing && <p className="text-sm text-gray-400 mt-2">Reading PDF...</p>}
+        <p className="text-xs text-gray-400 mt-1.5">Multiple files select kar sakte ho — sab merge ho jayenge</p>
+        {progress && <p className="text-sm text-gray-400 mt-2">{progress}</p>}
         {matching && <p className="text-sm text-blue-500 mt-2">Matching orders in system...</p>}
       </div>
 
