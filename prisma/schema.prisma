@@ -257,6 +257,16 @@ model EcomPayment {
   date    DateTime  @default(now())
 }
 
+model CprBatch {
+  id           Int      @id @default(autoincrement())
+  appliedAt    DateTime @default(now())
+  fileCount    Int      @default(1)
+  payments     Int
+  returned     Int
+  notFound     Int
+  totalSettled Float
+}
+
 model EmpPerformance {
   id            Int      @id @default(autoincrement())
   user          User     @relation(fields: [userId], references: [id])

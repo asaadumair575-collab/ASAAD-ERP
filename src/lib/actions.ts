@@ -1810,7 +1810,7 @@ export async function previewCPR(rows: CPRRow[]): Promise<CPRPreviewRow[]> {
   return result;
 }
 
-export async function applyCPR(rows: CPRRow[]): Promise<{ payments: number; returned: number; notFound: number }> {
+export async function applyCPR(rows: CPRRow[], fileCount = 1): Promise<{ payments: number; returned: number; notFound: number }> {
   await requireAuth();
 
   let payments = 0;
@@ -1844,8 +1844,15 @@ export async function applyCPR(rows: CPRRow[]): Promise<{ payments: number; retu
     }
   }
 
+  // record batch for history
+  const totalSettled = rows
+    .filter((r) => r.status === "Delivered")
+    .reduce((s, r) => s + (r.netAmount ?? 0), 0);
+  await prisma.cprBatch.create({ data: { fileCount, payments, returned, notFound, totalSettled } });
+
   revalidatePath("/ecommerce");
   revalidatePath("/ecommerce/orders");
   revalidatePath("/ecommerce/finance");
+  revalidatePath("/ecommerce/cpr");
   return { payments, returned, notFound };
 }

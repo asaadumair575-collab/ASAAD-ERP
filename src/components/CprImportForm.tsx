@@ -10,6 +10,7 @@ function fmt(n: number) {
 export default function CprImportForm() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [rawRows, setRawRows] = useState<CPRRow[]>([]);
+  const [fileCount, setFileCount] = useState(1);
   const [preview, setPreview] = useState<CPRPreviewRow[] | null>(null);
   const [result, setResult] = useState<{ payments: number; returned: number; notFound: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +42,7 @@ export default function CprImportForm() {
       const merged = [...seen.values()];
       if (merged.length === 0) { setError("No orders found in PDFs — check the files"); return; }
       setRawRows(merged);
+      setFileCount(files.length);
       setProgress(null);
       setMatching(true);
       const matched = await previewCPR(merged);
@@ -58,7 +60,7 @@ export default function CprImportForm() {
     if (!rawRows.length) return;
     setError(null);
     setApplying(true);
-    applyCPR(rawRows)
+    applyCPR(rawRows, fileCount)
       .then((res) => {
         setResult(res);
         setPreview(null);
