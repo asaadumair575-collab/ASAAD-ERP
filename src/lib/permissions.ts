@@ -9,7 +9,7 @@ export const MODULES = [
   { key: "retail",     label: "Retail / COD",       href: "/retail",         yesNo: false },
   { key: "commission",     label: "Commission",          href: "/commission",      yesNo: false },
   { key: "emp_commission", label: "My Commission",        href: "/emp-commission",  yesNo: true  },
-  { key: "ecommerce",      label: "Ecommerce",            href: "/ecommerce",       yesNo: false },
+  { key: "ecommerce",      label: "Retail COD",           href: "/ecommerce",       yesNo: false },
 ] as const;
 
 // Sub-pages within each module dropdown
@@ -34,6 +34,7 @@ export const SUB_MODULES = [
   { parentKey: "leads",   key: "leads_sample_sent",    label: "Samples"         },
   { parentKey: "leads",      key: "leads_add",            label: "Add Shop"        },
   { parentKey: "ecommerce", key: "ecom_orders",          label: "Orders"          },
+  { parentKey: "ecommerce", key: "ecom_customers",       label: "Customers"       },
   { parentKey: "ecommerce", key: "ecom_finance",         label: "Finance"         },
   { parentKey: "ecommerce", key: "ecom_expenses",        label: "Expenses"        },
 ] as const;
