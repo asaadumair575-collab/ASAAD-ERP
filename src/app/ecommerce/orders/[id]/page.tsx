@@ -1,8 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { deleteEcomOrder } from "@/lib/actions";
-import { getSessionUser } from "@/lib/auth";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -11,16 +9,11 @@ function fmt(n: number) {
 export default async function EcomOrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const orderId = parseInt(id, 10);
-  const me = await getSessionUser();
-  const isAdmin = me?.isAdmin ?? false;
-
   const order = await prisma.ecomOrder.findUnique({
     where: { id: orderId },
     include: { items: true },
   });
   if (!order) notFound();
-
-  const deleteOrderBound = deleteEcomOrder.bind(null, order.id);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -86,15 +79,6 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
         </table>
       </div>
 
-      {isAdmin && (
-        <div className="pt-2">
-          <form action={deleteOrderBound}>
-            <button type="submit" className="w-full border border-red-200 text-red-500 text-sm font-medium py-2.5 rounded-xl hover:bg-red-50 transition-colors">
-              Delete Order
-            </button>
-          </form>
-        </div>
-      )}
     </div>
   );
 }
