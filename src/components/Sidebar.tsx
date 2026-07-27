@@ -205,7 +205,7 @@ export default function Sidebar({
                 isOnRetail ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               }`}
             >
-              <span className="flex items-center gap-2.5">{icons.retail} Retail / COD</span>
+              <span className="flex items-center gap-2.5">{icons.retail} Retail Advance</span>
               <span className={`transition-transform text-gray-400 ${openSection === "retail" ? "rotate-90" : ""}`}>{icons.chevron}</span>
             </button>
             {openSection === "retail" && (
@@ -237,7 +237,7 @@ export default function Sidebar({
           <>
             <button type="button" onClick={() => toggleSection("ecommerce")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEcommerce ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}>
-              <span className="flex items-center gap-2.5">{icons.retail} Ecommerce</span>
+              <span className="flex items-center gap-2.5">{icons.retail} Retail COD</span>
               <span className={`transition-transform text-gray-400 ${openSection === "ecommerce" ? "rotate-90" : ""}`}>{icons.chevron}</span>
             </button>
             {openSection === "ecommerce" && (
