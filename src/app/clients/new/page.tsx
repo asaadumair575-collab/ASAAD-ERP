@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
+import Link from "next/link";
 
 export default async function NewClientPage({
   searchParams,
@@ -15,6 +16,8 @@ export default async function NewClientPage({
           {error}
         </div>
       )}
+
+      <Link href="/clients" className="text-sm text-gray-400 hover:text-black">← Customers</Link>
 
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shrink-0">
