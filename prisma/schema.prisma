@@ -106,6 +106,7 @@ model User {
   createdAt            DateTime             @default(now())
   empCommissionEntries EmpCommissionEntry[]
   empPerformances      EmpPerformance[]
+  retailOrders         RetailOrder[]
 }
 
 model EmpCommissionEntry {
@@ -180,6 +181,8 @@ model RetailOrder {
   notes            String?
   date             DateTime         @default(now())
   createdAt        DateTime         @default(now())
+  createdBy        User?            @relation(fields: [createdByUserId], references: [id])
+  createdByUserId  Int?
   items            RetailOrderItem[]
   payments         RetailPayment[]
 }

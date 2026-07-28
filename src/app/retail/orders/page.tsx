@@ -34,7 +34,7 @@ export default async function RetailPage({
           }
         : {}),
     },
-    include: { items: true },
+    include: { items: true, createdBy: { select: { displayName: true, username: true } } },
     orderBy: { date: "desc" },
   });
 
@@ -120,6 +120,9 @@ export default async function RetailPage({
                       <p className="font-medium">{o.customerName}</p>
                       {(o.phone || o.city) && (
                         <p className="text-xs text-gray-400">{[o.phone, o.city].filter(Boolean).join(" · ")}</p>
+                      )}
+                      {o.createdBy && (
+                        <p className="text-xs text-blue-400 mt-0.5">{o.createdBy.displayName ?? o.createdBy.username}</p>
                       )}
                     </td>
                     <td className="py-3 px-5 text-gray-500">{o.date.toISOString().slice(0, 10)}</td>

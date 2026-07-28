@@ -1228,7 +1228,7 @@ export async function updateSampleResponse(sampleId: number, formData: FormData)
 // ── Retail / COD ──────────────────────────────────────────────────────────────
 
 export async function createRetailOrder(formData: FormData) {
-  await requireAuth();
+  const me = await requireAuth();
   const retailCustomerIdRaw = formData.get("retailCustomerId");
   const retailCustomerId = retailCustomerIdRaw ? parseInt(String(retailCustomerIdRaw), 10) : null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
@@ -1270,6 +1270,7 @@ export async function createRetailOrder(formData: FormData) {
   const order = await prisma.retailOrder.create({
     data: {
       customerName, phone, city, notes, deliveryCharge, totalAmount,
+      createdByUserId: me.id,
       retailCustomerId: retailCustomerId ?? undefined,
       status: deliveryCharge > 0 ? "PARTIAL" : "PENDING",
       items: { create: items },
