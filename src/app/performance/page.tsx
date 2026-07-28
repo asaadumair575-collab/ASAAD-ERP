@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
+import PerformanceRowActions from "./log/PerformanceRowActions";
 
 function pct(val: number, target: number) {
   if (!target) return 0;
@@ -256,6 +257,7 @@ export default async function PerformancePage({
                   <th className="py-2 px-4 text-right">Conversion</th>
                   {target && <th className="py-2 px-4 text-right">Target %</th>}
                   <th className="py-2 px-4">Notes</th>
+                  <th className="py-2 px-4" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -278,6 +280,9 @@ export default async function PerformancePage({
                         </td>
                       )}
                       <td className="py-3 px-4 text-xs text-gray-400">{e.notes ?? "—"}</td>
+                      <td className="py-3 px-4">
+                        <PerformanceRowActions id={e.id} calls={e.calls} newOrders={e.newOrders} notes={e.notes} />
+                      </td>
                     </tr>
                   );
                 })}
