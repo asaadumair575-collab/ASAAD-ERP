@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/auth";
 import { deleteRetailCustomer, updateRetailCustomer } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 import DeleteButton from "@/components/DeleteButton";
+import CopyButton from "@/components/CopyButton";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -80,7 +81,10 @@ export default async function RetailCustomerDetailPage({
         <h2 className="text-sm font-semibold text-gray-700">Edit Info</h2>
         <form action={updateBound} className="space-y-3">
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">Name <span className="text-black">*</span></label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs text-gray-500">Name <span className="text-black">*</span></label>
+              <CopyButton value={customer.name} />
+            </div>
             <input
               type="text"
               name="name"
@@ -91,7 +95,10 @@ export default async function RetailCustomerDetailPage({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">Phone</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs text-gray-500">Phone</label>
+                <CopyButton value={customer.phone ?? ""} />
+              </div>
               <input
                 type="tel"
                 name="phone"
@@ -100,7 +107,10 @@ export default async function RetailCustomerDetailPage({
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">City</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs text-gray-500">City</label>
+                <CopyButton value={customer.city ?? ""} />
+              </div>
               <input
                 type="text"
                 name="city"
@@ -110,7 +120,10 @@ export default async function RetailCustomerDetailPage({
             </div>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">Address</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs text-gray-500">Address</label>
+              <CopyButton value={(customer as typeof customer & { address?: string }).address ?? ""} />
+            </div>
             <input
               type="text"
               name="address"
@@ -120,7 +133,10 @@ export default async function RetailCustomerDetailPage({
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">Notes</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs text-gray-500">Notes</label>
+              <CopyButton value={customer.notes ?? ""} />
+            </div>
             <textarea
               name="notes"
               rows={2}
