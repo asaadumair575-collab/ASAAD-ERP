@@ -1857,3 +1857,23 @@ export async function applyCPR(rows: CPRRow[], fileCount = 1): Promise<{ payment
   revalidatePath("/ecommerce/cpr");
   return { payments, returned, notFound };
 }
+
+export async function reportBug(formData: FormData) {
+  const me = await requireAuth();
+  const title = (formData.get("title") as string | null)?.trim();
+  const description = (formData.get("description") as string | null)?.trim();
+  const page = (formData.get("page") as string | null)?.trim() || null;
+  if (!title || !description) throw new Error("Title and description required");
+  await prisma.bugReport.create({
+    data: { title, description, page, reportedById: me.id },
+  });
+}
+
+export async function updateBugReportStatus(id: number, status: string, adminNote?: string) {
+  await requireAdmin();
+  await prisma.bugReport.update({
+    where: { id },
+    data: { status, ...(adminNote !== undefined ? { adminNote } : {}) },
+  });
+  revalidatePath("/bug-reports");
+}

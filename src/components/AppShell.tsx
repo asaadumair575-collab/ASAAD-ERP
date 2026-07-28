@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
+import ReportBugButton from "@/components/ReportBugButton";
 import type { UserPermissions } from "@/lib/permissions";
 
 export default function AppShell({
@@ -40,6 +41,7 @@ export default function AppShell({
           </div>
         </main>
       </div>
+      <ReportBugButton />
     </div>
   );
 }

@@ -344,6 +344,16 @@ export default function Sidebar({
             Users
           </NavLink>
         )}
+        {isAdmin && (
+          <NavLink
+            href="/bug-reports"
+            active={pathname.startsWith("/bug-reports")}
+            icon={icons.sales}
+            onClick={closeMobile}
+          >
+            Bug Reports
+          </NavLink>
+        )}
       </nav>
 
       <div className="px-3 py-3 border-t border-gray-100 space-y-0.5 shrink-0">

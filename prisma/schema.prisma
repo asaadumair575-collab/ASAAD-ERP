@@ -107,6 +107,7 @@ model User {
   empCommissionEntries EmpCommissionEntry[]
   empPerformances      EmpPerformance[]
   retailOrders         RetailOrder[]
+  bugReports           BugReport[]
 }
 
 model EmpCommissionEntry {
@@ -296,6 +297,19 @@ model AppSetting {
   key   String @unique
   value String @db.Text
 }
+
+model BugReport {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String   @db.Text
+  page        String?
+  status      String   @default("OPEN")
+  adminNote   String?
+  reportedBy  User?    @relation(fields: [reportedById], references: [id])
+  reportedById Int?
+  createdAt   DateTime @default(now())
+}
+
 
 model EcomExpense {
   id        Int      @id @default(autoincrement())

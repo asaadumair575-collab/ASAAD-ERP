@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS "BugReport" (
+  "id" SERIAL PRIMARY KEY,
+  "title" TEXT NOT NULL,
+  "description" TEXT NOT NULL,
+  "page" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'OPEN',
+  "adminNote" TEXT,
+  "reportedById" INTEGER REFERENCES "User"("id") ON DELETE SET NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
