@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { logEmpPerformance, deleteEmpPerformance } from "@/lib/actions";
+import { logEmpPerformance } from "@/lib/actions";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import PerformanceRowActions from "./PerformanceRowActions";
 
 export default async function PerformanceLogPage() {
   const me = await getSessionUser();
@@ -93,7 +94,7 @@ export default async function PerformanceLogPage() {
                   <th className="py-2 px-4 text-right">Calls</th>
                   <th className="py-2 px-4 text-right">Orders</th>
                   {target && <th className="py-2 px-4 text-right">Target %</th>}
-                  {isAdmin && <th className="py-2 px-4" />}
+                  <th className="py-2 px-4" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -113,13 +114,14 @@ export default async function PerformanceLogPage() {
                           </span>
                         </td>
                       )}
-                      {isAdmin && (
-                        <td className="py-3 px-4">
-                          <form action={deleteEmpPerformance.bind(null, e.id)}>
-                            <button type="submit" className="text-xs text-red-400 hover:text-red-600">Delete</button>
-                          </form>
-                        </td>
-                      )}
+                      <td className="py-3 px-4">
+                        <PerformanceRowActions
+                          id={e.id}
+                          calls={e.calls}
+                          newOrders={e.newOrders}
+                          notes={e.notes}
+                        />
+                      </td>
                     </tr>
                   );
                 })}

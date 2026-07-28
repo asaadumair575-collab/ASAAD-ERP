@@ -1877,3 +1877,31 @@ export async function updateBugReportStatus(id: number, status: string, adminNot
   });
   revalidatePath("/bug-reports");
 }
+
+export async function updateEmpPerformance(id: number, formData: FormData) {
+  const me = await requireAuth();
+  const entry = await prisma.empPerformance.findUnique({ where: { id } });
+  if (!entry) throw new Error("Not found");
+  if (!me.isAdmin && entry.userId !== me.id) throw new Error("Unauthorized");
+
+  const calls = parseInt(String(formData.get("calls") ?? "0")) || 0;
+  const newOrders = parseInt(String(formData.get("newOrders") ?? "0")) || 0;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  await prisma.empPerformance.update({
+    where: { id },
+    data: { calls, newOrders, notes },
+  });
+  revalidatePath("/performance");
+  revalidatePath("/performance/log");
+}
+
+export async function deleteEmpPerformanceOwn(id: number) {
+  const me = await requireAuth();
+  const entry = await prisma.empPerformance.findUnique({ where: { id } });
+  if (!entry) throw new Error("Not found");
+  if (!me.isAdmin && entry.userId !== me.id) throw new Error("Unauthorized");
+  await prisma.empPerformance.delete({ where: { id } });
+  revalidatePath("/performance");
+  revalidatePath("/performance/log");
+}
