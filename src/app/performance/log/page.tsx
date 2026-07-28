@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { logEmpPerformance } from "@/lib/actions";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import PerformanceRowActions from "./PerformanceRowActions";
+import PerformanceLogForm from "./PerformanceLogForm";
 
 export default async function PerformanceLogPage() {
   const me = await getSessionUser();
@@ -41,43 +41,7 @@ export default async function PerformanceLogPage() {
         <div className="px-5 py-3 border-b border-gray-100">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">New Entry</p>
         </div>
-        <form action={logEmpPerformance} className="p-5 grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Date</label>
-            <input name="date" type="date" defaultValue={todayStr} required
-              className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-          </div>
-          {isAdmin && (
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Employee</label>
-              <select name="userId" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
-                <option value="">Self</option>
-                {users.map((u) => <option key={u.id} value={u.id}>{u.displayName ?? u.username}</option>)}
-              </select>
-            </div>
-          )}
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Calls</label>
-            <input name="calls" type="number" min="0" defaultValue="0"
-              className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">New Orders</label>
-            <input name="newOrders" type="number" min="0" defaultValue="0"
-              className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-          </div>
-          <div className="col-span-2">
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Notes</label>
-            <input name="notes" type="text" placeholder="Optional"
-              className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-          </div>
-          <div className="col-span-2">
-            <button type="submit"
-              className="w-full bg-black text-white text-sm font-medium py-2.5 rounded-xl hover:bg-gray-800 transition-colors">
-              Save Entry
-            </button>
-          </div>
-        </form>
+        <PerformanceLogForm isAdmin={isAdmin} users={users} todayStr={todayStr} />
       </div>
 
       {entries.length > 0 && (
