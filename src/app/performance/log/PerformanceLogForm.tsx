@@ -81,12 +81,11 @@ export default function PerformanceLogForm({
         />
       </div>
       <div className="col-span-2">
-        <label className="text-sm font-medium text-gray-700 mb-1 block">Notes <span className="text-red-500">*</span></label>
+        <label className="text-sm font-medium text-gray-700 mb-1 block">Notes</label>
         <input
           name="notes"
           type="text"
-          required
-          placeholder="Aaj kya hua batao..."
+          placeholder="Optional"
           className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
         />
       </div>
