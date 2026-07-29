@@ -5,7 +5,7 @@ import { useRef, useState, useTransition } from "react";
 import { sendMessage } from "@/lib/actions";
 
 type UserMin = { id: number; displayName: string | null; username: string };
-type Conv = { user: UserMin; lastMsg: { body: string; createdAt: Date } | null; unread: number };
+type Conv = { user: UserMin; lastMsg: { body: string; createdAt: string } | null; unread: number };
 type Msg = { id: number; senderId: number; body: string; createdAt: string; readAt: string | null };
 
 function name(u: UserMin) { return u.displayName ?? u.username; }
@@ -50,9 +50,13 @@ export default function MessagesUI({
     const body = text.trim();
     setText("");
     startTransition(async () => {
-      await sendMessage(activeChatId, body);
-      router.refresh();
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+      try {
+        await sendMessage(activeChatId, body);
+        router.refresh();
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+      } catch {
+        setText(body);
+      }
     });
   }
 
@@ -99,7 +103,7 @@ export default function MessagesUI({
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-gray-800 truncate">{name(c.user)}</p>
                   {c.lastMsg && (
-                    <p className="text-xs text-gray-400 shrink-0 ml-1">{dateLabel(c.lastMsg.createdAt.toString())}</p>
+                    <p className="text-xs text-gray-400 shrink-0 ml-1">{dateLabel(c.lastMsg.createdAt)}</p>
                   )}
                 </div>
                 <p className="text-xs text-gray-400 truncate mt-0.5">{c.lastMsg?.body ?? "No messages yet"}</p>

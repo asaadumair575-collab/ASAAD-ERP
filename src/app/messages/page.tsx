@@ -60,9 +60,15 @@ export default async function MessagesPage({
     if (u) convMap.set(activeChatId, { user: u, lastMsg: null as never, unread: 0 });
   }
 
-  const conversations = Array.from(convMap.values()).sort((a, b) =>
-    (b.lastMsg?.createdAt?.getTime() ?? 0) - (a.lastMsg?.createdAt?.getTime() ?? 0)
-  );
+  const conversations = Array.from(convMap.values())
+    .sort((a, b) => (b.lastMsg?.createdAt?.getTime() ?? 0) - (a.lastMsg?.createdAt?.getTime() ?? 0))
+    .map((c) => ({
+      user: c.user,
+      unread: c.unread,
+      lastMsg: c.lastMsg
+        ? { body: c.lastMsg.body, createdAt: c.lastMsg.createdAt.toISOString() }
+        : null,
+    }));
 
   const activeMsgs = activeChatId
     ? allMessages.filter(
