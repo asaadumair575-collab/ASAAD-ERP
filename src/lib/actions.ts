@@ -1921,3 +1921,38 @@ export async function markConversationRead(otherUserId: number) {
   });
   revalidatePath("/messages");
 }
+
+export async function bulkImportRetailOrders(rows: {
+  customerName: string;
+  phone?: string;
+  city?: string;
+  notes?: string;
+  deliveryCharge: number;
+  items: { description: string; quantity: number; rate: number }[];
+}[]) {
+  const me = await requireAuth();
+  let created = 0;
+  for (const row of rows) {
+    if (!row.customerName || row.items.length === 0) continue;
+    const totalAmount = round2(row.items.reduce((s, i) => s + i.quantity * i.rate, 0));
+    await prisma.retailOrder.create({
+      data: {
+        customerName: row.customerName,
+        phone: row.phone || null,
+        city: row.city || null,
+        notes: row.notes || null,
+        deliveryCharge: row.deliveryCharge,
+        totalAmount,
+        createdByUserId: me.id,
+        status: row.deliveryCharge > 0 ? "PARTIAL" : "PENDING",
+        items: { create: row.items.map((i) => ({ description: i.description, quantity: i.quantity, rate: i.rate })) },
+        payments: row.deliveryCharge > 0
+          ? { create: [{ amount: row.deliveryCharge, note: "Delivery Advance" }] }
+          : undefined,
+      },
+    });
+    created++;
+  }
+  revalidatePath("/retail/orders");
+  return created;
+}

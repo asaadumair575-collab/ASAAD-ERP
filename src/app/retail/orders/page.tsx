@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
+import RetailImportModal from "@/components/RetailImportModal";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -49,12 +50,15 @@ export default async function RetailPage({
             Small orders — collect a delivery advance, ship the goods, receive payment later.
           </p>
         </div>
-        <Link
-          href="/retail/orders/new"
-          className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-        >
-          + New Order
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          <RetailImportModal />
+          <Link
+            href="/retail/orders/new"
+            className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            + New Order
+          </Link>
+        </div>
       </div>
 
       {/* Filter bar */}
