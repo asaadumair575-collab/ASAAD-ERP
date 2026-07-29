@@ -108,6 +108,8 @@ model User {
   empPerformances      EmpPerformance[]
   retailOrders         RetailOrder[]
   bugReports           BugReport[]
+  messagesSent         Message[]   @relation("MessagesSent")
+  messagesReceived     Message[]   @relation("MessagesReceived")
 }
 
 model EmpCommissionEntry {
@@ -296,6 +298,17 @@ model AppSetting {
   id    Int    @id @default(autoincrement())
   key   String @unique
   value String @db.Text
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  sender     User     @relation("MessagesSent", fields: [senderId], references: [id])
+  senderId   Int
+  receiver   User     @relation("MessagesReceived", fields: [receiverId], references: [id])
+  receiverId Int
+  body       String   @db.Text
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
 }
 
 model BugReport {

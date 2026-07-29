@@ -1905,3 +1905,19 @@ export async function deleteEmpPerformanceOwn(id: number) {
   revalidatePath("/performance");
   revalidatePath("/performance/log");
 }
+
+export async function sendMessage(receiverId: number, body: string) {
+  const me = await requireAuth();
+  if (!body.trim()) throw new Error("Message cannot be empty");
+  await prisma.message.create({ data: { senderId: me.id, receiverId, body: body.trim() } });
+  revalidatePath("/messages");
+}
+
+export async function markConversationRead(otherUserId: number) {
+  const me = await requireAuth();
+  await prisma.message.updateMany({
+    where: { senderId: otherUserId, receiverId: me.id, readAt: null },
+    data: { readAt: new Date() },
+  });
+  revalidatePath("/messages");
+}

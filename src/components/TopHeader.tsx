@@ -3,13 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useTransition } from "react";
 import { logoutAction } from "@/lib/actions";
+import Link from "next/link";
 
 export default function TopHeader({
   onMenuClick,
   username,
+  unreadCount = 0,
 }: {
   onMenuClick: () => void;
   username: string | null;
+  unreadCount?: number;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -64,12 +67,17 @@ export default function TopHeader({
       </form>
 
       <div className="flex items-center gap-1 ml-auto">
-        {/* Notification bell */}
-        <button type="button" className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
-          <svg viewBox="0 0 20 20" fill="none" className="w-4.5 h-4.5 w-[18px] h-[18px]">
+        {/* Messages bell */}
+        <Link href="/messages" className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+          <svg viewBox="0 0 20 20" fill="none" className="w-[18px] h-[18px]">
             <path d="M10 2a6 6 0 0 0-6 6v2.5l-1.5 2.5h15L16 10.5V8a6 6 0 0 0-6-6ZM8 16a2 2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-        </button>
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </Link>
 
         {/* User menu */}
         <div className="relative" ref={userRef}>
@@ -95,6 +103,21 @@ export default function TopHeader({
                 <p className="text-xs font-medium text-gray-900 truncate">{username}</p>
                 <p className="text-xs text-gray-400 mt-0.5">Logged in</p>
               </div>
+              <Link
+                href="/messages"
+                onClick={() => setUserOpen(false)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              >
+                <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+                  <path d="M2 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4l-2 2V5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Messages
+                {unreadCount > 0 && (
+                  <span className="ml-auto w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </Link>
               <button
                 type="button"
                 onClick={() => startTransition(() => logoutAction())}

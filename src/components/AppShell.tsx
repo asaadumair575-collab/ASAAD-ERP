@@ -12,12 +12,14 @@ export default function AppShell({
   isAdmin,
   username,
   permissions,
+  unreadCount = 0,
 }: {
   children: React.ReactNode;
   businessName: string;
   isAdmin: boolean;
   username: string | null;
   permissions?: UserPermissions;
+  unreadCount?: number;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -34,6 +36,7 @@ export default function AppShell({
         <TopHeader
           onMenuClick={() => setMobileOpen(true)}
           username={username}
+          unreadCount={unreadCount}
         />
         <main className="flex-1 overflow-y-auto overscroll-none bg-gray-50 [-webkit-overflow-scrolling:touch]">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 print:max-w-none print:p-0">

@@ -5,6 +5,7 @@ import AppShell from "@/components/AppShell";
 import { getBusinessProfile } from "@/lib/businessProfile";
 import { getSessionUser } from "@/lib/auth";
 import { parsePermissions } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -47,6 +48,10 @@ export default async function RootLayout({
     ? [null, null]
     : await Promise.all([getBusinessProfile(), getSessionUser()]);
 
+  const unreadCount = me
+    ? await prisma.message.count({ where: { receiverId: me.id, readAt: null } })
+    : 0;
+
   if (isLoginPage) {
     return (
       <html
@@ -69,6 +74,7 @@ export default async function RootLayout({
           isAdmin={me?.isAdmin ?? false}
           username={me?.displayName ?? me?.username ?? null}
           permissions={parsePermissions(me?.permissions)}
+          unreadCount={unreadCount}
         >
           {children}
         </AppShell>
