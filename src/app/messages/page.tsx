@@ -14,87 +14,113 @@ export default async function MessagesPage({
   const { with: withParam } = await searchParams;
   const activeChatId = withParam ? parseInt(withParam) : null;
 
-  // All users except self
-  const users = await prisma.user.findMany({
-    where: { id: { not: me.id } },
-    select: { id: true, displayName: true, username: true },
-    orderBy: { displayName: "asc" },
-  });
+  try {
+    const users = await prisma.user.findMany({
+      where: { id: { not: me.id } },
+      select: { id: true, displayName: true, username: true },
+      orderBy: { displayName: "asc" },
+    });
 
-  // All messages involving me (safe if table doesn't exist yet)
-  const allMessages = await prisma.message.findMany({
-    where: { OR: [{ senderId: me.id }, { receiverId: me.id }] },
-    orderBy: { createdAt: "asc" },
-    include: {
-      sender: { select: { id: true, displayName: true, username: true } },
-      receiver: { select: { id: true, displayName: true, username: true } },
-    },
-  }).catch(() => []);
+    const allMessages = await prisma.message.findMany({
+      where: { OR: [{ senderId: me.id }, { receiverId: me.id }] },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        senderId: true,
+        receiverId: true,
+        body: true,
+        readAt: true,
+        createdAt: true,
+        sender: { select: { id: true, displayName: true, username: true } },
+        receiver: { select: { id: true, displayName: true, username: true } },
+      },
+    });
 
-  // Mark active chat as read server-side
-  if (activeChatId) {
-    await prisma.message.updateMany({
-      where: { senderId: activeChatId, receiverId: me.id, readAt: null },
-      data: { readAt: new Date() },
-    }).catch(() => null);
-  }
-
-  // Build conversation list: one entry per other user I've talked to
-  const convMap = new Map<number, { user: { id: number; displayName: string | null; username: string }; lastMsg: (typeof allMessages)[0]; unread: number }>();
-
-  for (const m of allMessages) {
-    const otherId = m.senderId === me.id ? m.receiverId : m.senderId;
-    const otherUser = m.senderId === me.id ? m.receiver : m.sender;
-    const existing = convMap.get(otherId);
-    const unreadInc = m.receiverId === me.id && !m.readAt && m.senderId === otherId ? 1 : 0;
-    if (!existing) {
-      convMap.set(otherId, { user: otherUser, lastMsg: m, unread: unreadInc });
-    } else {
-      convMap.set(otherId, { ...existing, lastMsg: m, unread: existing.unread + unreadInc });
+    // Mark active conversation as read
+    if (activeChatId) {
+      await prisma.message.updateMany({
+        where: { senderId: activeChatId, receiverId: me.id, readAt: null },
+        data: { readAt: new Date() },
+      });
     }
+
+    // Build conversation summaries
+    const convMap = new Map<number, {
+      userId: number;
+      displayName: string | null;
+      username: string;
+      lastBody: string;
+      lastAt: string;
+      unread: number;
+    }>();
+
+    for (const m of allMessages) {
+      const isFromMe = m.senderId === me.id;
+      const otherId = isFromMe ? m.receiverId : m.senderId;
+      const other = isFromMe ? m.receiver : m.sender;
+      const unreadInc = !isFromMe && !m.readAt ? 1 : 0;
+      const existing = convMap.get(otherId);
+      convMap.set(otherId, {
+        userId: otherId,
+        displayName: other.displayName,
+        username: other.username,
+        lastBody: m.body,
+        lastAt: m.createdAt.toISOString(),
+        unread: (existing?.unread ?? 0) + unreadInc,
+      });
+    }
+
+    // Add placeholder for active chat if not in map
+    if (activeChatId && !convMap.has(activeChatId)) {
+      const u = users.find((u) => u.id === activeChatId);
+      if (u) {
+        convMap.set(activeChatId, {
+          userId: activeChatId,
+          displayName: u.displayName,
+          username: u.username,
+          lastBody: "",
+          lastAt: "",
+          unread: 0,
+        });
+      }
+    }
+
+    const conversations = Array.from(convMap.values()).sort((a, b) =>
+      (b.lastAt || "").localeCompare(a.lastAt || "")
+    );
+
+    const activeMessages = activeChatId
+      ? allMessages
+          .filter(
+            (m) =>
+              (m.senderId === me.id && m.receiverId === activeChatId) ||
+              (m.senderId === activeChatId && m.receiverId === me.id)
+          )
+          .map((m) => ({
+            id: m.id,
+            senderId: m.senderId,
+            body: m.body,
+            createdAt: m.createdAt.toISOString(),
+            readAt: m.readAt ? m.readAt.toISOString() : null,
+          }))
+      : [];
+
+    return (
+      <MessagesUI
+        me={{ id: me.id, displayName: me.displayName ?? null, username: me.username }}
+        users={users.map((u) => ({ id: u.id, displayName: u.displayName, username: u.username }))}
+        conversations={conversations}
+        activeChatId={activeChatId}
+        activeMessages={activeMessages}
+      />
+    );
+  } catch (err) {
+    console.error("Messages page error:", err);
+    return (
+      <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
+        <p className="text-gray-500 text-sm">Messages could not be loaded.</p>
+        <p className="text-gray-400 text-xs mt-1">Please try refreshing the page.</p>
+      </div>
+    );
   }
-
-  // If active chat not in convMap yet, add placeholder
-  if (activeChatId && !convMap.has(activeChatId)) {
-    const u = users.find((u) => u.id === activeChatId);
-    if (u) convMap.set(activeChatId, { user: u, lastMsg: null as never, unread: 0 });
-  }
-
-  const conversations = Array.from(convMap.values())
-    .sort((a, b) => {
-      const ta = a.lastMsg?.createdAt instanceof Date ? a.lastMsg.createdAt.getTime() : 0;
-      const tb = b.lastMsg?.createdAt instanceof Date ? b.lastMsg.createdAt.getTime() : 0;
-      return tb - ta;
-    })
-    .map((c) => ({
-      user: c.user,
-      unread: c.unread,
-      lastMsg: c.lastMsg?.createdAt instanceof Date
-        ? { body: c.lastMsg.body, createdAt: c.lastMsg.createdAt.toISOString() }
-        : null,
-    }));
-
-  const activeMsgs = activeChatId
-    ? allMessages.filter(
-        (m) =>
-          (m.senderId === me.id && m.receiverId === activeChatId) ||
-          (m.senderId === activeChatId && m.receiverId === me.id)
-      )
-    : [];
-
-  return (
-    <MessagesUI
-      me={{ id: me.id, displayName: me.displayName ?? null, username: me.username }}
-      users={users}
-      conversations={conversations}
-      activeChatId={activeChatId}
-      activeMessages={activeMsgs.map((m) => ({
-        id: m.id,
-        senderId: m.senderId,
-        body: m.body,
-        createdAt: m.createdAt.toISOString(),
-        readAt: m.readAt?.toISOString() ?? null,
-      }))}
-    />
-  );
 }

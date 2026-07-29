@@ -5,7 +5,7 @@ import { useRef, useState, useTransition } from "react";
 import { sendMessage } from "@/lib/actions";
 
 type UserMin = { id: number; displayName: string | null; username: string };
-type Conv = { user: UserMin; lastMsg: { body: string; createdAt: string } | null; unread: number };
+type Conv = { userId: number; displayName: string | null; username: string; lastBody: string; lastAt: string; unread: number };
 type Msg = { id: number; senderId: number; body: string; createdAt: string; readAt: string | null };
 
 function name(u: UserMin) { return u.displayName ?? u.username; }
@@ -43,7 +43,9 @@ export default function MessagesUI({
   const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const activeUser = activeChatId ? [...users, me].find((u) => u.id === activeChatId) ?? null : null;
+  const activeUser = activeChatId
+    ? users.find((u) => u.id === activeChatId) ?? (activeChatId === me.id ? me : null)
+    : null;
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -93,21 +95,21 @@ export default function MessagesUI({
           )}
           {conversations.map((c) => (
             <button
-              key={c.user.id}
-              onClick={() => router.push(`/messages?with=${c.user.id}`)}
-              className={`w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 ${activeChatId === c.user.id ? "bg-gray-50" : ""}`}
+              key={c.userId}
+              onClick={() => router.replace(`/messages?with=${c.userId}`)}
+              className={`w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 ${activeChatId === c.userId ? "bg-gray-50" : ""}`}
             >
               <span className="w-9 h-9 rounded-full bg-zinc-800 text-white text-sm font-semibold flex items-center justify-center shrink-0">
-                {initial(c.user)}
+                {(c.displayName ?? c.username).charAt(0).toUpperCase()}
               </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-gray-800 truncate">{name(c.user)}</p>
-                  {c.lastMsg && (
-                    <p className="text-xs text-gray-400 shrink-0 ml-1">{dateLabel(c.lastMsg.createdAt)}</p>
+                  <p className="text-sm font-medium text-gray-800 truncate">{c.displayName ?? c.username}</p>
+                  {c.lastAt && (
+                    <p className="text-xs text-gray-400 shrink-0 ml-1">{dateLabel(c.lastAt)}</p>
                   )}
                 </div>
-                <p className="text-xs text-gray-400 truncate mt-0.5">{c.lastMsg?.body ?? "No messages yet"}</p>
+                <p className="text-xs text-gray-400 truncate mt-0.5">{c.lastBody || "No messages yet"}</p>
               </div>
               {c.unread > 0 && (
                 <span className="w-5 h-5 rounded-full bg-black text-white text-xs font-bold flex items-center justify-center shrink-0">
