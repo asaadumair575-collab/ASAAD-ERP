@@ -21,7 +21,7 @@ export default async function MessagesPage({
     orderBy: { displayName: "asc" },
   });
 
-  // All messages involving me
+  // All messages involving me (safe if table doesn't exist yet)
   const allMessages = await prisma.message.findMany({
     where: { OR: [{ senderId: me.id }, { receiverId: me.id }] },
     orderBy: { createdAt: "asc" },
@@ -29,14 +29,14 @@ export default async function MessagesPage({
       sender: { select: { id: true, displayName: true, username: true } },
       receiver: { select: { id: true, displayName: true, username: true } },
     },
-  });
+  }).catch(() => []);
 
   // Mark active chat as read server-side
   if (activeChatId) {
     await prisma.message.updateMany({
       where: { senderId: activeChatId, receiverId: me.id, readAt: null },
       data: { readAt: new Date() },
-    });
+    }).catch(() => null);
   }
 
   // Build conversation list: one entry per other user I've talked to
