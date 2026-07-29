@@ -156,9 +156,20 @@ export default function MessagesUI({
                               : "bg-gray-100 text-gray-800 rounded-bl-sm"
                           }`}>
                             <p>{m.body}</p>
-                            <p className={`text-xs mt-1 ${isMine ? "text-gray-400" : "text-gray-400"} text-right`}>
-                              {timeStr(m.createdAt)}
-                              {isMine && m.readAt && " ✓✓"}
+                            <p className="text-xs mt-1 text-right flex items-center justify-end gap-1">
+                              <span className={isMine ? "text-gray-400" : "text-gray-400"}>{timeStr(m.createdAt)}</span>
+                              {isMine && (
+                                m.readAt ? (
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 12" className="w-4 h-3 shrink-0 fill-blue-400">
+                                    <path d="M1 6l4 4L14 1" stroke="#60a5fa" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M5 6l4 4L18 1" stroke="#60a5fa" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                ) : (
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 12" className="w-3.5 h-3 shrink-0">
+                                    <path d="M1 6l4 4L15 1" stroke="#9ca3af" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                )
+                              )}
                             </p>
                           </div>
                         </div>
