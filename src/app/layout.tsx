@@ -49,7 +49,7 @@ export default async function RootLayout({
     : await Promise.all([getBusinessProfile(), getSessionUser()]);
 
   const unreadCount = me
-    ? await prisma.message.count({ where: { receiverId: me.id, readAt: null } })
+    ? await prisma.message.count({ where: { receiverId: me.id, readAt: null } }).catch(() => 0)
     : 0;
 
   if (isLoginPage) {
