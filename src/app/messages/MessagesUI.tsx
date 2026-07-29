@@ -53,8 +53,8 @@ export default function MessagesUI({
     setError("");
     try {
       await sendMessage(activeChatId, body);
-      startTransition(() => router.refresh());
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 200);
+      router.replace(`/messages?with=${activeChatId}`);
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 300);
     } catch (err) {
       setText(body);
       setError(err instanceof Error ? err.message : "Failed to send message");

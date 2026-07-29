@@ -61,11 +61,15 @@ export default async function MessagesPage({
   }
 
   const conversations = Array.from(convMap.values())
-    .sort((a, b) => (b.lastMsg?.createdAt?.getTime() ?? 0) - (a.lastMsg?.createdAt?.getTime() ?? 0))
+    .sort((a, b) => {
+      const ta = a.lastMsg?.createdAt instanceof Date ? a.lastMsg.createdAt.getTime() : 0;
+      const tb = b.lastMsg?.createdAt instanceof Date ? b.lastMsg.createdAt.getTime() : 0;
+      return tb - ta;
+    })
     .map((c) => ({
       user: c.user,
       unread: c.unread,
-      lastMsg: c.lastMsg
+      lastMsg: c.lastMsg?.createdAt instanceof Date
         ? { body: c.lastMsg.body, createdAt: c.lastMsg.createdAt.toISOString() }
         : null,
     }));
