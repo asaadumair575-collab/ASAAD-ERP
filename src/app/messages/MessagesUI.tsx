@@ -40,24 +40,25 @@ export default function MessagesUI({
   const [text, setText] = useState("");
   const [pending, startTransition] = useTransition();
   const [newChat, setNewChat] = useState(false);
+  const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const activeUser = activeChatId ? [...users, me].find((u) => u.id === activeChatId) ?? null : null;
 
-  function send(e: React.FormEvent) {
+  async function send(e: React.FormEvent) {
     e.preventDefault();
-    if (!activeChatId || !text.trim()) return;
+    if (!activeChatId || !text.trim() || pending) return;
     const body = text.trim();
     setText("");
-    startTransition(async () => {
-      try {
-        await sendMessage(activeChatId, body);
-        router.refresh();
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
-      } catch {
-        setText(body);
-      }
-    });
+    setError("");
+    try {
+      await sendMessage(activeChatId, body);
+      startTransition(() => router.refresh());
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 200);
+    } catch (err) {
+      setText(body);
+      setError(err instanceof Error ? err.message : "Failed to send message");
+    }
   }
 
   // Group messages by date
@@ -168,6 +169,9 @@ export default function MessagesUI({
             </div>
 
             {/* Input */}
+            {error && (
+              <p className="px-5 py-1.5 text-xs text-red-500 bg-red-50 border-t border-red-100">{error}</p>
+            )}
             <form onSubmit={send} className="px-4 py-3 border-t border-gray-100 flex items-center gap-2">
               <input
                 value={text}
