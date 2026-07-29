@@ -115,11 +115,11 @@ export default async function MessagesPage({
       />
     );
   } catch (err) {
-    console.error("Messages page error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
     return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
-        <p className="text-gray-500 text-sm">Messages could not be loaded.</p>
-        <p className="text-gray-400 text-xs mt-1">Please try refreshing the page.</p>
+      <div className="bg-white border border-red-200 rounded-2xl p-14 text-center shadow-sm">
+        <p className="text-red-500 text-sm font-medium">Messages error</p>
+        <p className="text-gray-500 text-xs mt-2 font-mono break-all max-w-lg mx-auto">{msg}</p>
       </div>
     );
   }
