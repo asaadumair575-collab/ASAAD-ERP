@@ -65,18 +65,18 @@ export default async function ReorderCampaignPage({
   const callback = campaign.leads.filter((l) => l.status === "CALLBACK").length;
 
   // Today's calls per employee (non-admin only)
-  const todayEmpMap = new Map<number, { name: string; total: number; ordered: number; notInterested: number; noAnswer: number; callback: number }>();
+  const todayEmpMap = new Map<number, { name: string; total: number; interested: number; orderReceived: number; notInterested: number; noAnswer: number }>();
   for (const l of campaign.leads) {
     if (!l.calledBy || l.calledBy.isAdmin) continue;
     if (!l.calledAt || new Date(l.calledAt) < todayStart) continue;
     const uid = l.calledBy.id;
     const name = l.calledBy.displayName ?? l.calledBy.username;
-    const e = todayEmpMap.get(uid) ?? { name, total: 0, ordered: 0, notInterested: 0, noAnswer: 0, callback: 0 };
+    const e = todayEmpMap.get(uid) ?? { name, total: 0, interested: 0, orderReceived: 0, notInterested: 0, noAnswer: 0 };
     e.total++;
-    if (l.status === "ORDER_PLACED" || l.status === "ORDER_RECEIVED") e.ordered++;
+    if (l.status === "ORDER_PLACED")    e.interested++;
+    if (l.status === "ORDER_RECEIVED")  e.orderReceived++;
     if (l.status === "NOT_INTERESTED")  e.notInterested++;
     if (l.status === "NO_ANSWER")       e.noAnswer++;
-    if (l.status === "CALLBACK")        e.callback++;
     todayEmpMap.set(uid, e);
   }
   const todayEmpStats = Array.from(todayEmpMap.values()).sort((a, b) => b.total - a.total);
@@ -158,9 +158,9 @@ export default async function ReorderCampaignPage({
                     <p className="text-sm font-medium text-gray-800 truncate">{e.name}</p>
                     <p className="text-sm font-bold text-gray-900 shrink-0 ml-2">{e.total} calls</p>
                   </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    {e.ordered > 0       && <span className="text-green-600 font-medium">✅ {e.ordered} orders</span>}
-                    {e.callback > 0      && <span className="text-blue-600">🔁 {e.callback}</span>}
+                  <div className="flex items-center gap-2 text-xs flex-wrap">
+                    {e.orderReceived > 0 && <span className="text-green-600 font-medium">🟢 {e.orderReceived} order</span>}
+                    {e.interested > 0    && <span className="text-violet-600 font-medium">✅ {e.interested} interested</span>}
                     {e.noAnswer > 0      && <span className="text-yellow-600">📵 {e.noAnswer}</span>}
                     {e.notInterested > 0 && <span className="text-red-500">❌ {e.notInterested}</span>}
                   </div>
