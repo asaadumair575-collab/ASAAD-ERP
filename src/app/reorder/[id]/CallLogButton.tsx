@@ -47,8 +47,11 @@ export default function CallLogButton({
   const router = useRouter();
 
   const isNotInterested = status === "NOT_INTERESTED";
+  const isCallback = status === "CALLBACK";
   const isOther = reason === "Other";
-  const canSave = status && (!isNotInterested || (reason && (!isOther || otherText.trim())));
+  const canSave = status &&
+    (!isNotInterested || (reason && (!isOther || otherText.trim()))) &&
+    (!isCallback || note.trim());
 
   function handleStatusChange(val: string) {
     setStatus(val);
@@ -155,15 +158,22 @@ export default function CallLogButton({
             {/* Note */}
             <div>
               <label className="text-xs font-medium text-gray-600 block mb-1">
-                {isNotInterested ? "Extra note (optional)" : "Note (optional)"}
+                {isNotInterested ? "Extra note (optional)" : isCallback ? "Callback reason (zaroori)" : "Note (optional)"}
               </label>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 rows={2}
-                placeholder={isNotInterested ? "Kuch aur baat hui ho to..." : "Add a note about this call..."}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
+                placeholder={isNotInterested ? "Kuch aur baat hui ho to..." : isCallback ? "Callback kyun? kab call karein?..." : "Add a note about this call..."}
+                className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none ${
+                  isCallback && !note.trim()
+                    ? "border-blue-300 focus:ring-blue-400"
+                    : "border-gray-200 focus:ring-black"
+                }`}
               />
+              {isCallback && !note.trim() && (
+                <p className="text-xs text-blue-500 mt-1">Callback ki wajah likhna zaroori hai</p>
+              )}
             </div>
 
             <div className="flex gap-2 justify-end">
