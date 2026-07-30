@@ -84,6 +84,14 @@ export default function CallLogButton({
     }
   }
 
+  function saveNoAnswer() {
+    startTransition(async () => {
+      await logReorderCall(lead.id, "NO_ANSWER", "Call not picked");
+      setOpen(false);
+      router.replace(window.location.pathname + window.location.search);
+    });
+  }
+
   function save() {
     if (!canSave) return;
     const effectiveReason = isOther ? `Other: ${otherText.trim()}` : reason;
@@ -141,6 +149,22 @@ export default function CallLogButton({
             {/* ── STEP 1: Feedback ── */}
             {step === "feedback" && (
               <>
+                {/* Quick: Call Not Picked */}
+                <button
+                  type="button"
+                  onClick={saveNoAnswer}
+                  disabled={pending}
+                  className="w-full border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-40"
+                >
+                  📵 Call Not Picked — Save & Done
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-px bg-gray-100" />
+                  <span className="text-xs text-gray-300">ya call hui to</span>
+                  <div className="flex-1 h-px bg-gray-100" />
+                </div>
+
                 <div>
                   <p className="text-xs font-semibold text-gray-700 mb-2">Customer ka feedback kya tha?</p>
                   <div className="grid grid-cols-2 gap-2">
