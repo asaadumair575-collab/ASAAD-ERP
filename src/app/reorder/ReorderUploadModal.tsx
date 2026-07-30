@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createReorderCampaign } from "@/lib/actions";
 
 type Lead = { customerName: string; phone: string; email: string; address: string; city: string; prevItem: string };
+type ParseResult = { leads: Lead[]; skippedStatus: number; mergedDupes: number; totalRows: number };
 
 function splitLine(line: string): string[] {
   const cols: string[] = [];
@@ -52,9 +53,13 @@ function cleanItem(raw: string): string {
   return raw.replace(/^\[|\]$/g, "").trim() || raw.trim();
 }
 
-function parseCSV(text: string): Lead[] {
+function parseCSV(text: string): ParseResult {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
-  if (lines.length < 2) return [];
+  if (lines.length < 2) return { leads: [], skippedStatus: 0, mergedDupes: 0, totalRows: 0 };
+
+  const totalRows = lines.length - 1;
+  let skippedStatus = 0;
+  let mergedDupes = 0;
 
   const headers = splitLine(lines[0]).map((h) => h.toUpperCase().trim());
 
@@ -83,7 +88,7 @@ function parseCSV(text: string): Lead[] {
     for (const line of lines.slice(1)) {
       const cols = splitLine(line);
       const get = (i: number) => (i >= 0 ? (cols[i] ?? "") : "").trim();
-      if (statusIdx >= 0 && get(statusIdx).toLowerCase() !== "delivered") continue;
+      if (statusIdx >= 0 && get(statusIdx).toLowerCase() !== "delivered") { skippedStatus++; continue; }
       const customerName = cleanName(get(nameIdx));
       const phone = get(phoneIdx).replace(/\s+/g, "").replace(/\t/g, "");
       const city = get(cityIdx);
@@ -94,6 +99,7 @@ function parseCSV(text: string): Lead[] {
       if (!seen.has(key)) {
         seen.set(key, { customerName, phone, email: "", address, city, prevItem });
       } else {
+        mergedDupes++;
         const e = seen.get(key)!;
         if (prevItem && !e.prevItem.includes(prevItem))
           e.prevItem = e.prevItem ? `${e.prevItem}, ${prevItem}` : prevItem;
@@ -124,7 +130,7 @@ function parseCSV(text: string): Lead[] {
       // Skip non-completed orders if status column exists
       if (statusIdx >= 0) {
         const s = get(statusIdx).toLowerCase();
-        if (s && s !== "completed" && s !== "processing" && s !== "delivered") continue;
+        if (s && s !== "completed" && s !== "processing" && s !== "delivered") { skippedStatus++; continue; }
       }
       const firstName = get(firstNameIdx);
       const lastName  = get(lastNameIdx);
@@ -139,6 +145,7 @@ function parseCSV(text: string): Lead[] {
       if (!seen.has(key)) {
         seen.set(key, { customerName, phone, email, address, city, prevItem });
       } else {
+        mergedDupes++;
         const e = seen.get(key)!;
         if (prevItem && !e.prevItem.includes(prevItem))
           e.prevItem = e.prevItem ? `${e.prevItem}, ${prevItem}` : prevItem;
@@ -158,6 +165,7 @@ function parseCSV(text: string): Lead[] {
       if (!seen.has(key)) {
         seen.set(key, { customerName, phone, email: "", address: "", city, prevItem });
       } else {
+        mergedDupes++;
         const e = seen.get(key)!;
         if (prevItem && !e.prevItem.includes(prevItem))
           e.prevItem = e.prevItem ? `${e.prevItem}, ${prevItem}` : prevItem;
@@ -165,13 +173,14 @@ function parseCSV(text: string): Lead[] {
     }
   }
 
-  return Array.from(seen.values());
+  return { leads: Array.from(seen.values()), skippedStatus, mergedDupes, totalRows };
 }
 
 export default function ReorderUploadModal() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [parseInfo, setParseInfo] = useState<{ skippedStatus: number; mergedDupes: number; totalRows: number } | null>(null);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -181,13 +190,18 @@ export default function ReorderUploadModal() {
     if (!file) return;
     if (!name) setName(file.name.replace(/\.csv$/i, ""));
     const reader = new FileReader();
-    reader.onload = (ev) => setLeads(parseCSV(ev.target?.result as string));
+    reader.onload = (ev) => {
+      const result = parseCSV(ev.target?.result as string);
+      setLeads(result.leads);
+      setParseInfo({ skippedStatus: result.skippedStatus, mergedDupes: result.mergedDupes, totalRows: result.totalRows });
+    };
     reader.readAsText(file);
   }
 
   function close() {
     setOpen(false);
     setLeads([]);
+    setParseInfo(null);
     setName("");
     if (fileRef.current) fileRef.current.value = "";
   }
@@ -253,7 +267,19 @@ export default function ReorderUploadModal() {
 
               {leads.length > 0 && (
                 <div>
-                  <p className="text-xs font-medium text-gray-600 mb-2">{leads.length} customers found</p>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    <span className="text-xs font-semibold text-gray-700">{leads.length} customers found</span>
+                    {parseInfo && parseInfo.skippedStatus > 0 && (
+                      <span className="text-xs text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-2 py-0.5">
+                        {parseInfo.skippedStatus} skipped (not delivered)
+                      </span>
+                    )}
+                    {parseInfo && parseInfo.mergedDupes > 0 && (
+                      <span className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                        {parseInfo.mergedDupes} merged (same phone)
+                      </span>
+                    )}
+                  </div>
                   <div className="border border-gray-200 rounded-xl overflow-hidden">
                     <table className="w-full text-xs">
                       <thead>
