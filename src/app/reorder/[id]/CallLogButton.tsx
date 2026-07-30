@@ -39,17 +39,22 @@ export default function CallLogButton({
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState(lead.status === "PENDING" ? "" : lead.status);
   const [reason, setReason] = useState(lead.status === "NOT_INTERESTED" ? extractReason(lead.callNote) : "");
+  const [otherText, setOtherText] = useState(
+    lead.status === "NOT_INTERESTED" && extractReason(lead.callNote) === "Other" ? extractNote(lead.callNote) : ""
+  );
   const [note, setNote] = useState(lead.status === "NOT_INTERESTED" ? extractNote(lead.callNote) : lead.callNote);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
   const isNotInterested = status === "NOT_INTERESTED";
-  const canSave = status && (!isNotInterested || reason);
+  const isOther = reason === "Other";
+  const canSave = status && (!isNotInterested || (reason && (!isOther || otherText.trim())));
 
   function handleStatusChange(val: string) {
     setStatus(val);
     if (val !== "NOT_INTERESTED") {
       setReason("");
+      setOtherText("");
     } else if (lead.status === "NOT_INTERESTED") {
       setReason(extractReason(lead.callNote));
     }
@@ -57,8 +62,9 @@ export default function CallLogButton({
 
   function save() {
     if (!canSave) return;
+    const effectiveReason = isOther ? `Other: ${otherText.trim()}` : reason;
     const finalNote = isNotInterested
-      ? `Reason: ${reason}${note ? ` — ${note}` : ""}`
+      ? `Reason: ${effectiveReason}${note ? ` — ${note}` : ""}`
       : note;
     startTransition(async () => {
       await logReorderCall(lead.id, status, finalNote);
@@ -125,6 +131,21 @@ export default function CallLogButton({
                     </button>
                   ))}
                 </div>
+                {isOther && (
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      autoFocus
+                      value={otherText}
+                      onChange={(e) => setOtherText(e.target.value)}
+                      placeholder="Wajah likhein (zaroori)..."
+                      className="w-full border border-red-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                    />
+                    {!otherText.trim() && (
+                      <p className="text-xs text-red-400 mt-1">Wajah likhna zaroori hai</p>
+                    )}
+                  </div>
+                )}
                 {!reason && (
                   <p className="text-xs text-red-400">Wajah select karna zaroori hai</p>
                 )}
