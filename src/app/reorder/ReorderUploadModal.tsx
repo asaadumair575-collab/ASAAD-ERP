@@ -6,43 +6,123 @@ import { createReorderCampaign } from "@/lib/actions";
 
 type Lead = { customerName: string; phone: string; city: string; prevItem: string };
 
+function splitLine(line: string): string[] {
+  const cols: string[] = [];
+  let cur = "";
+  let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQ = !inQ; continue; }
+    if (ch === "," && !inQ) { cols.push(cur.trim()); cur = ""; continue; }
+    cur += ch;
+  }
+  cols.push(cur.trim());
+  return cols.map((c) => c.replace(/^"|"$/g, "").trim());
+}
+
+// Clean up courier customer names that repeat themselves: "Ali Khan Ali Khan" → "Ali Khan"
+function cleanName(raw: string): string {
+  const s = raw.trim();
+  const half = Math.floor(s.length / 2);
+  if (s.length > 4 && s.length % 2 === 0) {
+    const a = s.slice(0, half);
+    const b = s.slice(half).trim();
+    if (a.trim().toLowerCase() === b.toLowerCase()) return a.trim();
+  }
+  // Try space-split dedup: "Ali Khan Abc Ali Khan Abc" → split words, find repeated prefix
+  const words = s.split(/\s+/);
+  for (let len = 1; len <= Math.floor(words.length / 2); len++) {
+    const prefix = words.slice(0, len).join(" ").toLowerCase();
+    const rest = words.slice(len, len * 2).join(" ").toLowerCase();
+    if (prefix === rest) return words.slice(0, len).join(" ");
+  }
+  return s;
+}
+
+// Clean up item description from courier format: "[ 1 x Cancon Pro 72 - Pack 6 -  ]" → "Cancon Pro 72 - Pack 6"
+function cleanItem(raw: string): string {
+  // Extract from "[ N x Product Name -  ]" pattern
+  const match = raw.match(/\[\s*\d+\s*x\s*(.+?)\s*-\s*\]/);
+  if (match) return match[1].trim();
+  // Multiple items: combine them
+  const allMatches = [...raw.matchAll(/\[\s*(\d+)\s*x\s*(.+?)\s*-\s*\]/g)];
+  if (allMatches.length > 1) {
+    return allMatches.map((m) => `${m[2].trim()} ×${m[1]}`).join(", ");
+  }
+  return raw.replace(/^\[|\]$/g, "").trim() || raw.trim();
+}
+
 function parseCSV(text: string): Lead[] {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return [];
 
+  const headers = splitLine(lines[0]).map((h) => h.toUpperCase());
+
+  // Detect courier format by checking for known courier column names
+  const isCourierFormat =
+    headers.includes("CUSTOMER_NAME") ||
+    headers.includes("CUSTOMER_PHONE") ||
+    headers.includes("TRACKING_NUMBER");
+
   const seen = new Map<string, Lead>();
 
-  for (const line of lines.slice(1)) {
-    const cols: string[] = [];
-    let cur = "";
-    let inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQ = !inQ; continue; }
-      if (ch === "," && !inQ) { cols.push(cur.trim()); cur = ""; continue; }
-      cur += ch;
+  if (isCourierFormat) {
+    // Courier CSV format (PostEx / TCS etc.)
+    const nameIdx   = headers.indexOf("CUSTOMER_NAME");
+    const phoneIdx  = headers.indexOf("CUSTOMER_PHONE");
+    const cityIdx   = headers.indexOf("CITY_NAME");
+    const itemIdx   = headers.indexOf("ORDER_DETAIL");
+    const statusIdx = headers.indexOf("MERCHANT_TRANSACTION_STATUS");
+
+    for (const line of lines.slice(1)) {
+      const cols = splitLine(line);
+      const get = (i: number) => (i >= 0 ? (cols[i] ?? "") : "").trim();
+
+      // Only include delivered orders
+      if (statusIdx >= 0 && get(statusIdx).toLowerCase() !== "delivered") continue;
+
+      const customerName = cleanName(get(nameIdx));
+      const phone = get(phoneIdx).replace(/\s+/g, "").replace(/\t/g, "");
+      const city = get(cityIdx);
+      const prevItem = cleanItem(get(itemIdx));
+
+      if (!customerName || !phone) continue;
+
+      const key = `${phone}`;
+      if (!seen.has(key)) {
+        seen.set(key, { customerName, phone, city, prevItem });
+      } else {
+        const existing = seen.get(key)!;
+        if (prevItem && !existing.prevItem.includes(prevItem)) {
+          existing.prevItem = existing.prevItem ? `${existing.prevItem}, ${prevItem}` : prevItem;
+        }
+      }
     }
-    cols.push(cur.trim());
-    const get = (i: number) => (cols[i] ?? "").replace(/^"|"$/g, "").trim();
+  } else {
+    // Retail orders CSV format: Customer Name, Phone, City, Item Description, ...
+    for (const line of lines.slice(1)) {
+      const cols = splitLine(line);
+      const get = (i: number) => (cols[i] ?? "").trim();
 
-    const customerName = get(0);
-    const phone = get(1);
-    const city = get(2);
-    const prevItem = get(3);
+      const customerName = get(0);
+      const phone = get(1);
+      const city = get(2);
+      const prevItem = get(3);
 
-    if (!customerName || !phone) continue;
+      if (!customerName || !phone) continue;
 
-    const key = `${customerName}||${phone}`;
-    if (!seen.has(key)) {
-      seen.set(key, { customerName, phone, city, prevItem });
-    } else {
-      // Merge items
-      const existing = seen.get(key)!;
-      if (prevItem && !existing.prevItem.includes(prevItem)) {
-        existing.prevItem = existing.prevItem ? `${existing.prevItem}, ${prevItem}` : prevItem;
+      const key = `${customerName}||${phone}`;
+      if (!seen.has(key)) {
+        seen.set(key, { customerName, phone, city, prevItem });
+      } else {
+        const existing = seen.get(key)!;
+        if (prevItem && !existing.prevItem.includes(prevItem)) {
+          existing.prevItem = existing.prevItem ? `${existing.prevItem}, ${prevItem}` : prevItem;
+        }
       }
     }
   }
+
   return Array.from(seen.values());
 }
 
@@ -126,7 +206,7 @@ export default function ReorderUploadModal() {
                   <span className="text-sm text-gray-500">Choose CSV file...</span>
                   <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFile} />
                 </label>
-                <p className="text-xs text-gray-400 mt-1">Columns: Customer Name, Phone, City, Item Description, Quantity, Rate, Delivery Charge, Notes</p>
+                <p className="text-xs text-gray-400 mt-1">Automatically detects courier CSV (PostEx/TCS) or retail orders format</p>
               </div>
 
               {leads.length > 0 && (
