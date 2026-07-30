@@ -25,12 +25,15 @@ export default async function ReorderCampaignPage({
   const { id } = await params;
   const { status, q } = await searchParams;
 
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
   const campaign = await prisma.reorderCampaign.findUnique({
     where: { id: parseInt(id) },
     include: {
       createdBy: { select: { displayName: true, username: true } },
       leads: {
-        include: { calledBy: { select: { displayName: true, username: true } } },
+        include: { calledBy: { select: { id: true, displayName: true, username: true } } },
         orderBy: [{ status: "asc" }, { createdAt: "asc" }],
       },
     },
@@ -57,6 +60,22 @@ export default async function ReorderCampaignPage({
   const noAnswer = campaign.leads.filter((l) => l.status === "NO_ANSWER").length;
   const notInterested = campaign.leads.filter((l) => l.status === "NOT_INTERESTED").length;
   const callback = campaign.leads.filter((l) => l.status === "CALLBACK").length;
+
+  // Today's calls per employee for this campaign
+  const todayEmpMap = new Map<number, { name: string; total: number; ordered: number; notInterested: number; noAnswer: number; callback: number }>();
+  for (const l of campaign.leads) {
+    if (!l.calledBy || !l.calledAt || new Date(l.calledAt) < todayStart) continue;
+    const uid = l.calledBy.id;
+    const name = l.calledBy.displayName ?? l.calledBy.username;
+    const e = todayEmpMap.get(uid) ?? { name, total: 0, ordered: 0, notInterested: 0, noAnswer: 0, callback: 0 };
+    e.total++;
+    if (l.status === "ORDER_PLACED")    e.ordered++;
+    if (l.status === "NOT_INTERESTED")  e.notInterested++;
+    if (l.status === "NO_ANSWER")       e.noAnswer++;
+    if (l.status === "CALLBACK")        e.callback++;
+    todayEmpMap.set(uid, e);
+  }
+  const todayEmpStats = Array.from(todayEmpMap.values()).sort((a, b) => b.total - a.total);
 
   const meSerial = { id: me.id, displayName: me.displayName ?? null };
 
@@ -116,6 +135,34 @@ export default async function ReorderCampaignPage({
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />No Answer</span>
         </div>
       </div>
+
+      {/* Today's calls per employee */}
+      {todayEmpStats.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Aaj ki Calls — Is Campaign Mein</p>
+          <div className="space-y-2">
+            {todayEmpStats.map((e) => (
+              <div key={e.name} className="flex items-center gap-3">
+                <span className="w-7 h-7 rounded-full bg-zinc-800 text-white text-xs font-bold flex items-center justify-center shrink-0">
+                  {e.name.charAt(0).toUpperCase()}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <p className="text-sm font-medium text-gray-800 truncate">{e.name}</p>
+                    <p className="text-sm font-bold text-gray-900 shrink-0 ml-2">{e.total} calls</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    {e.ordered > 0       && <span className="text-green-600 font-medium">✅ {e.ordered} orders</span>}
+                    {e.callback > 0      && <span className="text-blue-600">🔁 {e.callback}</span>}
+                    {e.noAnswer > 0      && <span className="text-yellow-600">📵 {e.noAnswer}</span>}
+                    {e.notInterested > 0 && <span className="text-red-500">❌ {e.notInterested}</span>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
