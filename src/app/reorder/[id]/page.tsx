@@ -211,7 +211,7 @@ export default async function ReorderCampaignPage({
                 <th className="py-3 px-4 text-left">Status</th>
                 <th className="py-3 px-4 text-left">Note</th>
                 <th className="py-3 px-4 text-left">Called By</th>
-                <th className="py-3 px-4" />
+                <th className="py-3 px-4 sticky right-0 bg-gray-50" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -238,7 +238,7 @@ export default async function ReorderCampaignPage({
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-4 sticky right-0 bg-white">
                       <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "" }} me={meSerial} />
                     </td>
                   </tr>
