@@ -108,8 +108,10 @@ model User {
   empPerformances      EmpPerformance[]
   retailOrders         RetailOrder[]
   bugReports           BugReport[]
-  messagesSent         Message[]   @relation("MessagesSent")
-  messagesReceived     Message[]   @relation("MessagesReceived")
+  messagesSent         Message[]        @relation("MessagesSent")
+  messagesReceived     Message[]        @relation("MessagesReceived")
+  reorderCampaigns     ReorderCampaign[]
+  reorderCalls         ReorderLead[]    @relation("ReorderLeadCalledBy")
 }
 
 model EmpCommissionEntry {
@@ -332,4 +334,29 @@ model EcomExpense {
   amount    Float
   note      String?
   createdAt DateTime @default(now())
+}
+
+model ReorderCampaign {
+  id          Int           @id @default(autoincrement())
+  name        String
+  createdAt   DateTime      @default(now())
+  createdBy   User?         @relation(fields: [createdById], references: [id])
+  createdById Int?
+  leads       ReorderLead[]
+}
+
+model ReorderLead {
+  id           Int             @id @default(autoincrement())
+  campaign     ReorderCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaignId   Int
+  customerName String
+  phone        String
+  city         String?
+  prevItem     String?
+  status       String          @default("PENDING")
+  callNote     String?
+  calledAt     DateTime?
+  calledBy     User?           @relation("ReorderLeadCalledBy", fields: [calledById], references: [id])
+  calledById   Int?
+  createdAt    DateTime        @default(now())
 }

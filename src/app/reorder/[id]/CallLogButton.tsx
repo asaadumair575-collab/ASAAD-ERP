@@ -1,0 +1,101 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { logReorderCall } from "@/lib/actions";
+
+const OUTCOMES = [
+  { value: "ORDER_PLACED",   label: "✅ Order Placed",   color: "bg-green-50 border-green-300 text-green-700 hover:bg-green-100" },
+  { value: "CALLBACK",       label: "🔁 Callback",       color: "bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100" },
+  { value: "NO_ANSWER",      label: "📵 No Answer",      color: "bg-yellow-50 border-yellow-300 text-yellow-700 hover:bg-yellow-100" },
+  { value: "NOT_INTERESTED", label: "❌ Not Interested", color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
+];
+
+export default function CallLogButton({
+  lead,
+  me,
+}: {
+  lead: { id: number; customerName: string; phone: string; status: string; callNote: string };
+  me: { id: number; displayName: string | null };
+}) {
+  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState(lead.status === "PENDING" ? "" : lead.status);
+  const [note, setNote] = useState(lead.callNote);
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+
+  function save() {
+    if (!status) return;
+    startTransition(async () => {
+      await logReorderCall(lead.id, status, note);
+      setOpen(false);
+      router.replace(window.location.pathname + window.location.search);
+    });
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors whitespace-nowrap"
+      >
+        {lead.status === "PENDING" ? "Log Call" : "Update"}
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-800">{lead.customerName}</h3>
+              <p className="text-xs text-gray-400 font-mono mt-0.5">{lead.phone}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-gray-600 mb-2">Call Outcome</p>
+              <div className="grid grid-cols-2 gap-2">
+                {OUTCOMES.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setStatus(o.value)}
+                    className={`border rounded-xl px-3 py-2.5 text-xs font-medium text-left transition-colors ${
+                      status === o.value
+                        ? o.color + " ring-2 ring-offset-1 ring-current"
+                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-gray-600 block mb-1">Note (optional)</label>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={2}
+                placeholder="Add a note about this call..."
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
+              />
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setOpen(false)} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
+                Cancel
+              </button>
+              <button
+                onClick={save}
+                disabled={pending || !status}
+                className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
+              >
+                {pending ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

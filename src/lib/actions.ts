@@ -1956,3 +1956,47 @@ export async function bulkImportRetailOrders(rows: {
   revalidatePath("/retail/orders");
   return created;
 }
+
+// ── Reorder Campaign ──────────────────────────────────────────────────────────
+
+export async function createReorderCampaign(
+  name: string,
+  leads: { customerName: string; phone: string; city?: string; prevItem?: string }[]
+) {
+  const me = await requireAuth();
+  const campaign = await prisma.reorderCampaign.create({
+    data: {
+      name,
+      createdById: me.id,
+      leads: {
+        create: leads.map((l) => ({
+          customerName: l.customerName,
+          phone: l.phone,
+          city: l.city || null,
+          prevItem: l.prevItem || null,
+        })),
+      },
+    },
+  });
+  revalidatePath("/reorder");
+  return campaign.id;
+}
+
+export async function logReorderCall(
+  leadId: number,
+  status: string,
+  callNote: string
+) {
+  const me = await requireAuth();
+  await prisma.reorderLead.update({
+    where: { id: leadId },
+    data: { status, callNote: callNote || null, calledAt: new Date(), calledById: me.id },
+  });
+  revalidatePath("/reorder");
+}
+
+export async function deleteReorderCampaign(id: number) {
+  await requireAuth();
+  await prisma.reorderCampaign.delete({ where: { id } });
+  revalidatePath("/reorder");
+}

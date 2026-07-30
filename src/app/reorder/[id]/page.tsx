@@ -1,0 +1,204 @@
+import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/auth";
+import { redirect, notFound } from "next/navigation";
+import Link from "next/link";
+import CallLogButton from "./CallLogButton";
+
+const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  PENDING:       { label: "Pending",       color: "bg-gray-100 text-gray-500" },
+  NO_ANSWER:     { label: "No Answer",     color: "bg-yellow-100 text-yellow-700" },
+  CALLBACK:      { label: "Callback",      color: "bg-blue-100 text-blue-700" },
+  NOT_INTERESTED:{ label: "Not Interested",color: "bg-red-100 text-red-600" },
+  ORDER_PLACED:  { label: "Order Placed",  color: "bg-green-100 text-green-700" },
+};
+
+export default async function ReorderCampaignPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ status?: string; q?: string }>;
+}) {
+  const me = await getSessionUser();
+  if (!me) redirect("/login");
+
+  const { id } = await params;
+  const { status, q } = await searchParams;
+
+  const campaign = await prisma.reorderCampaign.findUnique({
+    where: { id: parseInt(id) },
+    include: {
+      createdBy: { select: { displayName: true, username: true } },
+      leads: {
+        include: { calledBy: { select: { displayName: true, username: true } } },
+        orderBy: [{ status: "asc" }, { createdAt: "asc" }],
+      },
+    },
+  });
+  if (!campaign) notFound();
+
+  const leads = campaign.leads.filter((l) => {
+    if (status && l.status !== status) return false;
+    if (q) {
+      const qq = q.toLowerCase();
+      return (
+        l.customerName.toLowerCase().includes(qq) ||
+        l.phone.includes(qq) ||
+        (l.city ?? "").toLowerCase().includes(qq)
+      );
+    }
+    return true;
+  });
+
+  const total = campaign.leads.length;
+  const pending = campaign.leads.filter((l) => l.status === "PENDING").length;
+  const called = campaign.leads.filter((l) => l.status !== "PENDING").length;
+  const ordered = campaign.leads.filter((l) => l.status === "ORDER_PLACED").length;
+  const noAnswer = campaign.leads.filter((l) => l.status === "NO_ANSWER").length;
+  const notInterested = campaign.leads.filter((l) => l.status === "NOT_INTERESTED").length;
+  const callback = campaign.leads.filter((l) => l.status === "CALLBACK").length;
+
+  const meSerial = { id: me.id, displayName: me.displayName ?? null };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Link href="/reorder" className="text-sm text-gray-400 hover:text-gray-600">← Campaigns</Link>
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">{campaign.name}</h1>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Created {new Date(campaign.createdAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
+            {campaign.createdBy && ` · ${campaign.createdBy.displayName ?? campaign.createdBy.username}`}
+          </p>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        {[
+          { label: "Total", value: total, color: "text-gray-700" },
+          { label: "Pending", value: pending, color: "text-amber-600" },
+          { label: "Called", value: called, color: "text-blue-600" },
+          { label: "Orders", value: ordered, color: "text-green-600" },
+          { label: "No Answer", value: noAnswer, color: "text-yellow-600" },
+          { label: "Not Interested", value: notInterested, color: "text-red-500" },
+        ].map((s) => (
+          <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-3 text-center shadow-sm">
+            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Progress bar */}
+      <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+          <span className="font-medium">Call Progress</span>
+          <span>{total > 0 ? Math.round((called / total) * 100) : 0}% complete</span>
+        </div>
+        <div className="h-2 bg-gray-100 rounded-full overflow-hidden flex gap-0.5">
+          {total > 0 && (
+            <>
+              <div className="h-full bg-green-500 transition-all" style={{ width: `${(ordered / total) * 100}%` }} />
+              <div className="h-full bg-red-400 transition-all" style={{ width: `${(notInterested / total) * 100}%` }} />
+              <div className="h-full bg-blue-400 transition-all" style={{ width: `${(callback / total) * 100}%` }} />
+              <div className="h-full bg-yellow-400 transition-all" style={{ width: `${(noAnswer / total) * 100}%` }} />
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" />Order Placed</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Not Interested</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />Callback</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />No Answer</span>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
+        <input
+          type="text"
+          name="q"
+          defaultValue={q}
+          placeholder="Search name, phone, city..."
+          className="flex-1 min-w-[160px] text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+        />
+        <select
+          name="status"
+          defaultValue={status ?? ""}
+          className="text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+        >
+          <option value="">All Statuses</option>
+          {Object.entries(STATUS_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>{v.label}</option>
+          ))}
+        </select>
+        <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+          Filter
+        </button>
+        {(q || status) && (
+          <Link href={`/reorder/${id}`} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-2">
+            Clear
+          </Link>
+        )}
+      </form>
+
+      {/* Leads table */}
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        {leads.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-12">No leads match the filter</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                <th className="py-3 px-4 text-left">#</th>
+                <th className="py-3 px-4 text-left">Customer</th>
+                <th className="py-3 px-4 text-left">Phone</th>
+                <th className="py-3 px-4 text-left">City</th>
+                <th className="py-3 px-4 text-left">Last Order</th>
+                <th className="py-3 px-4 text-left">Status</th>
+                <th className="py-3 px-4 text-left">Note</th>
+                <th className="py-3 px-4 text-left">Called By</th>
+                <th className="py-3 px-4" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {leads.map((l, i) => {
+                const st = STATUS_LABELS[l.status] ?? STATUS_LABELS.PENDING;
+                return (
+                  <tr key={l.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="py-3 px-4 text-gray-400 text-xs">{i + 1}</td>
+                    <td className="py-3 px-4 font-medium text-gray-800">{l.customerName}</td>
+                    <td className="py-3 px-4 text-gray-500 font-mono text-xs">{l.phone}</td>
+                    <td className="py-3 px-4 text-gray-500">{l.city || "—"}</td>
+                    <td className="py-3 px-4 text-gray-400 text-xs truncate max-w-[140px]">{l.prevItem || "—"}</td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${st.color}`}>
+                        {st.label}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-gray-400 text-xs max-w-[160px] truncate">{l.callNote || "—"}</td>
+                    <td className="py-3 px-4 text-gray-400 text-xs">
+                      {l.calledBy ? (l.calledBy.displayName ?? l.calledBy.username) : "—"}
+                      {l.calledAt && (
+                        <span className="block text-gray-300">
+                          {new Date(l.calledAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
+                      <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "" }} me={meSerial} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
