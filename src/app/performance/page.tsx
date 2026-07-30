@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
-import PerformanceRowActions from "./log/PerformanceRowActions";
 
 function pct(val: number, target: number) {
   if (!target) return 0;
@@ -42,45 +41,86 @@ export default async function PerformancePage({
 
   const filterUserId = isAdmin && user ? parseInt(user) : (!isAdmin ? me?.id : undefined);
 
-  const entries = await prisma.empPerformance.findMany({
+  // Calls: from ReorderLead
+  const reorderLeads = await prisma.reorderLead.findMany({
     where: {
-      ...(filterUserId ? { userId: filterUserId } : {}),
-      ...(fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {}),
+      calledAt: { not: null, ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) },
+      ...(filterUserId ? { calledById: filterUserId } : {}),
     },
-    include: { user: true },
-    orderBy: { date: "desc" },
+    select: {
+      calledAt: true,
+      calledById: true,
+      calledBy: { select: { id: true, displayName: true, username: true } },
+    },
   });
 
+  // Orders: from RetailOrder
+  const retailOrders = await prisma.retailOrder.findMany({
+    where: {
+      createdByUserId: { not: null },
+      ...(fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {}),
+      ...(filterUserId ? { createdByUserId: filterUserId } : {}),
+    },
+    select: {
+      date: true,
+      createdByUserId: true,
+      createdBy: { select: { id: true, displayName: true, username: true } },
+    },
+  });
+
+  // Aggregate by date + userId
+  type DayKey = string; // "YYYY-MM-DD|userId"
+  const dayMap = new Map<DayKey, { date: string; userId: number; name: string; calls: number; orders: number }>();
+
+  function dayKey(dateStr: string, uid: number) { return `${dateStr}|${uid}`; }
+
+  for (const l of reorderLeads) {
+    if (!l.calledAt || !l.calledById || !l.calledBy) continue;
+    const dateStr = l.calledAt.toISOString().slice(0, 10);
+    const uid = l.calledById;
+    const key = dayKey(dateStr, uid);
+    const existing = dayMap.get(key) ?? { date: dateStr, userId: uid, name: l.calledBy.displayName ?? l.calledBy.username, calls: 0, orders: 0 };
+    existing.calls++;
+    dayMap.set(key, existing);
+  }
+
+  for (const o of retailOrders) {
+    if (!o.createdByUserId || !o.createdBy) continue;
+    const dateStr = o.date.toISOString().slice(0, 10);
+    const uid = o.createdByUserId;
+    const key = dayKey(dateStr, uid);
+    const existing = dayMap.get(key) ?? { date: dateStr, userId: uid, name: o.createdBy.displayName ?? o.createdBy.username, calls: 0, orders: 0 };
+    existing.orders++;
+    dayMap.set(key, existing);
+  }
+
+  const entries = Array.from(dayMap.values()).sort((a, b) => b.date.localeCompare(a.date) || a.name.localeCompare(b.name));
+
   const totalCalls = entries.reduce((s, e) => s + e.calls, 0);
-  const totalOrders = entries.reduce((s, e) => s + e.newOrders, 0);
-  const days = entries.length;
+  const totalOrders = entries.reduce((s, e) => s + e.orders, 0);
+  // Count unique days (not rows) for avg calc
+  const uniqueDays = new Set(entries.map(e => e.date)).size;
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  const myUserId = filterUserId ?? me?.id;
-  const todayEntry = entries.find(e =>
-    e.date.toISOString().slice(0, 10) === todayStr &&
-    (!myUserId || e.userId === myUserId)
-  );
-
-  // Also count today's reorder calls made by this employee
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-  const todayReorderCalls = myUserId
-    ? await prisma.reorderLead.count({ where: { calledById: myUserId, calledAt: { gte: todayStart } } })
-    : 0;
 
-  const todayTotalCalls = (todayEntry?.calls ?? 0) + todayReorderCalls;
-  const showTargetWarning = target && todayEntry && todayEntry.newOrders < target.newOrders;
+  // Today's stats for the current user
+  const myUserId = filterUserId ?? me?.id;
+  const todayEntries = entries.filter(e => e.date === todayStr && (!myUserId || e.userId === myUserId));
+  const todayCallsCount = todayEntries.reduce((s, e) => s + e.calls, 0);
+  const todayOrdersCount = todayEntries.reduce((s, e) => s + e.orders, 0);
 
-  const scoreCallsPct = target?.calls && days > 0 ? Math.min(100, Math.round((totalCalls / days / target.calls) * 100)) : null;
-  const scoreOrdersPct = target?.newOrders && days > 0 ? Math.min(100, Math.round((totalOrders / days / target.newOrders) * 100)) : null;
+  const scoreCallsPct = target?.calls && uniqueDays > 0 ? Math.min(100, Math.round((totalCalls / uniqueDays / target.calls) * 100)) : null;
+  const scoreOrdersPct = target?.newOrders && uniqueDays > 0 ? Math.min(100, Math.round((totalOrders / uniqueDays / target.newOrders) * 100)) : null;
   const overallScore = scoreCallsPct !== null && scoreOrdersPct !== null
     ? Math.round((scoreCallsPct + scoreOrdersPct) / 2)
     : null;
 
+  // Per-user breakdown
   const byUser = new Map<number, { name: string; calls: number; orders: number; days: number }>();
   for (const e of entries) {
-    const existing = byUser.get(e.userId) ?? { name: e.user.displayName ?? e.user.username, calls: 0, orders: 0, days: 0 };
-    byUser.set(e.userId, { ...existing, calls: existing.calls + e.calls, orders: existing.orders + e.newOrders, days: existing.days + 1 });
+    const existing = byUser.get(e.userId) ?? { name: e.name, calls: 0, orders: 0, days: 0 };
+    byUser.set(e.userId, { ...existing, calls: existing.calls + e.calls, orders: existing.orders + e.orders, days: existing.days + 1 });
   }
 
   return (
@@ -88,84 +128,71 @@ export default async function PerformancePage({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Employee Performance</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Track daily calls and new orders</p>
+          <p className="text-sm text-gray-500 mt-0.5">Calls from reorder module · Orders from retail advance</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Link href="/performance/log"
-            className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-            + Log Entry
+        {isAdmin && (
+          <Link href="/performance/targets"
+            className="border border-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors shrink-0">
+            Set Targets
           </Link>
-          {isAdmin && (
-            <Link href="/performance/targets"
-              className="border border-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-              Set Targets
-            </Link>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Daily target card */}
       {target && (
         <div className={`bg-white border-2 rounded-2xl shadow-sm p-5 ${
-          todayTotalCalls >= target.calls && (todayEntry?.newOrders ?? 0) >= target.newOrders
+          todayCallsCount >= target.calls && todayOrdersCount >= target.newOrders
             ? "border-green-300"
-            : (todayEntry || todayReorderCalls > 0) ? "border-amber-300" : "border-gray-200"
+            : (todayCallsCount > 0 || todayOrdersCount > 0) ? "border-amber-300" : "border-gray-200"
         }`}>
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm font-semibold text-gray-800">Today's Target</p>
-            {(todayEntry || todayReorderCalls > 0)
-              ? (todayTotalCalls >= target.calls && (todayEntry?.newOrders ?? 0) >= target.newOrders
+            <p className="text-sm font-semibold text-gray-800">Today&apos;s Target</p>
+            {(todayCallsCount > 0 || todayOrdersCount > 0)
+              ? (todayCallsCount >= target.calls && todayOrdersCount >= target.newOrders
                   ? <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">✅ Target Achieved!</span>
                   : <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">⏳ In Progress</span>)
-              : <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full">No entry logged today</span>
+              : <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full">No activity today</span>
             }
           </div>
           <div className="grid grid-cols-2 gap-4">
-            {/* Calls */}
             <div>
               <div className="flex items-end justify-between mb-1.5">
-                <div>
-                  <p className="text-xs text-gray-500">Calls</p>
-                  {todayReorderCalls > 0 && (
-                    <p className="text-xs text-blue-500">(incl. {todayReorderCalls} reorder)</p>
-                  )}
-                </div>
+                <p className="text-xs text-gray-500">Calls</p>
                 <p className="text-xs font-medium text-gray-600">
-                  <span className={`text-lg font-bold ${todayTotalCalls >= target.calls ? "text-green-600" : "text-gray-900"}`}>
-                    {todayTotalCalls}
+                  <span className={`text-lg font-bold ${todayCallsCount >= target.calls ? "text-green-600" : "text-gray-900"}`}>
+                    {todayCallsCount}
                   </span>
                   <span className="text-gray-400"> / {target.calls}</span>
                 </p>
               </div>
               <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all ${todayTotalCalls >= target.calls ? "bg-green-500" : "bg-blue-500"}`}
-                  style={{ width: `${target.calls ? Math.min(100, Math.round((todayTotalCalls / target.calls) * 100)) : 0}%` }}
+                  className={`h-full rounded-full transition-all ${todayCallsCount >= target.calls ? "bg-green-500" : "bg-blue-500"}`}
+                  style={{ width: `${target.calls ? Math.min(100, Math.round((todayCallsCount / target.calls) * 100)) : 0}%` }}
                 />
               </div>
-              {todayTotalCalls < target.calls && (
-                <p className="text-xs text-amber-600 mt-1">{target.calls - todayTotalCalls} more calls remaining</p>
+              {todayCallsCount < target.calls && (
+                <p className="text-xs text-amber-600 mt-1">{target.calls - todayCallsCount} more calls remaining</p>
               )}
             </div>
-            {/* New Orders */}
             <div>
               <div className="flex items-end justify-between mb-1.5">
                 <p className="text-xs text-gray-500">New Orders</p>
                 <p className="text-xs font-medium text-gray-600">
-                  <span className={`text-lg font-bold ${(todayEntry?.newOrders ?? 0) >= target.newOrders ? "text-green-600" : "text-gray-900"}`}>
-                    {todayEntry?.newOrders ?? 0}
+                  <span className={`text-lg font-bold ${todayOrdersCount >= target.newOrders ? "text-green-600" : "text-gray-900"}`}>
+                    {todayOrdersCount}
                   </span>
                   <span className="text-gray-400"> / {target.newOrders}</span>
                 </p>
               </div>
               <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all ${(todayEntry?.newOrders ?? 0) >= target.newOrders ? "bg-green-500" : "bg-purple-500"}`}
-                  style={{ width: `${target.newOrders ? Math.min(100, Math.round(((todayEntry?.newOrders ?? 0) / target.newOrders) * 100)) : 0}%` }}
+                  className={`h-full rounded-full transition-all ${todayOrdersCount >= target.newOrders ? "bg-green-500" : "bg-purple-500"}`}
+                  style={{ width: `${target.newOrders ? Math.min(100, Math.round((todayOrdersCount / target.newOrders) * 100)) : 0}%` }}
                 />
               </div>
-              {(todayEntry?.newOrders ?? 0) < target.newOrders && (
-                <p className="text-xs text-amber-600 mt-1">{target.newOrders - (todayEntry?.newOrders ?? 0)} more orders remaining</p>
+              {todayOrdersCount < target.newOrders && (
+                <p className="text-xs text-amber-600 mt-1">{target.newOrders - todayOrdersCount} more orders remaining</p>
               )}
             </div>
           </div>
@@ -223,7 +250,7 @@ export default async function PerformancePage({
             </div>
             {overallScore < 100 && (
               <p className="text-xs text-gray-400">
-                {scoreOrdersPct! < scoreCallsPct! ? "Orders are lagging behind" : "Calls are lagging behind"}
+                {(scoreOrdersPct ?? 0) < (scoreCallsPct ?? 0) ? "Orders are lagging behind" : "Calls are lagging behind"}
                 {" — "}target: {target!.calls} calls / {target!.newOrders} orders per day
               </p>
             )}
@@ -243,11 +270,11 @@ export default async function PerformancePage({
         {(from || to || user) && <Link href="/performance" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>}
       </form>
 
-      {days > 0 && (
+      {uniqueDays > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Total Calls", val: totalCalls, daily: Math.round(totalCalls / days), target: target?.calls ?? 0, color: "bg-blue-500" },
-            { label: "New Orders", val: totalOrders, daily: Math.round(totalOrders / days), target: target?.newOrders ?? 0, color: "bg-purple-500" },
+            { label: "Total Calls", val: totalCalls, daily: Math.round(totalCalls / uniqueDays), target: target?.calls ?? 0, color: "bg-blue-500" },
+            { label: "New Orders", val: totalOrders, daily: Math.round(totalOrders / uniqueDays), target: target?.newOrders ?? 0, color: "bg-purple-500" },
             {
               label: "Conversion Rate",
               val: totalCalls > 0 ? Math.round((totalOrders / totalCalls) * 100) : 0,
@@ -261,7 +288,7 @@ export default async function PerformancePage({
               <p className="text-2xl font-bold tracking-tight">{c.val}{"suffix" in c ? c.suffix : ""}</p>
               {"sub" in c
                 ? <p className="text-xs text-gray-400">{c.sub}</p>
-                : <p className="text-xs text-gray-400">Avg {"daily" in c ? c.daily : 0}/day · {days} days</p>
+                : <p className="text-xs text-gray-400">Avg {"daily" in c ? c.daily : 0}/day · {uniqueDays} days</p>
               }
               {"target" in c && (c.target ?? 0) > 0 && "daily" in c && <Bar value={c.daily as number} target={c.target as number} color={c.color} />}
               {"target" in c && (c.target ?? 0) > 0 && <p className="text-xs text-gray-400">Daily target: {c.target}</p>}
@@ -320,21 +347,19 @@ export default async function PerformancePage({
                   <th className="py-2 px-4 text-right">Orders</th>
                   <th className="py-2 px-4 text-right">Conversion</th>
                   {target && <th className="py-2 px-4 text-right">Target %</th>}
-                  <th className="py-2 px-4">Notes</th>
-                  <th className="py-2 px-4" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {entries.map((e) => {
-                  const conv = e.calls > 0 ? Math.round((e.newOrders / e.calls) * 100) : 0;
-                  const orderPct = pct(e.newOrders, target?.newOrders ?? 0);
-                  const isToday = e.date.toISOString().slice(0, 10) === todayStr;
+                  const conv = e.calls > 0 ? Math.round((e.orders / e.calls) * 100) : 0;
+                  const orderPct = pct(e.orders, target?.newOrders ?? 0);
+                  const isToday = e.date === todayStr;
                   return (
-                    <tr key={e.id} className={`hover:bg-gray-50/70 ${isToday && target && e.newOrders < target.newOrders ? "bg-red-50/40" : ""}`}>
-                      <td className="py-3 px-4 text-gray-600 text-xs">{e.date.toISOString().slice(0, 10)}</td>
-                      {isAdmin && <td className="py-3 px-4 font-medium">{e.user.displayName ?? e.user.username}</td>}
+                    <tr key={`${e.date}-${e.userId}`} className={`hover:bg-gray-50/70 ${isToday && target && e.orders < target.newOrders ? "bg-red-50/40" : ""}`}>
+                      <td className="py-3 px-4 text-gray-600 text-xs">{e.date}</td>
+                      {isAdmin && <td className="py-3 px-4 font-medium">{e.name}</td>}
                       <td className="py-3 px-4 text-right font-semibold text-blue-600 tabular-nums">{e.calls}</td>
-                      <td className="py-3 px-4 text-right font-semibold text-purple-600 tabular-nums">{e.newOrders}</td>
+                      <td className="py-3 px-4 text-right font-semibold text-purple-600 tabular-nums">{e.orders}</td>
                       <td className="py-3 px-4 text-right font-semibold text-green-600 tabular-nums">{conv}%</td>
                       {target && (
                         <td className="py-3 px-4 text-right">
@@ -343,10 +368,6 @@ export default async function PerformancePage({
                           </span>
                         </td>
                       )}
-                      <td className="py-3 px-4 text-xs text-gray-400">{e.notes ?? "—"}</td>
-                      <td className="py-3 px-4">
-                        <PerformanceRowActions id={e.id} calls={e.calls} newOrders={e.newOrders} notes={e.notes} />
-                      </td>
                     </tr>
                   );
                 })}
@@ -358,10 +379,8 @@ export default async function PerformancePage({
 
       {entries.length === 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
-          <p className="text-gray-400 text-sm">No entries yet</p>
-          <Link href="/performance/log" className="mt-3 inline-block text-sm font-medium text-black underline underline-offset-2">
-            Log your first entry →
-          </Link>
+          <p className="text-gray-400 text-sm">No activity in this period</p>
+          <p className="text-xs text-gray-300 mt-1">Calls from reorder module and retail orders will appear here automatically</p>
         </div>
       )}
     </div>
