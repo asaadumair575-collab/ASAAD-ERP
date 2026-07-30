@@ -60,12 +60,18 @@ export default function CallLogButton({
   const canProceed = feedback && feedbackNote.trim();
   const canSave = status &&
     (!isNotInterested || (reason && (!isOther || otherText.trim()))) &&
-    note.trim();
+    note.trim() &&
+    (isNewCall ? (feedback && feedbackNote.trim()) : true);
+
+  const isNewCall = lead.status === "PENDING";
 
   function openModal() {
-    setStep("feedback");
-    setFeedback("");
-    setFeedbackNote("");
+    // New call: start from feedback; Update: go straight to outcome
+    setStep(isNewCall ? "feedback" : "outcome");
+    if (isNewCall) {
+      setFeedback("");
+      setFeedbackNote("");
+    }
     setOpen(true);
   }
 
@@ -112,7 +118,7 @@ export default function CallLogButton({
                 <h3 className="text-sm font-semibold text-gray-800">{lead.customerName}</h3>
                 <p className="text-xs text-gray-400 font-mono mt-0.5">{lead.phone}</p>
               </div>
-              {step === "outcome" && (
+              {step === "outcome" && isNewCall && (
                 <button
                   type="button"
                   onClick={() => setStep("feedback")}
@@ -123,11 +129,13 @@ export default function CallLogButton({
               )}
             </div>
 
-            {/* Step indicator */}
-            <div className="flex items-center gap-2">
-              <div className={`flex-1 h-1 rounded-full ${step === "feedback" ? "bg-black" : "bg-green-500"}`} />
-              <div className={`flex-1 h-1 rounded-full ${step === "outcome" ? "bg-black" : "bg-gray-200"}`} />
-            </div>
+            {/* Step indicator — only for new calls */}
+            {isNewCall && (
+              <div className="flex items-center gap-2">
+                <div className={`flex-1 h-1 rounded-full ${step === "feedback" ? "bg-black" : "bg-green-500"}`} />
+                <div className={`flex-1 h-1 rounded-full ${step === "outcome" ? "bg-black" : "bg-gray-200"}`} />
+              </div>
+            )}
 
             {/* ── STEP 1: Feedback ── */}
             {step === "feedback" && (
