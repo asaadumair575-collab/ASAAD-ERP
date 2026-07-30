@@ -6,11 +6,12 @@ import CallLogButton from "./CallLogButton";
 import NoteCell from "./NoteCell";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  PENDING:       { label: "Pending",       color: "bg-gray-100 text-gray-500" },
-  NO_ANSWER:     { label: "No Answer",     color: "bg-yellow-100 text-yellow-700" },
-  CALLBACK:      { label: "Callback",      color: "bg-blue-100 text-blue-700" },
-  NOT_INTERESTED:{ label: "Not Interested",color: "bg-red-100 text-red-600" },
-  ORDER_PLACED:  { label: "Interested", color: "bg-violet-100 text-violet-700" },
+  PENDING:        { label: "Pending",        color: "bg-gray-100 text-gray-500" },
+  NO_ANSWER:      { label: "No Answer",      color: "bg-yellow-100 text-yellow-700" },
+  CALLBACK:       { label: "Callback",       color: "bg-blue-100 text-blue-700" },
+  NOT_INTERESTED: { label: "Not Interested", color: "bg-red-100 text-red-600" },
+  ORDER_PLACED:   { label: "Interested",     color: "bg-violet-100 text-violet-700" },
+  ORDER_RECEIVED: { label: "Order Received", color: "bg-green-100 text-green-700" },
 };
 
 export default async function ReorderCampaignPage({
@@ -57,7 +58,8 @@ export default async function ReorderCampaignPage({
   const total = campaign.leads.length;
   const pending = campaign.leads.filter((l) => l.status === "PENDING").length;
   const called = campaign.leads.filter((l) => l.status !== "PENDING").length;
-  const ordered = campaign.leads.filter((l) => l.status === "ORDER_PLACED").length;
+  const interested = campaign.leads.filter((l) => l.status === "ORDER_PLACED").length;
+  const ordered = campaign.leads.filter((l) => l.status === "ORDER_RECEIVED").length;
   const noAnswer = campaign.leads.filter((l) => l.status === "NO_ANSWER").length;
   const notInterested = campaign.leads.filter((l) => l.status === "NOT_INTERESTED").length;
   const callback = campaign.leads.filter((l) => l.status === "CALLBACK").length;
@@ -101,7 +103,7 @@ export default async function ReorderCampaignPage({
         {[
           { label: "Total", value: total, color: "text-gray-700" },
           { label: "Pending", value: pending, color: "text-amber-600" },
-          { label: "Called", value: called, color: "text-blue-600" },
+          { label: "Interested", value: interested, color: "text-violet-600" },
           { label: "Orders", value: ordered, color: "text-green-600" },
           { label: "No Answer", value: noAnswer, color: "text-yellow-600" },
           { label: "Not Interested", value: notInterested, color: "text-red-500" },

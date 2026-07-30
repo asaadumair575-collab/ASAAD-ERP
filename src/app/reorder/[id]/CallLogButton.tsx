@@ -9,6 +9,12 @@ const OUTCOMES = [
   { value: "NOT_INTERESTED", label: "❌ Not Interested", color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
 ];
 
+const OUTCOMES_INTERESTED = [
+  { value: "ORDER_RECEIVED", label: "🟢 Order Received", color: "bg-green-50 border-green-400 text-green-700 hover:bg-green-100" },
+  { value: "ORDER_PLACED",   label: "✅ Still Interested", color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
+  { value: "NOT_INTERESTED", label: "❌ Not Interested",  color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
+];
+
 const NOT_INTERESTED_REASONS = [
   "Ball Quality",
   "Price Too High",
@@ -53,6 +59,8 @@ export default function CallLogButton({
   const router = useRouter();
 
   const isNewCall = lead.status === "PENDING";
+  const isInterestedUpdate = lead.status === "ORDER_PLACED" || lead.status === "ORDER_RECEIVED";
+  const outcomeOptions = isInterestedUpdate ? OUTCOMES_INTERESTED : OUTCOMES;
   const isNotInterested = status === "NOT_INTERESTED";
   const isOther = reason === "Other";
 
@@ -230,7 +238,7 @@ export default function CallLogButton({
                 <div>
                   <p className="text-xs font-medium text-gray-600 mb-2">Call Outcome</p>
                   <div className="grid grid-cols-2 gap-2">
-                    {OUTCOMES.map((o) => (
+                    {outcomeOptions.map((o) => (
                       <button
                         key={o.value}
                         type="button"
