@@ -54,6 +54,7 @@ export default function CallLogButton({
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
+  const isNewCall = lead.status === "PENDING";
   const isNotInterested = status === "NOT_INTERESTED";
   const isOther = reason === "Other";
 
@@ -62,8 +63,6 @@ export default function CallLogButton({
     (!isNotInterested || (reason && (!isOther || otherText.trim()))) &&
     note.trim() &&
     (isNewCall ? (feedback && feedbackNote.trim()) : true);
-
-  const isNewCall = lead.status === "PENDING";
 
   function openModal() {
     // New call: start from feedback; Update: go straight to outcome
