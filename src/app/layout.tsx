@@ -72,7 +72,7 @@ export default async function RootLayout({
         <AppShell
           businessName={profile?.name ?? "Trader CRM"}
           isAdmin={me?.isAdmin ?? false}
-          username={me?.displayName ?? me?.username ?? null}
+          username={me?.isAdmin ? "Admin" : (me?.displayName ?? me?.username ?? null)}
           permissions={parsePermissions(me?.permissions)}
           unreadCount={unreadCount}
         >
