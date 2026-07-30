@@ -99,39 +99,19 @@ export default function RetailPaymentSection({
 
       {/* Record payment form */}
       {(isAdmin || canRecordPayment) && balance > 0.01 && (
-        <form action={recordAction} encType="multipart/form-data" className="space-y-3 pt-3 border-t border-gray-100">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1.5">Amount (Rs)</label>
-              <input
-                type="number"
-                name="amount"
-                min="1"
-                step="1"
-                placeholder={String(Math.round(balance))}
-                required
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-black"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1.5">Note (optional)</label>
-              <input
-                type="text"
-                name="note"
-                placeholder="e.g. Postex weekly settlement"
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-black"
-              />
-            </div>
-          </div>
+        <form action={recordAction} className="flex items-end gap-3 pt-3 border-t border-gray-100">
+          <input type="hidden" name="note" value="Postex Shipping" />
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">Screenshot (optional)</label>
+            <label className="block text-xs text-gray-500 mb-1.5">Amount (Rs)</label>
             <input
-              type="file"
-              name="screenshot"
-              accept="image/*"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black file:mr-3 file:border-0 file:bg-gray-100 file:text-xs file:font-medium file:px-3 file:py-1 file:rounded-md"
+              type="number"
+              name="amount"
+              min="1"
+              step="1"
+              defaultValue={Math.round(balance)}
+              required
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-black"
             />
-            <p className="text-xs text-gray-400 mt-1">Payment proof (bank transfer / receipt screenshot)</p>
           </div>
           <SubmitButton
             pendingText="Recording..."
