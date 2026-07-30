@@ -1961,7 +1961,7 @@ export async function bulkImportRetailOrders(rows: {
 
 export async function createReorderCampaign(
   name: string,
-  leads: { customerName: string; phone: string; city?: string; prevItem?: string }[]
+  leads: { customerName: string; phone: string; email?: string; address?: string; city?: string; prevItem?: string }[]
 ) {
   const me = await requireAuth();
   const campaign = await prisma.reorderCampaign.create({
@@ -1972,6 +1972,8 @@ export async function createReorderCampaign(
         create: leads.map((l) => ({
           customerName: l.customerName,
           phone: l.phone,
+          email: l.email || null,
+          address: l.address || null,
           city: l.city || null,
           prevItem: l.prevItem || null,
         })),

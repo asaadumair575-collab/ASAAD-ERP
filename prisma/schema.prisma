@@ -351,6 +351,8 @@ model ReorderLead {
   campaignId   Int
   customerName String
   phone        String
+  email        String?
+  address      String?
   city         String?
   prevItem     String?
   status       String          @default("PENDING")

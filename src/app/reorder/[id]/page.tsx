@@ -4,6 +4,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import CallLogButton from "./CallLogButton";
 import NoteCell from "./NoteCell";
+import LeadDetail from "./LeadDetail";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PENDING:        { label: "Pending",        color: "bg-gray-100 text-gray-500" },
@@ -225,7 +226,7 @@ export default async function ReorderCampaignPage({
                   <tr key={l.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="py-2.5 px-4 text-gray-300 text-xs hidden sm:table-cell">{i + 1}</td>
                     <td className="py-2.5 px-4">
-                      <p className="text-sm font-medium text-gray-800 leading-tight">{l.customerName}</p>
+                      <LeadDetail lead={{ customerName: l.customerName, phone: l.phone, email: l.email, address: l.address, city: l.city, prevItem: l.prevItem }} />
                       {l.calledBy && (
                         <p className="text-[11px] text-gray-400 mt-0.5 leading-none">
                           {l.calledBy.displayName ?? l.calledBy.username}

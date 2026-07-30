@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createReorderCampaign } from "@/lib/actions";
 
-type Lead = { customerName: string; phone: string; city: string; prevItem: string };
+type Lead = { customerName: string; phone: string; email: string; address: string; city: string; prevItem: string };
 
 function splitLine(line: string): string[] {
   const cols: string[] = [];
@@ -56,18 +56,23 @@ function parseCSV(text: string): Lead[] {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return [];
 
-  const headers = splitLine(lines[0]).map((h) => h.toUpperCase());
+  const headers = splitLine(lines[0]).map((h) => h.toUpperCase().trim());
 
-  // Detect courier format by checking for known courier column names
   const isCourierFormat =
     headers.includes("CUSTOMER_NAME") ||
     headers.includes("CUSTOMER_PHONE") ||
     headers.includes("TRACKING_NUMBER");
 
+  // WooCommerce export: has "BILLING FIRST NAME" or "BILLING_FIRST_NAME"
+  const normalH = headers.map((h) => h.replace(/[\s_]+/g, " "));
+  const isWooFormat =
+    normalH.includes("BILLING FIRST NAME") ||
+    normalH.includes("CUSTOMER FIRST NAME") ||
+    normalH.includes("FIRST NAME");
+
   const seen = new Map<string, Lead>();
 
   if (isCourierFormat) {
-    // Courier CSV format (PostEx / TCS etc.)
     const nameIdx   = headers.indexOf("CUSTOMER_NAME");
     const phoneIdx  = headers.indexOf("CUSTOMER_PHONE");
     const cityIdx   = headers.indexOf("CITY_NAME");
@@ -77,48 +82,83 @@ function parseCSV(text: string): Lead[] {
     for (const line of lines.slice(1)) {
       const cols = splitLine(line);
       const get = (i: number) => (i >= 0 ? (cols[i] ?? "") : "").trim();
-
-      // Only include delivered orders
       if (statusIdx >= 0 && get(statusIdx).toLowerCase() !== "delivered") continue;
-
       const customerName = cleanName(get(nameIdx));
       const phone = get(phoneIdx).replace(/\s+/g, "").replace(/\t/g, "");
       const city = get(cityIdx);
       const prevItem = cleanItem(get(itemIdx));
-
       if (!customerName || !phone) continue;
-
-      const key = `${phone}`;
+      const key = phone;
       if (!seen.has(key)) {
-        seen.set(key, { customerName, phone, city, prevItem });
+        seen.set(key, { customerName, phone, email: "", address: "", city, prevItem });
       } else {
-        const existing = seen.get(key)!;
-        if (prevItem && !existing.prevItem.includes(prevItem)) {
-          existing.prevItem = existing.prevItem ? `${existing.prevItem}, ${prevItem}` : prevItem;
-        }
+        const e = seen.get(key)!;
+        if (prevItem && !e.prevItem.includes(prevItem))
+          e.prevItem = e.prevItem ? `${e.prevItem}, ${prevItem}` : prevItem;
+      }
+    }
+  } else if (isWooFormat) {
+    // WooCommerce / ecommerce export with named columns
+    const idx = (name: string) => {
+      const n = name.replace(/[\s_]+/g, " ");
+      return normalH.indexOf(n);
+    };
+    const firstNameIdx  = idx("BILLING FIRST NAME") >= 0 ? idx("BILLING FIRST NAME") : idx("FIRST NAME");
+    const lastNameIdx   = idx("BILLING LAST NAME")  >= 0 ? idx("BILLING LAST NAME")  : idx("LAST NAME");
+    const phoneIdx      = idx("BILLING PHONE")       >= 0 ? idx("BILLING PHONE")      : idx("PHONE");
+    const emailIdx      = idx("BILLING EMAIL")       >= 0 ? idx("BILLING EMAIL")      : idx("EMAIL");
+    const cityIdx       = idx("BILLING CITY")        >= 0 ? idx("BILLING CITY")       : idx("CITY");
+    const addressIdx    = idx("BILLING ADDRESS 1")   >= 0 ? idx("BILLING ADDRESS 1")  : idx("ADDRESS");
+    const statusIdx     = idx("ORDER STATUS")        >= 0 ? idx("ORDER STATUS")       : idx("STATUS");
+    // Collect item name columns (WooCommerce exports "Item #1 Name", "Item #2 Name" etc.)
+    const itemNameIdxs  = normalH.reduce<number[]>((acc, h, i) => {
+      if (/ITEM #?\d+ NAME/.test(h) || h === "PRODUCT NAME" || h === "ITEM NAME") acc.push(i);
+      return acc;
+    }, []);
+
+    for (const line of lines.slice(1)) {
+      const cols = splitLine(line);
+      const get = (i: number) => (i >= 0 ? (cols[i] ?? "") : "").trim();
+      // Skip non-completed orders if status column exists
+      if (statusIdx >= 0) {
+        const s = get(statusIdx).toLowerCase();
+        if (s && s !== "completed" && s !== "processing" && s !== "delivered") continue;
+      }
+      const firstName = get(firstNameIdx);
+      const lastName  = get(lastNameIdx);
+      const customerName = [firstName, lastName].filter(Boolean).join(" ").trim();
+      const phone = get(phoneIdx).replace(/\s+/g, "").replace(/\t/g, "");
+      const email = get(emailIdx);
+      const city  = get(cityIdx);
+      const address = get(addressIdx);
+      const prevItem = itemNameIdxs.map((i) => get(i)).filter(Boolean).join(", ");
+      if (!customerName || !phone) continue;
+      const key = phone;
+      if (!seen.has(key)) {
+        seen.set(key, { customerName, phone, email, address, city, prevItem });
+      } else {
+        const e = seen.get(key)!;
+        if (prevItem && !e.prevItem.includes(prevItem))
+          e.prevItem = e.prevItem ? `${e.prevItem}, ${prevItem}` : prevItem;
       }
     }
   } else {
-    // Retail orders CSV format: Customer Name, Phone, City, Item Description, ...
+    // Retail orders CSV: Customer Name, Phone, City, Item
     for (const line of lines.slice(1)) {
       const cols = splitLine(line);
       const get = (i: number) => (cols[i] ?? "").trim();
-
       const customerName = get(0);
       const phone = get(1);
       const city = get(2);
       const prevItem = get(3);
-
       if (!customerName || !phone) continue;
-
       const key = `${customerName}||${phone}`;
       if (!seen.has(key)) {
-        seen.set(key, { customerName, phone, city, prevItem });
+        seen.set(key, { customerName, phone, email: "", address: "", city, prevItem });
       } else {
-        const existing = seen.get(key)!;
-        if (prevItem && !existing.prevItem.includes(prevItem)) {
-          existing.prevItem = existing.prevItem ? `${existing.prevItem}, ${prevItem}` : prevItem;
-        }
+        const e = seen.get(key)!;
+        if (prevItem && !e.prevItem.includes(prevItem))
+          e.prevItem = e.prevItem ? `${e.prevItem}, ${prevItem}` : prevItem;
       }
     }
   }
