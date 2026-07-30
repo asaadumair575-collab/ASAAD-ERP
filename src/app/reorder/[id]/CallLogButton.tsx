@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import { logReorderCall } from "@/lib/actions";
 
 const OUTCOMES = [
-  { value: "ORDER_PLACED",   label: "✅ Interested → Order", color: "bg-green-50 border-green-300 text-green-700 hover:bg-green-100" },
+  { value: "ORDER_PLACED",   label: "✅ Interested → Order", color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
   { value: "CALLBACK",       label: "🔁 Callback",           color: "bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100" },
-  { value: "NO_ANSWER",      label: "📵 No Answer",          color: "bg-yellow-50 border-yellow-300 text-yellow-700 hover:bg-yellow-100" },
   { value: "NOT_INTERESTED", label: "❌ Not Interested",     color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
 ];
 
