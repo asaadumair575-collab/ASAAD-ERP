@@ -26,10 +26,20 @@ export default function CallLogButton({
   lead: { id: number; customerName: string; phone: string; status: string; callNote: string };
   me: { id: number; displayName: string | null };
 }) {
+  // Pre-extract reason from saved note e.g. "Reason: Ball Quality — extra note"
+  function extractReason(callNote: string) {
+    const m = callNote.match(/^Reason:\s*(.+?)(?:\s*—|$)/);
+    return m ? m[1].trim() : "";
+  }
+  function extractNote(callNote: string) {
+    const m = callNote.match(/^Reason:.+?—\s*(.+)$/);
+    return m ? m[1].trim() : (callNote.startsWith("Reason:") ? "" : callNote);
+  }
+
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState(lead.status === "PENDING" ? "" : lead.status);
-  const [reason, setReason] = useState("");
-  const [note, setNote] = useState(lead.callNote);
+  const [reason, setReason] = useState(lead.status === "NOT_INTERESTED" ? extractReason(lead.callNote) : "");
+  const [note, setNote] = useState(lead.status === "NOT_INTERESTED" ? extractNote(lead.callNote) : lead.callNote);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -38,7 +48,11 @@ export default function CallLogButton({
 
   function handleStatusChange(val: string) {
     setStatus(val);
-    if (val !== "NOT_INTERESTED") setReason("");
+    if (val !== "NOT_INTERESTED") {
+      setReason("");
+    } else if (lead.status === "NOT_INTERESTED") {
+      setReason(extractReason(lead.callNote));
+    }
   }
 
   function save() {
