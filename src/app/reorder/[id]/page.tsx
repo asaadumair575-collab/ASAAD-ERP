@@ -203,15 +203,15 @@ export default async function ReorderCampaignPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                <th className="py-3 px-4 text-left">#</th>
+                <th className="py-3 px-4 text-left hidden sm:table-cell">#</th>
                 <th className="py-3 px-4 text-left">Customer</th>
                 <th className="py-3 px-4 text-left">Phone</th>
-                <th className="py-3 px-4 text-left">City</th>
-                <th className="py-3 px-4 text-left">Last Order</th>
+                <th className="py-3 px-4 text-left hidden md:table-cell">City</th>
+                <th className="py-3 px-4 text-left hidden lg:table-cell">Last Order</th>
                 <th className="py-3 px-4 text-left">Status</th>
-                <th className="py-3 px-4 text-left">Note</th>
-                <th className="py-3 px-4 text-left">Called By</th>
-                <th className="py-3 px-4 sticky right-0 bg-gray-50" />
+                <th className="py-3 px-4 text-left hidden sm:table-cell">Note</th>
+                <th className="py-3 px-4 text-left hidden md:table-cell">Called By</th>
+                <th className="py-3 px-4" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -219,18 +219,18 @@ export default async function ReorderCampaignPage({
                 const st = STATUS_LABELS[l.status] ?? STATUS_LABELS.PENDING;
                 return (
                   <tr key={l.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-4 text-gray-400 text-xs">{i + 1}</td>
+                    <td className="py-3 px-4 text-gray-400 text-xs hidden sm:table-cell">{i + 1}</td>
                     <td className="py-3 px-4 font-medium text-gray-800">{l.customerName}</td>
                     <td className="py-3 px-4 text-gray-500 font-mono text-xs">{l.phone}</td>
-                    <td className="py-3 px-4 text-gray-500">{l.city || "—"}</td>
-                    <td className="py-3 px-4 text-gray-400 text-xs truncate max-w-[140px]">{l.prevItem || "—"}</td>
+                    <td className="py-3 px-4 text-gray-500 hidden md:table-cell">{l.city || "—"}</td>
+                    <td className="py-3 px-4 text-gray-400 text-xs truncate max-w-[140px] hidden lg:table-cell">{l.prevItem || "—"}</td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${st.color}`}>
                         {st.label}
                       </span>
                     </td>
-                    <td className="py-3 px-4"><NoteCell note={l.callNote ?? ""} /></td>
-                    <td className="py-3 px-4 text-gray-400 text-xs">
+                    <td className="py-3 px-4 hidden sm:table-cell"><NoteCell note={l.callNote ?? ""} /></td>
+                    <td className="py-3 px-4 text-gray-400 text-xs hidden md:table-cell">
                       {l.calledBy ? (l.calledBy.displayName ?? l.calledBy.username) : "—"}
                       {l.calledAt && (
                         <span className="block text-gray-300">
@@ -238,7 +238,7 @@ export default async function ReorderCampaignPage({
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4 sticky right-0 bg-white">
+                    <td className="py-3 px-4">
                       <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "" }} me={meSerial} />
                     </td>
                   </tr>
