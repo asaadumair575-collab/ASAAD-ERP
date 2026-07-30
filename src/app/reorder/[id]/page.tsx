@@ -199,6 +199,7 @@ export default async function ReorderCampaignPage({
         {leads.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-12">No leads match the filter</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
@@ -245,6 +246,7 @@ export default async function ReorderCampaignPage({
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>
