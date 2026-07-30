@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import CallLogButton from "./CallLogButton";
+import NoteCell from "./NoteCell";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PENDING:       { label: "Pending",       color: "bg-gray-100 text-gray-500" },
@@ -227,7 +228,7 @@ export default async function ReorderCampaignPage({
                         {st.label}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-gray-400 text-xs max-w-[160px] truncate">{l.callNote || "—"}</td>
+                    <td className="py-3 px-4"><NoteCell note={l.callNote ?? ""} /></td>
                     <td className="py-3 px-4 text-gray-400 text-xs">
                       {l.calledBy ? (l.calledBy.displayName ?? l.calledBy.username) : "—"}
                       {l.calledAt && (
