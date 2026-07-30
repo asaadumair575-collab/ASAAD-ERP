@@ -5,6 +5,7 @@ import Link from "next/link";
 import CallLogButton from "./CallLogButton";
 import NoteCell from "./NoteCell";
 import LeadDetail from "./LeadDetail";
+import BackfillAddressButton from "./BackfillAddressButton";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PENDING:        { label: "Pending",        color: "bg-gray-100 text-gray-500" },
@@ -97,6 +98,9 @@ export default async function ReorderCampaignPage({
             Created {new Date(campaign.createdAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
             {campaign.createdBy && ` · ${campaign.createdBy.displayName ?? campaign.createdBy.username}`}
           </p>
+          <div className="mt-2">
+            <BackfillAddressButton campaignId={campaign.id} />
+          </div>
         </div>
       </div>
 

@@ -1997,6 +1997,31 @@ export async function logReorderCall(
   revalidatePath("/reorder");
 }
 
+export async function backfillReorderAddresses(
+  campaignId: number,
+  rows: { phone: string; address: string; email?: string }[]
+) {
+  await requireAuth();
+  const leads = await prisma.reorderLead.findMany({
+    where: { campaignId },
+    select: { id: true, phone: true },
+  });
+  const phoneMap = new Map(leads.map((l) => [l.phone.replace(/\s+/g, ""), l.id]));
+  let updated = 0;
+  for (const row of rows) {
+    const phone = row.phone.replace(/\s+/g, "");
+    const id = phoneMap.get(phone);
+    if (!id || !row.address) continue;
+    await prisma.reorderLead.update({
+      where: { id },
+      data: { address: row.address, ...(row.email ? { email: row.email } : {}) },
+    });
+    updated++;
+  }
+  revalidatePath(`/reorder/${campaignId}`);
+  return updated;
+}
+
 export async function deleteReorderCampaign(id: number) {
   await requireAuth();
   await prisma.reorderCampaign.delete({ where: { id } });
