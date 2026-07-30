@@ -108,13 +108,15 @@ export default function Sidebar({
   const isOnRetail = pathname.startsWith("/retail");
   const isOnLeads = pathname.startsWith("/leads");
   const isOnEcommerce = pathname.startsWith("/ecommerce");
+  const isOnEmployee = pathname.startsWith("/emp-commission") || pathname.startsWith("/performance");
 
-  type Section = "wholesale" | "retail" | "leads" | "ecommerce" | null;
+  type Section = "wholesale" | "retail" | "leads" | "ecommerce" | "employee" | null;
   function sectionForPath(): Section {
     if (isOnWholesale) return "wholesale";
     if (isOnRetail) return "retail";
     if (isOnLeads) return "leads";
     if (isOnEcommerce) return "ecommerce";
+    if (isOnEmployee) return "employee";
     return null;
   }
   const [openSection, setOpenSection] = useState<Section>(sectionForPath());
@@ -308,15 +310,26 @@ export default function Sidebar({
           </NavLink>
         )}
 
-        {canView(permissions, "emp_commission", isAdmin) && (
-          <NavLink href="/emp-commission" active={isActive("/emp-commission")} icon={icons.finance} onClick={closeMobile}>
-            {isAdmin ? "Emp Commission" : "My Commission"}
-          </NavLink>
+        <button
+          type="button"
+          onClick={() => toggleSection("employee")}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEmployee ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}
+        >
+          <span className="flex items-center gap-2.5">{icons.finance} Employee</span>
+          <span className={`transition-transform text-gray-400 ${openSection === "employee" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+        </button>
+        {openSection === "employee" && (
+          <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+            {canView(permissions, "emp_commission", isAdmin) && (
+              <NavLink href="/emp-commission" active={isActive("/emp-commission")} compact onClick={closeMobile}>
+                {isAdmin ? "Commission" : "My Commission"}
+              </NavLink>
+            )}
+            <NavLink href="/performance" active={pathname.startsWith("/performance")} compact onClick={closeMobile}>
+              Performance
+            </NavLink>
+          </div>
         )}
-
-        <NavLink href="/performance" active={pathname.startsWith("/performance")} icon={icons.sales} onClick={closeMobile}>
-          Performance
-        </NavLink>
 
         {isAdmin && <SectionLabel>Admin</SectionLabel>}
 
