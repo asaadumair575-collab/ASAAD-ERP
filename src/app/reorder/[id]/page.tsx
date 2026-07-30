@@ -35,7 +35,7 @@ export default async function ReorderCampaignPage({
     include: {
       createdBy: { select: { displayName: true, username: true } },
       leads: {
-        include: { calledBy: { select: { id: true, displayName: true, username: true } } },
+        include: { calledBy: { select: { id: true, displayName: true, username: true, isAdmin: true } } },
         orderBy: [{ status: "asc" }, { createdAt: "asc" }],
       },
     },
@@ -64,15 +64,16 @@ export default async function ReorderCampaignPage({
   const notInterested = campaign.leads.filter((l) => l.status === "NOT_INTERESTED").length;
   const callback = campaign.leads.filter((l) => l.status === "CALLBACK").length;
 
-  // Today's calls per employee for this campaign
+  // Today's calls per employee (non-admin only)
   const todayEmpMap = new Map<number, { name: string; total: number; ordered: number; notInterested: number; noAnswer: number; callback: number }>();
   for (const l of campaign.leads) {
-    if (!l.calledBy || !l.calledAt || new Date(l.calledAt) < todayStart) continue;
+    if (!l.calledBy || l.calledBy.isAdmin) continue;
+    if (!l.calledAt || new Date(l.calledAt) < todayStart) continue;
     const uid = l.calledBy.id;
     const name = l.calledBy.displayName ?? l.calledBy.username;
     const e = todayEmpMap.get(uid) ?? { name, total: 0, ordered: 0, notInterested: 0, noAnswer: 0, callback: 0 };
     e.total++;
-    if (l.status === "ORDER_PLACED")    e.ordered++;
+    if (l.status === "ORDER_PLACED" || l.status === "ORDER_RECEIVED") e.ordered++;
     if (l.status === "NOT_INTERESTED")  e.notInterested++;
     if (l.status === "NO_ANSWER")       e.noAnswer++;
     if (l.status === "CALLBACK")        e.callback++;
@@ -142,7 +143,10 @@ export default async function ReorderCampaignPage({
       {/* Today's calls per employee */}
       {todayEmpStats.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Aaj ki Calls — Is Campaign Mein</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Aaj ki Calls — Is Campaign Mein</p>
+            <p className="text-xs text-gray-400">{new Date().toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</p>
+          </div>
           <div className="space-y-2">
             {todayEmpStats.map((e) => (
               <div key={e.name} className="flex items-center gap-3">
