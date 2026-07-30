@@ -126,16 +126,16 @@ export default async function ReorderCampaignPage({
           {total > 0 && (
             <>
               <div className="h-full bg-green-500 transition-all" style={{ width: `${(ordered / total) * 100}%` }} />
+              <div className="h-full bg-violet-500 transition-all" style={{ width: `${(interested / total) * 100}%` }} />
               <div className="h-full bg-red-400 transition-all" style={{ width: `${(notInterested / total) * 100}%` }} />
-              <div className="h-full bg-blue-400 transition-all" style={{ width: `${(callback / total) * 100}%` }} />
               <div className="h-full bg-yellow-400 transition-all" style={{ width: `${(noAnswer / total) * 100}%` }} />
             </>
           )}
         </div>
-        <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" />Order Placed</span>
+        <div className="flex items-center gap-4 mt-2 text-xs text-gray-400 flex-wrap">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" />Order Received</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-500 inline-block" />Interested</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />Not Interested</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />Callback</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />No Answer</span>
         </div>
       </div>
