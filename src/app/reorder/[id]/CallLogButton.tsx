@@ -90,7 +90,9 @@ export default function CallLogButton({
     const outcomeNote = isNotInterested
       ? `Reason: ${effectiveReason}${note ? ` — ${note}` : ""}`
       : note;
-    const finalNote = `[${feedback === "POSITIVE" ? "👍 Positive" : "👎 Negative"}: ${feedbackNote.trim()}] ${outcomeNote}`.trim();
+    const finalNote = isNewCall && feedback
+      ? `[${feedback === "POSITIVE" ? "👍 Positive" : "👎 Negative"}: ${feedbackNote.trim()}] ${outcomeNote}`.trim()
+      : outcomeNote;
     startTransition(async () => {
       await logReorderCall(lead.id, status, finalNote);
       setOpen(false);
