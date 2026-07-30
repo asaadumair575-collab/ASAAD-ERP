@@ -11,6 +11,14 @@ const OUTCOMES = [
   { value: "NOT_INTERESTED", label: "❌ Not Interested", color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
 ];
 
+const NOT_INTERESTED_REASONS = [
+  "Ball Quality",
+  "Price Too High",
+  "Already Has Stock",
+  "Not Selling This Product",
+  "Other",
+];
+
 export default function CallLogButton({
   lead,
   me,
@@ -20,14 +28,26 @@ export default function CallLogButton({
 }) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState(lead.status === "PENDING" ? "" : lead.status);
+  const [reason, setReason] = useState("");
   const [note, setNote] = useState(lead.callNote);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
+  const isNotInterested = status === "NOT_INTERESTED";
+  const canSave = status && (!isNotInterested || reason);
+
+  function handleStatusChange(val: string) {
+    setStatus(val);
+    if (val !== "NOT_INTERESTED") setReason("");
+  }
+
   function save() {
-    if (!status) return;
+    if (!canSave) return;
+    const finalNote = isNotInterested
+      ? `Reason: ${reason}${note ? ` — ${note}` : ""}`
+      : note;
     startTransition(async () => {
-      await logReorderCall(lead.id, status, note);
+      await logReorderCall(lead.id, status, finalNote);
       setOpen(false);
       router.replace(window.location.pathname + window.location.search);
     });
@@ -50,6 +70,7 @@ export default function CallLogButton({
               <p className="text-xs text-gray-400 font-mono mt-0.5">{lead.phone}</p>
             </div>
 
+            {/* Outcome */}
             <div>
               <p className="text-xs font-medium text-gray-600 mb-2">Call Outcome</p>
               <div className="grid grid-cols-2 gap-2">
@@ -57,7 +78,7 @@ export default function CallLogButton({
                   <button
                     key={o.value}
                     type="button"
-                    onClick={() => setStatus(o.value)}
+                    onClick={() => handleStatusChange(o.value)}
                     className={`border rounded-xl px-3 py-2.5 text-xs font-medium text-left transition-colors ${
                       status === o.value
                         ? o.color + " ring-2 ring-offset-1 ring-current"
@@ -70,13 +91,42 @@ export default function CallLogButton({
               </div>
             </div>
 
+            {/* Not Interested reason — shown only when that outcome is selected */}
+            {isNotInterested && (
+              <div className="bg-red-50 border border-red-100 rounded-xl p-3 space-y-2">
+                <p className="text-xs font-semibold text-red-700">Not interested ki wajah?</p>
+                <div className="flex flex-wrap gap-2">
+                  {NOT_INTERESTED_REASONS.map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setReason(r)}
+                      className={`text-xs px-2.5 py-1.5 rounded-lg border font-medium transition-colors ${
+                        reason === r
+                          ? "bg-red-600 text-white border-red-600"
+                          : "border-red-200 text-red-600 hover:bg-red-100"
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+                {!reason && (
+                  <p className="text-xs text-red-400">Wajah select karna zaroori hai</p>
+                )}
+              </div>
+            )}
+
+            {/* Note */}
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">Note (optional)</label>
+              <label className="text-xs font-medium text-gray-600 block mb-1">
+                {isNotInterested ? "Extra note (optional)" : "Note (optional)"}
+              </label>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 rows={2}
-                placeholder="Add a note about this call..."
+                placeholder={isNotInterested ? "Kuch aur baat hui ho to..." : "Add a note about this call..."}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
               />
             </div>
@@ -87,7 +137,7 @@ export default function CallLogButton({
               </button>
               <button
                 onClick={save}
-                disabled={pending || !status}
+                disabled={pending || !canSave}
                 className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
               >
                 {pending ? "Saving..." : "Save"}
