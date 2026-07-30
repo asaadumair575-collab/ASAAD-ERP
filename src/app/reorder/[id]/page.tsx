@@ -209,7 +209,6 @@ export default async function ReorderCampaignPage({
                 <th className="py-3 px-4 text-left hidden lg:table-cell">Last Order</th>
                 <th className="py-3 px-4 text-left">Status</th>
                 <th className="py-3 px-4 text-left hidden sm:table-cell">Note</th>
-                <th className="py-3 px-4 text-left hidden md:table-cell">Called By</th>
                 <th className="py-3 px-4 text-left sticky right-0 bg-gray-50 z-10"></th>
               </tr>
             </thead>
@@ -219,7 +218,15 @@ export default async function ReorderCampaignPage({
                 return (
                   <tr key={l.id} className="hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-4 text-gray-400 text-xs hidden sm:table-cell">{i + 1}</td>
-                    <td className="py-3 px-4 font-medium text-gray-800">{l.customerName}</td>
+                    <td className="py-3 px-4">
+                      <p className="font-medium text-gray-800">{l.customerName}</p>
+                      {l.calledBy && (
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {l.calledBy.displayName ?? l.calledBy.username}
+                          {l.calledAt && <span className="text-gray-300"> · {new Date(l.calledAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}</span>}
+                        </p>
+                      )}
+                    </td>
                     <td className="py-3 px-4 text-gray-500 font-mono text-xs hidden sm:table-cell">{l.phone}</td>
                     <td className="py-3 px-4 text-gray-500 hidden md:table-cell">{l.city || "—"}</td>
                     <td className="py-3 px-4 text-gray-400 text-xs truncate max-w-[140px] hidden lg:table-cell">{l.prevItem || "—"}</td>
@@ -229,14 +236,6 @@ export default async function ReorderCampaignPage({
                       </span>
                     </td>
                     <td className="py-3 px-4 hidden sm:table-cell"><NoteCell note={l.callNote ?? ""} /></td>
-                    <td className="py-3 px-4 text-gray-400 text-xs hidden md:table-cell">
-                      {l.calledBy ? (l.calledBy.displayName ?? l.calledBy.username) : "—"}
-                      {l.calledAt && (
-                        <span className="block text-gray-300">
-                          {new Date(l.calledAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
-                        </span>
-                      )}
-                    </td>
                     <td className="py-3 px-4 sticky right-0 bg-inherit">
                       <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "" }} me={meSerial} />
                     </td>
