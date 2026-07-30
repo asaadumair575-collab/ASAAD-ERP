@@ -212,31 +212,31 @@ export default async function ReorderCampaignPage({
                 <th className="py-3 px-4 text-left sticky right-0 bg-gray-50 z-10"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-100">
               {leads.map((l, i) => {
                 const st = STATUS_LABELS[l.status] ?? STATUS_LABELS.PENDING;
                 return (
-                  <tr key={l.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-4 text-gray-400 text-xs hidden sm:table-cell">{i + 1}</td>
-                    <td className="py-3 px-4">
-                      <p className="font-medium text-gray-800">{l.customerName}</p>
+                  <tr key={l.id} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="py-2.5 px-4 text-gray-300 text-xs hidden sm:table-cell">{i + 1}</td>
+                    <td className="py-2.5 px-4">
+                      <p className="text-sm font-medium text-gray-800 leading-tight">{l.customerName}</p>
                       {l.calledBy && (
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-[11px] text-gray-400 mt-0.5 leading-none">
                           {l.calledBy.displayName ?? l.calledBy.username}
                           {l.calledAt && <span className="text-gray-300"> · {new Date(l.calledAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}</span>}
                         </p>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-gray-500 font-mono text-xs hidden sm:table-cell">{l.phone}</td>
-                    <td className="py-3 px-4 text-gray-500 hidden md:table-cell">{l.city || "—"}</td>
-                    <td className="py-3 px-4 text-gray-400 text-xs truncate max-w-[140px] hidden lg:table-cell">{l.prevItem || "—"}</td>
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-4 text-gray-400 font-mono text-xs hidden sm:table-cell">{l.phone}</td>
+                    <td className="py-2.5 px-4 text-gray-400 text-sm hidden md:table-cell">{l.city || "—"}</td>
+                    <td className="py-2.5 px-4 text-gray-300 text-xs truncate max-w-[140px] hidden lg:table-cell">{l.prevItem || "—"}</td>
+                    <td className="py-2.5 px-4">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${st.color}`}>
                         {st.label}
                       </span>
                     </td>
-                    <td className="py-3 px-4 hidden sm:table-cell"><NoteCell note={l.callNote ?? ""} /></td>
-                    <td className="py-3 px-4 sticky right-0 bg-inherit">
+                    <td className="py-2.5 px-4 hidden sm:table-cell"><NoteCell note={l.callNote ?? ""} /></td>
+                    <td className="py-2.5 px-4 sticky right-0 bg-inherit">
                       <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "" }} me={meSerial} />
                     </td>
                   </tr>
