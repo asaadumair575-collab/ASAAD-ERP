@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 function parseFeedback(note: string) {
-  const m = note.match(/^\[(👍|👎)\s*(Positive|Negative):\s*(.+?)\]\s*(.*)/s);
+  const m = note.match(/^\[(👍|👎)\s*(Positive|Negative):\s*(.+?)\]\s*([\s\S]*)/);
   if (!m) return { badge: null, feedbackText: null, outcomeNote: note };
   return {
     badge: m[1] === "👍" ? "positive" : "negative",
