@@ -73,11 +73,12 @@ function parseCSV(text: string): Lead[] {
   const seen = new Map<string, Lead>();
 
   if (isCourierFormat) {
-    const nameIdx   = headers.indexOf("CUSTOMER_NAME");
-    const phoneIdx  = headers.indexOf("CUSTOMER_PHONE");
-    const cityIdx   = headers.indexOf("CITY_NAME");
-    const itemIdx   = headers.indexOf("ORDER_DETAIL");
-    const statusIdx = headers.indexOf("MERCHANT_TRANSACTION_STATUS");
+    const nameIdx    = headers.indexOf("CUSTOMER_NAME");
+    const phoneIdx   = headers.indexOf("CUSTOMER_PHONE");
+    const cityIdx    = headers.indexOf("CITY_NAME");
+    const itemIdx    = headers.indexOf("ORDER_DETAIL");
+    const statusIdx  = headers.indexOf("MERCHANT_TRANSACTION_STATUS");
+    const addressIdx = headers.indexOf("DELIVERY_ADDRESS");
 
     for (const line of lines.slice(1)) {
       const cols = splitLine(line);
@@ -87,10 +88,11 @@ function parseCSV(text: string): Lead[] {
       const phone = get(phoneIdx).replace(/\s+/g, "").replace(/\t/g, "");
       const city = get(cityIdx);
       const prevItem = cleanItem(get(itemIdx));
+      const address = get(addressIdx);
       if (!customerName || !phone) continue;
       const key = phone;
       if (!seen.has(key)) {
-        seen.set(key, { customerName, phone, email: "", address: "", city, prevItem });
+        seen.set(key, { customerName, phone, email: "", address, city, prevItem });
       } else {
         const e = seen.get(key)!;
         if (prevItem && !e.prevItem.includes(prevItem))
