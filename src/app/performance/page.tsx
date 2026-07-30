@@ -96,14 +96,67 @@ export default async function PerformancePage({
         </div>
       </div>
 
-      {showTargetWarning && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-          <span className="text-red-500 text-lg">⚠️</span>
-          <div>
-            <p className="text-sm font-semibold text-red-700">Today's target not fulfilled!</p>
-            <p className="text-xs text-red-500 mt-0.5">
-              {todayEntry.newOrders} orders logged today — target is {target.newOrders}. {target.newOrders - todayEntry.newOrders} more needed.
-            </p>
+      {/* Daily target card — visible to everyone when a target is set */}
+      {target && (
+        <div className={`bg-white border-2 rounded-2xl shadow-sm p-5 ${
+          todayEntry
+            ? (todayEntry.calls >= target.calls && todayEntry.newOrders >= target.newOrders
+                ? "border-green-300"
+                : "border-amber-300")
+            : "border-gray-200"
+        }`}>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-semibold text-gray-800">Aaj ka Target</p>
+            {todayEntry
+              ? (todayEntry.calls >= target.calls && todayEntry.newOrders >= target.newOrders
+                  ? <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">✅ Poora ho gaya!</span>
+                  : <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">⏳ Jari hai...</span>)
+              : <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full">Aaj ki entry nahi</span>
+            }
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Calls */}
+            <div>
+              <div className="flex items-end justify-between mb-1.5">
+                <p className="text-xs text-gray-500">Calls</p>
+                <p className="text-xs font-medium text-gray-600">
+                  <span className={`text-lg font-bold ${todayEntry && todayEntry.calls >= target.calls ? "text-green-600" : "text-gray-900"}`}>
+                    {todayEntry?.calls ?? 0}
+                  </span>
+                  <span className="text-gray-400"> / {target.calls}</span>
+                </p>
+              </div>
+              <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${todayEntry && todayEntry.calls >= target.calls ? "bg-green-500" : "bg-blue-500"}`}
+                  style={{ width: `${target.calls ? Math.min(100, Math.round(((todayEntry?.calls ?? 0) / target.calls) * 100)) : 0}%` }}
+                />
+              </div>
+              {todayEntry && todayEntry.calls < target.calls && (
+                <p className="text-xs text-amber-600 mt-1">{target.calls - todayEntry.calls} aur calls baqi</p>
+              )}
+            </div>
+            {/* New Orders */}
+            <div>
+              <div className="flex items-end justify-between mb-1.5">
+                <p className="text-xs text-gray-500">New Orders</p>
+                <p className="text-xs font-medium text-gray-600">
+                  <span className={`text-lg font-bold ${todayEntry && todayEntry.newOrders >= target.newOrders ? "text-green-600" : "text-gray-900"}`}>
+                    {todayEntry?.newOrders ?? 0}
+                  </span>
+                  <span className="text-gray-400"> / {target.newOrders}</span>
+                </p>
+              </div>
+              <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${todayEntry && todayEntry.newOrders >= target.newOrders ? "bg-green-500" : "bg-purple-500"}`}
+                  style={{ width: `${target.newOrders ? Math.min(100, Math.round(((todayEntry?.newOrders ?? 0) / target.newOrders) * 100)) : 0}%` }}
+                />
+              </div>
+              {todayEntry && todayEntry.newOrders < target.newOrders && (
+                <p className="text-xs text-amber-600 mt-1">{target.newOrders - todayEntry.newOrders} aur orders baqi</p>
+              )}
+            </div>
           </div>
         </div>
       )}
