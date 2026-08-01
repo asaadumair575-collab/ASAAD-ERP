@@ -2013,6 +2013,29 @@ export async function logReorderCall(
   revalidatePath("/reorder");
 }
 
+export async function searchReorderLeads(q: string) {
+  await requireAuth();
+  const leads = await prisma.reorderLead.findMany({
+    where: {
+      OR: [
+        { customerName: { contains: q, mode: "insensitive" } },
+        { phone: { contains: q } },
+      ],
+    },
+    select: {
+      id: true,
+      customerName: true,
+      phone: true,
+      city: true,
+      status: true,
+      campaign: { select: { id: true, name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+  return leads;
+}
+
 export async function deleteReorderLead(leadId: number) {
   await requireAuth();
   await prisma.reorderLead.delete({ where: { id: leadId } });

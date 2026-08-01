@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import ReorderUploadModal from "./ReorderUploadModal";
 import DeleteCampaignButton from "./DeleteCampaignButton";
+import LeadSearch from "./LeadSearch";
 
 export default async function ReorderPage() {
   const me = await getSessionUser();
@@ -25,7 +26,10 @@ export default async function ReorderPage() {
           <h1 className="text-xl font-bold text-gray-900">Reorder Campaigns</h1>
           <p className="text-sm text-gray-400 mt-0.5">Upload delivered-parcel CSVs and track re-order calls</p>
         </div>
-        <ReorderUploadModal />
+        <div className="flex items-center gap-2">
+          <LeadSearch />
+          <ReorderUploadModal />
+        </div>
       </div>
 
 
