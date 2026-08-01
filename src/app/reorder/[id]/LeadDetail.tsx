@@ -1,6 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { getLeadCallLogs } from "@/lib/actions";
+import { userLabel } from "@/lib/userLabel";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PENDING:          { label: "Pending",              color: "text-gray-400" },
@@ -16,7 +17,7 @@ type CallLog = {
   status: string;
   callNote: string | null;
   calledAt: Date;
-  calledBy: { displayName: string | null; username: string };
+  calledBy: { displayName: string | null; username: string; isAdmin?: boolean };
 };
 
 type Lead = {
@@ -107,7 +108,7 @@ export default function LeadDetail({ lead, leadId }: { lead: Lead; leadId: numbe
                             <p className="text-xs text-gray-600 leading-snug">{log.callNote}</p>
                           </div>
                         )}
-                        <p className="text-[11px] text-gray-300 mt-0.5">by {log.calledBy.displayName ?? log.calledBy.username}</p>
+                        <p className="text-[11px] text-gray-300 mt-0.5">by {userLabel(log.calledBy)}</p>
                       </div>
                     );
                   })}

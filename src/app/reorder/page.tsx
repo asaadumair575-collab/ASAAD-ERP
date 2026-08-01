@@ -5,6 +5,7 @@ import Link from "next/link";
 import ReorderUploadModal from "./ReorderUploadModal";
 import DeleteCampaignButton from "./DeleteCampaignButton";
 import LeadSearch from "./LeadSearch";
+import { userLabel } from "@/lib/userLabel";
 
 export default async function ReorderPage() {
   const me = await getSessionUser();
@@ -13,7 +14,7 @@ export default async function ReorderPage() {
   const campaigns = await prisma.reorderCampaign.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      createdBy: { select: { displayName: true, username: true } },
+      createdBy: { select: { displayName: true, username: true, isAdmin: true } },
       _count: { select: { leads: true } },
       leads: { select: { status: true } },
     },
@@ -58,7 +59,7 @@ export default async function ReorderPage() {
                     </Link>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {new Date(c.createdAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
-                      {c.createdBy && ` · by ${c.createdBy.displayName ?? c.createdBy.username}`}
+                      {c.createdBy && ` · by ${userLabel(c.createdBy)}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">

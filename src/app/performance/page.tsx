@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
+import { userLabel } from "@/lib/userLabel";
 
 function pct(val: number, target: number) {
   if (!target) return 0;
@@ -33,7 +34,7 @@ export default async function PerformancePage({
   const toDate = to ? new Date(`${to}T23:59:59.999`) : undefined;
 
   const target = await prisma.performanceTarget.findFirst({ orderBy: { effectiveFrom: "desc" } });
-  const users = isAdmin ? await prisma.user.findMany({ orderBy: { displayName: "asc" } }) : [];
+  const users = isAdmin ? await prisma.user.findMany({ where: { isAdmin: false }, orderBy: { displayName: "asc" } }) : [];
 
   const pendingDelivery = await prisma.retailOrder.count({
     where: { dispatched: false, status: { notIn: ["CANCELLED", "DELIVERED"] } },
@@ -50,7 +51,7 @@ export default async function PerformancePage({
     select: {
       calledAt: true,
       calledById: true,
-      calledBy: { select: { id: true, displayName: true, username: true } },
+      calledBy: { select: { id: true, displayName: true, username: true, isAdmin: true } },
     },
   });
 
@@ -64,7 +65,7 @@ export default async function PerformancePage({
     select: {
       date: true,
       createdByUserId: true,
-      createdBy: { select: { id: true, displayName: true, username: true } },
+      createdBy: { select: { id: true, displayName: true, username: true, isAdmin: true } },
     },
   });
 
@@ -79,7 +80,7 @@ export default async function PerformancePage({
     const dateStr = l.calledAt.toISOString().slice(0, 10);
     const uid = l.calledById;
     const key = dayKey(dateStr, uid);
-    const existing = dayMap.get(key) ?? { date: dateStr, userId: uid, name: l.calledBy.displayName ?? l.calledBy.username, calls: 0, orders: 0 };
+    const existing = dayMap.get(key) ?? { date: dateStr, userId: uid, name: userLabel(l.calledBy), calls: 0, orders: 0 };
     existing.calls++;
     dayMap.set(key, existing);
   }
@@ -89,7 +90,7 @@ export default async function PerformancePage({
     const dateStr = o.date.toISOString().slice(0, 10);
     const uid = o.createdByUserId;
     const key = dayKey(dateStr, uid);
-    const existing = dayMap.get(key) ?? { date: dateStr, userId: uid, name: o.createdBy.displayName ?? o.createdBy.username, calls: 0, orders: 0 };
+    const existing = dayMap.get(key) ?? { date: dateStr, userId: uid, name: userLabel(o.createdBy), calls: 0, orders: 0 };
     existing.orders++;
     dayMap.set(key, existing);
   }
@@ -262,7 +263,7 @@ export default async function PerformancePage({
         {isAdmin && (
           <select name="user" defaultValue={user ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
             <option value="">All Employees</option>
-            {users.map((u) => <option key={u.id} value={u.id}>{u.displayName ?? u.username}</option>)}
+            {users.map((u) => <option key={u.id} value={u.id}>{userLabel(u)}</option>)}
           </select>
         )}
         <DateRangeFilter from={from} to={to} />

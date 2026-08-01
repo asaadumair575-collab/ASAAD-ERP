@@ -5,6 +5,7 @@ import { parsePermissions, canView } from "@/lib/permissions";
 import { approveEmpCommission, rejectEmpCommission, deleteEmpCommissionEntry, submitEmpCommission } from "@/lib/actions";
 import DeleteButton from "@/components/DeleteButton";
 import SubmitButton from "@/components/SubmitButton";
+import { userLabel } from "@/lib/userLabel";
 
 const RATE = 30;
 
@@ -25,7 +26,7 @@ export default async function EmpCommissionPage() {
   /* ── ADMIN VIEW ── */
   if (me.isAdmin) {
     const entries = await prisma.empCommissionEntry.findMany({
-      include: { user: { select: { id: true, displayName: true, username: true } } },
+      include: { user: { select: { id: true, displayName: true, username: true, isAdmin: true } } },
       orderBy: { createdAt: "desc" },
     });
 
@@ -34,7 +35,7 @@ export default async function EmpCommissionPage() {
 
     const totals: Record<number, { name: string; total: number }> = {};
     for (const e of approved) {
-      if (!totals[e.userId]) totals[e.userId] = { name: e.user.displayName ?? e.user.username, total: 0 };
+      if (!totals[e.userId]) totals[e.userId] = { name: userLabel(e.user), total: 0 };
       totals[e.userId].total += e.orders * RATE;
     }
 
@@ -71,7 +72,7 @@ export default async function EmpCommissionPage() {
                 <div key={e.id} className="bg-white border border-orange-200 rounded-2xl p-4 shadow-sm space-y-3">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-medium text-sm">{e.user.displayName ?? e.user.username}</p>
+                      <p className="font-medium text-sm">{userLabel(e.user)}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{fmtDate(e.date)}</p>
                     </div>
                     <div className="text-right shrink-0">
@@ -134,7 +135,7 @@ export default async function EmpCommissionPage() {
                     const delBound = deleteEmpCommissionEntry.bind(null, e.id);
                     return (
                       <tr key={e.id} className="hover:bg-gray-50/70 transition-colors">
-                        <td className="py-3 px-5 font-medium">{e.user.displayName ?? e.user.username}</td>
+                        <td className="py-3 px-5 font-medium">{userLabel(e.user)}</td>
                         <td className="py-3 px-5 text-gray-500 whitespace-nowrap">{fmtDate(e.date)}</td>
                         <td className="py-3 px-5 text-right">{e.orders}</td>
                         <td className="py-3 px-5 text-right font-medium">Rs {fmt(e.orders * RATE)}</td>
@@ -175,7 +176,7 @@ export default async function EmpCommissionPage() {
                       const delBound = deleteEmpCommissionEntry.bind(null, e.id);
                       return (
                         <tr key={e.id} className="hover:bg-red-50/50 transition-colors">
-                          <td className="py-3 px-5 font-medium">{e.user.displayName ?? e.user.username}</td>
+                          <td className="py-3 px-5 font-medium">{userLabel(e.user)}</td>
                           <td className="py-3 px-5 text-gray-500 whitespace-nowrap">{fmtDate(e.date)}</td>
                           <td className="py-3 px-5 text-right">{e.orders}</td>
                           <td className="py-3 px-5 text-gray-500 text-xs">{e.note ?? "—"}</td>

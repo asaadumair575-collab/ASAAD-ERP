@@ -6,6 +6,7 @@ import CallLogButton from "./CallLogButton";
 import NoteCell from "./NoteCell";
 import LeadDetail from "./LeadDetail";
 import BackfillAddressButton from "./BackfillAddressButton";
+import { userLabel } from "@/lib/userLabel";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PENDING:          { label: "Pending",              color: "bg-gray-100 text-gray-500" },
@@ -41,7 +42,7 @@ export default async function ReorderCampaignPage({
   const campaign = await prisma.reorderCampaign.findUnique({
     where: { id: parseInt(id) },
     include: {
-      createdBy: { select: { displayName: true, username: true } },
+      createdBy: { select: { displayName: true, username: true, isAdmin: true } },
       leads: {
         include: {
           calledBy: { select: { id: true, displayName: true, username: true, isAdmin: true } },
@@ -110,7 +111,7 @@ export default async function ReorderCampaignPage({
           <h1 className="text-xl font-bold text-gray-900">{campaign.name}</h1>
           <p className="text-xs text-gray-400 mt-0.5">
             Created {new Date(campaign.createdAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
-            {campaign.createdBy && ` · ${campaign.createdBy.displayName ?? campaign.createdBy.username}`}
+            {campaign.createdBy && ` · ${userLabel(campaign.createdBy)}`}
           </p>
           <div className="mt-2">
             <BackfillAddressButton campaignId={campaign.id} />
@@ -264,7 +265,7 @@ export default async function ReorderCampaignPage({
                       />
                       {l.calledBy && (
                         <p className="text-[11px] text-gray-400 mt-0.5 leading-none">
-                          {l.calledBy.displayName ?? l.calledBy.username}
+                          {userLabel(l.calledBy)}
                           {l.calledAt && <span className="text-gray-300"> · {new Date(l.calledAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}</span>}
                         </p>
                       )}

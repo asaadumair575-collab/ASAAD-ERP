@@ -2,8 +2,9 @@
 
 import { useRef, useState, useTransition } from "react";
 import { logEmpPerformance } from "@/lib/actions";
+import { userLabel } from "@/lib/userLabel";
 
-type User = { id: number; displayName: string | null; username: string };
+type User = { id: number; displayName: string | null; username: string; isAdmin?: boolean };
 
 export default function PerformanceLogForm({
   isAdmin,
@@ -53,7 +54,7 @@ export default function PerformanceLogForm({
           >
             <option value="">Self</option>
             {users.map((u) => (
-              <option key={u.id} value={u.id}>{u.displayName ?? u.username}</option>
+              <option key={u.id} value={u.id}>{userLabel(u)}</option>
             ))}
           </select>
         </div>

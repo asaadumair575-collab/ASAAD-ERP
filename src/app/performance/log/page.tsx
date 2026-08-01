@@ -4,13 +4,14 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import PerformanceRowActions from "./PerformanceRowActions";
 import PerformanceLogForm from "./PerformanceLogForm";
+import { userLabel } from "@/lib/userLabel";
 
 export default async function PerformanceLogPage() {
   const me = await getSessionUser();
   if (!me) redirect("/login");
   const isAdmin = me.isAdmin ?? false;
 
-  const users = isAdmin ? await prisma.user.findMany({ orderBy: { displayName: "asc" } }) : [];
+  const users = isAdmin ? await prisma.user.findMany({ where: { isAdmin: false }, orderBy: { displayName: "asc" } }) : [];
 
   const entries = await prisma.empPerformance.findMany({
     ...(isAdmin ? {} : { where: { userId: me.id } }),
@@ -68,7 +69,7 @@ export default async function PerformanceLogPage() {
                   return (
                     <tr key={e.id} className={`hover:bg-gray-50/70 ${isToday ? "bg-blue-50/30" : ""}`}>
                       <td className="py-3 px-4 text-gray-600 text-xs">{e.date.toISOString().slice(0, 10)}</td>
-                      {isAdmin && <td className="py-3 px-4 font-medium">{e.user.displayName ?? e.user.username}</td>}
+                      {isAdmin && <td className="py-3 px-4 font-medium">{userLabel(e.user)}</td>}
                       <td className="py-3 px-4 text-right font-semibold text-blue-600 tabular-nums">{e.calls}</td>
                       <td className="py-3 px-4 text-right font-semibold text-purple-600 tabular-nums">{e.newOrders}</td>
                       {target && (

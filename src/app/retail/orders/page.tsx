@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import RetailImportModal from "@/components/RetailImportModal";
+import { userLabel } from "@/lib/userLabel";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -35,7 +36,7 @@ export default async function RetailPage({
           }
         : {}),
     },
-    include: { items: true, createdBy: { select: { displayName: true, username: true } } },
+    include: { items: true, createdBy: { select: { displayName: true, username: true, isAdmin: true } } },
     orderBy: { date: "desc" },
   });
 
@@ -126,7 +127,7 @@ export default async function RetailPage({
                         <p className="text-xs text-gray-400">{[o.phone, o.city].filter(Boolean).join(" · ")}</p>
                       )}
                       {o.createdBy && (
-                        <p className="text-xs text-blue-400 mt-0.5">{o.createdBy.displayName ?? o.createdBy.username}</p>
+                        <p className="text-xs text-blue-400 mt-0.5">{userLabel(o.createdBy)}</p>
                       )}
                     </td>
                     <td className="py-3 px-5 text-gray-500">{o.date.toISOString().slice(0, 10)}</td>

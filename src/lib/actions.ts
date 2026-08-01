@@ -2017,7 +2017,7 @@ export async function getLeadCallLogs(leadId: number) {
   await requireAuth();
   return prisma.reorderCallLog.findMany({
     where: { leadId },
-    include: { calledBy: { select: { displayName: true, username: true } } },
+    include: { calledBy: { select: { displayName: true, username: true, isAdmin: true } } },
     orderBy: { calledAt: "asc" },
   });
 }
