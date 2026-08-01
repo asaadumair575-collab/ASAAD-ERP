@@ -51,6 +51,10 @@ export default async function ReorderCampaignPage({
 
   const leads = campaign.leads.filter((l) => {
     if (status && l.status !== status) return false;
+    if (callDate) {
+      const calledAt = l.calledAt ? new Date(l.calledAt) : null;
+      if (!calledAt || calledAt < dayStart || calledAt > dayEnd) return false;
+    }
     if (q) {
       const qq = q.toLowerCase();
       return (
