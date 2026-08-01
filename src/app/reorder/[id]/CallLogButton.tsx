@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { logReorderCall } from "@/lib/actions";
+import { logReorderCall, markReorderOrderReceived } from "@/lib/actions";
 
 const OUTCOMES = [
   { value: "ORDER_PLACED",   label: "✅ Interested",     color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
@@ -152,7 +152,7 @@ export default function CallLogButton({
 
   function quickOrderDone() {
     startTransition(async () => {
-      await logReorderCall(lead.id, "ORDER_RECEIVED", "Order done");
+      await markReorderOrderReceived(lead.id);
       router.replace(window.location.pathname + window.location.search);
     });
   }

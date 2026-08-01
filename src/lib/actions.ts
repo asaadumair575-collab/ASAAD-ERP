@@ -2013,6 +2013,15 @@ export async function logReorderCall(
   revalidatePath("/reorder");
 }
 
+export async function markReorderOrderReceived(leadId: number) {
+  await requireAuth();
+  await prisma.reorderLead.update({
+    where: { id: leadId },
+    data: { status: "ORDER_RECEIVED", followUpDate: null },
+  });
+  revalidatePath("/reorder");
+}
+
 export async function backfillReorderAddresses(
   campaignId: number,
   rows: { phone: string; address: string; email?: string }[]
