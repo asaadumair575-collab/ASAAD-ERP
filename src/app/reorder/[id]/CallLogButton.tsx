@@ -33,9 +33,11 @@ const NOT_INTERESTED_REASONS = [
 export default function CallLogButton({
   lead,
   me,
+  callCount,
 }: {
   lead: { id: number; customerName: string; phone: string; status: string; callNote: string };
   me: { id: number; displayName: string | null };
+  callCount: number;
 }) {
   function extractReason(callNote: string) {
     const m = callNote.match(/^Reason:\s*(.+?)(?:\s*—|$)/);
@@ -137,7 +139,7 @@ export default function CallLogButton({
         onClick={openModal}
         className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors whitespace-nowrap"
       >
-        {lead.status === "PENDING" ? "Log Call" : "Update"}
+        {callCount === 0 ? "Log Call" : `Call ${callCount + 1}`}
       </button>
 
       {open && (

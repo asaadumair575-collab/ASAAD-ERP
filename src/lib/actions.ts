@@ -1990,10 +1990,16 @@ export async function logReorderCall(
   callNote: string
 ) {
   const me = await requireAuth();
-  await prisma.reorderLead.update({
-    where: { id: leadId },
-    data: { status, callNote: callNote || null, calledAt: new Date(), calledById: me.id },
-  });
+  const now = new Date();
+  await prisma.$transaction([
+    prisma.reorderLead.update({
+      where: { id: leadId },
+      data: { status, callNote: callNote || null, calledAt: now, calledById: me.id },
+    }),
+    prisma.reorderCallLog.create({
+      data: { leadId, status, callNote: callNote || null, calledAt: now, calledById: me.id },
+    }),
+  ]);
   revalidatePath("/reorder");
 }
 

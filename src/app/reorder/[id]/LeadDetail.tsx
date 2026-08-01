@@ -1,6 +1,22 @@
 "use client";
 import { useState } from "react";
 
+const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  PENDING:        { label: "Pending",        color: "text-gray-400" },
+  NO_ANSWER:      { label: "No Answer",      color: "text-yellow-600" },
+  CALLBACK:       { label: "Callback",       color: "text-blue-600" },
+  NOT_INTERESTED: { label: "Not Interested", color: "text-red-600" },
+  ORDER_PLACED:   { label: "Interested",     color: "text-violet-600" },
+  ORDER_RECEIVED: { label: "Order Received", color: "text-green-600" },
+};
+
+type CallLog = {
+  status: string;
+  callNote: string;
+  calledAt: string;
+  calledBy: string;
+};
+
 type Lead = {
   customerName: string;
   phone: string;
@@ -10,7 +26,7 @@ type Lead = {
   prevItem?: string | null;
 };
 
-export default function LeadDetail({ lead }: { lead: Lead }) {
+export default function LeadDetail({ lead, callLogs = [] }: { lead: Lead; callLogs?: CallLog[] }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -29,7 +45,7 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
           onClick={() => setOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-3"
+            className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-3 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between">
@@ -44,6 +60,34 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
               {lead.address  && <Row icon="🏠" label="Address" value={lead.address} />}
               {lead.prevItem && <Row icon="📦" label="Last Order" value={lead.prevItem} />}
             </div>
+
+            {callLogs.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Call History</p>
+                <div className="space-y-2">
+                  {callLogs.map((log, i) => {
+                    const st = STATUS_LABELS[log.status] ?? { label: log.status, color: "text-gray-500" };
+                    const date = new Date(log.calledAt);
+                    return (
+                      <div key={i} className="border border-gray-100 rounded-xl p-3 space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-xs font-semibold ${st.color}`}>{st.label}</span>
+                          <span className="text-[11px] text-gray-300">
+                            {date.toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
+                            {" · "}
+                            {date.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                          </span>
+                        </div>
+                        {log.callNote && (
+                          <p className="text-xs text-gray-500 leading-snug">{log.callNote}</p>
+                        )}
+                        <p className="text-[11px] text-gray-300">{log.calledBy}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <button
               onClick={() => setOpen(false)}

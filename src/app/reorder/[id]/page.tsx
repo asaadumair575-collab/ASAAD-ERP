@@ -42,7 +42,13 @@ export default async function ReorderCampaignPage({
     include: {
       createdBy: { select: { displayName: true, username: true } },
       leads: {
-        include: { calledBy: { select: { id: true, displayName: true, username: true, isAdmin: true } } },
+        include: {
+          calledBy: { select: { id: true, displayName: true, username: true, isAdmin: true } },
+          callLogs: {
+            include: { calledBy: { select: { displayName: true, username: true } } },
+            orderBy: { calledAt: "asc" },
+          },
+        },
         orderBy: [{ status: "asc" }, { createdAt: "asc" }],
       },
     },
@@ -254,7 +260,15 @@ export default async function ReorderCampaignPage({
                   <tr key={l.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="py-2.5 px-4 text-gray-300 text-xs hidden sm:table-cell">{i + 1}</td>
                     <td className="py-2.5 px-4">
-                      <LeadDetail lead={{ customerName: l.customerName, phone: l.phone, email: l.email, address: l.address, city: l.city, prevItem: l.prevItem }} />
+                      <LeadDetail
+                        lead={{ customerName: l.customerName, phone: l.phone, email: l.email, address: l.address, city: l.city, prevItem: l.prevItem }}
+                        callLogs={l.callLogs.map((cl) => ({
+                          status: cl.status,
+                          callNote: cl.callNote ?? "",
+                          calledAt: cl.calledAt.toISOString(),
+                          calledBy: cl.calledBy.displayName ?? cl.calledBy.username,
+                        }))}
+                      />
                       {l.calledBy && (
                         <p className="text-[11px] text-gray-400 mt-0.5 leading-none">
                           {l.calledBy.displayName ?? l.calledBy.username}
@@ -272,7 +286,7 @@ export default async function ReorderCampaignPage({
                     </td>
                     <td className="py-2.5 px-4 hidden sm:table-cell"><NoteCell note={l.callNote ?? ""} /></td>
                     <td className="py-2.5 px-4 sticky right-0 bg-inherit">
-                      <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "" }} me={meSerial} />
+                      <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "" }} me={meSerial} callCount={l.callLogs.length} />
                     </td>
                   </tr>
                 );
