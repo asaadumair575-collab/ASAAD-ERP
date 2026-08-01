@@ -1983,13 +1983,15 @@ export async function createRetailFollowupBatch(name: string) {
 
   const leads = Array.from(seen.values());
   const campaign = await prisma.reorderCampaign.create({
-    data: {
-      name,
-      createdById: me.id,
-      isRetailFollowup: true,
-      leads: { create: leads },
-    },
+    data: { name, createdById: me.id, isRetailFollowup: true },
   });
+
+  const BATCH = 500;
+  for (let i = 0; i < leads.length; i += BATCH) {
+    await prisma.reorderLead.createMany({
+      data: leads.slice(i, i + BATCH).map((l) => ({ campaignId: campaign.id, ...l })),
+    });
+  }
   revalidatePath("/reorder");
   return campaign.id;
 }
@@ -2012,21 +2014,25 @@ export async function createReorderCampaign(
 ) {
   const me = await requireAuth();
   const campaign = await prisma.reorderCampaign.create({
-    data: {
-      name,
-      createdById: me.id,
-      leads: {
-        create: leads.map((l) => ({
-          customerName: l.customerName,
-          phone: l.phone,
-          email: l.email || null,
-          address: l.address || null,
-          city: l.city || null,
-          prevItem: l.prevItem || null,
-        })),
-      },
-    },
+    data: { name, createdById: me.id },
   });
+
+  // Insert leads in batches of 500 to avoid hitting Postgres parameter limits
+  const BATCH = 500;
+  for (let i = 0; i < leads.length; i += BATCH) {
+    await prisma.reorderLead.createMany({
+      data: leads.slice(i, i + BATCH).map((l) => ({
+        campaignId: campaign.id,
+        customerName: l.customerName,
+        phone: l.phone,
+        email: l.email || null,
+        address: l.address || null,
+        city: l.city || null,
+        prevItem: l.prevItem || null,
+      })),
+    });
+  }
+
   revalidatePath("/reorder");
   return campaign.id;
 }
