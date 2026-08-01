@@ -10,9 +10,9 @@ const OUTCOMES = [
 ];
 
 const OUTCOMES_INTERESTED = [
-  { value: "ORDER_RECEIVED", label: "🟢 Order Received", color: "bg-green-50 border-green-400 text-green-700 hover:bg-green-100" },
+  { value: "ORDER_RECEIVED", label: "🟢 Order Received",   color: "bg-green-50 border-green-400 text-green-700 hover:bg-green-100" },
   { value: "ORDER_PLACED",   label: "✅ Still Interested", color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
-  { value: "NOT_INTERESTED", label: "❌ Not Interested",  color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
+  { value: "NOT_INTERESTED", label: "❌ Not Interested",   color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
 ];
 
 const INTERESTED_REASONS = [
@@ -39,48 +39,48 @@ export default function CallLogButton({
   me: { id: number; displayName: string | null };
   callCount: number;
 }) {
-  function extractReason(callNote: string) {
-    const m = callNote.match(/^Reason:\s*(.+?)(?:\s*—|$)/);
-    return m ? m[1].trim() : "";
-  }
-  function extractNote(callNote: string) {
-    const m = callNote.match(/^Reason:.+?—\s*(.+)$/);
-    return m ? m[1].trim() : (callNote.startsWith("Reason:") ? "" : callNote);
-  }
+  const [open, setOpen]   = useState(false);
+  const [step, setStep]   = useState<"feedback" | "outcome">("feedback");
 
-  // "feedback" = step 1, "outcome" = step 2
-  const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<"feedback" | "outcome">("feedback");
-
-  // Step 1 — feedback
-  const [feedback, setFeedback] = useState<"POSITIVE" | "NEGATIVE" | "">("");
+  // Step 1
+  const [feedback,     setFeedback]     = useState<"POSITIVE" | "NEGATIVE" | "">("");
   const [feedbackNote, setFeedbackNote] = useState("");
 
-  // Step 2 — outcome (always start empty — this is a new call)
-  const [status, setStatus] = useState("");
-  const [reason, setReason] = useState("");
-  const [otherText, setOtherText] = useState("");
-  const [interestedReason, setInterestedReason] = useState("");
-  const [interestedOtherText, setInterestedOtherText] = useState("");
-  const [note, setNote] = useState("");
+  // Step 2
+  const [status,               setStatus]               = useState("");
+  const [reason,               setReason]               = useState("");   // NOT_INTERESTED reason
+  const [otherText,            setOtherText]            = useState("");   // when reason = Other
+  const [interestedReason,     setInterestedReason]     = useState("");   // ORDER_PLACED reason
+  const [interestedOtherText,  setInterestedOtherText]  = useState("");   // when interestedReason = Other
+  const [outcomeNote,          setOutcomeNote]          = useState("");
 
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
-  const isNewCall = true; // every button press logs a fresh call
-  const isInterestedUpdate = lead.status === "ORDER_PLACED" || lead.status === "ORDER_RECEIVED";
-  const outcomeOptions = isInterestedUpdate ? OUTCOMES_INTERESTED : OUTCOMES;
-  const isNotInterested = status === "NOT_INTERESTED";
-  const isInterested = status === "ORDER_PLACED";
-  const isOther = reason === "Other";
+  const isInterestedLead  = lead.status === "ORDER_PLACED" || lead.status === "ORDER_RECEIVED";
+  const outcomeOptions    = isInterestedLead ? OUTCOMES_INTERESTED : OUTCOMES;
+
+  const isNotInterested   = status === "NOT_INTERESTED";
+  const isInterested      = status === "ORDER_PLACED";
+  const isOrderReceived   = status === "ORDER_RECEIVED";
+  const isOther           = reason === "Other";
   const isInterestedOther = interestedReason === "Other";
 
-  const canProceed = feedback && feedbackNote.trim();
-  const canSave = status &&
-    (!isNotInterested || (reason && (!isOther || otherText.trim()))) &&
-    (!isInterested || (interestedReason && (!isInterestedOther || interestedOtherText.trim()))) &&
-    note.trim() &&
-    (isNewCall ? (feedback && feedbackNote.trim()) : true);
+  // Step 1 can proceed: feedback selected + note written
+  const canProceed = !!feedback && feedbackNote.trim().length > 0;
+
+  // Step 2 can save:
+  // - status must be selected
+  // - if NOT_INTERESTED: reason required; if Other → otherText required (replaces note)
+  // - if ORDER_PLACED: interestedReason required; if Other → interestedOtherText required (replaces note)
+  // - if ORDER_RECEIVED: outcomeNote required
+  // - note required UNLESS "Other" is selected (Other's own field covers it)
+  const noteRequired = !isOther && !isInterestedOther;
+  const canSave =
+    !!status &&
+    (!isNotInterested  || (!!reason && (!isOther           || otherText.trim().length > 0))) &&
+    (!isInterested     || (!!interestedReason && (!isInterestedOther || interestedOtherText.trim().length > 0))) &&
+    (!noteRequired     || outcomeNote.trim().length > 0);
 
   function openModal() {
     setStep("feedback");
@@ -91,16 +91,14 @@ export default function CallLogButton({
     setOtherText("");
     setInterestedReason("");
     setInterestedOtherText("");
-    setNote("");
+    setOutcomeNote("");
     setOpen(true);
   }
 
   function handleStatusChange(val: string) {
     setStatus(val);
     if (val !== "NOT_INTERESTED") { setReason(""); setOtherText(""); }
-    else if (lead.status === "NOT_INTERESTED") setReason(extractReason(lead.callNote));
-    if (val !== "ORDER_PLACED") { setInterestedReason(""); setInterestedOtherText(""); }
-    else if (lead.status === "ORDER_PLACED") setInterestedReason(extractReason(lead.callNote));
+    if (val !== "ORDER_PLACED")   { setInterestedReason(""); setInterestedOtherText(""); }
   }
 
   function saveNoAnswer() {
@@ -113,22 +111,30 @@ export default function CallLogButton({
 
   function save() {
     if (!canSave) return;
-    const effectiveReason = isOther ? `Other: ${otherText.trim()}` : reason;
+
+    // Build the reason part
+    const effectiveReason           = isOther           ? `Other: ${otherText.trim()}`           : reason;
     const effectiveInterestedReason = isInterestedOther ? `Other: ${interestedOtherText.trim()}` : interestedReason;
-    const outcomeNote = isNotInterested
-      ? `Reason: ${effectiveReason}${note ? ` — ${note}` : ""}`
-      : isInterested && effectiveInterestedReason
-      ? `Reason: ${effectiveInterestedReason}${note ? ` — ${note}` : ""}`
-      : note;
-    const finalNote = isNewCall && feedback
-      ? `[${feedback === "POSITIVE" ? "👍 Positive" : "👎 Negative"}: ${feedbackNote.trim()}] ${outcomeNote}`.trim()
-      : outcomeNote;
+
+    // Build outcome note
+    let finalOutcomeNote = outcomeNote.trim();
+    if (isNotInterested && effectiveReason) {
+      finalOutcomeNote = effectiveReason + (outcomeNote.trim() ? ` — ${outcomeNote.trim()}` : "");
+    } else if (isInterested && effectiveInterestedReason) {
+      finalOutcomeNote = effectiveInterestedReason + (outcomeNote.trim() ? ` — ${outcomeNote.trim()}` : "");
+    }
+
+    // Prepend feedback from step 1
+    const fullNote = `[${feedback === "POSITIVE" ? "👍 Positive" : "👎 Negative"}: ${feedbackNote.trim()}] ${finalOutcomeNote}`.trim();
+
     startTransition(async () => {
-      await logReorderCall(lead.id, status, finalNote);
+      await logReorderCall(lead.id, status, fullNote);
       setOpen(false);
       router.replace(window.location.pathname + window.location.search);
     });
   }
+
+  const callLabel = callCount === 0 ? "Log Call" : `Call ${callCount + 1}`;
 
   return (
     <>
@@ -136,7 +142,7 @@ export default function CallLogButton({
         onClick={openModal}
         className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors whitespace-nowrap"
       >
-        {callCount === 0 ? "Log Call" : `Call ${callCount + 1}`}
+        {callLabel}
       </button>
 
       {open && (
@@ -146,32 +152,27 @@ export default function CallLogButton({
             {/* Header */}
             <div className="flex items-start justify-between">
               <div>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">{callLabel}</p>
                 <h3 className="text-sm font-semibold text-gray-800">{lead.customerName}</h3>
                 <p className="text-xs text-gray-400 font-mono mt-0.5">{lead.phone}</p>
               </div>
-              {step === "outcome" && isNewCall && (
-                <button
-                  type="button"
-                  onClick={() => setStep("feedback")}
-                  className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
-                >
+              {step === "outcome" && (
+                <button type="button" onClick={() => setStep("feedback")} className="text-xs text-gray-400 hover:text-gray-600">
                   ← Back
                 </button>
               )}
             </div>
 
-            {/* Step indicator — only for new calls */}
-            {isNewCall && (
-              <div className="flex items-center gap-2">
-                <div className={`flex-1 h-1 rounded-full ${step === "feedback" ? "bg-black" : "bg-green-500"}`} />
-                <div className={`flex-1 h-1 rounded-full ${step === "outcome" ? "bg-black" : "bg-gray-200"}`} />
-              </div>
-            )}
+            {/* Step bar */}
+            <div className="flex items-center gap-2">
+              <div className={`flex-1 h-1 rounded-full ${step === "feedback" ? "bg-black" : "bg-green-500"}`} />
+              <div className={`flex-1 h-1 rounded-full ${step === "outcome"  ? "bg-black" : "bg-gray-200"}`} />
+            </div>
 
             {/* ── STEP 1: Feedback ── */}
             {step === "feedback" && (
               <>
-                {/* Quick: Call Not Picked */}
+                {/* Quick save */}
                 <button
                   type="button"
                   onClick={saveNoAnswer}
@@ -187,50 +188,45 @@ export default function CallLogButton({
                   <div className="flex-1 h-px bg-gray-100" />
                 </div>
 
+                {/* Feedback buttons */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-700 mb-2">Customer ka feedback kya tha?</p>
+                  <p className="text-xs font-semibold text-gray-700 mb-2">
+                    Customer ka feedback kya tha? <span className="text-red-500">*</span>
+                  </p>
                   <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFeedback("POSITIVE")}
-                      className={`border rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${
-                        feedback === "POSITIVE"
-                          ? "bg-green-50 border-green-400 text-green-700 ring-2 ring-green-400 ring-offset-1"
-                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                      }`}
-                    >
-                      👍 Positive
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFeedback("NEGATIVE")}
-                      className={`border rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${
-                        feedback === "NEGATIVE"
-                          ? "bg-red-50 border-red-400 text-red-700 ring-2 ring-red-400 ring-offset-1"
-                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                      }`}
-                    >
-                      👎 Negative
-                    </button>
+                    {[
+                      { val: "POSITIVE", label: "👍 Positive", sel: "bg-green-50 border-green-400 text-green-700 ring-2 ring-green-400 ring-offset-1" },
+                      { val: "NEGATIVE", label: "👎 Negative", sel: "bg-red-50 border-red-400 text-red-700 ring-2 ring-red-400 ring-offset-1"   },
+                    ].map(({ val, label, sel }) => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setFeedback(val as "POSITIVE" | "NEGATIVE")}
+                        className={`border rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${
+                          feedback === val ? sel : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
+                {/* Feedback note — mandatory */}
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">
-                    Feedback note <span className="text-red-500">*</span>
+                    Note <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     value={feedbackNote}
                     onChange={(e) => setFeedbackNote(e.target.value)}
                     rows={3}
-                    placeholder="Customer ne kya kaha? koi baat hui ho to likhein..."
+                    placeholder="Customer ne kya kaha?"
                     className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none ${
                       !feedbackNote.trim() ? "border-gray-300 focus:ring-gray-400" : "border-gray-200 focus:ring-black"
                     }`}
                   />
-                  {!feedbackNote.trim() && (
-                    <p className="text-xs text-gray-400 mt-1">Note likhna zaroori hai</p>
-                  )}
+                  {!feedbackNote.trim() && <p className="text-xs text-gray-400 mt-1">Note likhna zaroori hai</p>}
                 </div>
 
                 <div className="flex gap-2 justify-end">
@@ -251,8 +247,11 @@ export default function CallLogButton({
             {/* ── STEP 2: Outcome ── */}
             {step === "outcome" && (
               <>
+                {/* Outcome buttons */}
                 <div>
-                  <p className="text-xs font-medium text-gray-600 mb-2">Call Outcome</p>
+                  <p className="text-xs font-semibold text-gray-700 mb-2">
+                    Call ka outcome kya raha? <span className="text-red-500">*</span>
+                  </p>
                   <div className="grid grid-cols-2 gap-2">
                     {outcomeOptions.map((o) => (
                       <button
@@ -274,7 +273,9 @@ export default function CallLogButton({
                 {/* Interested reasons */}
                 {isInterested && (
                   <div className="bg-violet-50 border border-violet-100 rounded-xl p-3 space-y-2">
-                    <p className="text-xs font-semibold text-violet-700">Interested — kya wajah hai abhi order nahi?</p>
+                    <p className="text-xs font-semibold text-violet-700">
+                      Abhi order kyun nahi? <span className="text-red-500">*</span>
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {INTERESTED_REASONS.map((r) => (
                         <button
@@ -297,18 +298,20 @@ export default function CallLogButton({
                         autoFocus
                         value={interestedOtherText}
                         onChange={(e) => setInterestedOtherText(e.target.value)}
-                        placeholder="Reason likhein..."
+                        placeholder="Wajah likhein..."
                         className="w-full border border-violet-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
                       />
                     )}
-                    {!interestedReason && <p className="text-xs text-violet-400">Wajah select karna zaroori hai</p>}
+                    {!interestedReason && <p className="text-xs text-violet-400">Wajah select karni zaroori hai</p>}
                   </div>
                 )}
 
                 {/* Not Interested reasons */}
                 {isNotInterested && (
                   <div className="bg-red-50 border border-red-100 rounded-xl p-3 space-y-2">
-                    <p className="text-xs font-semibold text-red-700">Not interested ki wajah?</p>
+                    <p className="text-xs font-semibold text-red-700">
+                      Not interested ki wajah? <span className="text-red-500">*</span>
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {NOT_INTERESTED_REASONS.map((r) => (
                         <button
@@ -326,44 +329,37 @@ export default function CallLogButton({
                       ))}
                     </div>
                     {isOther && (
-                      <div className="mt-1">
-                        <input
-                          type="text"
-                          autoFocus
-                          value={otherText}
-                          onChange={(e) => setOtherText(e.target.value)}
-                          placeholder="Wajah likhein (zaroori)..."
-                          className="w-full border border-red-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-                        />
-                        {!otherText.trim() && (
-                          <p className="text-xs text-red-400 mt-1">Wajah likhna zaroori hai</p>
-                        )}
-                      </div>
+                      <input
+                        type="text"
+                        autoFocus
+                        value={otherText}
+                        onChange={(e) => setOtherText(e.target.value)}
+                        placeholder="Wajah likhein..."
+                        className="w-full border border-red-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                      />
                     )}
-                    {!reason && (
-                      <p className="text-xs text-red-400">Wajah select karna zaroori hai</p>
-                    )}
+                    {!reason && <p className="text-xs text-red-400">Wajah select karni zaroori hai</p>}
                   </div>
                 )}
 
-                {/* Note — always mandatory */}
-                <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">
-                    Note <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    rows={2}
-                    placeholder="Call ke baare mein kuch likhein..."
-                    className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none ${
-                      !note.trim() ? "border-gray-300 focus:ring-gray-400" : "border-gray-200 focus:ring-black"
-                    }`}
-                  />
-                  {!note.trim() && (
-                    <p className="text-xs text-gray-400 mt-1">Note likhna zaroori hai</p>
-                  )}
-                </div>
+                {/* Outcome note — mandatory UNLESS Other is selected */}
+                {!isOther && !isInterestedOther && (
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 block mb-1">
+                      Note <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={outcomeNote}
+                      onChange={(e) => setOutcomeNote(e.target.value)}
+                      rows={2}
+                      placeholder="Koi aur baat ho to likhein..."
+                      className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none ${
+                        !outcomeNote.trim() ? "border-gray-300 focus:ring-gray-400" : "border-gray-200 focus:ring-black"
+                      }`}
+                    />
+                    {!outcomeNote.trim() && <p className="text-xs text-gray-400 mt-1">Note likhna zaroori hai</p>}
+                  </div>
+                )}
 
                 <div className="flex gap-2 justify-end">
                   <button onClick={() => setOpen(false)} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
@@ -379,6 +375,7 @@ export default function CallLogButton({
                 </div>
               </>
             )}
+
           </div>
         </div>
       )}
