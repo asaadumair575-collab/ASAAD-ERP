@@ -68,12 +68,21 @@ function parseCSV(text: string): ParseResult {
     headers.includes("CUSTOMER_PHONE") ||
     headers.includes("TRACKING_NUMBER");
 
-  // WooCommerce export: has "BILLING FIRST NAME" or "BILLING_FIRST_NAME"
   const normalH = headers.map((h) => h.replace(/[\s_]+/g, " "));
+
+  // Shopify customers export: has "DEFAULT ADDRESS CITY" or "TOTAL SPENT"
+  const isShopifyFormat =
+    normalH.includes("DEFAULT ADDRESS CITY") ||
+    normalH.includes("DEFAULT ADDRESS ADDRESS1") ||
+    normalH.includes("TOTAL SPENT");
+
+  // WooCommerce export: has "BILLING FIRST NAME" or "BILLING_FIRST_NAME"
   const isWooFormat =
-    normalH.includes("BILLING FIRST NAME") ||
-    normalH.includes("CUSTOMER FIRST NAME") ||
-    normalH.includes("FIRST NAME");
+    !isShopifyFormat && (
+      normalH.includes("BILLING FIRST NAME") ||
+      normalH.includes("CUSTOMER FIRST NAME") ||
+      normalH.includes("FIRST NAME")
+    );
 
   const seen = new Map<string, Lead>();
 
@@ -103,6 +112,39 @@ function parseCSV(text: string): ParseResult {
         const e = seen.get(key)!;
         if (prevItem && !e.prevItem.includes(prevItem))
           e.prevItem = e.prevItem ? `${e.prevItem}, ${prevItem}` : prevItem;
+      }
+    }
+  } else if (isShopifyFormat) {
+    // Shopify customers export
+    const idx = (name: string) => normalH.indexOf(name);
+    const firstNameIdx    = idx("FIRST NAME");
+    const lastNameIdx     = idx("LAST NAME");
+    const phoneIdx        = idx("PHONE");
+    const defaultPhoneIdx = idx("DEFAULT ADDRESS PHONE");
+    const emailIdx        = idx("EMAIL");
+    const cityIdx         = idx("DEFAULT ADDRESS CITY");
+    const addr1Idx        = idx("DEFAULT ADDRESS ADDRESS1");
+    const addr2Idx        = idx("DEFAULT ADDRESS ADDRESS2");
+
+    for (const line of lines.slice(1)) {
+      const cols = splitLine(line);
+      const get = (i: number) => (i >= 0 ? (cols[i] ?? "") : "").trim();
+      const firstName = get(firstNameIdx);
+      const lastName  = get(lastNameIdx);
+      const customerName = [firstName, lastName].filter(Boolean).join(" ").trim();
+      // Use Phone column first; fall back to Default Address Phone
+      const phone = (get(phoneIdx) || get(defaultPhoneIdx)).replace(/\s+/g, "");
+      if (!customerName || !phone) continue;
+      const email   = get(emailIdx);
+      const city    = get(cityIdx);
+      const addr1   = get(addr1Idx);
+      const addr2   = get(addr2Idx);
+      const address = [addr1, addr2].filter(Boolean).join(", ");
+      const key = phone;
+      if (!seen.has(key)) {
+        seen.set(key, { customerName, phone, email, address, city, prevItem: "" });
+      } else {
+        mergedDupes++;
       }
     }
   } else if (isWooFormat) {
@@ -262,7 +304,7 @@ export default function ReorderUploadModal() {
                   <span className="text-sm text-gray-500">Choose CSV file...</span>
                   <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFile} />
                 </label>
-                <p className="text-xs text-gray-400 mt-1">Automatically detects courier CSV (PostEx/TCS) or retail orders format</p>
+                <p className="text-xs text-gray-400 mt-1">Detects courier (PostEx/TCS), Shopify customers export, WooCommerce, or retail orders format</p>
               </div>
 
               {leads.length > 0 && (
