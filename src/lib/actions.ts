@@ -2013,6 +2013,12 @@ export async function logReorderCall(
   revalidatePath("/reorder");
 }
 
+export async function deleteReorderLead(leadId: number) {
+  await requireAuth();
+  await prisma.reorderLead.delete({ where: { id: leadId } });
+  revalidatePath("/reorder");
+}
+
 export async function markReorderOrderReceived(leadId: number, orderId?: string | null) {
   await requireAuth();
   const note = orderId ? `Order ID: ${orderId}` : "Order received";

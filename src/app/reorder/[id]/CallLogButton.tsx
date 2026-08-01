@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { logReorderCall, markReorderOrderReceived } from "@/lib/actions";
+import { logReorderCall, markReorderOrderReceived, deleteReorderLead } from "@/lib/actions";
 
 const OUTCOMES = [
   { value: "ORDER_PLACED",   label: "✅ Interested",     color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
@@ -152,6 +152,7 @@ export default function CallLogButton({
 
   const [orderConfirmOpen, setOrderConfirmOpen] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   function quickOrderDone() {
     setOrderId("");
@@ -185,7 +186,45 @@ export default function CallLogButton({
             🟢
           </button>
         )}
+        <button
+          onClick={() => setDeleteConfirmOpen(true)}
+          disabled={pending}
+          title="Delete"
+          className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 text-gray-300 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors disabled:opacity-40"
+        >
+          ✕
+        </button>
       </div>
+
+      {/* Delete confirmation */}
+      {deleteConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setDeleteConfirmOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-800">Delete karna chahte ho?</h3>
+              <p className="text-xs text-gray-500 mt-1">{lead.customerName} · {lead.phone}</p>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setDeleteConfirmOpen(false)} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  startTransition(async () => {
+                    await deleteReorderLead(lead.id);
+                    setDeleteConfirmOpen(false);
+                    router.replace(window.location.pathname + window.location.search);
+                  });
+                }}
+                disabled={pending}
+                className="bg-red-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-red-700 disabled:opacity-40 transition-colors"
+              >
+                {pending ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Order confirmation popup */}
       {orderConfirmOpen && (
