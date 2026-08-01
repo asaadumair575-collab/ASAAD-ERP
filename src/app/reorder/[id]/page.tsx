@@ -21,16 +21,21 @@ export default async function ReorderCampaignPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ status?: string; q?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; callDate?: string }>;
 }) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
   const { id } = await params;
-  const { status, q } = await searchParams;
+  const { status, q, callDate } = await searchParams;
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
+  const selectedDate = callDate ? new Date(callDate) : new Date();
+  const dayStart = new Date(selectedDate);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(selectedDate);
+  dayEnd.setHours(23, 59, 59, 999);
+  // keep todayStart for backward compat alias
+  const todayStart = dayStart;
 
   const campaign = await prisma.reorderCampaign.findUnique({
     where: { id: parseInt(id) },
@@ -70,7 +75,8 @@ export default async function ReorderCampaignPage({
   const todayEmpMap = new Map<number, { name: string; total: number; interested: number; orderReceived: number; notInterested: number; noAnswer: number }>();
   for (const l of campaign.leads) {
     if (!l.calledBy || l.calledBy.isAdmin) continue;
-    if (!l.calledAt || new Date(l.calledAt) < todayStart) continue;
+    const calledAt = l.calledAt ? new Date(l.calledAt) : null;
+    if (!calledAt || calledAt < dayStart || calledAt > dayEnd) continue;
     const uid = l.calledBy.id;
     const name = l.calledBy.displayName ?? l.calledBy.username;
     const e = todayEmpMap.get(uid) ?? { name, total: 0, interested: 0, orderReceived: 0, notInterested: 0, noAnswer: 0 };
@@ -148,9 +154,23 @@ export default async function ReorderCampaignPage({
       {/* Today's calls per employee */}
       {todayEmpStats.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Aaj ki Calls — Is Campaign Mein</p>
-            <p className="text-xs text-gray-400">{new Date().toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</p>
+          <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              {callDate
+                ? new Date(callDate).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })
+                : "Aaj"} ki Calls — Is Campaign Mein
+            </p>
+            <form method="GET" className="flex items-center gap-1.5">
+              {status && <input type="hidden" name="status" value={status} />}
+              {q && <input type="hidden" name="q" value={q} />}
+              <input
+                type="date"
+                name="callDate"
+                defaultValue={callDate ?? new Date().toISOString().slice(0, 10)}
+                className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black"
+              />
+              <button type="submit" className="text-xs bg-black text-white px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors">Go</button>
+            </form>
           </div>
           <div className="space-y-2">
             {todayEmpStats.map((e) => (
