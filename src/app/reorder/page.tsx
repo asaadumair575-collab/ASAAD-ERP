@@ -93,10 +93,11 @@ export default async function ReorderPage() {
       ) : (
         <div className="space-y-3">
           {campaigns.map((c) => {
-            const total = c.leads.length;
-            const called = c.leads.filter((l) => l.status !== "PENDING").length;
-            const ordered = c.leads.filter((l) => l.status === "ORDER_PLACED").length;
-            const pending = c.leads.filter((l) => l.status === "PENDING").length;
+            const total      = c.leads.length;
+            const pending    = c.leads.filter((l) => l.status === "PENDING").length;
+            const called     = c.leads.filter((l) => l.status !== "PENDING").length;
+            const interested = c.leads.filter((l) => l.status === "ORDER_PLACED").length;
+            const ordered    = c.leads.filter((l) => l.status === "ORDER_RECEIVED").length;
             const pct = total > 0 ? Math.round((called / total) * 100) : 0;
 
             return (
@@ -123,12 +124,13 @@ export default async function ReorderPage() {
                 </div>
 
                 {/* Stats row */}
-                <div className="mt-4 grid grid-cols-4 gap-3">
+                <div className="mt-4 grid grid-cols-5 gap-3">
                   {[
-                    { label: "Total", value: total, color: "text-gray-700" },
-                    { label: "Pending", value: pending, color: "text-amber-600" },
-                    { label: "Called", value: called, color: "text-blue-600" },
-                    { label: "Orders", value: ordered, color: "text-green-600" },
+                    { label: "Total",      value: total,      color: "text-gray-700"   },
+                    { label: "Pending",    value: pending,    color: "text-amber-600"  },
+                    { label: "Called",     value: called,     color: "text-blue-600"   },
+                    { label: "Interested", value: interested, color: "text-violet-600" },
+                    { label: "Orders",     value: ordered,    color: "text-green-600"  },
                   ].map((s) => (
                     <div key={s.label} className="bg-gray-50 rounded-xl p-3 text-center">
                       <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
