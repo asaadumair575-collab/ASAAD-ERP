@@ -150,14 +150,33 @@ export default function CallLogButton({
 
   const callLabel = callCount === 0 ? "Log Call" : `Call ${callCount + 1}`;
 
+  function quickOrderDone() {
+    startTransition(async () => {
+      await logReorderCall(lead.id, "ORDER_RECEIVED", "Order done");
+      router.replace(window.location.pathname + window.location.search);
+    });
+  }
+
   return (
     <>
-      <button
-        onClick={openModal}
-        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors whitespace-nowrap"
-      >
-        {callLabel}
-      </button>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={openModal}
+          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors whitespace-nowrap"
+        >
+          {callLabel}
+        </button>
+        {lead.status === "ORDER_PLACED" && (
+          <button
+            onClick={quickOrderDone}
+            disabled={pending}
+            title="Order aa gaya!"
+            className="text-xs px-2 py-1.5 rounded-lg bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 transition-colors disabled:opacity-40 whitespace-nowrap"
+          >
+            🟢
+          </button>
+        )}
+      </div>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setOpen(false)}>
