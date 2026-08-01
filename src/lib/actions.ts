@@ -2013,11 +2013,12 @@ export async function logReorderCall(
   revalidatePath("/reorder");
 }
 
-export async function markReorderOrderReceived(leadId: number) {
+export async function markReorderOrderReceived(leadId: number, orderId?: string | null) {
   await requireAuth();
+  const note = orderId ? `Order ID: ${orderId}` : "Order received";
   await prisma.reorderLead.update({
     where: { id: leadId },
-    data: { status: "ORDER_RECEIVED", followUpDate: null },
+    data: { status: "ORDER_RECEIVED", followUpDate: null, callNote: note },
   });
   revalidatePath("/reorder");
 }

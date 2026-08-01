@@ -150,9 +150,18 @@ export default function CallLogButton({
 
   const callLabel = callCount === 0 ? "Log Call" : `Call ${callCount + 1}`;
 
+  const [orderConfirmOpen, setOrderConfirmOpen] = useState(false);
+  const [orderId, setOrderId] = useState("");
+
   function quickOrderDone() {
+    setOrderId("");
+    setOrderConfirmOpen(true);
+  }
+
+  function confirmOrderDone() {
     startTransition(async () => {
-      await markReorderOrderReceived(lead.id);
+      await markReorderOrderReceived(lead.id, orderId.trim() || null);
+      setOrderConfirmOpen(false);
       router.replace(window.location.pathname + window.location.search);
     });
   }
@@ -177,6 +186,42 @@ export default function CallLogButton({
           </button>
         )}
       </div>
+
+      {/* Order confirmation popup */}
+      {orderConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setOrderConfirmOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-800">🟢 Order Received?</h3>
+              <p className="text-xs text-gray-400 mt-0.5">{lead.customerName}</p>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 block mb-1">Order ID <span className="text-gray-400 font-normal">(optional)</span></label>
+              <input
+                type="text"
+                autoFocus
+                value={orderId}
+                onChange={(e) => setOrderId(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && confirmOrderDone()}
+                placeholder="e.g. ORD-1234"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setOrderConfirmOpen(false)} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
+                Cancel
+              </button>
+              <button
+                onClick={confirmOrderDone}
+                disabled={pending}
+                className="bg-green-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-green-700 disabled:opacity-40 transition-colors"
+              >
+                {pending ? "Saving..." : "Order Received ✓"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setOpen(false)}>
