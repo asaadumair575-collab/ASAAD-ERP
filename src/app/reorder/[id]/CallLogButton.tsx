@@ -75,12 +75,14 @@ export default function CallLogButton({
   // - if ORDER_PLACED: interestedReason required; if Other → interestedOtherText required (replaces note)
   // - if ORDER_RECEIVED: outcomeNote required
   // - note required UNLESS "Other" is selected (Other's own field covers it)
-  const noteRequired = !isOther && !isInterestedOther;
+  const isNegative    = feedback === "NEGATIVE";
+  const showReasons   = !isNegative; // negative feedback = reason already in feedback note
+  const noteRequired  = showReasons && !isOther && !isInterestedOther;
   const canSave =
     !!status &&
-    (!isNotInterested  || (!!reason && (!isOther           || otherText.trim().length > 0))) &&
-    (!isInterested     || (!!interestedReason && (!isInterestedOther || interestedOtherText.trim().length > 0))) &&
-    (!noteRequired     || outcomeNote.trim().length > 0);
+    (!showReasons || !isNotInterested  || (!!reason && (!isOther           || otherText.trim().length > 0))) &&
+    (!showReasons || !isInterested     || (!!interestedReason && (!isInterestedOther || interestedOtherText.trim().length > 0))) &&
+    (!noteRequired || outcomeNote.trim().length > 0);
 
   function openModal() {
     setStep(callCount === 0 ? "feedback" : "outcome");
@@ -275,7 +277,7 @@ export default function CallLogButton({
                 </div>
 
                 {/* Interested reasons */}
-                {isInterested && (
+                {showReasons && isInterested && (
                   <div className="bg-violet-50 border border-violet-100 rounded-xl p-3 space-y-2">
                     <p className="text-xs font-semibold text-violet-700">
                       Abhi order kyun nahi? <span className="text-red-500">*</span>
@@ -311,7 +313,7 @@ export default function CallLogButton({
                 )}
 
                 {/* Not Interested reasons */}
-                {isNotInterested && (
+                {showReasons && isNotInterested && (
                   <div className="bg-red-50 border border-red-100 rounded-xl p-3 space-y-2">
                     <p className="text-xs font-semibold text-red-700">
                       Not interested ki wajah? <span className="text-red-500">*</span>
@@ -346,8 +348,8 @@ export default function CallLogButton({
                   </div>
                 )}
 
-                {/* Outcome note — mandatory UNLESS Other is selected */}
-                {!isOther && !isInterestedOther && (
+                {/* Outcome note — mandatory only when positive feedback and no Other selected */}
+                {showReasons && !isOther && !isInterestedOther && (
                   <div>
                     <label className="text-xs font-medium text-gray-600 block mb-1">
                       Note <span className="text-red-500">*</span>
