@@ -85,10 +85,11 @@ export default function CallLogButton({
   // - note required UNLESS "Other" is selected (Other's own field covers it)
   const isNegative    = feedback === "NEGATIVE";
   const showReasons   = !isNegative; // negative feedback = reason already in feedback note
-  const noteRequired  = showReasons && !isOther && !isInterestedOther;
+  const reasonsHidden = isNotInterestedLead && isNotInterested; // already-NI lead marked NI again
+  const noteRequired  = (showReasons && !isOther && !isInterestedOther) || reasonsHidden;
   const canSave =
     !!status &&
-    (!showReasons || !isNotInterested  || (!!reason && (!isOther           || otherText.trim().length > 0))) &&
+    (!showReasons || reasonsHidden || !isNotInterested  || (!!reason && (!isOther           || otherText.trim().length > 0))) &&
     (!showReasons || !isInterested     || (!!interestedReason && (!isInterestedOther || interestedOtherText.trim().length > 0))) &&
     (!noteRequired || outcomeNote.trim().length > 0);
 
@@ -320,8 +321,8 @@ export default function CallLogButton({
                   </div>
                 )}
 
-                {/* Not Interested reasons */}
-                {showReasons && isNotInterested && (
+                {/* Not Interested reasons — hide if lead was already NOT_INTERESTED (reason known) */}
+                {showReasons && isNotInterested && !isNotInterestedLead && (
                   <div className="bg-red-50 border border-red-100 rounded-xl p-3 space-y-2">
                     <p className="text-xs font-semibold text-red-700">
                       Not interested ki wajah? <span className="text-red-500">*</span>
@@ -356,8 +357,8 @@ export default function CallLogButton({
                   </div>
                 )}
 
-                {/* Outcome note — mandatory only when positive feedback and no Other selected */}
-                {showReasons && !isOther && !isInterestedOther && (
+                {/* Outcome note */}
+                {(reasonsHidden || (showReasons && !isOther && !isInterestedOther)) && (
                   <div>
                     <label className="text-xs font-medium text-gray-600 block mb-1">
                       Note <span className="text-red-500">*</span>
