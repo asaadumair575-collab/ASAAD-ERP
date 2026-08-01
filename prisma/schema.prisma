@@ -113,6 +113,7 @@ model User {
   reorderCampaigns     ReorderCampaign[]
   reorderCalls         ReorderLead[]    @relation("ReorderLeadCalledBy")
   reorderCallLogs      ReorderCallLog[] @relation("ReorderCallLogCalledBy")
+  retailFollowupLogs   RetailFollowupLog[] @relation("RetailFollowupLogCalledBy")
 }
 
 model EmpCommissionEntry {
@@ -375,5 +376,15 @@ model ReorderCallLog {
   callNote   String?
   calledAt   DateTime    @default(now())
   calledBy   User        @relation("ReorderCallLogCalledBy", fields: [calledById], references: [id])
+  calledById Int
+}
+
+model RetailFollowupLog {
+  id         Int      @id @default(autoincrement())
+  phone      String
+  status     String
+  note       String?
+  calledAt   DateTime @default(now())
+  calledBy   User     @relation("RetailFollowupLogCalledBy", fields: [calledById], references: [id])
   calledById Int
 }

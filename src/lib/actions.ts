@@ -2098,6 +2098,14 @@ export async function searchReorderLeads(q: string) {
   return leads;
 }
 
+export async function logRetailFollowupCall(phone: string, status: string, note: string) {
+  const me = await requireAuth();
+  await prisma.retailFollowupLog.create({
+    data: { phone, status, note: note || null, calledById: me.id },
+  });
+  revalidatePath("/reorder/retail-followup");
+}
+
 export async function deleteReorderLead(leadId: number) {
   await requireAuth();
   await prisma.reorderLead.delete({ where: { id: leadId } });
