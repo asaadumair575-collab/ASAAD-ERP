@@ -95,7 +95,7 @@ export default function CallLogButton({
     (!isInterested || followUpDate.length > 0);
 
   function openModal() {
-    setStep(callCount === 0 ? "feedback" : "outcome");
+    setStep(callCount === 0 || lead.status === "NO_ANSWER" ? "feedback" : "outcome");
     setFeedback("");
     setFeedbackNote("");
     setStatus("");
@@ -171,15 +171,15 @@ export default function CallLogButton({
                 <h3 className="text-sm font-semibold text-gray-800">{lead.customerName}</h3>
                 <p className="text-xs text-gray-400 font-mono mt-0.5">{lead.phone}</p>
               </div>
-              {step === "outcome" && callCount === 0 && (
+              {step === "outcome" && (callCount === 0 || lead.status === "NO_ANSWER") && (
                 <button type="button" onClick={() => setStep("feedback")} className="text-xs text-gray-400 hover:text-gray-600">
                   ← Back
                 </button>
               )}
             </div>
 
-            {/* Step bar — only for first call */}
-            {callCount === 0 && (
+            {/* Step bar — for first call or when previous was no-answer */}
+            {(callCount === 0 || lead.status === "NO_ANSWER") && (
               <div className="flex items-center gap-2">
                 <div className={`flex-1 h-1 rounded-full ${step === "feedback" ? "bg-black" : "bg-green-500"}`} />
                 <div className={`flex-1 h-1 rounded-full ${step === "outcome"  ? "bg-black" : "bg-gray-200"}`} />
