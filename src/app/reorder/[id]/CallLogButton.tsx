@@ -15,6 +15,11 @@ const OUTCOMES_INTERESTED = [
   { value: "NOT_INTERESTED", label: "❌ Not Interested",   color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
 ];
 
+const OUTCOMES_NOT_INTERESTED = [
+  { value: "ORDER_PLACED",   label: "✅ Convinced",     color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
+  { value: "NOT_INTERESTED", label: "❌ Not Convinced", color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
+];
+
 const INTERESTED_REASONS = [
   "Has Stock — Will Order Later",
   "Will Inform When Needed",
@@ -57,8 +62,11 @@ export default function CallLogButton({
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
-  const isInterestedLead  = lead.status === "ORDER_PLACED" || lead.status === "ORDER_RECEIVED";
-  const outcomeOptions    = isInterestedLead ? OUTCOMES_INTERESTED : OUTCOMES;
+  const isInterestedLead     = lead.status === "ORDER_PLACED" || lead.status === "ORDER_RECEIVED";
+  const isNotInterestedLead  = lead.status === "NOT_INTERESTED";
+  const outcomeOptions       = isInterestedLead    ? OUTCOMES_INTERESTED
+                             : isNotInterestedLead ? OUTCOMES_NOT_INTERESTED
+                             : OUTCOMES;
 
   const isNotInterested   = status === "NOT_INTERESTED";
   const isInterested      = status === "ORDER_PLACED";
