@@ -56,24 +56,18 @@ export default function CallLogButton({
   const [feedback, setFeedback] = useState<"POSITIVE" | "NEGATIVE" | "">("");
   const [feedbackNote, setFeedbackNote] = useState("");
 
-  // Step 2 — outcome
-  const [status, setStatus] = useState(lead.status === "PENDING" ? "" : lead.status);
-  const [reason, setReason] = useState(lead.status === "NOT_INTERESTED" ? extractReason(lead.callNote) : "");
-  const [otherText, setOtherText] = useState(
-    lead.status === "NOT_INTERESTED" && extractReason(lead.callNote) === "Other" ? extractNote(lead.callNote) : ""
-  );
-  const [interestedReason, setInterestedReason] = useState(
-    lead.status === "ORDER_PLACED" ? extractReason(lead.callNote) : ""
-  );
-  const [interestedOtherText, setInterestedOtherText] = useState(
-    lead.status === "ORDER_PLACED" && extractReason(lead.callNote) === "Other" ? extractNote(lead.callNote) : ""
-  );
-  const [note, setNote] = useState(lead.status === "NOT_INTERESTED" ? extractNote(lead.callNote) : lead.callNote);
+  // Step 2 — outcome (always start empty — this is a new call)
+  const [status, setStatus] = useState("");
+  const [reason, setReason] = useState("");
+  const [otherText, setOtherText] = useState("");
+  const [interestedReason, setInterestedReason] = useState("");
+  const [interestedOtherText, setInterestedOtherText] = useState("");
+  const [note, setNote] = useState("");
 
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
-  const isNewCall = lead.status === "PENDING";
+  const isNewCall = true; // every button press logs a fresh call
   const isInterestedUpdate = lead.status === "ORDER_PLACED" || lead.status === "ORDER_RECEIVED";
   const outcomeOptions = isInterestedUpdate ? OUTCOMES_INTERESTED : OUTCOMES;
   const isNotInterested = status === "NOT_INTERESTED";
@@ -89,12 +83,15 @@ export default function CallLogButton({
     (isNewCall ? (feedback && feedbackNote.trim()) : true);
 
   function openModal() {
-    // New call: start from feedback; Update: go straight to outcome
-    setStep(isNewCall ? "feedback" : "outcome");
-    if (isNewCall) {
-      setFeedback("");
-      setFeedbackNote("");
-    }
+    setStep("feedback");
+    setFeedback("");
+    setFeedbackNote("");
+    setStatus("");
+    setReason("");
+    setOtherText("");
+    setInterestedReason("");
+    setInterestedOtherText("");
+    setNote("");
     setOpen(true);
   }
 
