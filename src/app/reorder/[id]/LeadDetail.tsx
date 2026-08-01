@@ -69,19 +69,30 @@ export default function LeadDetail({ lead, callLogs = [] }: { lead: Lead; callLo
                     const st = STATUS_LABELS[log.status] ?? { label: log.status, color: "text-gray-500" };
                     const date = new Date(log.calledAt);
                     return (
-                      <div key={i} className="border border-gray-100 rounded-xl p-3 space-y-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className={`text-xs font-semibold ${st.color}`}>{st.label}</span>
-                          <span className="text-[11px] text-gray-300">
+                      <div key={i} className="border border-gray-100 rounded-xl p-3">
+                        {/* Call number + date/time */}
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <span className="text-xs font-bold text-gray-700">Call {i + 1}</span>
+                          <span className="text-[11px] text-gray-400">
                             {date.toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
                             {" · "}
                             {date.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", hour12: true })}
                           </span>
                         </div>
+                        {/* Outcome */}
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="text-[11px] text-gray-400 shrink-0">Outcome:</span>
+                          <span className={`text-xs font-semibold ${st.color}`}>{st.label}</span>
+                        </div>
+                        {/* Note */}
                         {log.callNote && (
-                          <p className="text-xs text-gray-500 leading-snug">{log.callNote}</p>
+                          <div className="flex items-start gap-1.5 mb-1">
+                            <span className="text-[11px] text-gray-400 shrink-0 mt-px">Note:</span>
+                            <p className="text-xs text-gray-600 leading-snug">{log.callNote}</p>
+                          </div>
                         )}
-                        <p className="text-[11px] text-gray-300">{log.calledBy}</p>
+                        {/* Called by */}
+                        <p className="text-[11px] text-gray-300 mt-0.5">by {log.calledBy}</p>
                       </div>
                     );
                   })}
