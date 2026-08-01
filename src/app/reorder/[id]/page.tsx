@@ -45,10 +45,7 @@ export default async function ReorderCampaignPage({
       leads: {
         include: {
           calledBy: { select: { id: true, displayName: true, username: true, isAdmin: true } },
-          callLogs: {
-            include: { calledBy: { select: { displayName: true, username: true } } },
-            orderBy: { calledAt: "asc" },
-          },
+          _count: { select: { callLogs: true } },
         },
         orderBy: [{ status: "asc" }, { createdAt: "asc" }],
       },
@@ -263,12 +260,7 @@ export default async function ReorderCampaignPage({
                     <td className="py-2.5 px-4">
                       <LeadDetail
                         lead={{ customerName: l.customerName, phone: l.phone, email: l.email, address: l.address, city: l.city, prevItem: l.prevItem }}
-                        callLogs={l.callLogs.map((cl) => ({
-                          status: cl.status,
-                          callNote: cl.callNote ?? "",
-                          calledAt: cl.calledAt.toISOString(),
-                          calledBy: cl.calledBy.displayName ?? cl.calledBy.username,
-                        }))}
+                        leadId={l.id}
                       />
                       {l.calledBy && (
                         <p className="text-[11px] text-gray-400 mt-0.5 leading-none">
@@ -299,7 +291,7 @@ export default async function ReorderCampaignPage({
                     </td>
                     <td className="py-2.5 px-4 hidden sm:table-cell"><NoteCell note={l.callNote ?? ""} /></td>
                     <td className="py-2.5 px-4 sticky right-0 bg-inherit">
-                      <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "" }} me={meSerial} callCount={l.callLogs.length} />
+                      <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "" }} me={meSerial} callCount={l._count.callLogs} />
                     </td>
                   </tr>
                 );

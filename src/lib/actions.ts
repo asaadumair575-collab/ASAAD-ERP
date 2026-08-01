@@ -2013,6 +2013,15 @@ export async function logReorderCall(
   revalidatePath("/reorder");
 }
 
+export async function getLeadCallLogs(leadId: number) {
+  await requireAuth();
+  return prisma.reorderCallLog.findMany({
+    where: { leadId },
+    include: { calledBy: { select: { displayName: true, username: true } } },
+    orderBy: { calledAt: "asc" },
+  });
+}
+
 export async function searchReorderLeads(q: string) {
   await requireAuth();
   const leads = await prisma.reorderLead.findMany({

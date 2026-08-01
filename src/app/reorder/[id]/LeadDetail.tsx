@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { getLeadCallLogs } from "@/lib/actions";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PENDING:          { label: "Pending",              color: "text-gray-400" },
@@ -13,9 +14,9 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 
 type CallLog = {
   status: string;
-  callNote: string;
-  calledAt: string;
-  calledBy: string;
+  callNote: string | null;
+  calledAt: Date;
+  calledBy: { displayName: string | null; username: string };
 };
 
 type Lead = {
@@ -27,14 +28,28 @@ type Lead = {
   prevItem?: string | null;
 };
 
-export default function LeadDetail({ lead, callLogs = [] }: { lead: Lead; callLogs?: CallLog[] }) {
+export default function LeadDetail({ lead, leadId }: { lead: Lead; leadId: number }) {
   const [open, setOpen] = useState(false);
+  const [callLogs, setCallLogs] = useState<CallLog[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [, startTransition] = useTransition();
+
+  function openPopup() {
+    setOpen(true);
+    if (!loaded) {
+      startTransition(async () => {
+        const logs = await getLeadCallLogs(leadId);
+        setCallLogs(logs);
+        setLoaded(true);
+      });
+    }
+  }
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openPopup}
         className="text-sm font-medium text-gray-800 hover:underline underline-offset-2 text-left leading-tight"
       >
         {lead.customerName}
@@ -68,7 +83,7 @@ export default function LeadDetail({ lead, callLogs = [] }: { lead: Lead; callLo
                 <div className="space-y-2">
                   {callLogs.map((log, i) => {
                     const st = STATUS_LABELS[log.status] ?? { label: log.status, color: "text-gray-500" };
-                    const date = new Date(log.calledAt);
+                    const date = log.calledAt instanceof Date ? log.calledAt : new Date(log.calledAt);
                     return (
                       <div key={i} className="border border-gray-100 rounded-xl p-3">
                         {/* Call number + date/time */}
@@ -92,8 +107,7 @@ export default function LeadDetail({ lead, callLogs = [] }: { lead: Lead; callLo
                             <p className="text-xs text-gray-600 leading-snug">{log.callNote}</p>
                           </div>
                         )}
-                        {/* Called by */}
-                        <p className="text-[11px] text-gray-300 mt-0.5">by {log.calledBy}</p>
+                        <p className="text-[11px] text-gray-300 mt-0.5">by {log.calledBy.displayName ?? log.calledBy.username}</p>
                       </div>
                     );
                   })}
