@@ -28,7 +28,6 @@ const INTERESTED_REASONS = [
 ];
 
 const NOT_INTERESTED_REASONS = [
-  "Ball Quality",
   "Price Too High",
   "Already Has Stock",
   "Not Selling This Product",
