@@ -18,6 +18,7 @@ const OUTCOMES_INTERESTED = [
 const INTERESTED_REASONS = [
   "Has Stock — Will Order Later",
   "Will Inform When Needed",
+  "Sent a Message",
   "Other",
 ];
 
