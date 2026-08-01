@@ -99,7 +99,7 @@ export default async function ReorderCampaignPage({
   }
   const todayEmpStats = Array.from(todayEmpMap.values()).sort((a, b) => b.total - a.total);
 
-  const meSerial = { id: me.id, displayName: me.displayName ?? null };
+  const meSerial = { id: me.id, displayName: me.displayName ?? null, isAdmin: me.isAdmin };
 
   return (
     <div className="space-y-6">

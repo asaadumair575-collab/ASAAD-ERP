@@ -40,7 +40,7 @@ export default function CallLogButton({
   callCount,
 }: {
   lead: { id: number; customerName: string; phone: string; status: string; callNote: string };
-  me: { id: number; displayName: string | null };
+  me: { id: number; displayName: string | null; isAdmin?: boolean };
   callCount: number;
 }) {
   const [open, setOpen]   = useState(false);
@@ -186,14 +186,16 @@ export default function CallLogButton({
             🟢
           </button>
         )}
-        <button
-          onClick={() => setDeleteConfirmOpen(true)}
-          disabled={pending}
-          title="Delete"
-          className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 text-gray-300 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors disabled:opacity-40"
-        >
-          ✕
-        </button>
+        {me.isAdmin && (
+          <button
+            onClick={() => setDeleteConfirmOpen(true)}
+            disabled={pending}
+            title="Delete"
+            className="text-xs px-2 py-1.5 rounded-lg border border-gray-200 text-gray-300 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-colors disabled:opacity-40"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {/* Delete confirmation */}
