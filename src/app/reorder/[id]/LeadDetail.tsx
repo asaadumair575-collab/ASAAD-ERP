@@ -2,12 +2,13 @@
 import { useState } from "react";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  PENDING:        { label: "Pending",        color: "text-gray-400" },
-  NO_ANSWER:      { label: "No Answer",      color: "text-yellow-600" },
-  CALLBACK:       { label: "Callback",       color: "text-blue-600" },
-  NOT_INTERESTED: { label: "Not Interested", color: "text-red-600" },
-  ORDER_PLACED:   { label: "Interested",     color: "text-violet-600" },
-  ORDER_RECEIVED: { label: "Order Received", color: "text-green-600" },
+  PENDING:          { label: "Pending",              color: "text-gray-400" },
+  NO_ANSWER:        { label: "No Answer",            color: "text-yellow-600" },
+  CALLBACK:         { label: "Callback",             color: "text-blue-600" },
+  NOT_INTERESTED:   { label: "Not Interested",       color: "text-red-600" },
+  ORDER_PLACED:     { label: "Interested",           color: "text-violet-600" },
+  INTERESTED_LATER: { label: "Interested — Not Now", color: "text-orange-500" },
+  ORDER_RECEIVED:   { label: "Order Received",       color: "text-green-600" },
 };
 
 type CallLog = {

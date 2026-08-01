@@ -5,19 +5,22 @@ import { useRouter } from "next/navigation";
 import { logReorderCall, markReorderOrderReceived, deleteReorderLead } from "@/lib/actions";
 
 const OUTCOMES = [
-  { value: "ORDER_PLACED",   label: "✅ Interested",     color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
-  { value: "NOT_INTERESTED", label: "❌ Not Interested", color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
+  { value: "ORDER_PLACED",     label: "Interested",          color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
+  { value: "INTERESTED_LATER", label: "Interested — Not Now", color: "bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100" },
+  { value: "NOT_INTERESTED",   label: "Not Interested",       color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
 ];
 
 const OUTCOMES_INTERESTED = [
-  { value: "ORDER_RECEIVED", label: "🟢 Order Received",   color: "bg-green-50 border-green-400 text-green-700 hover:bg-green-100" },
-  { value: "ORDER_PLACED",   label: "✅ Still Interested", color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
-  { value: "NOT_INTERESTED", label: "❌ Not Interested",   color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
+  { value: "ORDER_RECEIVED",   label: "Order Received",       color: "bg-green-50 border-green-400 text-green-700 hover:bg-green-100" },
+  { value: "ORDER_PLACED",     label: "Still Interested",     color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
+  { value: "INTERESTED_LATER", label: "Interested — Not Now", color: "bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100" },
+  { value: "NOT_INTERESTED",   label: "Not Interested",       color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
 ];
 
 const OUTCOMES_NOT_INTERESTED = [
-  { value: "ORDER_PLACED",   label: "✅ Convinced",     color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
-  { value: "NOT_INTERESTED", label: "❌ Not Convinced", color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
+  { value: "ORDER_PLACED",     label: "Convinced",            color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
+  { value: "INTERESTED_LATER", label: "Interested — Not Now", color: "bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100" },
+  { value: "NOT_INTERESTED",   label: "Not Convinced",        color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
 ];
 
 const INTERESTED_REASONS = [
@@ -62,7 +65,7 @@ export default function CallLogButton({
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
-  const isInterestedLead     = lead.status === "ORDER_PLACED" || lead.status === "ORDER_RECEIVED";
+  const isInterestedLead     = lead.status === "ORDER_PLACED" || lead.status === "ORDER_RECEIVED" || lead.status === "INTERESTED_LATER";
   const isNotInterestedLead  = lead.status === "NOT_INTERESTED";
   const outcomeOptions       = isInterestedLead    ? OUTCOMES_INTERESTED
                              : isNotInterestedLead ? OUTCOMES_NOT_INTERESTED
@@ -176,7 +179,7 @@ export default function CallLogButton({
         >
           {callLabel}
         </button>
-        {lead.status === "ORDER_PLACED" && (
+        {(lead.status === "ORDER_PLACED" || lead.status === "INTERESTED_LATER") && (
           <button
             onClick={quickOrderDone}
             disabled={pending}

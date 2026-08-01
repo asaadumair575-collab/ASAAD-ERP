@@ -8,12 +8,13 @@ import LeadDetail from "./LeadDetail";
 import BackfillAddressButton from "./BackfillAddressButton";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  PENDING:        { label: "Pending",        color: "bg-gray-100 text-gray-500" },
-  NO_ANSWER:      { label: "No Answer",      color: "bg-yellow-100 text-yellow-700" },
-  CALLBACK:       { label: "Callback",       color: "bg-blue-100 text-blue-700" },
-  NOT_INTERESTED: { label: "Not Interested", color: "bg-red-100 text-red-600" },
-  ORDER_PLACED:   { label: "Interested",     color: "bg-violet-100 text-violet-700" },
-  ORDER_RECEIVED: { label: "Order Received", color: "bg-green-100 text-green-700" },
+  PENDING:          { label: "Pending",              color: "bg-gray-100 text-gray-500" },
+  NO_ANSWER:        { label: "No Answer",            color: "bg-yellow-100 text-yellow-700" },
+  CALLBACK:         { label: "Callback",             color: "bg-blue-100 text-blue-700" },
+  NOT_INTERESTED:   { label: "Not Interested",       color: "bg-red-100 text-red-600" },
+  ORDER_PLACED:     { label: "Interested",           color: "bg-violet-100 text-violet-700" },
+  INTERESTED_LATER: { label: "Interested — Not Now", color: "bg-orange-100 text-orange-600" },
+  ORDER_RECEIVED:   { label: "Order Received",       color: "bg-green-100 text-green-700" },
 };
 
 export default async function ReorderCampaignPage({
