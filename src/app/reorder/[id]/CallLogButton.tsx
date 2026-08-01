@@ -91,8 +91,7 @@ export default function CallLogButton({
     !!status &&
     (!showReasons || reasonsHidden || !isNotInterested  || (!!reason && (!isOther           || otherText.trim().length > 0))) &&
     (!showReasons || !isInterested     || (!!interestedReason && (!isInterestedOther || interestedOtherText.trim().length > 0))) &&
-    (!noteRequired || outcomeNote.trim().length > 0) &&
-    (!isInterested || followUpDate.length > 0);
+    (!noteRequired || outcomeNote.trim().length > 0);
 
   function openModal() {
     setStep(callCount === 0 || lead.status === "NO_ANSWER" ? "feedback" : "outcome");
@@ -327,18 +326,15 @@ export default function CallLogButton({
                 {isInterested && (
                   <div>
                     <label className="text-xs font-semibold text-gray-700 block mb-1">
-                      Follow-up Date <span className="text-red-500">*</span>
+                      Follow-up Date <span className="text-gray-400 font-normal">(optional)</span>
                     </label>
                     <input
                       type="date"
                       value={followUpDate}
                       min={new Date().toISOString().slice(0, 10)}
                       onChange={(e) => setFollowUpDate(e.target.value)}
-                      className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                        !followUpDate ? "border-gray-300 focus:ring-gray-400" : "border-gray-200 focus:ring-black"
-                      }`}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
                     />
-                    {!followUpDate && <p className="text-xs text-gray-400 mt-1">Follow-up date dalna zaroori hai</p>}
                   </div>
                 )}
 
