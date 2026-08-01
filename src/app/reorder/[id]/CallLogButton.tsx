@@ -15,6 +15,12 @@ const OUTCOMES_INTERESTED = [
   { value: "NOT_INTERESTED", label: "❌ Not Interested",  color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
 ];
 
+const INTERESTED_REASONS = [
+  "Has Stock — Will Order Later",
+  "Will Inform When Needed",
+  "Other",
+];
+
 const NOT_INTERESTED_REASONS = [
   "Ball Quality",
   "Price Too High",
@@ -53,6 +59,12 @@ export default function CallLogButton({
   const [otherText, setOtherText] = useState(
     lead.status === "NOT_INTERESTED" && extractReason(lead.callNote) === "Other" ? extractNote(lead.callNote) : ""
   );
+  const [interestedReason, setInterestedReason] = useState(
+    lead.status === "ORDER_PLACED" ? extractReason(lead.callNote) : ""
+  );
+  const [interestedOtherText, setInterestedOtherText] = useState(
+    lead.status === "ORDER_PLACED" && extractReason(lead.callNote) === "Other" ? extractNote(lead.callNote) : ""
+  );
   const [note, setNote] = useState(lead.status === "NOT_INTERESTED" ? extractNote(lead.callNote) : lead.callNote);
 
   const [pending, startTransition] = useTransition();
@@ -62,11 +74,14 @@ export default function CallLogButton({
   const isInterestedUpdate = lead.status === "ORDER_PLACED" || lead.status === "ORDER_RECEIVED";
   const outcomeOptions = isInterestedUpdate ? OUTCOMES_INTERESTED : OUTCOMES;
   const isNotInterested = status === "NOT_INTERESTED";
+  const isInterested = status === "ORDER_PLACED";
   const isOther = reason === "Other";
+  const isInterestedOther = interestedReason === "Other";
 
   const canProceed = feedback && feedbackNote.trim();
   const canSave = status &&
     (!isNotInterested || (reason && (!isOther || otherText.trim()))) &&
+    (!isInterested || (interestedReason && (!isInterestedOther || interestedOtherText.trim()))) &&
     note.trim() &&
     (isNewCall ? (feedback && feedbackNote.trim()) : true);
 
@@ -82,12 +97,10 @@ export default function CallLogButton({
 
   function handleStatusChange(val: string) {
     setStatus(val);
-    if (val !== "NOT_INTERESTED") {
-      setReason("");
-      setOtherText("");
-    } else if (lead.status === "NOT_INTERESTED") {
-      setReason(extractReason(lead.callNote));
-    }
+    if (val !== "NOT_INTERESTED") { setReason(""); setOtherText(""); }
+    else if (lead.status === "NOT_INTERESTED") setReason(extractReason(lead.callNote));
+    if (val !== "ORDER_PLACED") { setInterestedReason(""); setInterestedOtherText(""); }
+    else if (lead.status === "ORDER_PLACED") setInterestedReason(extractReason(lead.callNote));
   }
 
   function saveNoAnswer() {
@@ -101,8 +114,11 @@ export default function CallLogButton({
   function save() {
     if (!canSave) return;
     const effectiveReason = isOther ? `Other: ${otherText.trim()}` : reason;
+    const effectiveInterestedReason = isInterestedOther ? `Other: ${interestedOtherText.trim()}` : interestedReason;
     const outcomeNote = isNotInterested
       ? `Reason: ${effectiveReason}${note ? ` — ${note}` : ""}`
+      : isInterested && effectiveInterestedReason
+      ? `Reason: ${effectiveInterestedReason}${note ? ` — ${note}` : ""}`
       : note;
     const finalNote = isNewCall && feedback
       ? `[${feedback === "POSITIVE" ? "👍 Positive" : "👎 Negative"}: ${feedbackNote.trim()}] ${outcomeNote}`.trim()
@@ -254,6 +270,40 @@ export default function CallLogButton({
                     ))}
                   </div>
                 </div>
+
+                {/* Interested reasons */}
+                {isInterested && (
+                  <div className="bg-violet-50 border border-violet-100 rounded-xl p-3 space-y-2">
+                    <p className="text-xs font-semibold text-violet-700">Interested — kya wajah hai abhi order nahi?</p>
+                    <div className="flex flex-wrap gap-2">
+                      {INTERESTED_REASONS.map((r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => setInterestedReason(r)}
+                          className={`text-xs px-2.5 py-1.5 rounded-lg border font-medium transition-colors ${
+                            interestedReason === r
+                              ? "bg-violet-600 text-white border-violet-600"
+                              : "border-violet-200 text-violet-600 hover:bg-violet-100"
+                          }`}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                    {isInterestedOther && (
+                      <input
+                        type="text"
+                        autoFocus
+                        value={interestedOtherText}
+                        onChange={(e) => setInterestedOtherText(e.target.value)}
+                        placeholder="Reason likhein..."
+                        className="w-full border border-violet-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                      />
+                    )}
+                    {!interestedReason && <p className="text-xs text-violet-400">Wajah select karna zaroori hai</p>}
+                  </div>
+                )}
 
                 {/* Not Interested reasons */}
                 {isNotInterested && (
