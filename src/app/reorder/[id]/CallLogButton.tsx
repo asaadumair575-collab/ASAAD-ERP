@@ -57,6 +57,7 @@ export default function CallLogButton({
   const [interestedReason,     setInterestedReason]     = useState("");   // ORDER_PLACED reason
   const [interestedOtherText,  setInterestedOtherText]  = useState("");   // when interestedReason = Other
   const [outcomeNote,          setOutcomeNote]          = useState("");
+  const [followUpDate,         setFollowUpDate]         = useState("");
 
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -90,7 +91,8 @@ export default function CallLogButton({
     !!status &&
     (!showReasons || reasonsHidden || !isNotInterested  || (!!reason && (!isOther           || otherText.trim().length > 0))) &&
     (!showReasons || !isInterested     || (!!interestedReason && (!isInterestedOther || interestedOtherText.trim().length > 0))) &&
-    (!noteRequired || outcomeNote.trim().length > 0);
+    (!noteRequired || outcomeNote.trim().length > 0) &&
+    (!isInterested || followUpDate.length > 0);
 
   function openModal() {
     setStep(callCount === 0 ? "feedback" : "outcome");
@@ -102,6 +104,7 @@ export default function CallLogButton({
     setInterestedReason("");
     setInterestedOtherText("");
     setOutcomeNote("");
+    setFollowUpDate("");
     setOpen(true);
   }
 
@@ -140,7 +143,7 @@ export default function CallLogButton({
       : finalOutcomeNote;
 
     startTransition(async () => {
-      await logReorderCall(lead.id, status, fullNote);
+      await logReorderCall(lead.id, status, fullNote, isInterested ? followUpDate : null);
       setOpen(false);
       router.replace(window.location.pathname + window.location.search);
     });
@@ -317,6 +320,25 @@ export default function CallLogButton({
                       />
                     )}
                     {!interestedReason && <p className="text-xs text-violet-400">Wajah select karni zaroori hai</p>}
+                  </div>
+                )}
+
+                {/* Follow-up date — mandatory when Interested */}
+                {isInterested && (
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 block mb-1">
+                      Follow-up Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={followUpDate}
+                      min={new Date().toISOString().slice(0, 10)}
+                      onChange={(e) => setFollowUpDate(e.target.value)}
+                      className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                        !followUpDate ? "border-gray-300 focus:ring-gray-400" : "border-gray-200 focus:ring-black"
+                      }`}
+                    />
+                    {!followUpDate && <p className="text-xs text-gray-400 mt-1">Follow-up date dalna zaroori hai</p>}
                   </div>
                 )}
 

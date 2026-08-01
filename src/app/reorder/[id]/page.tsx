@@ -283,6 +283,18 @@ export default async function ReorderCampaignPage({
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${st.color}`}>
                         {st.label}
                       </span>
+                      {l.followUpDate && l.status === "ORDER_PLACED" && (() => {
+                        const due = new Date(l.followUpDate);
+                        const today = new Date(); today.setHours(0,0,0,0);
+                        const isOverdue = due < today;
+                        const isToday   = due.toDateString() === today.toDateString();
+                        return (
+                          <p className={`text-[11px] mt-0.5 font-medium ${isOverdue ? "text-red-500" : isToday ? "text-amber-500" : "text-gray-400"}`}>
+                            {isOverdue ? "⚠️ " : isToday ? "📅 " : "🗓 "}
+                            Follow-up: {due.toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
+                          </p>
+                        );
+                      })()}
                     </td>
                     <td className="py-2.5 px-4 hidden sm:table-cell"><NoteCell note={l.callNote ?? ""} /></td>
                     <td className="py-2.5 px-4 sticky right-0 bg-inherit">

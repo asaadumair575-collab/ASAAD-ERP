@@ -358,6 +358,7 @@ model ReorderLead {
   prevItem     String?
   status       String            @default("PENDING")
   callNote     String?
+  followUpDate DateTime?         @db.Date
   calledAt     DateTime?
   calledBy     User?             @relation("ReorderLeadCalledBy", fields: [calledById], references: [id])
   calledById   Int?

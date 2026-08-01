@@ -1987,14 +1987,24 @@ export async function createReorderCampaign(
 export async function logReorderCall(
   leadId: number,
   status: string,
-  callNote: string
+  callNote: string,
+  followUpDate?: string | null
 ) {
   const me = await requireAuth();
   const now = new Date();
+  const followUp = followUpDate ? new Date(followUpDate) : null;
+  // Clear follow-up date if lead is no longer interested
+  const clearFollowUp = status !== "ORDER_PLACED";
   await prisma.$transaction([
     prisma.reorderLead.update({
       where: { id: leadId },
-      data: { status, callNote: callNote || null, calledAt: now, calledById: me.id },
+      data: {
+        status,
+        callNote: callNote || null,
+        calledAt: now,
+        calledById: me.id,
+        followUpDate: clearFollowUp ? null : (followUp ?? undefined),
+      },
     }),
     prisma.reorderCallLog.create({
       data: { leadId, status, callNote: callNote || null, calledAt: now, calledById: me.id },
