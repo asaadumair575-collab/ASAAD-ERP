@@ -1959,6 +1959,53 @@ export async function bulkImportRetailOrders(rows: {
 
 // ── Reorder Campaign ──────────────────────────────────────────────────────────
 
+export async function createRetailFollowupBatch(name: string) {
+  const me = await requireAuth();
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 15);
+
+  const orders = await prisma.retailOrder.findMany({
+    where: { date: { lte: cutoff } },
+    include: { items: true },
+    orderBy: { date: "desc" },
+  });
+
+  // Deduplicate by phone — keep most recent order per customer
+  const seen = new Map<string, { customerName: string; phone: string; city: string | null; address: string | null; prevItem: string }>();
+  for (const o of orders) {
+    const phone = o.phone?.trim() || "";
+    if (!phone || !o.customerName) continue;
+    if (!seen.has(phone)) {
+      const prevItem = o.items.map((i) => `${i.description} ×${i.quantity}`).join(", ");
+      seen.set(phone, { customerName: o.customerName, phone, city: o.city ?? null, address: null, prevItem });
+    }
+  }
+
+  const leads = Array.from(seen.values());
+  const campaign = await prisma.reorderCampaign.create({
+    data: {
+      name,
+      createdById: me.id,
+      isRetailFollowup: true,
+      leads: { create: leads },
+    },
+  });
+  revalidatePath("/reorder");
+  return campaign.id;
+}
+
+export async function getRetailFollowupCount() {
+  await requireAuth();
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 15);
+  const orders = await prisma.retailOrder.findMany({
+    where: { date: { lte: cutoff } },
+    select: { phone: true },
+  });
+  const unique = new Set(orders.map((o) => o.phone?.trim()).filter(Boolean));
+  return unique.size;
+}
+
 export async function createReorderCampaign(
   name: string,
   leads: { customerName: string; phone: string; email?: string; address?: string; city?: string; prevItem?: string }[]

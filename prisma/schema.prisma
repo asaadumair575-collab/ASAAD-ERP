@@ -338,12 +338,13 @@ model EcomExpense {
 }
 
 model ReorderCampaign {
-  id          Int           @id @default(autoincrement())
-  name        String
-  createdAt   DateTime      @default(now())
-  createdBy   User?         @relation(fields: [createdById], references: [id])
-  createdById Int?
-  leads       ReorderLead[]
+  id                Int           @id @default(autoincrement())
+  name              String
+  createdAt         DateTime      @default(now())
+  createdBy         User?         @relation(fields: [createdById], references: [id])
+  createdById       Int?
+  isRetailFollowup  Boolean       @default(false)
+  leads             ReorderLead[]
 }
 
 model ReorderLead {

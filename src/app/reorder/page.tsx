@@ -5,6 +5,7 @@ import Link from "next/link";
 import ReorderUploadModal from "./ReorderUploadModal";
 import DeleteCampaignButton from "./DeleteCampaignButton";
 import LeadSearch from "./LeadSearch";
+import RetailFollowupModal from "./RetailFollowupModal";
 import { userLabel } from "@/lib/userLabel";
 
 export default async function ReorderPage() {
@@ -29,6 +30,7 @@ export default async function ReorderPage() {
         </div>
         <div className="flex items-center gap-2">
           <LeadSearch />
+          <RetailFollowupModal />
           <ReorderUploadModal />
         </div>
       </div>
@@ -54,9 +56,14 @@ export default async function ReorderPage() {
               <div key={c.id} className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <Link href={`/reorder/${c.id}`} className="text-base font-semibold text-gray-900 hover:text-black truncate block">
-                      {c.name}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/reorder/${c.id}`} className="text-base font-semibold text-gray-900 hover:text-black truncate">
+                        {c.name}
+                      </Link>
+                      {c.isRetailFollowup && (
+                        <span className="text-[10px] font-semibold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full shrink-0">Retail</span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {new Date(c.createdAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
                       {c.createdBy && ` · by ${userLabel(c.createdBy)}`}

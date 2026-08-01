@@ -37,14 +37,22 @@ const NOT_INTERESTED_REASONS = [
   "Other",
 ];
 
+const RETAIL_OUTCOMES = [
+  { value: "ORDER_RECEIVED", label: "✓ Order Diya",     color: "bg-green-50 border-green-400 text-green-700 hover:bg-green-100" },
+  { value: "CALLBACK",       label: "📞 Follow-up",     color: "bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100" },
+  { value: "NOT_INTERESTED", label: "✗ Nahi Karna",    color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
+];
+
 export default function CallLogButton({
   lead,
   me,
   callCount,
+  simplified = false,
 }: {
   lead: { id: number; customerName: string; phone: string; status: string; callNote: string };
   me: { id: number; displayName: string | null; isAdmin?: boolean };
   callCount: number;
+  simplified?: boolean;
 }) {
   const [open, setOpen]   = useState(false);
   const [step, setStep]   = useState<"feedback" | "outcome">("feedback");
@@ -90,14 +98,15 @@ export default function CallLogButton({
   const showReasons   = !isNegative; // negative feedback = reason already in feedback note
   const reasonsHidden = isNotInterestedLead && isNotInterested; // already-NI lead marked NI again
   const noteRequired  = (showReasons && !isOther && !isInterestedOther && !isInterested) || reasonsHidden;
-  const canSave =
-    !!status &&
-    (!showReasons || reasonsHidden || !isNotInterested  || (!!reason && (!isOther           || otherText.trim().length > 0))) &&
-    (!isInterested || (!!interestedReason && (!isInterestedOther || interestedOtherText.trim().length > 0))) &&
-    (!noteRequired || outcomeNote.trim().length > 0);
+  const canSave = simplified
+    ? !!status
+    : !!status &&
+      (!showReasons || reasonsHidden || !isNotInterested  || (!!reason && (!isOther           || otherText.trim().length > 0))) &&
+      (!isInterested || (!!interestedReason && (!isInterestedOther || interestedOtherText.trim().length > 0))) &&
+      (!noteRequired || outcomeNote.trim().length > 0);
 
   function openModal() {
-    setStep(callCount === 0 || lead.status === "NO_ANSWER" ? "feedback" : "outcome");
+    setStep(simplified || (callCount > 0 && lead.status !== "NO_ANSWER") ? "outcome" : "feedback");
     setFeedback("");
     setFeedbackNote("");
     setStatus("");
@@ -278,15 +287,15 @@ export default function CallLogButton({
                 <h3 className="text-sm font-semibold text-gray-800">{lead.customerName}</h3>
                 <p className="text-xs text-gray-400 font-mono mt-0.5">{lead.phone}</p>
               </div>
-              {step === "outcome" && (callCount === 0 || lead.status === "NO_ANSWER") && (
+              {!simplified && step === "outcome" && (callCount === 0 || lead.status === "NO_ANSWER") && (
                 <button type="button" onClick={() => setStep("feedback")} className="text-xs text-gray-400 hover:text-gray-600">
                   ← Back
                 </button>
               )}
             </div>
 
-            {/* Step bar — for first call or when previous was no-answer */}
-            {(callCount === 0 || lead.status === "NO_ANSWER") && (
+            {/* Step bar — for first call or when previous was no-answer (not in simplified mode) */}
+            {!simplified && (callCount === 0 || lead.status === "NO_ANSWER") && (
               <div className="flex items-center gap-2">
                 <div className={`flex-1 h-1 rounded-full ${step === "feedback" ? "bg-black" : "bg-green-500"}`} />
                 <div className={`flex-1 h-1 rounded-full ${step === "outcome"  ? "bg-black" : "bg-gray-200"}`} />
@@ -371,13 +380,32 @@ export default function CallLogButton({
             {/* ── STEP 2: Outcome ── */}
             {step === "outcome" && (
               <>
+                {/* No Answer quick button for simplified mode */}
+                {simplified && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={saveNoAnswer}
+                      disabled={pending}
+                      className="w-full border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-40"
+                    >
+                      📵 Call Not Picked — Save & Done
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-px bg-gray-100" />
+                      <span className="text-xs text-gray-300">ya call hui to</span>
+                      <div className="flex-1 h-px bg-gray-100" />
+                    </div>
+                  </>
+                )}
+
                 {/* Outcome buttons */}
                 <div>
                   <p className="text-xs font-semibold text-gray-700 mb-2">
-                    Call ka outcome kya raha? <span className="text-red-500">*</span>
+                    {simplified ? "Order mila?" : "Call ka outcome kya raha?"} <span className="text-red-500">*</span>
                   </p>
                   <div className="grid grid-cols-2 gap-2">
-                    {outcomeOptions.map((o) => (
+                    {(simplified ? RETAIL_OUTCOMES : outcomeOptions).map((o) => (
                       <button
                         key={o.value}
                         type="button"
@@ -394,8 +422,8 @@ export default function CallLogButton({
                   </div>
                 </div>
 
-                {/* Interested reasons — always show so follow-up context is clear */}
-                {isInterested && (
+                {/* Interested reasons — hide in simplified mode */}
+                {!simplified && isInterested && (
                   <div className="bg-violet-50 border border-violet-100 rounded-xl p-3 space-y-2">
                     <p className="text-xs font-semibold text-violet-700">
                       Abhi order kyun nahi? <span className="text-red-500">*</span>
@@ -430,8 +458,8 @@ export default function CallLogButton({
                   </div>
                 )}
 
-                {/* Follow-up date — mandatory when Interested */}
-                {isInterested && (
+                {/* Follow-up date — not needed in simplified mode */}
+                {!simplified && isInterested && (
                   <div>
                     <label className="text-xs font-semibold text-gray-700 block mb-1">
                       Follow-up Date <span className="text-gray-400 font-normal">(optional)</span>
@@ -446,8 +474,8 @@ export default function CallLogButton({
                   </div>
                 )}
 
-                {/* Not Interested reasons — hide if lead was already NOT_INTERESTED (reason known) */}
-                {showReasons && isNotInterested && !isNotInterestedLead && (
+                {/* Not Interested reasons — hide in simplified mode or if already NOT_INTERESTED */}
+                {!simplified && showReasons && isNotInterested && !isNotInterestedLead && (
                   <div className="bg-red-50 border border-red-100 rounded-xl p-3 space-y-2">
                     <p className="text-xs font-semibold text-red-700">
                       Not interested ki wajah? <span className="text-red-500">*</span>
@@ -482,22 +510,20 @@ export default function CallLogButton({
                   </div>
                 )}
 
-                {/* Outcome note */}
-                {(reasonsHidden || (showReasons && !isOther && !isInterestedOther)) && (
+                {/* Outcome note — always optional in simplified mode */}
+                {(simplified || reasonsHidden || (showReasons && !isOther && !isInterestedOther)) && (
                   <div>
                     <label className="text-xs font-medium text-gray-600 block mb-1">
-                      Note <span className="text-red-500">*</span>
+                      Note{!simplified && <span className="text-red-500"> *</span>}{simplified && <span className="text-gray-400"> (optional)</span>}
                     </label>
                     <textarea
                       value={outcomeNote}
                       onChange={(e) => setOutcomeNote(e.target.value)}
                       rows={2}
-                      placeholder="Koi aur baat ho to likhein..."
-                      className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none ${
-                        !outcomeNote.trim() ? "border-gray-300 focus:ring-gray-400" : "border-gray-200 focus:ring-black"
-                      }`}
+                      placeholder="Koi baat ho to likhein..."
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
                     />
-                    {!outcomeNote.trim() && <p className="text-xs text-gray-400 mt-1">Note likhna zaroori hai</p>}
+                    {!simplified && !outcomeNote.trim() && <p className="text-xs text-gray-400 mt-1">Note likhna zaroori hai</p>}
                   </div>
                 )}
 
