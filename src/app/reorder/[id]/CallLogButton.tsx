@@ -86,11 +86,11 @@ export default function CallLogButton({
   const isNegative    = feedback === "NEGATIVE";
   const showReasons   = !isNegative; // negative feedback = reason already in feedback note
   const reasonsHidden = isNotInterestedLead && isNotInterested; // already-NI lead marked NI again
-  const noteRequired  = (showReasons && !isOther && !isInterestedOther) || reasonsHidden;
+  const noteRequired  = (showReasons && !isOther && !isInterestedOther && !isInterested) || reasonsHidden;
   const canSave =
     !!status &&
     (!showReasons || reasonsHidden || !isNotInterested  || (!!reason && (!isOther           || otherText.trim().length > 0))) &&
-    (!showReasons || !isInterested     || (!!interestedReason && (!isInterestedOther || interestedOtherText.trim().length > 0))) &&
+    (!isInterested || (!!interestedReason && (!isInterestedOther || interestedOtherText.trim().length > 0))) &&
     (!noteRequired || outcomeNote.trim().length > 0);
 
   function openModal() {
@@ -286,8 +286,8 @@ export default function CallLogButton({
                   </div>
                 </div>
 
-                {/* Interested reasons */}
-                {showReasons && isInterested && (
+                {/* Interested reasons — always show so follow-up context is clear */}
+                {isInterested && (
                   <div className="bg-violet-50 border border-violet-100 rounded-xl p-3 space-y-2">
                     <p className="text-xs font-semibold text-violet-700">
                       Abhi order kyun nahi? <span className="text-red-500">*</span>
