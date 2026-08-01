@@ -83,7 +83,7 @@ export default function CallLogButton({
     (!noteRequired     || outcomeNote.trim().length > 0);
 
   function openModal() {
-    setStep("feedback");
+    setStep(callCount === 0 ? "feedback" : "outcome");
     setFeedback("");
     setFeedbackNote("");
     setStatus("");
@@ -124,8 +124,10 @@ export default function CallLogButton({
       finalOutcomeNote = effectiveInterestedReason + (outcomeNote.trim() ? ` — ${outcomeNote.trim()}` : "");
     }
 
-    // Prepend feedback from step 1
-    const fullNote = `[${feedback === "POSITIVE" ? "👍 Positive" : "👎 Negative"}: ${feedbackNote.trim()}] ${finalOutcomeNote}`.trim();
+    // Prepend feedback only if it was collected (first call)
+    const fullNote = feedback
+      ? `[${feedback === "POSITIVE" ? "👍 Positive" : "👎 Negative"}: ${feedbackNote.trim()}] ${finalOutcomeNote}`.trim()
+      : finalOutcomeNote;
 
     startTransition(async () => {
       await logReorderCall(lead.id, status, fullNote);
@@ -156,18 +158,20 @@ export default function CallLogButton({
                 <h3 className="text-sm font-semibold text-gray-800">{lead.customerName}</h3>
                 <p className="text-xs text-gray-400 font-mono mt-0.5">{lead.phone}</p>
               </div>
-              {step === "outcome" && (
+              {step === "outcome" && callCount === 0 && (
                 <button type="button" onClick={() => setStep("feedback")} className="text-xs text-gray-400 hover:text-gray-600">
                   ← Back
                 </button>
               )}
             </div>
 
-            {/* Step bar */}
-            <div className="flex items-center gap-2">
-              <div className={`flex-1 h-1 rounded-full ${step === "feedback" ? "bg-black" : "bg-green-500"}`} />
-              <div className={`flex-1 h-1 rounded-full ${step === "outcome"  ? "bg-black" : "bg-gray-200"}`} />
-            </div>
+            {/* Step bar — only for first call */}
+            {callCount === 0 && (
+              <div className="flex items-center gap-2">
+                <div className={`flex-1 h-1 rounded-full ${step === "feedback" ? "bg-black" : "bg-green-500"}`} />
+                <div className={`flex-1 h-1 rounded-full ${step === "outcome"  ? "bg-black" : "bg-gray-200"}`} />
+              </div>
+            )}
 
             {/* ── STEP 1: Feedback ── */}
             {step === "feedback" && (
