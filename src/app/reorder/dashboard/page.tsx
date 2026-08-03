@@ -175,6 +175,29 @@ export default async function ReorderDashboardPage({
             </div>
           </div>
 
+          {/* Per-employee call count card */}
+          {empRows.length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
+              <h2 className="text-sm font-semibold text-gray-700 mb-3">Calls Per Employee</h2>
+              <div className="space-y-2">
+                {empRows.map((e) => {
+                  const pct = Math.round((e.total / total) * 100);
+                  return (
+                    <div key={e.id}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-700">{e.label}</span>
+                        <span className="text-sm font-bold text-gray-900 tabular-nums">{e.total} <span className="text-xs text-gray-400 font-normal">calls</span></span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-zinc-800 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Second call timing */}
           {repeatCalls.length > 0 && (
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
