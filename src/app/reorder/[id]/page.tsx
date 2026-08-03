@@ -79,6 +79,7 @@ export default async function ReorderCampaignPage({
   const noAnswer = campaign.leads.filter((l) => l.status === "NO_ANSWER").length;
   const notInterested = campaign.leads.filter((l) => l.status === "NOT_INTERESTED").length;
   const callback = campaign.leads.filter((l) => l.status === "CALLBACK").length;
+  const followupNeeded = noAnswer + callback;
 
   // Today's calls per employee (non-admin only)
   const todayEmpMap = new Map<number, { name: string; total: number; interested: number; orderReceived: number; notInterested: number; noAnswer: number }>();
@@ -205,7 +206,47 @@ export default async function ReorderCampaignPage({
         </div>
       )}
 
-      {/* Filters */}
+      {/* Quick-filter chips */}
+      <div className="flex flex-wrap gap-2">
+        {[
+          { label: "All", value: "", count: total },
+          { label: "Pending", value: "PENDING", count: pending },
+          { label: "Follow-up Needed", value: "__followup__", count: followupNeeded, highlight: true },
+          { label: "Interested", value: "ORDER_PLACED", count: interested },
+          { label: "Orders", value: "ORDER_RECEIVED", count: ordered },
+          { label: "Not Interested", value: "NOT_INTERESTED", count: notInterested },
+        ].map((chip) => {
+          const isActive = chip.value === "__followup__"
+            ? status === "NO_ANSWER" || status === "CALLBACK"
+            : (status ?? "") === chip.value;
+          const href = chip.value === "__followup__"
+            ? `?status=NO_ANSWER${q ? `&q=${encodeURIComponent(q)}` : ""}`
+            : `?${chip.value ? `status=${chip.value}` : ""}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
+          return (
+            <Link
+              key={chip.label}
+              href={href}
+              className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                isActive
+                  ? chip.highlight
+                    ? "bg-amber-500 border-amber-500 text-white"
+                    : "bg-black border-black text-white"
+                  : chip.highlight && chip.count > 0
+                    ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100"
+                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {chip.highlight && chip.count > 0 && !isActive && <span>📵</span>}
+              {chip.label}
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${isActive ? "bg-white/20" : "bg-gray-100 text-gray-500"}`}>
+                {chip.count}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Search + status filter */}
       <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
         <input
           type="text"
@@ -274,9 +315,15 @@ export default async function ReorderCampaignPage({
                     <td className="py-2.5 px-4 text-gray-400 text-sm hidden md:table-cell">{l.city || "—"}</td>
                     <td className="py-2.5 px-4 text-gray-300 text-xs truncate max-w-[140px] hidden lg:table-cell">{l.prevItem || "—"}</td>
                     <td className="py-2.5 px-4">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${st.color}`}>
                         {st.label}
                       </span>
+                      {l._count.callLogs > 1 && (
+                        <span className="text-[10px] font-semibold text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5">
+                          {l._count.callLogs}× tried
+                        </span>
+                      )}
                       {l.followUpDate && l.status === "ORDER_PLACED" && (() => {
                         const due = new Date(l.followUpDate);
                         const today = new Date(); today.setHours(0,0,0,0);
@@ -289,6 +336,7 @@ export default async function ReorderCampaignPage({
                           </p>
                         );
                       })()}
+                      </div>
                     </td>
                     <td className="py-2.5 px-4 hidden sm:table-cell"><NoteCell note={l.callNote ?? ""} /></td>
                     <td className="py-2.5 px-4 sticky right-0 bg-inherit">
