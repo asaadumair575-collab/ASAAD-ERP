@@ -49,16 +49,6 @@ export default async function ReorderDashboardPage({
   const visibleHourCounts = hourCounts.slice(HOUR_START, HOUR_END);
   const maxHour = Math.max(...visibleHourCounts, 1);
 
-  // Second+ calls: group by leadId, find calls where it's not the first log for that lead on any day
-  // We detect "repeat calls" by looking at leadId — if a lead appears more than once in logs today, 2nd+ are repeat
-  const leadCallOrder = new Map<number, number>(); // leadId -> call index today
-  const repeatCalls: typeof logs = [];
-  for (const l of logs) {
-    const idx = (leadCallOrder.get(l.leadId) ?? 0) + 1;
-    leadCallOrder.set(l.leadId, idx);
-    if (idx >= 2) repeatCalls.push(l);
-  }
-
   // Per-employee breakdown
   // Track which leads each employee called (for "new calls" = unique leads)
   const empLeadSets = new Map<number, Set<number>>();
@@ -222,41 +212,6 @@ export default async function ReorderDashboardPage({
             </div>
           )}
 
-          {/* Second call timing */}
-          {repeatCalls.length > 0 && (
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-              <h2 className="text-sm font-semibold text-gray-700 mb-1">2nd+ Calls Today</h2>
-              <p className="text-xs text-gray-400 mb-3">Woh calls jinka ek se zyada attempt hua is din</p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                      <th className="pb-2 text-left">Customer</th>
-                      <th className="pb-2 text-left hidden sm:table-cell">Phone</th>
-                      <th className="pb-2 text-left">Status</th>
-                      <th className="pb-2 text-left">Time</th>
-                      <th className="pb-2 text-left hidden md:table-cell">By</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {repeatCalls.map((l) => (
-                      <tr key={l.id} className="hover:bg-gray-50/60">
-                        <td className="py-2 pr-4 font-medium text-gray-800">{l.lead.customerName}</td>
-                        <td className="py-2 pr-4 text-gray-400 font-mono text-xs hidden sm:table-cell">{l.lead.phone}</td>
-                        <td className="py-2 pr-4">
-                          <StatusBadge status={l.status} />
-                        </td>
-                        <td className="py-2 pr-4 text-xs text-gray-500">
-                          {new Date(l.calledAt).toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit" })}
-                        </td>
-                        <td className="py-2 pr-4 text-xs text-gray-400 hidden md:table-cell">{userLabel(l.calledBy)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
 
           {/* Per-employee breakdown */}
           {empRows.length > 0 && (
