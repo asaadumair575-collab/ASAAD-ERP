@@ -33,7 +33,10 @@ export default async function PerformancePage({
   const fromDate = from ? new Date(`${from}T00:00:00`) : undefined;
   const toDate = to ? new Date(`${to}T23:59:59.999`) : undefined;
 
-  // Use the target that was in effect on the selected date (or latest if no filter)
+  // Current target — always the latest, used for "Today's Target" card
+  const currentTarget = await prisma.performanceTarget.findFirst({ orderBy: { effectiveFrom: "desc" } });
+
+  // Historical target — effective on the selected date, used for filtered data rows
   const targetLookupDate = fromDate ?? toDate ?? new Date();
   const target = await prisma.performanceTarget.findFirst({
     where: { effectiveFrom: { lte: targetLookupDate } },
@@ -144,17 +147,17 @@ export default async function PerformancePage({
         )}
       </div>
 
-      {/* Daily target card */}
-      {target && (
+      {/* Daily target card — always uses current target */}
+      {currentTarget && (
         <div className={`bg-white border-2 rounded-2xl shadow-sm p-5 ${
-          todayCallsCount >= target.calls && todayOrdersCount >= target.newOrders
+          todayCallsCount >= currentTarget.calls && todayOrdersCount >= currentTarget.newOrders
             ? "border-green-300"
             : (todayCallsCount > 0 || todayOrdersCount > 0) ? "border-amber-300" : "border-gray-200"
         }`}>
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm font-semibold text-gray-800">Today&apos;s Target</p>
             {(todayCallsCount > 0 || todayOrdersCount > 0)
-              ? (todayCallsCount >= target.calls && todayOrdersCount >= target.newOrders
+              ? (todayCallsCount >= currentTarget.calls && todayOrdersCount >= currentTarget.newOrders
                   ? <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">✅ Target Achieved!</span>
                   : <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">⏳ In Progress</span>)
               : <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full">No activity today</span>
@@ -165,40 +168,40 @@ export default async function PerformancePage({
               <div className="flex items-end justify-between mb-1.5">
                 <p className="text-xs text-gray-500">Calls</p>
                 <p className="text-xs font-medium text-gray-600">
-                  <span className={`text-lg font-bold ${todayCallsCount >= target.calls ? "text-green-600" : "text-gray-900"}`}>
+                  <span className={`text-lg font-bold ${todayCallsCount >= currentTarget.calls ? "text-green-600" : "text-gray-900"}`}>
                     {todayCallsCount}
                   </span>
-                  <span className="text-gray-400"> / {target.calls}</span>
+                  <span className="text-gray-400"> / {currentTarget.calls}</span>
                 </p>
               </div>
               <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all ${todayCallsCount >= target.calls ? "bg-green-500" : "bg-blue-500"}`}
-                  style={{ width: `${target.calls ? Math.min(100, Math.round((todayCallsCount / target.calls) * 100)) : 0}%` }}
+                  className={`h-full rounded-full transition-all ${todayCallsCount >= currentTarget.calls ? "bg-green-500" : "bg-blue-500"}`}
+                  style={{ width: `${currentTarget.calls ? Math.min(100, Math.round((todayCallsCount / currentTarget.calls) * 100)) : 0}%` }}
                 />
               </div>
-              {todayCallsCount < target.calls && (
-                <p className="text-xs text-amber-600 mt-1">{target.calls - todayCallsCount} more calls remaining</p>
+              {todayCallsCount < currentTarget.calls && (
+                <p className="text-xs text-amber-600 mt-1">{currentTarget.calls - todayCallsCount} more calls remaining</p>
               )}
             </div>
             <div>
               <div className="flex items-end justify-between mb-1.5">
                 <p className="text-xs text-gray-500">New Orders</p>
                 <p className="text-xs font-medium text-gray-600">
-                  <span className={`text-lg font-bold ${todayOrdersCount >= target.newOrders ? "text-green-600" : "text-gray-900"}`}>
+                  <span className={`text-lg font-bold ${todayOrdersCount >= currentTarget.newOrders ? "text-green-600" : "text-gray-900"}`}>
                     {todayOrdersCount}
                   </span>
-                  <span className="text-gray-400"> / {target.newOrders}</span>
+                  <span className="text-gray-400"> / {currentTarget.newOrders}</span>
                 </p>
               </div>
               <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all ${todayOrdersCount >= target.newOrders ? "bg-green-500" : "bg-purple-500"}`}
-                  style={{ width: `${target.newOrders ? Math.min(100, Math.round((todayOrdersCount / target.newOrders) * 100)) : 0}%` }}
+                  className={`h-full rounded-full transition-all ${todayOrdersCount >= currentTarget.newOrders ? "bg-green-500" : "bg-purple-500"}`}
+                  style={{ width: `${currentTarget.newOrders ? Math.min(100, Math.round((todayOrdersCount / currentTarget.newOrders) * 100)) : 0}%` }}
                 />
               </div>
-              {todayOrdersCount < target.newOrders && (
-                <p className="text-xs text-amber-600 mt-1">{target.newOrders - todayOrdersCount} more orders remaining</p>
+              {todayOrdersCount < currentTarget.newOrders && (
+                <p className="text-xs text-amber-600 mt-1">{currentTarget.newOrders - todayOrdersCount} more orders remaining</p>
               )}
             </div>
           </div>
