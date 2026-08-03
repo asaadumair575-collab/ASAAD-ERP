@@ -92,7 +92,7 @@ export default async function ReorderDashboardPage({
             <Link href="/reorder" className="text-sm text-gray-400 hover:text-gray-600">← Campaigns</Link>
           </div>
           <h1 className="text-xl font-bold text-gray-900">Reorder Dashboard</h1>
-          <p className="text-xs text-gray-400 mt-0.5">Din ki calls ka overview</p>
+          <p className="text-xs text-gray-400 mt-0.5">Call log & verification</p>
         </div>
 
         {/* Date picker */}
@@ -247,6 +247,53 @@ export default async function ReorderDashboardPage({
               </div>
             </div>
           )}
+
+          {/* Full call log — for admin verification */}
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">
+              Call Log
+              <span className="ml-2 text-xs font-normal text-gray-400">verify karne ke liye</span>
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                    <th className="pb-2 text-left">Time</th>
+                    <th className="pb-2 text-left">Employee</th>
+                    <th className="pb-2 text-left">Customer</th>
+                    <th className="pb-2 text-left">Phone</th>
+                    <th className="pb-2 text-left">Status</th>
+                    <th className="pb-2 text-left">Note</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {logs.map((l) => {
+                    const d = new Date(l.calledAt);
+                    const timeStr = d.toLocaleTimeString("en-PK", { timeZone: "Asia/Karachi", hour: "2-digit", minute: "2-digit", hour12: true });
+                    return (
+                      <tr key={l.id} className="hover:bg-gray-50/60">
+                        <td className="py-2 pr-4 text-xs text-gray-400 whitespace-nowrap tabular-nums">{timeStr}</td>
+                        <td className="py-2 pr-4 font-medium text-gray-800 whitespace-nowrap">{userLabel(l.calledBy)}</td>
+                        <td className="py-2 pr-4 text-gray-700 whitespace-nowrap">{l.lead.customerName || "—"}</td>
+                        <td className="py-2 pr-4 whitespace-nowrap">
+                          <a
+                            href={`tel:${l.lead.phone}`}
+                            className="font-mono text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                          >
+                            {l.lead.phone}
+                          </a>
+                        </td>
+                        <td className="py-2 pr-4 whitespace-nowrap">
+                          <StatusBadge status={l.status} />
+                        </td>
+                        <td className="py-2 text-xs text-gray-400 max-w-[200px] truncate">{l.callNote || "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </>
       )}
     </div>
