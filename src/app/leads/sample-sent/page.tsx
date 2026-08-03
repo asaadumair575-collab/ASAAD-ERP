@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { toLocalDateStr, todayPK } from "@/lib/tz";
 import { convertLeadToClient, deleteLead, createLeadSample, updateSampleResponse } from "@/lib/actions";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import ConfirmClientModal from "@/components/ConfirmClientModal";
@@ -28,13 +29,14 @@ export default async function SampleSentLeadsPage({
       take: PAGE_SIZE,
     }),
     prisma.lead.findMany({
+      where: { status: { in: ["NEW", "CONTACTED"] } },
       select: { id: true, shopNumber: true, name: true, city: true },
       orderBy: { shopNumber: "asc" },
     }),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayPK();
 
   return (
     <div className="space-y-6">
@@ -119,7 +121,7 @@ export default async function SampleSentLeadsPage({
                       {lastSample?.description ?? <span className="text-gray-300">—</span>}
                     </td>
                     <td className="py-3 px-5 text-gray-500">
-                      {lastSample ? lastSample.dateSent.toISOString().slice(0, 10) : "—"}
+                      {lastSample ? toLocalDateStr(new Date(lastSample.dateSent)) : "—"}
                     </td>
                     <td className="py-3 px-5 max-w-[240px]">
                       {lastSample ? (

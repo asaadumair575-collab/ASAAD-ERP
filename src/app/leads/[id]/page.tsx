@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { markLeadContacted, deleteLead, convertLeadToClient, cancelLead } from "@/lib/actions";
+import { toLocalDateStr } from "@/lib/tz";
 import SubmitButton from "@/components/SubmitButton";
 import ConfirmClientModal from "@/components/ConfirmClientModal";
 import DeleteButton from "@/components/DeleteButton";
@@ -30,6 +31,7 @@ export default async function LeadDetailPage({
 }) {
   const { id } = await params;
   const leadId = parseInt(id, 10);
+  if (isNaN(leadId)) notFound();
 
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
@@ -82,12 +84,14 @@ export default async function LeadDetailPage({
         {lead.status === "NEW" && (
           <ContactReasonModal action={contactBound} />
         )}
-        <Link
-          href={`/samples/new?leadId=${lead.id}`}
-          className="border border-gray-200 text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          Send Sample
-        </Link>
+        {(lead.status === "NEW" || lead.status === "CONTACTED") && (
+          <Link
+            href={`/samples/new?leadId=${lead.id}`}
+            className="border border-gray-200 text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Send Sample
+          </Link>
+        )}
         {lead.status === "CONTACTED" && (
           <form action={cancelBound}>
             <SubmitButton
@@ -98,12 +102,14 @@ export default async function LeadDetailPage({
             </SubmitButton>
           </form>
         )}
-        <ConfirmClientModal
-          confirmAction={convertBound}
-          defaultName={lead.name}
-          triggerLabel="Confirm as Customer"
-          triggerClassName="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
-        />
+        {(lead.status === "CONTACTED" || lead.status === "SAMPLE_SENT") && (
+          <ConfirmClientModal
+            confirmAction={convertBound}
+            defaultName={lead.name}
+            triggerLabel="Confirm as Customer"
+            triggerClassName="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
+          />
+        )}
         <DeleteButton action={deleteBound} message="This lead will be permanently deleted." />
       </div>
 
@@ -123,7 +129,7 @@ export default async function LeadDetailPage({
                   {s.description}
                 </span>
                 <span className="text-gray-400">
-                  {s.dateSent.toISOString().slice(0, 10)}
+                  {toLocalDateStr(new Date(s.dateSent))}
                 </span>
               </Link>
             ))}

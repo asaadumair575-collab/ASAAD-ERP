@@ -964,10 +964,17 @@ export async function createLead(formData: FormData) {
     throw new Error("Shop number, contact number and city are required");
   }
 
-  const existingLeads = await prisma.lead.findMany({
-    select: { shopNumber: true, name: true, phone: true },
+  const duplicate = await prisma.lead.findFirst({
+    where: {
+      shopNumber: { equals: shopNumber, mode: "insensitive" },
+      OR: [
+        { phone: phone ?? undefined },
+        { name: name ? { equals: name, mode: "insensitive" } : undefined },
+      ],
+    },
+    select: { id: true },
   });
-  if (isDuplicateLead(existingLeads, shopNumber, name, phone)) {
+  if (duplicate) {
     redirect(
       `/leads/new?error=${encodeURIComponent(
         `Duplicate shop: "${shopNumber}" already exists with this name/number.`
@@ -1117,7 +1124,9 @@ export async function setLeadStatus(id: number, status: string) {
 
 export async function markLeadContacted(id: number, reason?: string) {
   const lead = await prisma.lead.findUnique({ where: { id } });
-  const existing = lead?.notes?.trim();
+  if (!lead || lead.status !== "NEW") return;
+
+  const existing = lead.notes?.trim();
   const notes = reason
     ? existing
       ? `${existing}\nContacted: ${reason}`
