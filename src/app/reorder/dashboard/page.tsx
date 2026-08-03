@@ -195,16 +195,18 @@ export default async function ReorderDashboardPage({
                           <div className="h-full bg-blue-500 rounded-full" style={{ width: `${newPct}%` }} />
                         </div>
                       </div>
-                      {/* Total calls bar */}
-                      <div>
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="text-gray-400">Total Calls (incl. repeats)</span>
-                          <span className="font-bold text-gray-700 tabular-nums">{e.total}</span>
+                      {/* Repeat calls bar */}
+                      {e.total - e.newCalls > 0 && (
+                        <div>
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="text-gray-400">Repeat Calls</span>
+                            <span className="font-bold text-orange-500 tabular-nums">{e.total - e.newCalls}</span>
+                          </div>
+                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-orange-400 rounded-full" style={{ width: `${totalPct}%` }} />
+                          </div>
                         </div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-zinc-800 rounded-full" style={{ width: `${totalPct}%` }} />
-                        </div>
-                      </div>
+                      )}
                     </div>
                   );
                 })}
