@@ -323,11 +323,12 @@ export default async function ReorderDashboardPage({
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; color: string }> = {
-    NO_ANSWER:      { label: "No Answer",  color: "bg-yellow-100 text-yellow-700" },
-    ORDER_PLACED:   { label: "Interested", color: "bg-violet-100 text-violet-700" },
-    ORDER_RECEIVED: { label: "Ordered",    color: "bg-green-100 text-green-700" },
-    NOT_INTERESTED: { label: "Nahi Karna", color: "bg-red-100 text-red-600" },
-    CALLBACK:       { label: "Follow-up",  color: "bg-blue-100 text-blue-700" },
+    NO_ANSWER:        { label: "No Answer",        color: "bg-yellow-100 text-yellow-700" },
+    ORDER_PLACED:     { label: "Interested",       color: "bg-violet-100 text-violet-700" },
+    INTERESTED_LATER: { label: "Interested Later", color: "bg-orange-100 text-orange-600" },
+    ORDER_RECEIVED:   { label: "Ordered",          color: "bg-green-100 text-green-700" },
+    NOT_INTERESTED:   { label: "Not Interested",   color: "bg-red-100 text-red-600" },
+    CALLBACK:         { label: "Follow-up",        color: "bg-blue-100 text-blue-700" },
   };
   const s = map[status] ?? { label: status, color: "bg-gray-100 text-gray-600" };
   return (
