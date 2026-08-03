@@ -73,8 +73,12 @@ export default async function ReorderDashboardPage({
   const empRows = Array.from(empMap.values()).sort((a, b) => b.total - a.total);
 
   const hourLabels = Array.from({ length: 24 }, (_, i) => {
-    const h = i % 12 || 12;
-    return `${h}${i < 12 ? "am" : "pm"}`;
+    const fmt = (h: number) => {
+      const h12 = h % 12 || 12;
+      const suffix = h < 12 ? "am" : "pm";
+      return `${h12}${suffix}`;
+    };
+    return `${fmt(i)}-${fmt(i + 1)}`;
   });
 
   return (
@@ -135,13 +139,13 @@ export default async function ReorderDashboardPage({
             <h2 className="text-sm font-semibold text-gray-700 mb-4">Calls Per Hour</h2>
             <div className="flex items-end gap-1 h-28">
               {hourCounts.map((count, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
+                <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative" title={`${hourLabels[i]}: ${count} call${count !== 1 ? "s" : ""}`}>
                   <div
                     className="w-full bg-zinc-900 rounded-t transition-all"
                     style={{ height: `${(count / maxHour) * 100}%`, minHeight: count > 0 ? "4px" : "0" }}
                   />
                   {count > 0 && (
-                    <span className="absolute -top-5 text-[10px] text-gray-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="absolute -top-5 text-[10px] text-gray-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                       {count}
                     </span>
                   )}
@@ -150,8 +154,8 @@ export default async function ReorderDashboardPage({
             </div>
             <div className="flex items-center gap-1 mt-1">
               {hourLabels.map((label, i) => (
-                <div key={i} className="flex-1 text-center text-[9px] text-gray-300 overflow-hidden">
-                  {i % 3 === 0 ? label : ""}
+                <div key={i} className="flex-1 text-center text-[9px] text-gray-300 overflow-hidden leading-tight">
+                  {i % 2 === 0 ? label.replace("-", "–") : ""}
                 </div>
               ))}
             </div>
