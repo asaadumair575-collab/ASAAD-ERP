@@ -109,14 +109,16 @@ export default function Sidebar({
   const isOnLeads = pathname.startsWith("/leads");
   const isOnEcommerce = pathname.startsWith("/ecommerce");
   const isOnEmployee = pathname.startsWith("/emp-commission") || pathname.startsWith("/performance");
+  const isOnReorder = pathname.startsWith("/reorder");
 
-  type Section = "wholesale" | "retail" | "leads" | "ecommerce" | "employee" | null;
+  type Section = "wholesale" | "retail" | "leads" | "ecommerce" | "employee" | "reorder" | null;
   function sectionForPath(): Section {
     if (isOnWholesale) return "wholesale";
     if (isOnRetail) return "retail";
     if (isOnLeads) return "leads";
     if (isOnEcommerce) return "ecommerce";
     if (isOnEmployee) return "employee";
+    if (isOnReorder) return "reorder";
     return null;
   }
   const [openSection, setOpenSection] = useState<Section>(sectionForPath());
@@ -230,7 +232,35 @@ export default function Sidebar({
                 {canViewSub(permissions, "retail_dispatch", isAdmin) && (
                   <NavLink href="/retail/dispatch" active={pathname.startsWith("/retail/dispatch")} compact onClick={closeMobile}>Dispatch</NavLink>
                 )}
-                <NavLink href="/reorder" active={pathname.startsWith("/reorder")} compact onClick={closeMobile}>Reorder Calls</NavLink>
+              </div>
+            )}
+          </>
+        )}
+
+        {canView(permissions, "retail", isAdmin) && (
+          <>
+            <button
+              type="button"
+              onClick={() => toggleSection("reorder")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                isOnReorder ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              }`}
+            >
+              <span className="flex items-center gap-2.5">
+                <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 shrink-0">
+                  <path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <circle cx="16" cy="5.5" r="1.5" fill="currentColor" />
+                  <circle cx="16" cy="10" r="1.5" fill="currentColor" />
+                </svg>
+                Reorder Calls
+              </span>
+              <span className={`transition-transform text-gray-400 ${openSection === "reorder" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+            </button>
+            {openSection === "reorder" && (
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+                <NavLink href="/reorder" active={pathname === "/reorder"} compact onClick={closeMobile}>Campaigns</NavLink>
+                <NavLink href="/reorder/retail-followup" active={pathname.startsWith("/reorder/retail-followup")} compact onClick={closeMobile}>Retail Follow-up</NavLink>
+                <NavLink href="/reorder/dashboard" active={pathname.startsWith("/reorder/dashboard")} compact onClick={closeMobile}>Dashboard</NavLink>
               </div>
             )}
           </>
