@@ -43,7 +43,11 @@ export default async function ReorderDashboardPage({
   for (const l of logs) {
     hourCounts[toLocalHour(new Date(l.calledAt))]++;
   }
-  const maxHour = Math.max(...hourCounts, 1);
+  // Only show working hours (9am–6pm)
+  const HOUR_START = 9;
+  const HOUR_END   = 18; // exclusive, so last bar is 5pm–6pm
+  const visibleHourCounts = hourCounts.slice(HOUR_START, HOUR_END);
+  const maxHour = Math.max(...visibleHourCounts, 1);
 
   // Second+ calls: group by leadId, find calls where it's not the first log for that lead on any day
   // We detect "repeat calls" by looking at leadId — if a lead appears more than once in logs today, 2nd+ are repeat
@@ -72,14 +76,13 @@ export default async function ReorderDashboardPage({
   }
   const empRows = Array.from(empMap.values()).sort((a, b) => b.total - a.total);
 
-  const hourLabels = Array.from({ length: 24 }, (_, i) => {
-    const fmt = (h: number) => {
-      const h12 = h % 12 || 12;
-      const suffix = h < 12 ? "am" : "pm";
-      return `${h12}${suffix}`;
-    };
-    return `${fmt(i)}-${fmt(i + 1)}`;
-  });
+  const fmt = (h: number) => {
+    const h12 = h % 12 || 12;
+    const suffix = h < 12 ? "am" : "pm";
+    return `${h12}${suffix}`;
+  };
+  const hourLabels = Array.from({ length: 24 }, (_, i) => `${fmt(i)}–${fmt(i + 1)}`);
+  const visibleHourLabels = hourLabels.slice(HOUR_START, HOUR_END);
 
   return (
     <div className="space-y-6">
@@ -138,12 +141,12 @@ export default async function ReorderDashboardPage({
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
             <h2 className="text-sm font-semibold text-gray-700 mb-4">Calls Per Hour</h2>
             <div className="flex items-end gap-[3px] h-32">
-              {hourCounts.map((count, i) => (
+              {visibleHourCounts.map((count, i) => (
                 <div
                   key={i}
                   className="flex-1 relative group"
                   style={{ height: "100%", display: "flex", alignItems: "flex-end" }}
-                  title={`${hourLabels[i]}: ${count} call${count !== 1 ? "s" : ""}`}
+                  title={`${visibleHourLabels[i]}: ${count} call${count !== 1 ? "s" : ""}`}
                 >
                   <div
                     className={`w-full rounded-t transition-all ${count > 0 ? "bg-zinc-800 hover:bg-zinc-600" : "bg-gray-100"}`}
@@ -159,13 +162,13 @@ export default async function ReorderDashboardPage({
             </div>
             {/* Rotated labels */}
             <div className="flex gap-[3px] mt-1 overflow-hidden" style={{ height: "48px" }}>
-              {hourLabels.map((label, i) => (
+              {visibleHourLabels.map((label, i) => (
                 <div key={i} className="flex-1 flex items-start justify-center overflow-hidden">
                   <span
                     className="text-[10px] text-gray-400 whitespace-nowrap font-medium"
                     style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1 }}
                   >
-                    {label.replace("-", "–")}
+                    {label}
                   </span>
                 </div>
               ))}
