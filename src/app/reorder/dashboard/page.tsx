@@ -137,25 +137,36 @@ export default async function ReorderDashboardPage({
           {/* Hourly bar chart */}
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
             <h2 className="text-sm font-semibold text-gray-700 mb-4">Calls Per Hour</h2>
-            <div className="flex items-end gap-1 h-28">
+            <div className="flex items-end gap-[3px] h-32">
               {hourCounts.map((count, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative" title={`${hourLabels[i]}: ${count} call${count !== 1 ? "s" : ""}`}>
+                <div
+                  key={i}
+                  className="flex-1 relative group"
+                  style={{ height: "100%", display: "flex", alignItems: "flex-end" }}
+                  title={`${hourLabels[i]}: ${count} call${count !== 1 ? "s" : ""}`}
+                >
                   <div
-                    className="w-full bg-zinc-900 rounded-t transition-all"
-                    style={{ height: `${(count / maxHour) * 100}%`, minHeight: count > 0 ? "4px" : "0" }}
+                    className={`w-full rounded-t transition-all ${count > 0 ? "bg-zinc-800 hover:bg-zinc-600" : "bg-gray-100"}`}
+                    style={{ height: count > 0 ? `${Math.max(6, (count / maxHour) * 100)}%` : "4px" }}
                   />
                   {count > 0 && (
-                    <span className="absolute -top-5 text-[10px] text-gray-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[11px] text-gray-600 font-semibold bg-white border border-gray-200 rounded px-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                       {count}
                     </span>
                   )}
                 </div>
               ))}
             </div>
-            <div className="flex items-center gap-1 mt-1">
+            {/* Rotated labels */}
+            <div className="flex gap-[3px] mt-1 overflow-hidden" style={{ height: "48px" }}>
               {hourLabels.map((label, i) => (
-                <div key={i} className="flex-1 text-center text-[9px] text-gray-300 overflow-hidden leading-tight">
-                  {i % 2 === 0 ? label.replace("-", "–") : ""}
+                <div key={i} className="flex-1 flex items-start justify-center overflow-hidden">
+                  <span
+                    className="text-[10px] text-gray-400 whitespace-nowrap font-medium"
+                    style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", lineHeight: 1 }}
+                  >
+                    {label.replace("-", "–")}
+                  </span>
                 </div>
               ))}
             </div>
