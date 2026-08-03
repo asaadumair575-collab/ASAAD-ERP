@@ -33,7 +33,12 @@ export default async function PerformancePage({
   const fromDate = from ? new Date(`${from}T00:00:00`) : undefined;
   const toDate = to ? new Date(`${to}T23:59:59.999`) : undefined;
 
-  const target = await prisma.performanceTarget.findFirst({ orderBy: { effectiveFrom: "desc" } });
+  // Use the target that was in effect on the selected date (or latest if no filter)
+  const targetLookupDate = fromDate ?? toDate ?? new Date();
+  const target = await prisma.performanceTarget.findFirst({
+    where: { effectiveFrom: { lte: targetLookupDate } },
+    orderBy: { effectiveFrom: "desc" },
+  });
   const users = isAdmin ? await prisma.user.findMany({ where: { isAdmin: false }, orderBy: { displayName: "asc" } }) : [];
 
   const pendingDelivery = await prisma.retailOrder.count({
