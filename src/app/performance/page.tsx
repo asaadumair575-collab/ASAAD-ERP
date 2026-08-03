@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import { userLabel } from "@/lib/userLabel";
+import { toLocalDateStr, todayPK, pkDayStart, pkDayEnd } from "@/lib/tz";
 
 function pct(val: number, target: number) {
   if (!target) return 0;
@@ -30,8 +31,8 @@ export default async function PerformancePage({
   const me = await getSessionUser();
   const isAdmin = me?.isAdmin ?? false;
 
-  const fromDate = from ? new Date(`${from}T00:00:00`) : undefined;
-  const toDate = to ? new Date(`${to}T23:59:59.999`) : undefined;
+  const fromDate = from ? pkDayStart(from) : undefined;
+  const toDate   = to   ? pkDayEnd(to)     : undefined;
 
   // Current target — always the latest, used for "Today's Target" card
   const currentTarget = await prisma.performanceTarget.findFirst({ orderBy: { effectiveFrom: "desc" } });
@@ -85,7 +86,7 @@ export default async function PerformancePage({
 
   for (const l of reorderLeads) {
     if (!l.calledAt || !l.calledById || !l.calledBy) continue;
-    const dateStr = l.calledAt.toISOString().slice(0, 10);
+    const dateStr = toLocalDateStr(l.calledAt);
     const uid = l.calledById;
     const key = dayKey(dateStr, uid);
     const existing = dayMap.get(key) ?? { date: dateStr, userId: uid, name: userLabel(l.calledBy), calls: 0, orders: 0 };
@@ -95,7 +96,7 @@ export default async function PerformancePage({
 
   for (const o of retailOrders) {
     if (!o.createdByUserId || !o.createdBy) continue;
-    const dateStr = o.date.toISOString().slice(0, 10);
+    const dateStr = toLocalDateStr(o.date);
     const uid = o.createdByUserId;
     const key = dayKey(dateStr, uid);
     const existing = dayMap.get(key) ?? { date: dateStr, userId: uid, name: userLabel(o.createdBy), calls: 0, orders: 0 };
@@ -110,8 +111,8 @@ export default async function PerformancePage({
   // Count unique days (not rows) for avg calc
   const uniqueDays = new Set(entries.map(e => e.date)).size;
 
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  const todayStr = todayPK();
+  const todayStart = pkDayStart(todayStr);
 
   // Today's stats for the current user
   const myUserId = filterUserId ?? me?.id;

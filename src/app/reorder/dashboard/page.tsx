@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { userLabel } from "@/lib/userLabel";
+import { todayPK, pkDayStart, pkDayEnd, toLocalHour } from "@/lib/tz";
 
 export default async function ReorderDashboardPage({
   searchParams,
@@ -14,11 +15,11 @@ export default async function ReorderDashboardPage({
 
   const { date } = await searchParams;
 
-  const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in local
+  const todayStr = todayPK();
   const selectedDate = date || todayStr;
 
-  const dayStart = new Date(selectedDate + "T00:00:00");
-  const dayEnd   = new Date(selectedDate + "T23:59:59.999");
+  const dayStart = pkDayStart(selectedDate);
+  const dayEnd   = pkDayEnd(selectedDate);
 
   // All call logs for selected date
   const logs = await prisma.reorderCallLog.findMany({
@@ -40,7 +41,7 @@ export default async function ReorderDashboardPage({
   // Hourly distribution (0-23)
   const hourCounts = Array(24).fill(0) as number[];
   for (const l of logs) {
-    hourCounts[new Date(l.calledAt).getHours()]++;
+    hourCounts[toLocalHour(new Date(l.calledAt))]++;
   }
   const maxHour = Math.max(...hourCounts, 1);
 
