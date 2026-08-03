@@ -10,6 +10,13 @@ const OUTCOMES = [
   { value: "NOT_INTERESTED", label: "✗ Not Interested", color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
 ];
 
+const NOT_INTERESTED_REASONS = [
+  "Price Too High",
+  "Already Has Stock",
+  "Not Selling This Product",
+  "Other",
+];
+
 export default function RetailFollowupCallButton({
   phone,
   customerName,
@@ -19,17 +26,38 @@ export default function RetailFollowupCallButton({
   customerName: string;
   lastStatus?: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen]     = useState(false);
   const [status, setStatus] = useState("");
-  const [note, setNote] = useState("");
+  const [orderId, setOrderId] = useState("");
+  const [reason, setReason]   = useState("");
+  const [otherReason, setOtherReason] = useState("");
+  const [note, setNote]     = useState("");
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
   function openModal() {
     setStatus("");
+    setOrderId("");
+    setReason("");
+    setOtherReason("");
     setNote("");
     setOpen(true);
   }
+
+  function handleStatusChange(val: string) {
+    setStatus(val);
+    if (val !== "NOT_INTERESTED") { setReason(""); setOtherReason(""); }
+    if (val !== "ORDER_RECEIVED") setOrderId("");
+  }
+
+  const isOrderReceived   = status === "ORDER_RECEIVED";
+  const isNotInterested   = status === "NOT_INTERESTED";
+  const isOther           = reason === "Other";
+
+  const canSave =
+    !!status &&
+    (!isOrderReceived || orderId.trim().length > 0) &&
+    (!isNotInterested || (!!reason && (!isOther || otherReason.trim().length > 0)));
 
   function saveNoAnswer() {
     startTransition(async () => {
@@ -40,9 +68,16 @@ export default function RetailFollowupCallButton({
   }
 
   function save() {
-    if (!status) return;
+    if (!canSave) return;
+    const effectiveReason = isOther ? `Other: ${otherReason.trim()}` : reason;
+    let finalNote = note.trim();
+    if (isOrderReceived) {
+      finalNote = `Order ID: ${orderId.trim()}` + (finalNote ? ` — ${finalNote}` : "");
+    } else if (isNotInterested && effectiveReason) {
+      finalNote = effectiveReason + (finalNote ? ` — ${finalNote}` : "");
+    }
     startTransition(async () => {
-      await logRetailFollowupCall(phone, status, note);
+      await logRetailFollowupCall(phone, status, finalNote || "");
       setOpen(false);
       router.refresh();
     });
@@ -85,6 +120,7 @@ export default function RetailFollowupCallButton({
               <div className="flex-1 h-px bg-gray-100" />
             </div>
 
+            {/* Outcome buttons */}
             <div>
               <p className="text-xs font-semibold text-gray-700 mb-2">Outcome <span className="text-red-500">*</span></p>
               <div className="grid grid-cols-3 gap-2">
@@ -92,7 +128,7 @@ export default function RetailFollowupCallButton({
                   <button
                     key={o.value}
                     type="button"
-                    onClick={() => setStatus(o.value)}
+                    onClick={() => handleStatusChange(o.value)}
                     className={`border rounded-xl px-2 py-2.5 text-xs font-medium text-center transition-colors ${
                       status === o.value
                         ? o.color + " ring-2 ring-offset-1 ring-current"
@@ -105,6 +141,63 @@ export default function RetailFollowupCallButton({
               </div>
             </div>
 
+            {/* Order ID — required when Ordered */}
+            {isOrderReceived && (
+              <div>
+                <label className="text-xs font-semibold text-gray-700 block mb-1">
+                  Order ID <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={orderId}
+                  onChange={(e) => setOrderId(e.target.value)}
+                  placeholder="e.g. ORD-1234"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                />
+                {!orderId.trim() && (
+                  <p className="text-xs text-red-400 mt-1">Order ID is required</p>
+                )}
+              </div>
+            )}
+
+            {/* Reason — required when Not Interested */}
+            {isNotInterested && (
+              <div className="bg-red-50 border border-red-100 rounded-xl p-3 space-y-2">
+                <p className="text-xs font-semibold text-red-700">
+                  Reason <span className="text-red-500">*</span>
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {NOT_INTERESTED_REASONS.map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setReason(r)}
+                      className={`text-xs px-2.5 py-1.5 rounded-lg border font-medium transition-colors ${
+                        reason === r
+                          ? "bg-red-600 text-white border-red-600"
+                          : "border-red-200 text-red-600 hover:bg-red-100"
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+                {isOther && (
+                  <input
+                    type="text"
+                    autoFocus
+                    value={otherReason}
+                    onChange={(e) => setOtherReason(e.target.value)}
+                    placeholder="Please specify..."
+                    className="w-full border border-red-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  />
+                )}
+                {!reason && <p className="text-xs text-red-400">Please select a reason</p>}
+              </div>
+            )}
+
+            {/* Optional note */}
             {status && (
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-1">
@@ -114,7 +207,6 @@ export default function RetailFollowupCallButton({
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   rows={2}
-                  autoFocus
                   placeholder="Add a note (optional)..."
                   className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
                 />
@@ -127,7 +219,7 @@ export default function RetailFollowupCallButton({
               </button>
               <button
                 onClick={save}
-                disabled={pending || !status}
+                disabled={pending || !canSave}
                 className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
               >
                 {pending ? "Saving..." : "Save"}

@@ -38,9 +38,16 @@ const NOT_INTERESTED_REASONS = [
 ];
 
 const RETAIL_OUTCOMES = [
-  { value: "ORDER_RECEIVED", label: "✓ Order Diya",     color: "bg-green-50 border-green-400 text-green-700 hover:bg-green-100" },
+  { value: "ORDER_RECEIVED", label: "✓ Ordered",        color: "bg-green-50 border-green-400 text-green-700 hover:bg-green-100" },
   { value: "CALLBACK",       label: "📞 Follow-up",     color: "bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100" },
-  { value: "NOT_INTERESTED", label: "✗ Nahi Karna",    color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
+  { value: "NOT_INTERESTED", label: "✗ Not Interested", color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
+];
+
+const RETAIL_NOT_INTERESTED_REASONS = [
+  "Price Too High",
+  "Already Has Stock",
+  "Not Selling This Product",
+  "Other",
 ];
 
 export default function CallLogButton({
@@ -69,6 +76,9 @@ export default function CallLogButton({
   const [interestedOtherText,  setInterestedOtherText]  = useState("");   // when interestedReason = Other
   const [outcomeNote,          setOutcomeNote]          = useState("");
   const [followUpDate,         setFollowUpDate]         = useState("");
+  const [simplifiedOrderId,    setSimplifiedOrderId]    = useState("");   // simplified mode order ID
+  const [simplifiedReason,     setSimplifiedReason]     = useState("");   // simplified mode NI reason
+  const [simplifiedOther,      setSimplifiedOther]      = useState("");   // simplified mode NI other text
 
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -98,8 +108,14 @@ export default function CallLogButton({
   const showReasons   = !isNegative; // negative feedback = reason already in feedback note
   const reasonsHidden = isNotInterestedLead && isNotInterested; // already-NI lead marked NI again
   const noteRequired  = (showReasons && !isOther && !isInterestedOther && !isInterested) || reasonsHidden;
+  const simplifiedIsOrderReceived = simplified && status === "ORDER_RECEIVED";
+  const simplifiedIsNotInterested = simplified && status === "NOT_INTERESTED";
+  const simplifiedIsOther         = simplifiedReason === "Other";
+
   const canSave = simplified
-    ? !!status
+    ? !!status &&
+      (!simplifiedIsOrderReceived || simplifiedOrderId.trim().length > 0) &&
+      (!simplifiedIsNotInterested || (!!simplifiedReason && (!simplifiedIsOther || simplifiedOther.trim().length > 0)))
     : !!status &&
       (!showReasons || reasonsHidden || !isNotInterested  || (!!reason && (!isOther           || otherText.trim().length > 0))) &&
       (!isInterested || (!!interestedReason && (!isInterestedOther || interestedOtherText.trim().length > 0))) &&
@@ -116,13 +132,17 @@ export default function CallLogButton({
     setInterestedOtherText("");
     setOutcomeNote("");
     setFollowUpDate("");
+    setSimplifiedOrderId("");
+    setSimplifiedReason("");
+    setSimplifiedOther("");
     setOpen(true);
   }
 
   function handleStatusChange(val: string) {
     setStatus(val);
-    if (val !== "NOT_INTERESTED") { setReason(""); setOtherText(""); }
+    if (val !== "NOT_INTERESTED") { setReason(""); setOtherText(""); setSimplifiedReason(""); setSimplifiedOther(""); }
     if (val !== "ORDER_PLACED")   { setInterestedReason(""); setInterestedOtherText(""); }
+    if (val !== "ORDER_RECEIVED") setSimplifiedOrderId("");
   }
 
   function saveNoAnswer() {
@@ -146,6 +166,16 @@ export default function CallLogButton({
       finalOutcomeNote = effectiveReason + (outcomeNote.trim() ? ` — ${outcomeNote.trim()}` : "");
     } else if (isInterested && effectiveInterestedReason) {
       finalOutcomeNote = effectiveInterestedReason + (outcomeNote.trim() ? ` — ${outcomeNote.trim()}` : "");
+    }
+
+    // Simplified mode: build note from order ID or NI reason
+    if (simplified) {
+      if (simplifiedIsOrderReceived) {
+        finalOutcomeNote = `Order ID: ${simplifiedOrderId.trim()}` + (outcomeNote.trim() ? ` — ${outcomeNote.trim()}` : "");
+      } else if (simplifiedIsNotInterested) {
+        const eff = simplifiedIsOther ? `Other: ${simplifiedOther.trim()}` : simplifiedReason;
+        finalOutcomeNote = eff + (outcomeNote.trim() ? ` — ${outcomeNote.trim()}` : "");
+      }
     }
 
     // Prepend feedback only if it was collected (first call)
@@ -421,6 +451,62 @@ export default function CallLogButton({
                     ))}
                   </div>
                 </div>
+
+                {/* Simplified: Order ID required when Ordered */}
+                {simplified && simplifiedIsOrderReceived && (
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 block mb-1">
+                      Order ID <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      autoFocus
+                      value={simplifiedOrderId}
+                      onChange={(e) => setSimplifiedOrderId(e.target.value)}
+                      placeholder="e.g. ORD-1234"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                    {!simplifiedOrderId.trim() && (
+                      <p className="text-xs text-red-400 mt-1">Order ID is required</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Simplified: Reason required when Not Interested */}
+                {simplified && simplifiedIsNotInterested && (
+                  <div className="bg-red-50 border border-red-100 rounded-xl p-3 space-y-2">
+                    <p className="text-xs font-semibold text-red-700">
+                      Reason <span className="text-red-500">*</span>
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {RETAIL_NOT_INTERESTED_REASONS.map((r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => setSimplifiedReason(r)}
+                          className={`text-xs px-2.5 py-1.5 rounded-lg border font-medium transition-colors ${
+                            simplifiedReason === r
+                              ? "bg-red-600 text-white border-red-600"
+                              : "border-red-200 text-red-600 hover:bg-red-100"
+                          }`}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                    {simplifiedIsOther && (
+                      <input
+                        type="text"
+                        autoFocus
+                        value={simplifiedOther}
+                        onChange={(e) => setSimplifiedOther(e.target.value)}
+                        placeholder="Please specify..."
+                        className="w-full border border-red-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                      />
+                    )}
+                    {!simplifiedReason && <p className="text-xs text-red-400">Please select a reason</p>}
+                  </div>
+                )}
 
                 {/* Interested reasons — hide in simplified mode */}
                 {!simplified && isInterested && (
