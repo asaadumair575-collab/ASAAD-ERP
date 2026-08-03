@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { logRetailFollowupCall } from "@/lib/actions";
 
 const OUTCOMES = [
-  { value: "ORDER_RECEIVED", label: "✓ Order Diya",   color: "bg-green-50 border-green-400 text-green-700 hover:bg-green-100" },
-  { value: "CALLBACK",       label: "📞 Follow-up",   color: "bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100" },
-  { value: "NOT_INTERESTED", label: "✗ Nahi Karna",  color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
+  { value: "ORDER_RECEIVED", label: "✓ Ordered",        color: "bg-green-50 border-green-400 text-green-700 hover:bg-green-100" },
+  { value: "CALLBACK",       label: "📞 Follow-up",     color: "bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100" },
+  { value: "NOT_INTERESTED", label: "✗ Not Interested", color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
 ];
 
 export default function RetailFollowupCallButton({
@@ -64,7 +64,7 @@ export default function RetailFollowupCallButton({
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Retail Follow-up</p>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Retail Follow-Up</p>
                 <h3 className="text-sm font-semibold text-gray-800">{customerName}</h3>
                 <p className="text-xs text-gray-400 font-mono mt-0.5">{phone}</p>
               </div>
@@ -76,17 +76,17 @@ export default function RetailFollowupCallButton({
               disabled={pending}
               className="w-full border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-40"
             >
-              📵 Call Not Picked — Save & Done
+              📵 No Answer — Save & Done
             </button>
 
             <div className="flex items-center gap-2">
               <div className="flex-1 h-px bg-gray-100" />
-              <span className="text-xs text-gray-300">ya call hui to</span>
+              <span className="text-xs text-gray-300">or if call connected</span>
               <div className="flex-1 h-px bg-gray-100" />
             </div>
 
             <div>
-              <p className="text-xs font-semibold text-gray-700 mb-2">Order mila? <span className="text-red-500">*</span></p>
+              <p className="text-xs font-semibold text-gray-700 mb-2">Outcome <span className="text-red-500">*</span></p>
               <div className="grid grid-cols-3 gap-2">
                 {OUTCOMES.map((o) => (
                   <button
@@ -115,7 +115,7 @@ export default function RetailFollowupCallButton({
                   onChange={(e) => setNote(e.target.value)}
                   rows={2}
                   autoFocus
-                  placeholder="Koi baat ho to likhein..."
+                  placeholder="Add a note (optional)..."
                   className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
                 />
               </div>
