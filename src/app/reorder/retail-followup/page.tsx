@@ -26,14 +26,13 @@ export default async function RetailFollowupPage({
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 15);
 
-  // All retail orders 15+ days old
+  // All retail orders — we need ALL to correctly find each customer's most recent order
   const orders = await prisma.retailOrder.findMany({
-    where: { date: { lte: cutoff } },
     include: { items: true },
     orderBy: { date: "desc" },
   });
 
-  // Deduplicate by phone — most recent order per customer
+  // Deduplicate by phone — most recent order per customer (across ALL orders)
   type Customer = {
     customerName: string;
     phone: string;
@@ -52,6 +51,11 @@ export default async function RetailFollowupPage({
       const lastOrderItems = o.items.map((i) => `${i.description} ×${i.quantity}`).join(", ") || "—";
       seen.set(phone, { customerName: o.customerName, phone, city: o.city ?? null, lastOrderDate: o.date, lastOrderItems, daysSince });
     }
+  }
+
+  // Only include customers whose MOST RECENT order is 15+ days old
+  for (const [phone, c] of seen) {
+    if (c.lastOrderDate > cutoff) seen.delete(phone);
   }
 
   // Latest log per phone
