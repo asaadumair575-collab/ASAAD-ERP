@@ -199,7 +199,9 @@ export default async function RetailFollowupPage({
                   <tr key={c.phone} className="hover:bg-gray-50/60 transition-colors">
                     <td className="py-2.5 px-4 text-gray-300 text-xs">{i + 1}</td>
                     <td className="py-2.5 px-4">
-                      <p className="text-sm font-medium text-gray-800">{c.customerName}</p>
+                      <Link href={`/reorder/retail-followup/${encodeURIComponent(c.phone)}`} className="text-sm font-medium text-gray-800 hover:text-black hover:underline">
+                        {c.customerName}
+                      </Link>
                       <p className="text-[11px] text-gray-400 mt-0.5">{c.daysSince} days ago</p>
                     </td>
                     <td className="py-2.5 px-4 text-gray-400 font-mono text-xs hidden sm:table-cell">{c.phone}</td>
