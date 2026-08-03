@@ -31,10 +31,10 @@ export default async function ReorderDashboardPage({
   });
 
   // Summary stats
-  const total       = logs.length;
-  const noAnswer    = logs.filter((l) => l.status === "NO_ANSWER").length;
-  const connected   = logs.filter((l) => l.status !== "NO_ANSWER").length;
-  const ordered     = logs.filter((l) => l.status === "ORDER_PLACED" || l.status === "ORDER_RECEIVED").length;
+  const total        = logs.length;
+  const noAnswer     = logs.filter((l) => l.status === "NO_ANSWER").length;
+  const interested   = logs.filter((l) => l.status === "ORDER_PLACED" || l.status === "INTERESTED_LATER").length;
+  const ordered      = logs.filter((l) => l.status === "ORDER_RECEIVED").length;
 
   // Hourly distribution (0-23)
   const hourCounts = Array(24).fill(0) as number[];
@@ -54,20 +54,18 @@ export default async function ReorderDashboardPage({
   }
 
   // Per-employee breakdown
-  type EmpRow = { id: number; label: string; total: number; noAnswer: number; connected: number; ordered: number };
+  type EmpRow = { id: number; label: string; total: number; noAnswer: number; interested: number; ordered: number };
   const empMap = new Map<number, EmpRow>();
   for (const l of logs) {
     const id = l.calledBy.id;
     if (!empMap.has(id)) {
-      empMap.set(id, { id, label: userLabel(l.calledBy), total: 0, noAnswer: 0, connected: 0, ordered: 0 });
+      empMap.set(id, { id, label: userLabel(l.calledBy), total: 0, noAnswer: 0, interested: 0, ordered: 0 });
     }
     const row = empMap.get(id)!;
     row.total++;
     if (l.status === "NO_ANSWER") row.noAnswer++;
-    else {
-      row.connected++;
-      if (l.status === "ORDER_PLACED" || l.status === "ORDER_RECEIVED") row.ordered++;
-    }
+    else if (l.status === "ORDER_RECEIVED") row.ordered++;
+    else if (l.status === "ORDER_PLACED" || l.status === "INTERESTED_LATER") row.interested++;
   }
   const empRows = Array.from(empMap.values()).sort((a, b) => b.total - a.total);
 
@@ -109,10 +107,10 @@ export default async function ReorderDashboardPage({
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total Calls",  value: total,     color: "text-gray-700" },
-          { label: "No Answer",    value: noAnswer,  color: "text-yellow-600" },
-          { label: "Connected",    value: connected, color: "text-blue-600" },
-          { label: "Orders",       value: ordered,   color: "text-green-600" },
+          { label: "Total Calls",  value: total,      color: "text-gray-700" },
+          { label: "Not Answered", value: noAnswer,   color: "text-yellow-600" },
+          { label: "Interested",   value: interested, color: "text-violet-600" },
+          { label: "Orders",       value: ordered,    color: "text-green-600" },
         ].map((s) => (
           <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
             <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
@@ -201,8 +199,8 @@ export default async function ReorderDashboardPage({
                     <tr className="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
                       <th className="pb-2 text-left">Employee</th>
                       <th className="pb-2 text-right">Total</th>
-                      <th className="pb-2 text-right">No Answer</th>
-                      <th className="pb-2 text-right">Connected</th>
+                      <th className="pb-2 text-right">Not Answered</th>
+                      <th className="pb-2 text-right">Interested</th>
                       <th className="pb-2 text-right">Orders</th>
                     </tr>
                   </thead>
@@ -212,7 +210,7 @@ export default async function ReorderDashboardPage({
                         <td className="py-2.5 pr-4 font-medium text-gray-800">{e.label}</td>
                         <td className="py-2.5 text-right font-semibold text-gray-700">{e.total}</td>
                         <td className="py-2.5 text-right text-yellow-600">{e.noAnswer}</td>
-                        <td className="py-2.5 text-right text-blue-600">{e.connected}</td>
+                        <td className="py-2.5 text-right text-violet-600">{e.interested}</td>
                         <td className="py-2.5 text-right text-green-600">{e.ordered}</td>
                       </tr>
                     ))}
