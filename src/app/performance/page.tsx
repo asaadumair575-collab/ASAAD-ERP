@@ -38,7 +38,8 @@ export default async function PerformancePage({
   const currentTarget = await prisma.performanceTarget.findFirst({ orderBy: { effectiveFrom: "desc" } });
 
   // Historical target — effective on the selected date, used for filtered data rows
-  const targetLookupDate = fromDate ?? toDate ?? new Date();
+  // Use toDate (end of day) so targets set during the selected day are found correctly
+  const targetLookupDate = toDate ?? fromDate ?? new Date();
   const target = await prisma.performanceTarget.findFirst({
     where: { effectiveFrom: { lte: targetLookupDate } },
     orderBy: { effectiveFrom: "desc" },

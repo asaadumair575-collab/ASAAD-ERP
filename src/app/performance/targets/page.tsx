@@ -58,7 +58,7 @@ export default async function PerformanceTargetsPage() {
             <tbody className="divide-y divide-gray-50">
               {targets.map((t) => (
                 <tr key={t.id} className="hover:bg-gray-50/70">
-                  <td className="py-3 px-4 text-gray-600 text-xs">{t.effectiveFrom.toISOString().slice(0, 10)}</td>
+                  <td className="py-3 px-4 text-gray-600 text-xs">{t.effectiveFrom.toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", day: "numeric", month: "short", year: "numeric" })}</td>
                   <td className="py-3 px-4 text-right font-semibold text-blue-600">{t.calls}</td>
                   <td className="py-3 px-4 text-right font-semibold text-purple-600">{t.newOrders}</td>
                 </tr>
