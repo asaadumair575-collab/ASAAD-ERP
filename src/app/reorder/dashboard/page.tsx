@@ -8,27 +8,38 @@ import { todayPK, pkDayStart, pkDayEnd, toLocalHour } from "@/lib/tz";
 export default async function ReorderDashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; emp?: string }>;
 }) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
-  const { date } = await searchParams;
+  const { date, emp } = await searchParams;
 
   const todayStr = todayPK();
   const selectedDate = date || todayStr;
+  const selectedEmpId = emp ? parseInt(emp, 10) : null;
 
   const dayStart = pkDayStart(selectedDate);
   const dayEnd   = pkDayEnd(selectedDate);
 
-  // All call logs for selected date
+  // All call logs for selected date (optionally filtered by employee)
   const logs = await prisma.reorderCallLog.findMany({
-    where: { calledAt: { gte: dayStart, lte: dayEnd } },
+    where: {
+      calledAt: { gte: dayStart, lte: dayEnd },
+      ...(selectedEmpId ? { calledById: selectedEmpId } : {}),
+    },
     include: {
       calledBy: { select: { id: true, displayName: true, username: true, isAdmin: true } },
       lead: { select: { id: true, phone: true, customerName: true } },
     },
     orderBy: { calledAt: "asc" },
+  });
+
+  // All employees who have ever made a reorder call (for dropdown)
+  const allEmployees = await prisma.user.findMany({
+    where: { reorderCallLogs: { some: {} } },
+    select: { id: true, displayName: true, username: true, isAdmin: true },
+    orderBy: { displayName: "asc" },
   });
 
   // Summary stats
@@ -95,8 +106,8 @@ export default async function ReorderDashboardPage({
           <p className="text-xs text-gray-400 mt-0.5">Call log & verification</p>
         </div>
 
-        {/* Date picker */}
-        <form method="GET" className="flex items-center gap-2">
+        {/* Filters */}
+        <form method="GET" className="flex items-center gap-2 flex-wrap">
           <input
             type="date"
             name="date"
@@ -104,6 +115,16 @@ export default async function ReorderDashboardPage({
             max={todayStr}
             className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-black"
           />
+          <select
+            name="emp"
+            defaultValue={selectedEmpId ?? ""}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-black"
+          >
+            <option value="">All Employees</option>
+            {allEmployees.map((e) => (
+              <option key={e.id} value={e.id}>{userLabel(e)}</option>
+            ))}
+          </select>
           <button
             type="submit"
             className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
