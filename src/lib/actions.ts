@@ -2121,14 +2121,35 @@ export async function deleteReorderLead(leadId: number) {
   revalidatePath("/reorder");
 }
 
-export async function markReorderOrderReceived(leadId: number, orderId?: string | null) {
+export async function markReorderOrderReceived(leadId: number, orderId: string) {
   await requireAuth();
-  const note = orderId ? `Order ID: ${orderId}` : "Order received";
+  const note = `Order ID: ${orderId}`;
   await prisma.reorderLead.update({
     where: { id: leadId },
     data: { status: "ORDER_RECEIVED", followUpDate: null, callNote: note },
   });
   revalidatePath("/reorder");
+}
+
+export async function checkRetailOrder(orderIdStr: string, phone: string): Promise<{
+  found: boolean;
+  order?: { id: number; customerName: string; phone: string | null; status: string };
+  phoneMatch: boolean;
+}> {
+  await requireAuth();
+  const numId = parseInt(orderIdStr.replace(/\D/g, ""), 10);
+  if (isNaN(numId)) return { found: false, phoneMatch: false };
+
+  const order = await prisma.retailOrder.findUnique({
+    where: { id: numId },
+    select: { id: true, customerName: true, phone: true, status: true },
+  });
+
+  if (!order) return { found: false, phoneMatch: false };
+
+  const norm = (p: string) => p.replace(/\D/g, "");
+  const phoneMatch = !!order.phone && norm(order.phone) === norm(phone);
+  return { found: true, order, phoneMatch };
 }
 
 export async function backfillReorderAddresses(

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { logReorderCall, markReorderOrderReceived, deleteReorderLead } from "@/lib/actions";
+import { logReorderCall, markReorderOrderReceived, deleteReorderLead, checkRetailOrder } from "@/lib/actions";
 
 const OUTCOMES = [
   { value: "ORDER_PLACED",     label: "Interested",          color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
@@ -79,6 +79,11 @@ export default function CallLogButton({
   const [simplifiedOrderId,    setSimplifiedOrderId]    = useState("");   // simplified mode order ID
   const [simplifiedReason,     setSimplifiedReason]     = useState("");   // simplified mode NI reason
   const [simplifiedOther,      setSimplifiedOther]      = useState("");   // simplified mode NI other text
+  const [mainOrderId,          setMainOrderId]          = useState("");   // full mode order ID for ORDER_RECEIVED
+
+  const [mainVerify,   setMainVerify]   = useState<null | "checking" | VerifyResult>(null);
+  const [quickVerify,  setQuickVerify]  = useState<null | "checking" | VerifyResult>(null);
+  const [simplVerify,  setSimplVerify]  = useState<null | "checking" | VerifyResult>(null);
 
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -112,11 +117,19 @@ export default function CallLogButton({
   const simplifiedIsNotInterested = simplified && status === "NOT_INTERESTED";
   const simplifiedIsOther         = simplifiedReason === "Other";
 
+  async function verifyOrder(oid: string, setter: (v: null | "checking" | VerifyResult) => void) {
+    if (!oid.trim()) { setter(null); return; }
+    setter("checking");
+    const result = await checkRetailOrder(oid.trim(), lead.phone);
+    setter(result);
+  }
+
   const canSave = simplified
     ? !!status &&
       (!simplifiedIsOrderReceived || simplifiedOrderId.trim().length > 0) &&
       (!simplifiedIsNotInterested || (!!simplifiedReason && (!simplifiedIsOther || simplifiedOther.trim().length > 0)))
     : !!status &&
+      (!isOrderReceived || mainOrderId.trim().length > 0) &&
       (!showReasons || reasonsHidden || !isNotInterested  || (!!reason && (!isOther           || otherText.trim().length > 0))) &&
       (!isInterested || (!!interestedReason && (!isInterestedOther || interestedOtherText.trim().length > 0))) &&
       (!noteRequired || outcomeNote.trim().length > 0);
@@ -135,6 +148,9 @@ export default function CallLogButton({
     setSimplifiedOrderId("");
     setSimplifiedReason("");
     setSimplifiedOther("");
+    setMainOrderId("");
+    setMainVerify(null);
+    setSimplVerify(null);
     setOpen(true);
   }
 
@@ -142,7 +158,7 @@ export default function CallLogButton({
     setStatus(val);
     if (val !== "NOT_INTERESTED") { setReason(""); setOtherText(""); setSimplifiedReason(""); setSimplifiedOther(""); }
     if (val !== "ORDER_PLACED")   { setInterestedReason(""); setInterestedOtherText(""); }
-    if (val !== "ORDER_RECEIVED") setSimplifiedOrderId("");
+    if (val !== "ORDER_RECEIVED") { setSimplifiedOrderId(""); setMainOrderId(""); setMainVerify(null); setSimplVerify(null); }
   }
 
   function saveNoAnswer() {
@@ -162,7 +178,9 @@ export default function CallLogButton({
 
     // Build outcome note
     let finalOutcomeNote = outcomeNote.trim();
-    if (isNotInterested && effectiveReason) {
+    if (isOrderReceived && mainOrderId.trim()) {
+      finalOutcomeNote = `Order ID: ${mainOrderId.trim()}` + (outcomeNote.trim() ? ` — ${outcomeNote.trim()}` : "");
+    } else if (isNotInterested && effectiveReason) {
       finalOutcomeNote = effectiveReason + (outcomeNote.trim() ? ` — ${outcomeNote.trim()}` : "");
     } else if (isInterested && effectiveInterestedReason) {
       finalOutcomeNote = effectiveInterestedReason + (outcomeNote.trim() ? ` — ${outcomeNote.trim()}` : "");
@@ -198,12 +216,14 @@ export default function CallLogButton({
 
   function quickOrderDone() {
     setOrderId("");
+    setQuickVerify(null);
     setOrderConfirmOpen(true);
   }
 
   function confirmOrderDone() {
+    if (!orderId.trim()) return;
     startTransition(async () => {
-      await markReorderOrderReceived(lead.id, orderId.trim() || null);
+      await markReorderOrderReceived(lead.id, orderId.trim());
       setOrderConfirmOpen(false);
       router.replace(window.location.pathname + window.location.search);
     });
@@ -279,16 +299,19 @@ export default function CallLogButton({
               <p className="text-xs text-gray-400 mt-0.5">{lead.customerName}</p>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">Order ID <span className="text-gray-400 font-normal">(optional)</span></label>
+              <label className="text-xs font-semibold text-gray-700 block mb-1">Order ID <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 autoFocus
                 value={orderId}
-                onChange={(e) => setOrderId(e.target.value)}
+                onChange={(e) => { setOrderId(e.target.value); setQuickVerify(null); }}
+                onBlur={(e) => verifyOrder(e.target.value, setQuickVerify)}
                 onKeyDown={(e) => e.key === "Enter" && confirmOrderDone()}
-                placeholder="e.g. ORD-1234"
+                placeholder="e.g. 1234"
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
               />
+              {!orderId.trim() && <p className="text-xs text-red-400 mt-1">Order ID zaroori hai</p>}
+              <OrderVerifyBadge result={quickVerify} />
             </div>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setOrderConfirmOpen(false)} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
@@ -296,7 +319,7 @@ export default function CallLogButton({
               </button>
               <button
                 onClick={confirmOrderDone}
-                disabled={pending}
+                disabled={pending || !orderId.trim()}
                 className="bg-green-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-green-700 disabled:opacity-40 transition-colors"
               >
                 {pending ? "Saving..." : "Order Received ✓"}
@@ -452,6 +475,26 @@ export default function CallLogButton({
                   </div>
                 </div>
 
+                {/* Non-simplified: Order ID required when ORDER_RECEIVED */}
+                {!simplified && isOrderReceived && (
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 block mb-1">
+                      Order ID <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      autoFocus
+                      value={mainOrderId}
+                      onChange={(e) => { setMainOrderId(e.target.value); setMainVerify(null); }}
+                      onBlur={(e) => verifyOrder(e.target.value, setMainVerify)}
+                      placeholder="e.g. 1234"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                    {!mainOrderId.trim() && <p className="text-xs text-red-400 mt-1">Order ID zaroori hai</p>}
+                    <OrderVerifyBadge result={mainVerify} />
+                  </div>
+                )}
+
                 {/* Simplified: Order ID required when Ordered */}
                 {simplified && simplifiedIsOrderReceived && (
                   <div>
@@ -462,13 +505,15 @@ export default function CallLogButton({
                       type="text"
                       autoFocus
                       value={simplifiedOrderId}
-                      onChange={(e) => setSimplifiedOrderId(e.target.value)}
-                      placeholder="e.g. ORD-1234"
+                      onChange={(e) => { setSimplifiedOrderId(e.target.value); setSimplVerify(null); }}
+                      onBlur={(e) => verifyOrder(e.target.value, setSimplVerify)}
+                      placeholder="e.g. 1234"
                       className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
                     />
                     {!simplifiedOrderId.trim() && (
-                      <p className="text-xs text-red-400 mt-1">Order ID is required</p>
+                      <p className="text-xs text-red-400 mt-1">Order ID zaroori hai</p>
                     )}
+                    <OrderVerifyBadge result={simplVerify} />
                   </div>
                 )}
 
@@ -632,5 +677,33 @@ export default function CallLogButton({
         </div>
       )}
     </>
+  );
+}
+
+type VerifyResult = { found: boolean; order?: { id: number; customerName: string; phone: string | null; status: string }; phoneMatch: boolean };
+
+function OrderVerifyBadge({ result }: { result: null | "checking" | VerifyResult }) {
+  if (!result) return null;
+  if (result === "checking") {
+    return <p className="text-xs text-gray-400 mt-1.5">🔍 Checking...</p>;
+  }
+  if (!result.found) {
+    return (
+      <div className="mt-1.5 text-xs rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-red-700 font-medium">
+        ❌ Retail orders mein yeh order nahi mila
+      </div>
+    );
+  }
+  if (result.phoneMatch) {
+    return (
+      <div className="mt-1.5 text-xs rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-green-700 font-medium">
+        ✅ Order #{result.order!.id} — {result.order!.customerName} — Phone match ✓
+      </div>
+    );
+  }
+  return (
+    <div className="mt-1.5 text-xs rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-amber-700 font-medium">
+      ⚠️ Order #{result.order!.id} mila ({result.order!.customerName}) — lekin phone match nahi karta
+    </div>
   );
 }
