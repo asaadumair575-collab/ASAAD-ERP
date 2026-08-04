@@ -110,8 +110,9 @@ export default function Sidebar({
   const isOnEcommerce = pathname.startsWith("/ecommerce");
   const isOnEmployee = pathname.startsWith("/emp-commission") || pathname.startsWith("/performance");
   const isOnReorder = pathname.startsWith("/reorder");
+  const isOnOrderStatus = pathname.startsWith("/order-status");
 
-  type Section = "wholesale" | "retail" | "leads" | "ecommerce" | "employee" | "reorder" | null;
+  type Section = "wholesale" | "retail" | "leads" | "ecommerce" | "employee" | "reorder" | "order-status" | null;
   function sectionForPath(): Section {
     if (isOnWholesale) return "wholesale";
     if (isOnRetail) return "retail";
@@ -119,6 +120,7 @@ export default function Sidebar({
     if (isOnEcommerce) return "ecommerce";
     if (isOnEmployee) return "employee";
     if (isOnReorder) return "reorder";
+    if (isOnOrderStatus) return "order-status";
     return null;
   }
   const [openSection, setOpenSection] = useState<Section>(sectionForPath());
@@ -264,6 +266,32 @@ export default function Sidebar({
               </div>
             )}
           </>
+        )}
+
+        {/* Order Status Check */}
+        <button
+          type="button"
+          onClick={() => toggleSection("order-status")}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+            isOnOrderStatus ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          }`}
+        >
+          <span className="flex items-center gap-2.5">
+            <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 shrink-0">
+              <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M10 6v4l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Order Status
+          </span>
+          <span className={`transition-transform text-gray-400 ${openSection === "order-status" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+        </button>
+        {openSection === "order-status" && (
+          <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+            <NavLink href="/order-status" active={pathname === "/order-status"} compact onClick={closeMobile}>Check Status</NavLink>
+            {isAdmin && (
+              <NavLink href="/order-status/settings" active={pathname.startsWith("/order-status/settings")} compact onClick={closeMobile}>Settings</NavLink>
+            )}
+          </div>
         )}
 
         {canView(permissions, "ecommerce", isAdmin) && (
