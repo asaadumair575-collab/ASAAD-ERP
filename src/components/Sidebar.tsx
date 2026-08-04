@@ -110,8 +110,9 @@ export default function Sidebar({
   const isOnEcommerce = pathname.startsWith("/ecommerce");
   const isOnEmployee = pathname.startsWith("/emp-commission") || pathname.startsWith("/performance");
   const isOnReorder = pathname.startsWith("/reorder");
+  const isOnCalling = pathname.startsWith("/calling");
 
-  type Section = "wholesale" | "retail" | "leads" | "ecommerce" | "employee" | "reorder" | null;
+  type Section = "wholesale" | "retail" | "leads" | "ecommerce" | "employee" | "reorder" | "calling" | null;
   function sectionForPath(): Section {
     if (isOnWholesale) return "wholesale";
     if (isOnRetail) return "retail";
@@ -119,6 +120,7 @@ export default function Sidebar({
     if (isOnEcommerce) return "ecommerce";
     if (isOnEmployee) return "employee";
     if (isOnReorder) return "reorder";
+    if (isOnCalling) return "calling";
     return null;
   }
   const [openSection, setOpenSection] = useState<Section>(sectionForPath());
@@ -296,6 +298,35 @@ export default function Sidebar({
               </div>
             )}
           </>
+        )}
+
+        {/* Calling Module */}
+        <button
+          type="button"
+          onClick={() => toggleSection("calling")}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+            isOnCalling ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          }`}
+        >
+          <span className="flex items-center gap-2.5">
+            <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 shrink-0">
+              <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"
+                stroke="currentColor" fill="none" strokeWidth="1" />
+            </svg>
+            Calling
+          </span>
+          <span className={`transition-transform text-gray-400 ${openSection === "calling" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+        </button>
+        {openSection === "calling" && (
+          <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+            <NavLink href="/calling/queue" active={pathname.startsWith("/calling/queue")} compact onClick={closeMobile}>My Queue</NavLink>
+            {isAdmin && (
+              <NavLink href="/calling/dashboard" active={pathname.startsWith("/calling/dashboard")} compact onClick={closeMobile}>Dashboard</NavLink>
+            )}
+            {isAdmin && (
+              <NavLink href="/calling/settings" active={pathname.startsWith("/calling/settings")} compact onClick={closeMobile}>Settings</NavLink>
+            )}
+          </div>
         )}
 
         {(canView(permissions, "leads", isAdmin) || canView(permissions, "dispatch", isAdmin)) && (
