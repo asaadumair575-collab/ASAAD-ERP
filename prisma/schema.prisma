@@ -114,8 +114,6 @@ model User {
   reorderCalls         ReorderLead[]    @relation("ReorderLeadCalledBy")
   reorderCallLogs      ReorderCallLog[] @relation("ReorderCallLogCalledBy")
   retailFollowupLogs   RetailFollowupLog[] @relation("RetailFollowupLogCalledBy")
-  callingLeadsAssigned CallingLead[]   @relation("CallingLeadAssignedTo")
-  callingRecords       CallingRecord[] @relation("CallingRecordBy")
 }
 
 model EmpCommissionEntry {
@@ -392,46 +390,3 @@ model RetailFollowupLog {
 }
 
 // ── Calling Module ─────────────────────────────────────────────────────────
-// Automated call queue — employees see one lead at a time, system assigns priority
-
-model CallingLead {
-  id            Int             @id @default(autoincrement())
-  customerName  String
-  phone         String
-  city          String?
-  sourceType    String          // RETAIL_ADVANCE | COD | REORDER | SHOPIFY | MANUAL
-  sourceRef     String?         // original record ID for dedup
-  lastOrderDate DateTime?
-  prevItem      String?         // last product ordered
-
-  // Queue state
-  queueStatus   String          @default("PENDING")
-  // PENDING | ASSIGNED | FOLLOW_UP | NO_ANSWER_RETRY | UNREACHABLE | DONE
-
-  // Priority: 1=Retail 15+d | 2=Follow-up due | 3=No-answer retry | 4=Shopify | 5=Campaign
-  priority      Int             @default(5)
-
-  noAnswerCount Int             @default(0)
-  nextRetryAt   DateTime?
-  followUpAt    DateTime?
-
-  assignedTo    User?           @relation("CallingLeadAssignedTo", fields: [assignedToId], references: [id])
-  assignedToId  Int?
-  assignedAt    DateTime?
-
-  createdAt     DateTime        @default(now())
-  callRecords   CallingRecord[]
-}
-
-model CallingRecord {
-  id          Int          @id @default(autoincrement())
-  lead        CallingLead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  leadId      Int
-  calledBy    User         @relation("CallingRecordBy", fields: [calledById], references: [id])
-  calledById  Int
-  status      String
-  // ORDER_CONFIRMED | INTERESTED | FOLLOW_UP_REQUIRED | NOT_INTERESTED | NO_ANSWER | BUSY | WRONG_NUMBER
-  note        String?
-  followUpAt  DateTime?
-  calledAt    DateTime     @default(now())
-}
