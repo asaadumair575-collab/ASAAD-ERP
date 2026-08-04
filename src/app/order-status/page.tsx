@@ -14,7 +14,7 @@ export default async function OrderStatusPage() {
     <div className="space-y-6 max-w-xl">
       <div>
         <h1 className="text-xl font-bold text-gray-900">Order Status Check</h1>
-        <p className="text-xs text-gray-400 mt-0.5">Track orders via PostEx courier</p>
+        <p className="text-xs text-gray-400 mt-0.5">Order ID se PostEx status check karein</p>
       </div>
 
       {!hasApiKey ? (

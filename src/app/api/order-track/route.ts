@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-const POSTEX_BY_CN  = "https://api.postex.pk/services/integration/api/order/v3/get-track-order";
 const POSTEX_BY_REF = "https://api.postex.pk/services/integration/api/order/v2/get-order-detail";
 
 function extractFields(dist: Record<string, unknown>) {
@@ -46,28 +45,15 @@ export async function GET(req: Request) {
   if (!key) return NextResponse.json({ error: "PostEx API key not configured" }, { status: 400 });
 
   try {
-    // Try CN-based tracking first, then fall back to order reference number
-    let dist: Record<string, unknown> | null = null;
-
-    const cnRes = await postexGet(`${POSTEX_BY_CN}/${encodeURIComponent(tracking)}`, key);
-    if (cnRes.ok) {
-      const json = JSON.parse(cnRes.text);
-      dist = (json?.dist ?? json) as Record<string, unknown>;
+    const refRes = await postexGet(`${POSTEX_BY_REF}/${encodeURIComponent(tracking)}`, key);
+    if (!refRes.ok) {
+      return NextResponse.json(
+        { error: `Order ID "${tracking}" PostEx pe nahi mila. Order ID check karein.` },
+        { status: 404 }
+      );
     }
-
-    if (!dist) {
-      const refRes = await postexGet(`${POSTEX_BY_REF}/${encodeURIComponent(tracking)}`, key);
-      if (refRes.ok) {
-        const json = JSON.parse(refRes.text);
-        dist = (json?.dist ?? json) as Record<string, unknown>;
-      } else {
-        return NextResponse.json(
-          { error: `Order not found on PostEx (tried CN and order reference). Check the tracking/order number.` },
-          { status: 404 }
-        );
-      }
-    }
-
+    const json = JSON.parse(refRes.text);
+    const dist = (json?.dist ?? json) as Record<string, unknown>;
     return NextResponse.json({ trackingNumber: tracking, ...extractFields(dist) });
   } catch (e) {
     return NextResponse.json({ error: `Failed to reach PostEx: ${String(e)}` }, { status: 502 });
