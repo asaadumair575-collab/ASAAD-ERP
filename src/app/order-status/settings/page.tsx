@@ -6,19 +6,18 @@ import SubmitButton from "@/components/SubmitButton";
 
 async function savePostexKey(formData: FormData) {
   "use server";
-  const { getSessionUser: getUser } = await import("@/lib/auth");
-  const me = await getUser();
+  const me = await getSessionUser();
   if (!me?.isAdmin) throw new Error("Unauthorized");
   const value = String(formData.get("postexKey") ?? "").trim();
   if (!value) return;
-  const { prisma: db } = await import("@/lib/prisma");
-  await db.appSetting.upsert({
+  await prisma.appSetting.upsert({
     where: { key: "POSTEX_API_KEY" },
     create: { key: "POSTEX_API_KEY", value },
     update: { value },
   });
   revalidatePath("/order-status");
   revalidatePath("/order-status/settings");
+  redirect("/order-status/settings");
 }
 
 export default async function OrderStatusSettingsPage() {
@@ -44,7 +43,7 @@ export default async function OrderStatusSettingsPage() {
             <p className="text-xs text-gray-400">Used for both Retail COD and Retail Advance orders</p>
           </div>
           {currentKey && (
-            <span className="ml-auto text-[10px] font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full">✓ Configured</span>
+            <span className="ml-auto text-[10px] font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full">✓ Connected</span>
           )}
         </div>
 
