@@ -2,7 +2,33 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-const POSTEX_TRACK = "https://api.postex.pk/services/integration/api/order/v3/get-track-order";
+const POSTEX_BY_CN  = "https://api.postex.pk/services/integration/api/order/v3/get-track-order";
+const POSTEX_BY_REF = "https://api.postex.pk/services/integration/api/order/v2/get-order-detail";
+
+function extractFields(dist: Record<string, unknown>) {
+  const orderStatus  = String(dist?.orderStatus ?? dist?.status ?? dist?.orderStatusName ?? "Unknown");
+  const customerName = dist?.customerName   ? String(dist.customerName)   : undefined;
+  const address      = dist?.deliveryAddress ?? dist?.customerAddress
+                         ? String(dist?.deliveryAddress ?? dist?.customerAddress) : undefined;
+  const amount       = dist?.invoicePayment ?? dist?.orderAmount ?? dist?.amount ?? undefined;
+  const shippingCharges = dist?.shippingCharges ?? dist?.deliveryCharges ?? undefined;
+  const attempts     = dist?.deliveryAttempts !== undefined ? Number(dist.deliveryAttempts) : undefined;
+  const lastUpdate   = dist?.updatedDate ?? dist?.lastUpdatedAt ?? dist?.statusDate ?? undefined;
+  const cnNumber     = dist?.trackingNumber ?? dist?.cnNumber ?? undefined;
+  return { orderStatus, customerName, address, amount, shippingCharges, attempts,
+           lastUpdate: lastUpdate ? String(lastUpdate) : undefined,
+           cnNumber: cnNumber ? String(cnNumber) : undefined };
+}
+
+async function postexGet(url: string, key: string) {
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { token: key, "Content-Type": "application/json" } as HeadersInit,
+    cache: "no-store",
+  });
+  const text = await res.text();
+  return { ok: res.ok, status: res.status, text };
+}
 
 export async function GET(req: Request) {
   const me = await getSessionUser();
@@ -20,36 +46,29 @@ export async function GET(req: Request) {
   if (!key) return NextResponse.json({ error: "PostEx API key not configured" }, { status: 400 });
 
   try {
-    const res = await fetch(`${POSTEX_TRACK}/${encodeURIComponent(tracking)}`, {
-      method: "GET",
-      headers: { token: key, "Content-Type": "application/json" } as HeadersInit,
-      cache: "no-store",
-    });
+    // Try CN-based tracking first, then fall back to order reference number
+    let dist: Record<string, unknown> | null = null;
 
-    const text = await res.text();
-    if (!res.ok) return NextResponse.json({ error: `PostEx error: HTTP ${res.status}` }, { status: 502 });
+    const cnRes = await postexGet(`${POSTEX_BY_CN}/${encodeURIComponent(tracking)}`, key);
+    if (cnRes.ok) {
+      const json = JSON.parse(cnRes.text);
+      dist = (json?.dist ?? json) as Record<string, unknown>;
+    }
 
-    const json = JSON.parse(text);
-    const dist = (json?.dist ?? json) as Record<string, unknown>;
+    if (!dist) {
+      const refRes = await postexGet(`${POSTEX_BY_REF}/${encodeURIComponent(tracking)}`, key);
+      if (refRes.ok) {
+        const json = JSON.parse(refRes.text);
+        dist = (json?.dist ?? json) as Record<string, unknown>;
+      } else {
+        return NextResponse.json(
+          { error: `Order not found on PostEx (tried CN and order reference). Check the tracking/order number.` },
+          { status: 404 }
+        );
+      }
+    }
 
-    const orderStatus = String(dist?.orderStatus ?? dist?.status ?? "Unknown");
-    const customerName = dist?.customerName ? String(dist.customerName) : undefined;
-    const address = dist?.deliveryAddress ? String(dist.deliveryAddress) : undefined;
-    const amount = dist?.invoicePayment ?? dist?.amount ?? undefined;
-    const shippingCharges = dist?.shippingCharges ?? dist?.deliveryCharges ?? undefined;
-    const attempts = dist?.deliveryAttempts !== undefined ? Number(dist.deliveryAttempts) : undefined;
-    const lastUpdate = dist?.updatedDate ?? dist?.lastUpdatedAt ?? dist?.statusDate ?? undefined;
-
-    return NextResponse.json({
-      trackingNumber: tracking,
-      orderStatus,
-      customerName,
-      address,
-      amount,
-      shippingCharges,
-      attempts,
-      lastUpdate: lastUpdate ? String(lastUpdate) : undefined,
-    });
+    return NextResponse.json({ trackingNumber: tracking, ...extractFields(dist) });
   } catch (e) {
     return NextResponse.json({ error: `Failed to reach PostEx: ${String(e)}` }, { status: 502 });
   }
