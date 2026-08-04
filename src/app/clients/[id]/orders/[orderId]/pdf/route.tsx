@@ -43,6 +43,15 @@ const styles = StyleSheet.create({
   notesSection: { marginTop: 24 },
   notesLabel: { color: "#6b7280", fontSize: 8, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 },
   notesText: { fontSize: 9, color: "#374151" },
+  paymentSection: { marginTop: 28, borderTopWidth: 1, borderTopColor: "#e5e7eb", paddingTop: 16 },
+  paymentTitle: { fontSize: 10, fontWeight: 700, color: "#111827", marginBottom: 10 },
+  paymentGrid: { flexDirection: "row", gap: 20 },
+  paymentCard: { flex: 1, backgroundColor: "#f9fafb", borderRadius: 6, padding: 10 },
+  paymentCardTitle: { fontSize: 9, fontWeight: 700, color: "#374151", marginBottom: 6 },
+  paymentRow: { flexDirection: "row", marginBottom: 3 },
+  paymentKey: { fontSize: 8, color: "#6b7280", width: 80 },
+  paymentVal: { fontSize: 8, color: "#111827", flex: 1 },
+  paymentNote: { marginTop: 10, fontSize: 8, color: "#6b7280", fontStyle: "italic" },
 });
 
 export async function GET(
@@ -177,6 +186,44 @@ export async function GET(
             )}
           </View>
         )}
+
+        {/* Payment Details */}
+        <View style={styles.paymentSection}>
+          <Text style={styles.paymentTitle}>💳  Payment Details</Text>
+          <View style={styles.paymentGrid}>
+            {/* JS Bank */}
+            <View style={styles.paymentCard}>
+              <Text style={styles.paymentCardTitle}>Bank Transfer — JS Bank</Text>
+              <View style={styles.paymentRow}>
+                <Text style={styles.paymentKey}>Account Title</Text>
+                <Text style={styles.paymentVal}>Asaad Umair</Text>
+              </View>
+              <View style={styles.paymentRow}>
+                <Text style={styles.paymentKey}>IBAN</Text>
+                <Text style={styles.paymentVal}>PK16JSBL9999903168604935</Text>
+              </View>
+              <View style={styles.paymentRow}>
+                <Text style={styles.paymentKey}>Bank</Text>
+                <Text style={styles.paymentVal}>JS Bank</Text>
+              </View>
+            </View>
+            {/* JazzCash */}
+            <View style={styles.paymentCard}>
+              <Text style={styles.paymentCardTitle}>JazzCash</Text>
+              <View style={styles.paymentRow}>
+                <Text style={styles.paymentKey}>Account Title</Text>
+                <Text style={styles.paymentVal}>Asaad Umair</Text>
+              </View>
+              <View style={styles.paymentRow}>
+                <Text style={styles.paymentKey}>Mobile Number</Text>
+                <Text style={styles.paymentVal}>0316-8604935</Text>
+              </View>
+            </View>
+          </View>
+          <Text style={styles.paymentNote}>
+            Kindly share the payment screenshot after completing the transfer for confirmation. Thank you.
+          </Text>
+        </View>
       </Page>
     </Document>
   );
