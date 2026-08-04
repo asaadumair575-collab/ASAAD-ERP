@@ -78,6 +78,21 @@ export default async function SettingsPage() {
 
       {me?.isAdmin && (
         <Link
+          href="/order-status/settings"
+          className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:bg-gray-50 transition-colors group"
+        >
+          <div>
+            <p className="text-sm font-semibold">Order Status — Courier API</p>
+            <p className="text-sm text-gray-500 mt-0.5">PostEx API token for live order tracking</p>
+          </div>
+          <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5 text-gray-300 group-hover:text-gray-400 transition-colors">
+            <path d="M7 4l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </Link>
+      )}
+
+      {me?.isAdmin && (
+        <Link
           href="/settings/users"
           className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:bg-gray-50 transition-colors group"
         >

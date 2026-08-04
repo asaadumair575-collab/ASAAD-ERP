@@ -54,10 +54,8 @@ export default async function OrderStatusSettingsPage() {
             <input
               type="text"
               name="postexKey"
-              defaultValue={currentKey ? "••••••••••••••••" : ""}
-              placeholder="Paste your PostEx API token here"
+              placeholder={currentKey ? "Already set — paste new token to update" : "Paste your PostEx API token here"}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black font-mono"
-              onFocus={(e) => { if (e.target.value.startsWith("•")) e.target.value = ""; }}
             />
             <p className="text-[11px] text-gray-400 mt-1">
               PostEx dashboard → API Integration → copy the token
