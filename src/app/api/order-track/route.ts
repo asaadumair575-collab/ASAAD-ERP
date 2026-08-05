@@ -4,22 +4,24 @@ import { NextResponse } from "next/server";
 
 const BASE = "https://api.postex.pk/services/integration/api/order";
 
-function extractFields(dist: Record<string, unknown>) {
-  const orderStatus     = String(dist?.orderStatus ?? dist?.status ?? dist?.orderStatusName ?? "Unknown");
-  const customerName    = dist?.customerName ? String(dist.customerName) : undefined;
+function extractFields(raw: Record<string, unknown>) {
+  const dist = (raw?.dist ?? raw) as Record<string, unknown>;
+  const orderStatus     = String(dist?.orderStatus ?? dist?.status ?? dist?.orderStatusName ?? "");
+  if (!orderStatus) return null; // empty response — not a real result
+  const customerName    = dist?.customerName    ? String(dist.customerName)    : undefined;
   const address         = dist?.deliveryAddress ?? dist?.customerAddress
-                            ? String(dist?.deliveryAddress ?? dist?.customerAddress) : undefined;
-  const amount          = dist?.invoicePayment ?? dist?.orderAmount ?? dist?.amount ?? undefined;
+                          ? String(dist?.deliveryAddress ?? dist?.customerAddress) : undefined;
+  const amount          = dist?.invoicePayment  ?? dist?.orderAmount ?? dist?.amount ?? undefined;
   const shippingCharges = dist?.shippingCharges ?? dist?.deliveryCharges ?? undefined;
   const attempts        = dist?.deliveryAttempts !== undefined ? Number(dist.deliveryAttempts) : undefined;
   const lastUpdate      = dist?.updatedDate ?? dist?.lastUpdatedAt ?? dist?.statusDate ?? undefined;
-  const cnNumber        = dist?.trackingNumber ?? dist?.cnNumber ?? undefined;
+  const cnNumber        = dist?.trackingNumber  ?? dist?.cnNumber ?? undefined;
   return { orderStatus, customerName, address, amount, shippingCharges, attempts,
            lastUpdate: lastUpdate ? String(lastUpdate) : undefined,
            cnNumber: cnNumber ? String(cnNumber) : undefined };
 }
 
-async function tryPostex(url: string, key: string, method = "GET", body?: string) {
+async function tryFetch(url: string, key: string, method = "GET", body?: string) {
   try {
     const res = await fetch(url, {
       method,
@@ -29,10 +31,7 @@ async function tryPostex(url: string, key: string, method = "GET", body?: string
     });
     if (!res.ok) return null;
     const json = JSON.parse(await res.text());
-    const dist = (json?.dist ?? json) as Record<string, unknown>;
-    // Make sure we got real data back, not empty
-    if (!dist || (!dist.orderStatus && !dist.status && !dist.orderStatusName)) return null;
-    return dist;
+    return extractFields(json);
   } catch {
     return null;
   }
@@ -53,56 +52,49 @@ export async function GET(req: Request) {
   }
   if (!key) return NextResponse.json({ error: "PostEx API key not configured" }, { status: 400 });
 
-  // 1. Try to find in our DB (by numeric ID or shopify order ID) to get PostEx CN
+  // Try every known PostEx endpoint — whichever returns data wins
+  const attempts = [
+    () => tryFetch(`${BASE}/v3/get-track-order/${encodeURIComponent(input)}`, key!),
+    () => tryFetch(`${BASE}/v2/get-track-order/${encodeURIComponent(input)}`, key!),
+    () => tryFetch(`${BASE}/v1/get-track-order/${encodeURIComponent(input)}`, key!),
+    () => tryFetch(`${BASE}/v3/get-track-order`, key!, "POST", JSON.stringify({ orderRefNumber: input })),
+    () => tryFetch(`${BASE}/v3/get-track-order`, key!, "POST", JSON.stringify({ orderRef: input })),
+    () => tryFetch(`${BASE}/v3/get-track-order`, key!, "POST", JSON.stringify({ trackingNumber: input })),
+    () => tryFetch(`${BASE}/v2/get-order-detail/${encodeURIComponent(input)}`, key!),
+    () => tryFetch(`${BASE}/v3/get-order/${encodeURIComponent(input)}`, key!),
+  ];
+
+  // Also check DB for a linked PostEx CN and try that too
   const numericId = parseInt(input, 10);
-  const order = await prisma.ecomOrder.findFirst({
+  const dbOrder = await prisma.ecomOrder.findFirst({
     where: isNaN(numericId)
       ? { shopifyOrderId: input }
       : { OR: [{ id: numericId }, { shopifyOrderId: input }] },
     select: { id: true, customerName: true, trackingNumber: true },
   });
 
-  // 2. If found in DB with a CN, query PostEx by CN
-  if (order?.trackingNumber) {
-    const dist = await tryPostex(`${BASE}/v3/get-track-order/${encodeURIComponent(order.trackingNumber)}`, key);
-    if (dist) {
-      const fields = extractFields(dist);
-      if (!fields.customerName) fields.customerName = order.customerName;
-      return NextResponse.json({ orderId: order.id, trackingNumber: order.trackingNumber, ...fields });
-    }
-  }
-
-  // 3. Try PostEx directly using input as order reference (POST with orderRefNumber)
-  const distByRef = await tryPostex(
-    `${BASE}/v3/get-track-order`,
-    key,
-    "POST",
-    JSON.stringify({ orderRefNumber: input })
-  );
-  if (distByRef) {
-    const fields = extractFields(distByRef);
-    if (order && !fields.customerName) fields.customerName = order.customerName;
-    return NextResponse.json({ trackingNumber: input, ...fields });
-  }
-
-  // 4. Try as plain order reference GET
-  const distByGet = await tryPostex(`${BASE}/v2/get-order-detail/${encodeURIComponent(input)}`, key);
-  if (distByGet) {
-    const fields = extractFields(distByGet);
-    if (order && !fields.customerName) fields.customerName = order.customerName;
-    return NextResponse.json({ trackingNumber: input, ...fields });
-  }
-
-  // Nothing worked — return helpful error
-  if (order && !order.trackingNumber) {
-    return NextResponse.json(
-      { error: `Order #${order.id} (${order.customerName}) hamare system mein hai lekin PostEx tracking number nahi daala gaya.` },
-      { status: 422 }
+  if (dbOrder?.trackingNumber && dbOrder.trackingNumber !== input) {
+    const cn = dbOrder.trackingNumber;
+    attempts.unshift(
+      () => tryFetch(`${BASE}/v3/get-track-order/${encodeURIComponent(cn)}`, key!),
     );
   }
 
+  for (const attempt of attempts) {
+    const result = await attempt();
+    if (result) {
+      const customerName = result.customerName ?? dbOrder?.customerName;
+      return NextResponse.json({
+        trackingNumber: input,
+        ...(dbOrder ? { orderId: dbOrder.id } : {}),
+        ...result,
+        ...(customerName ? { customerName } : {}),
+      });
+    }
+  }
+
   return NextResponse.json(
-    { error: `Order "${input}" PostEx pe nahi mila. Order ID ya tracking number check karein.` },
+    { error: `Order "${input}" PostEx pe nahi mila. Order ID ya tracking number dobara check karein.` },
     { status: 404 }
   );
 }
