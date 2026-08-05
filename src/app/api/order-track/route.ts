@@ -64,37 +64,69 @@ export async function GET(req: Request) {
     () => tryFetch(`${BASE}/v3/get-order/${encodeURIComponent(input)}`, key!),
   ];
 
-  // Also check DB for a linked PostEx CN and try that too
+  // Check DB — RetailOrder (R-054 format) or EcomOrder
   const numericId = parseInt(input, 10);
-  const dbOrder = await prisma.ecomOrder.findFirst({
-    where: isNaN(numericId)
-      ? { shopifyOrderId: input }
-      : { OR: [{ id: numericId }, { shopifyOrderId: input }] },
-    select: { id: true, customerName: true, trackingNumber: true },
-  });
+  // Support "R-054" format → extract numeric part
+  const retailMatch = input.match(/^R-?(\d+)$/i);
+  const retailNumId = retailMatch ? parseInt(retailMatch[1], 10) : (!isNaN(numericId) ? numericId : null);
 
-  if (dbOrder?.trackingNumber && dbOrder.trackingNumber !== input) {
-    const cn = dbOrder.trackingNumber;
-    attempts.unshift(
-      () => tryFetch(`${BASE}/v3/get-track-order/${encodeURIComponent(cn)}`, key!),
-    );
+  let dbCustomerName: string | undefined;
+  let dbCn: string | undefined;
+  let dbOrderId: string | undefined;
+
+  if (retailNumId !== null) {
+    const retailOrder = await prisma.retailOrder.findUnique({
+      where: { id: retailNumId },
+      select: { id: true, customerName: true, trackingNumber: true },
+    });
+    if (retailOrder) {
+      dbCustomerName = retailOrder.customerName;
+      dbOrderId = `R-${String(retailOrder.id).padStart(3, "0")}`;
+      if (retailOrder.trackingNumber) dbCn = retailOrder.trackingNumber;
+    }
+  }
+
+  // Also check EcomOrder
+  if (!dbCn) {
+    const ecomOrder = await prisma.ecomOrder.findFirst({
+      where: isNaN(numericId)
+        ? { shopifyOrderId: input }
+        : { OR: [{ id: numericId }, { shopifyOrderId: input }] },
+      select: { id: true, customerName: true, trackingNumber: true },
+    });
+    if (ecomOrder) {
+      dbCustomerName = dbCustomerName ?? ecomOrder.customerName;
+      dbOrderId = dbOrderId ?? String(ecomOrder.id);
+      if (ecomOrder.trackingNumber) dbCn = ecomOrder.trackingNumber;
+    }
+  }
+
+  // If we have a CN from DB, try it first
+  if (dbCn && dbCn !== input) {
+    attempts.unshift(() => tryFetch(`${BASE}/v3/get-track-order/${encodeURIComponent(dbCn!)}`, key!));
   }
 
   for (const attempt of attempts) {
     const result = await attempt();
     if (result) {
-      const customerName = result.customerName ?? dbOrder?.customerName;
       return NextResponse.json({
-        trackingNumber: input,
-        ...(dbOrder ? { orderId: dbOrder.id } : {}),
+        trackingNumber: dbCn ?? input,
+        ...(dbOrderId ? { orderId: dbOrderId } : {}),
         ...result,
-        ...(customerName ? { customerName } : {}),
+        customerName: result.customerName ?? dbCustomerName,
       });
     }
   }
 
+  if (dbOrderId && !dbCn) {
+    return NextResponse.json(
+      { error: `Order ${dbOrderId} (${dbCustomerName}) hamare system mein hai lekin PostEx tracking number save nahi hua. Order page pe jaa kar CN number save karein.` },
+      { status: 422 }
+    );
+  }
+
   return NextResponse.json(
-    { error: `Order "${input}" PostEx pe nahi mila. Order ID ya tracking number dobara check karein.` },
+    { error: `Order "${input}" nahi mila. R-054 format ya PostEx CN number try karein.` },
     { status: 404 }
   );
 }

@@ -78,7 +78,7 @@ export default function OrderStatusClient() {
             type="text"
             value={tracking}
             onChange={(e) => setTracking(e.target.value)}
-            placeholder="Order ID daalen (e.g. 54 ya Shopify order ID)"
+            placeholder="Order ID daalen (e.g. R-054) ya PostEx CN"
             className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"
             autoComplete="off"
             autoFocus

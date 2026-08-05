@@ -185,6 +185,7 @@ model RetailOrder {
   status               String           @default("PENDING")
   dispatched       Boolean          @default(false)
   dispatchedAt     DateTime?
+  trackingNumber   String?
   notes            String?
   date             DateTime         @default(now())
   createdAt        DateTime         @default(now())

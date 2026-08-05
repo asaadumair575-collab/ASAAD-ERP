@@ -1362,6 +1362,13 @@ export async function deleteRetailOrder(orderId: number) {
   redirect("/retail/orders");
 }
 
+export async function setRetailTrackingNumber(orderId: number, formData: FormData) {
+  "use server";
+  const trackingNumber = String(formData.get("trackingNumber") ?? "").trim() || null;
+  await prisma.retailOrder.update({ where: { id: orderId }, data: { trackingNumber } });
+  revalidatePath(`/retail/orders/${orderId}`);
+}
+
 export async function setRetailDispatched(orderId: number, dispatched: boolean) {
   await prisma.retailOrder.update({
     where: { id: orderId },

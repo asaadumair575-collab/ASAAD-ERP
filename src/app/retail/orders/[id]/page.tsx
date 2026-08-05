@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, setRetailDispatched, updateRetailCourierCharge } from "@/lib/actions";
+import { recordRetailPayment, deleteRetailPayment, deleteRetailOrder, setRetailDispatched, updateRetailCourierCharge, setRetailTrackingNumber } from "@/lib/actions";
 import { getSessionUser } from "@/lib/auth";
 import { parsePermissions, canDoSub } from "@/lib/permissions";
 import RetailPaymentSection from "@/components/RetailPaymentSection";
@@ -44,7 +44,8 @@ export default async function RetailOrderPage({
   const recordPaymentBound = recordRetailPayment.bind(null, order.id);
   const deleteOrderBound = deleteRetailOrder.bind(null, order.id);
   const toggleDispatchBound = setRetailDispatched.bind(null, order.id, !order.dispatched);
-  const updateCourierBound = updateRetailCourierCharge.bind(null, order.id);
+  const updateCourierBound    = updateRetailCourierCharge.bind(null, order.id);
+  const setTrackingBound      = setRetailTrackingNumber.bind(null, order.id);
 
 
   return (
@@ -206,6 +207,36 @@ export default async function RetailOrderPage({
             {order.dispatched ? "Mark Not Dispatched" : "Mark as Dispatched"}
           </button>
         </form>
+      </div>
+
+      {/* PostEx Tracking Number */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-gray-700">PostEx Tracking Number</p>
+          {order.trackingNumber && (
+            <span className="text-xs font-mono text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">{order.trackingNumber}</span>
+          )}
+        </div>
+        <form action={setTrackingBound} className="flex gap-2">
+          <input
+            type="text"
+            name="trackingNumber"
+            defaultValue={order.trackingNumber ?? ""}
+            placeholder="PostEx CN number daalen (e.g. 21676630000015)"
+            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-black"
+          />
+          <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-gray-800 transition-colors">
+            Save
+          </button>
+        </form>
+        {order.trackingNumber && (
+          <a
+            href={`/order-status?q=${order.trackingNumber}`}
+            className="text-xs text-blue-600 hover:underline"
+          >
+            → Order Status Check pe dekho
+          </a>
+        )}
       </div>
 
       {/* Payment summary */}
