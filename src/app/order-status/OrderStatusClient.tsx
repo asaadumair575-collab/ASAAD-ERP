@@ -48,15 +48,16 @@ export default function OrderStatusClient() {
 
     try {
       const res = await fetch(`/api/order-track?tracking=${encodeURIComponent(t)}`);
-      const data = await res.json();
+      let data: Record<string, unknown> = {};
+      try { data = await res.json(); } catch { /* non-JSON response */ }
       if (!res.ok || data.error) {
-        setError(data.error ?? "Failed to fetch status");
+        setError(String(data.error ?? `Server error (HTTP ${res.status})`));
       } else {
-        setResult(data);
-        setHistory((prev) => [data, ...prev.filter((h) => h.trackingNumber !== t)].slice(0, 10));
+        setResult(data as unknown as TrackResult);
+        setHistory((prev) => [data as unknown as TrackResult, ...prev.filter((h) => h.trackingNumber !== t)].slice(0, 10));
       }
-    } catch {
-      setError("Network error — try again");
+    } catch (e) {
+      setError(`Network error: ${String(e)}`);
     } finally {
       setLoading(false);
     }

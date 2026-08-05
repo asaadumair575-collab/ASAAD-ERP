@@ -38,6 +38,7 @@ async function tryFetch(url: string, key: string, method = "GET", body?: string)
 }
 
 export async function GET(req: Request) {
+  try {
   const me = await getSessionUser();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -50,7 +51,7 @@ export async function GET(req: Request) {
     const setting = await prisma.appSetting.findUnique({ where: { key: "POSTEX_API_KEY" } });
     key = setting?.value ?? undefined;
   }
-  if (!key) return NextResponse.json({ error: "PostEx API key not configured" }, { status: 400 });
+  if (!key) return NextResponse.json({ error: "PostEx API key set nahi — /order-status/settings pe jao" }, { status: 400 });
 
   // Try every known PostEx endpoint — whichever returns data wins
   const attempts = [
@@ -129,4 +130,7 @@ export async function GET(req: Request) {
     { error: `Order "${input}" nahi mila. R-054 format ya PostEx CN number try karein.` },
     { status: 404 }
   );
+  } catch (e) {
+    return NextResponse.json({ error: `Server error: ${String(e)}` }, { status: 500 });
+  }
 }
