@@ -105,6 +105,7 @@ export default async function ReorderCampaignPage({
   const pkToday = todayPK();
   const myTodayLogs = me.isAdmin ? [] : await prisma.reorderCallLog.findMany({
     where: {
+      lead: { campaignId: campaign.id },
       calledById: me.id,
       calledAt: { gte: pkDayStart(pkToday), lte: pkDayEnd(pkToday) },
     },
