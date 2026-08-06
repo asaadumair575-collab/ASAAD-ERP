@@ -301,17 +301,19 @@ export default async function ReorderCampaignPage({
                   <tr key={l.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="py-2.5 px-4 text-gray-300 text-xs hidden sm:table-cell">{i + 1}</td>
                     <td className="py-2.5 px-4">
-                      <LeadDetail
-                        lead={{ customerName: l.customerName, phone: l.phone, email: l.email, address: l.address, city: l.city, prevItem: l.prevItem }}
-                        leadId={l.id}
-                        isAdmin={!!me.isAdmin}
-                      />
-                      {l.calledBy && (
-                        <p className="text-[11px] text-gray-400 mt-0.5 leading-none">
-                          {userLabel(l.calledBy)}
-                          {l.calledAt && <span className="text-gray-300"> · {new Date(l.calledAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })} {new Date(l.calledAt).toLocaleTimeString("en-PK", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Karachi" })}</span>}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <LeadDetail
+                          lead={{ customerName: l.customerName, phone: l.phone, email: l.email, address: l.address, city: l.city, prevItem: l.prevItem }}
+                          leadId={l.id}
+                          isAdmin={!!me.isAdmin}
+                        />
+                        {l.calledBy && (
+                          <span className="text-[11px] text-gray-400 leading-none">
+                            · {userLabel(l.calledBy)}
+                            {l.calledAt && <span className="text-gray-300"> · {new Date(l.calledAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })} {new Date(l.calledAt).toLocaleTimeString("en-PK", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Karachi" })}</span>}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-2.5 px-4 text-gray-400 text-sm hidden md:table-cell">{l.city || "—"}</td>
                     <td className="py-2.5 px-4 text-gray-300 text-xs truncate max-w-[140px] hidden lg:table-cell">{l.prevItem || "—"}</td>
