@@ -167,9 +167,9 @@ export default function CallLogButton({
     if (val !== "ORDER_RECEIVED") { setSimplifiedOrderId(""); setMainOrderId(""); setMainVerify(null); setSimplVerify(null); }
   }
 
-  function saveNoAnswer() {
+  function saveNoAnswer(note: string) {
     startTransition(async () => {
-      await logReorderCall(lead.id, "NO_ANSWER", "Call not picked");
+      await logReorderCall(lead.id, "NO_ANSWER", note);
       setOpen(false);
       router.replace(window.location.pathname + window.location.search);
     });
@@ -412,15 +412,25 @@ export default function CallLogButton({
             {/* ── STEP 1: Feedback ── */}
             {step === "feedback" && (
               <>
-                {/* Quick save */}
-                <button
-                  type="button"
-                  onClick={saveNoAnswer}
-                  disabled={pending}
-                  className="w-full border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-40"
-                >
-                  📵 Not Picked — Save & Done
-                </button>
+                {/* Quick save — not picked / number closed */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => saveNoAnswer("Call not picked")}
+                    disabled={pending}
+                    className="border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-40"
+                  >
+                    📵 Not Picked
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => saveNoAnswer("Number closed")}
+                    disabled={pending}
+                    className="border border-red-200 bg-red-50 text-red-600 text-sm font-semibold rounded-xl py-2.5 hover:bg-red-100 transition-colors disabled:opacity-40"
+                  >
+                    🔴 Number Closed
+                  </button>
+                </div>
 
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-px bg-gray-100" />
@@ -487,17 +497,27 @@ export default function CallLogButton({
             {/* ── STEP 2: Outcome ── */}
             {step === "outcome" && (
               <>
-                {/* No Answer quick button for simplified mode */}
+                {/* No Answer quick buttons for simplified mode */}
                 {simplified && (
                   <>
-                    <button
-                      type="button"
-                      onClick={saveNoAnswer}
-                      disabled={pending}
-                      className="w-full border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-40"
-                    >
-                      📵 Not Picked — Save & Done
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => saveNoAnswer("Call not picked")}
+                        disabled={pending}
+                        className="border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-40"
+                      >
+                        📵 Not Picked
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => saveNoAnswer("Number closed")}
+                        disabled={pending}
+                        className="border border-red-200 bg-red-50 text-red-600 text-sm font-semibold rounded-xl py-2.5 hover:bg-red-100 transition-colors disabled:opacity-40"
+                      >
+                        🔴 Number Closed
+                      </button>
+                    </div>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-px bg-gray-100" />
                       <span className="text-xs text-gray-300">or if they answered</span>
