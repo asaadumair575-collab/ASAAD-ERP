@@ -2060,9 +2060,8 @@ export async function createReorderCampaign(
 
 export async function recordCallAttempt(leadId: number) {
   const me = await requireAuth();
-  await prisma.reorderLead.update({
-    where: { id: leadId },
-    data: { pendingAttemptAt: new Date() },
+  await prisma.reorderCallAttempt.create({
+    data: { leadId, userId: me.id },
   });
 }
 
@@ -2093,12 +2092,19 @@ export async function logReorderCall(
   const followUp = followUpDate ? new Date(followUpDate) : null;
   const clearFollowUp = status !== "ORDER_PLACED";
 
-  // Read and clear the pending attempt timestamp
-  const lead = await prisma.reorderLead.findUnique({
-    where: { id: leadId },
-    select: { pendingAttemptAt: true },
+  // Read all modal-open attempts by this user for this lead, then clear them
+  const attempts = await prisma.reorderCallAttempt.findMany({
+    where: { leadId, userId: me.id },
+    orderBy: { openedAt: "asc" },
+    select: { id: true, openedAt: true },
   });
-  const attemptedAt = lead?.pendingAttemptAt ?? null;
+  const openCount   = attempts.length;
+  const attemptedAt = attempts.length > 0 ? attempts[attempts.length - 1].openedAt : null;
+  if (attempts.length > 0) {
+    await prisma.reorderCallAttempt.deleteMany({
+      where: { id: { in: attempts.map((a) => a.id) } },
+    });
+  }
 
   await prisma.$transaction([
     prisma.reorderLead.update({
@@ -2109,11 +2115,10 @@ export async function logReorderCall(
         calledAt: now,
         calledById: me.id,
         followUpDate: clearFollowUp ? null : (followUp ?? undefined),
-        pendingAttemptAt: null,
       },
     }),
     prisma.reorderCallLog.create({
-      data: { leadId, status, callNote: callNote || null, calledAt: now, calledById: me.id, attemptedAt },
+      data: { leadId, status, callNote: callNote || null, calledAt: now, calledById: me.id, attemptedAt, openCount },
     }),
   ]);
   revalidatePath("/reorder");
@@ -2129,6 +2134,7 @@ export async function getLeadCallLogs(leadId: number) {
       callNote: true,
       calledAt: true,
       attemptedAt: true,
+      openCount: true,
       calledBy: { select: { displayName: true, username: true, isAdmin: true } },
     },
   });

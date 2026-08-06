@@ -18,6 +18,7 @@ type CallLog = {
   callNote: string | null;
   calledAt: Date;
   attemptedAt: Date | null;
+  openCount: number;
   calledBy: { displayName: string | null; username: string; isAdmin?: boolean };
 };
 
@@ -89,7 +90,9 @@ export default function LeadDetail({ lead, leadId }: { lead: Lead; leadId: numbe
                     const isNoAnswer = log.status === "NO_ANSWER";
                     const attemptedAt = log.attemptedAt ? new Date(log.attemptedAt) : null;
                     const diffSec = attemptedAt ? Math.floor((date.getTime() - attemptedAt.getTime()) / 1000) : null;
-                    const suspicious = isNoAnswer && (diffSec === null || diffSec < 30);
+                    const timeSuspicious = isNoAnswer && (diffSec === null || diffSec < 30);
+                    const openSuspicious = log.openCount > 1;
+                    const suspicious = timeSuspicious || openSuspicious;
                     return (
                       <div key={i} className={`border rounded-xl p-3 ${suspicious ? "border-red-200 bg-red-50" : "border-gray-100"}`}>
                         {/* Call number + date/time */}
@@ -113,15 +116,25 @@ export default function LeadDetail({ lead, leadId }: { lead: Lead; leadId: numbe
                             <p className="text-xs text-gray-600 leading-snug">{log.callNote}</p>
                           </div>
                         )}
-                        {/* Attempt audit — only show for NO_ANSWER */}
+                        {/* Attempt audit — always show for NO_ANSWER */}
                         {isNoAnswer && (
-                          <div className={`mt-1.5 text-[11px] rounded-lg px-2 py-1 flex items-center gap-1 ${suspicious ? "bg-red-100 text-red-700" : "bg-green-50 text-green-700"}`}>
-                            {suspicious ? "⚠️" : "✅"}
-                            {diffSec === null
-                              ? "No call attempt recorded — possible fake"
-                              : diffSec < 30
-                              ? `Only ${diffSec}s between dial & log — suspicious (min: 30s)`
-                              : `${diffSec}s between dial & log — looks genuine`}
+                          <div className="mt-1.5 space-y-1">
+                            <div className={`text-[11px] rounded-lg px-2 py-1 flex items-center gap-1 ${timeSuspicious ? "bg-red-100 text-red-700" : "bg-green-50 text-green-700"}`}>
+                              {timeSuspicious ? "⚠️" : "✅"}
+                              {diffSec === null
+                                ? "No call attempt recorded — possible fake"
+                                : diffSec < 30
+                                ? `Only ${diffSec}s between dial & log — suspicious (min: 30s)`
+                                : `${diffSec}s between opening & logging`}
+                            </div>
+                            <div className={`text-[11px] rounded-lg px-2 py-1 flex items-center gap-1 ${openSuspicious ? "bg-red-100 text-red-700" : "bg-green-50 text-green-700"}`}>
+                              {openSuspicious ? "⚠️" : "✅"}
+                              {log.openCount === 0
+                                ? "Log Call not opened — possible fake"
+                                : log.openCount === 1
+                                ? "Log Call opened 1 time"
+                                : `Log Call opened ${log.openCount} times — copied number & closed?`}
+                            </div>
                           </div>
                         )}
                         <p className="text-[11px] text-gray-300 mt-1">by {userLabel(log.calledBy)}</p>
