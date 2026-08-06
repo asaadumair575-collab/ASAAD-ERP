@@ -31,7 +31,7 @@ type Lead = {
   prevItem?: string | null;
 };
 
-export default function LeadDetail({ lead, leadId }: { lead: Lead; leadId: number }) {
+export default function LeadDetail({ lead, leadId, isAdmin = false }: { lead: Lead; leadId: number; isAdmin?: boolean }) {
   const [open, setOpen] = useState(false);
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -116,8 +116,8 @@ export default function LeadDetail({ lead, leadId }: { lead: Lead; leadId: numbe
                             <p className="text-xs text-gray-600 leading-snug">{log.callNote}</p>
                           </div>
                         )}
-                        {/* Attempt audit — always show for NO_ANSWER */}
-                        {isNoAnswer && (
+                        {/* Attempt audit — admin only */}
+                        {isAdmin && isNoAnswer && (
                           <div className="mt-1.5 space-y-1">
                             <div className={`text-[11px] rounded-lg px-2 py-1 flex items-center gap-1 ${timeSuspicious ? "bg-red-100 text-red-700" : "bg-green-50 text-green-700"}`}>
                               {timeSuspicious ? "⚠️" : "✅"}

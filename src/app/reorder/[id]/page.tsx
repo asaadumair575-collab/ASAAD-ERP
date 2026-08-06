@@ -304,6 +304,7 @@ export default async function ReorderCampaignPage({
                       <LeadDetail
                         lead={{ customerName: l.customerName, phone: l.phone, email: l.email, address: l.address, city: l.city, prevItem: l.prevItem }}
                         leadId={l.id}
+                        isAdmin={!!me.isAdmin}
                       />
                       {l.calledBy && (
                         <p className="text-[11px] text-gray-400 mt-0.5 leading-none">
