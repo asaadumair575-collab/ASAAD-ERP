@@ -239,10 +239,13 @@ export default function CallLogButton({
     <>
       <div className="flex items-center gap-1">
         <button
-          onClick={openModal}
-          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors whitespace-nowrap"
+          onClick={() => {
+            window.open(`tel:${lead.phone}`);
+            openModal();
+          }}
+          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors whitespace-nowrap flex items-center gap-1"
         >
-          {callLabel}
+          📞 {callLabel}
         </button>
         {(lead.status === "ORDER_PLACED" || lead.status === "INTERESTED_LATER") && (
           <button
