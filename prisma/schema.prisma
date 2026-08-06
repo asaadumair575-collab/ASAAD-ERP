@@ -346,6 +346,7 @@ model ReorderCampaign {
   createdBy         User?         @relation(fields: [createdById], references: [id])
   createdById       Int?
   isRetailFollowup  Boolean       @default(false)
+  isActive          Boolean       @default(true)
   leads             ReorderLead[]
 }
 

@@ -6,12 +6,14 @@ import ReorderUploadModal from "./ReorderUploadModal";
 import DeleteCampaignButton from "./DeleteCampaignButton";
 import LeadSearch from "./LeadSearch";
 import { userLabel } from "@/lib/userLabel";
+import { toggleReorderCampaignActive } from "@/lib/actions";
 
 export default async function ReorderPage() {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
   const campaigns = await prisma.reorderCampaign.findMany({
+    where: me.isAdmin ? undefined : { isActive: true },
     orderBy: { createdAt: "desc" },
     include: {
       createdBy: { select: { displayName: true, username: true, isAdmin: true } },
@@ -56,8 +58,9 @@ export default async function ReorderPage() {
             const ordered    = c.leads.filter((l) => l.status === "ORDER_RECEIVED").length;
             const pct = total > 0 ? Math.round((called / total) * 100) : 0;
 
+            const toggleActive = toggleReorderCampaignActive.bind(null, c.id, !c.isActive);
             return (
-              <div key={c.id} className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
+              <div key={c.id} className={`bg-white border rounded-2xl shadow-sm p-5 ${c.isActive ? "border-gray-200" : "border-gray-200 opacity-60"}`}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -66,6 +69,9 @@ export default async function ReorderPage() {
                       </Link>
                       {c.isRetailFollowup && (
                         <span className="text-[10px] font-semibold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full shrink-0">Retail</span>
+                      )}
+                      {!c.isActive && (
+                        <span className="text-[10px] font-semibold bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full shrink-0">Paused</span>
                       )}
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5">
@@ -80,6 +86,21 @@ export default async function ReorderPage() {
                     >
                       View Leads
                     </Link>
+                    {me.isAdmin && (
+                      <form action={toggleActive}>
+                        <button
+                          type="submit"
+                          title={c.isActive ? "Pause campaign" : "Activate campaign"}
+                          className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${
+                            c.isActive
+                              ? "border-yellow-200 text-yellow-700 bg-yellow-50 hover:bg-yellow-100"
+                              : "border-green-200 text-green-700 bg-green-50 hover:bg-green-100"
+                          }`}
+                        >
+                          {c.isActive ? "⏸ Pause" : "▶ Activate"}
+                        </button>
+                      </form>
+                    )}
                     {me.isAdmin && <DeleteCampaignButton id={c.id} />}
                   </div>
                 </div>

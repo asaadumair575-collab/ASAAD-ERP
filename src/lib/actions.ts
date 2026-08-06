@@ -2190,3 +2190,11 @@ export async function deleteReorderCampaign(id: number) {
   revalidatePath("/reorder");
 }
 
+export async function toggleReorderCampaignActive(id: number, isActive: boolean) {
+  "use server";
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Unauthorized");
+  await prisma.reorderCampaign.update({ where: { id }, data: { isActive } });
+  revalidatePath("/reorder");
+}
+
