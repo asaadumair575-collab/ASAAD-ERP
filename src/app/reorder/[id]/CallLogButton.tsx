@@ -346,13 +346,17 @@ export default function CallLogButton({
               <div>
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">{callLabel}</p>
                 <h3 className="text-sm font-semibold text-gray-800">{lead.customerName}</h3>
-                <p className="text-xs text-gray-400 font-mono mt-0.5">{lead.phone}</p>
               </div>
               {!simplified && step === "outcome" && (callCount === 0 || lead.status === "NO_ANSWER") && (
                 <button type="button" onClick={() => setStep("feedback")} className="text-xs text-gray-400 hover:text-gray-600">
                   ← Back
                 </button>
               )}
+            </div>
+
+            {/* Large phone number — for dialing */}
+            <div className="bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-center">
+              <p className="text-2xl font-bold font-mono tracking-widest text-gray-900 select-all">{lead.phone}</p>
             </div>
 
             {/* Step bar — for first call or when previous was no-answer (not in simplified mode) */}
