@@ -55,19 +55,14 @@ export default function CallLogButton({
   me,
   callCount,
   simplified = false,
-  noAnswerBlocked = false,
-  todayStats,
 }: {
   lead: { id: number; customerName: string; phone: string; status: string; callNote: string };
   me: { id: number; displayName: string | null; isAdmin?: boolean };
   callCount: number;
   simplified?: boolean;
-  noAnswerBlocked?: boolean;
-  todayStats?: { total: number; noAnswer: number };
 }) {
   const [open, setOpen]         = useState(false);
   const [step, setStep]         = useState<"feedback" | "outcome">("feedback");
-  const [showBlockAlert, setShowBlockAlert] = useState(false);
 
   // Step 1
   const [feedback,     setFeedback]     = useState<"POSITIVE" | "NEGATIVE" | "">("");
@@ -141,7 +136,6 @@ export default function CallLogButton({
       (!noteRequired || outcomeNote.trim().length > 0);
 
   function openModal() {
-    if (noAnswerBlocked && lead.status !== "NO_ANSWER") { setShowBlockAlert(true); return; }
     // Record call attempt on server (fire and forget — don't block modal open)
     recordCallAttempt(lead.id).catch(() => {});
     setStep(simplified || (callCount > 0 && lead.status !== "NO_ANSWER") ? "outcome" : "feedback");
@@ -273,54 +267,6 @@ export default function CallLogButton({
           </button>
         )}
       </div>
-
-      {/* No-Answer block alert */}
-      {showBlockAlert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowBlockAlert(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-red-600 px-6 py-5 text-center">
-              <p className="text-4xl mb-2">🚫</p>
-              <h2 className="text-white text-lg font-bold tracking-tight">New Calls Blocked</h2>
-              <p className="text-red-200 text-sm mt-1">Too many unanswered calls today</p>
-            </div>
-            <div className="px-6 py-5 space-y-4 text-center">
-              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <p className="text-3xl font-bold text-red-700">
-                  {todayStats?.noAnswer ?? 0} / {todayStats?.total ?? 0}
-                </p>
-                <p className="text-sm text-red-600 mt-0.5 font-medium">
-                  No-answer calls today — {todayStats && todayStats.total > 0 ? Math.round((todayStats.noAnswer / todayStats.total) * 100) : 0}% (limit: 30%)
-                </p>
-              </div>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                You cannot log new leads until your no-answer rate drops below 30%.
-                <br />
-                Retry the leads who didn&apos;t pick up first.
-              </p>
-              <button
-                onClick={() => {
-                  setShowBlockAlert(false);
-                  router.push(window.location.pathname + "?status=NO_ANSWER");
-                }}
-                className="w-full bg-yellow-500 text-white font-semibold text-sm py-3 rounded-xl hover:bg-yellow-600 transition-colors"
-              >
-                📵 Show No-Answer Leads ({todayStats?.noAnswer ?? 0})
-              </button>
-              <p className="text-xs text-gray-400">
-                Triggered after min. 3 calls · resets each day
-              </p>
-            </div>
-            <div className="px-6 pb-5">
-              <button
-                onClick={() => setShowBlockAlert(false)}
-                className="w-full border border-gray-200 text-gray-600 font-medium text-sm py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete confirmation */}
       {deleteConfirmOpen && (

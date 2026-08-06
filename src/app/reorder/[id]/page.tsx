@@ -8,7 +8,6 @@ import LeadDetail from "./LeadDetail";
 import BackfillAddressButton from "./BackfillAddressButton";
 import { userLabel } from "@/lib/userLabel";
 import PhonePopup from "./PhonePopup";
-import { todayPK, pkDayStart, pkDayEnd } from "@/lib/tz";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PENDING:          { label: "Pending",              color: "bg-gray-100 text-gray-500" },
@@ -100,20 +99,6 @@ export default async function ReorderCampaignPage({
     todayEmpMap.set(uid, e);
   }
   const todayEmpStats = Array.from(todayEmpMap.values()).sort((a, b) => b.total - a.total);
-
-  // Today's call logs for the current user — all campaigns, Pakistan timezone
-  const pkToday = todayPK();
-  const myTodayLogs = me.isAdmin ? [] : await prisma.reorderCallLog.findMany({
-    where: {
-      lead: { campaignId: campaign.id },
-      calledById: me.id,
-      calledAt: { gte: pkDayStart(pkToday), lte: pkDayEnd(pkToday) },
-    },
-    select: { status: true },
-  });
-  const myTodayTotal    = myTodayLogs.length;
-  const myTodayNoAnswer = myTodayLogs.filter((l) => l.status === "NO_ANSWER").length;
-  const noAnswerBlocked = !me.isAdmin && myTodayTotal >= 3 && myTodayNoAnswer / myTodayTotal > 0.30;
 
   const meSerial = { id: me.id, displayName: me.displayName ?? null, isAdmin: me.isAdmin };
 
@@ -356,7 +341,8 @@ export default async function ReorderCampaignPage({
                     </td>
                     <td className="py-2.5 px-4 hidden sm:table-cell"><NoteCell note={l.callNote ?? ""} /></td>
                     <td className="py-2.5 px-4 sticky right-0 bg-inherit">
-                      <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "" }} me={meSerial} callCount={l._count.callLogs} simplified={campaign.isRetailFollowup} noAnswerBlocked={noAnswerBlocked} todayStats={{ total: myTodayTotal, noAnswer: myTodayNoAnswer }} />
+                      <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "" }} me={meSerial} callCount={l._count.callLogs} simplified={campaign.isRetailFollowup} />
+
                     </td>
                   </tr>
                 );
