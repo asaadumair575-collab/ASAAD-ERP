@@ -418,7 +418,7 @@ export default function CallLogButton({
             {/* ── STEP 1: Feedback ── */}
             {step === "feedback" && (
               <>
-                {/* Quick save — not picked / number closed (blocked until countdown reaches 0) */}
+                {/* Quick save — not picked / number closed */}
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
@@ -515,18 +515,18 @@ export default function CallLogButton({
                       <button
                         type="button"
                         onClick={() => saveNoAnswer("Call not picked")}
-                        disabled={pending || countdown > 0}
+                        disabled={pending}
                         className="border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-40"
                       >
-                        {countdown > 0 ? `📵 Not Picked (${countdown}s)` : "📵 Not Picked"}
+                        📵 Not Picked
                       </button>
                       <button
                         type="button"
                         onClick={() => saveNoAnswer("Number closed")}
-                        disabled={pending || countdown > 0}
+                        disabled={pending}
                         className="border border-red-200 bg-red-50 text-red-600 text-sm font-semibold rounded-xl py-2.5 hover:bg-red-100 transition-colors disabled:opacity-40"
                       >
-                        {countdown > 0 ? `🔴 Closed (${countdown}s)` : "🔴 Number Closed"}
+                        🔴 Number Closed
                       </button>
                     </div>
                     {cooldownError && (
