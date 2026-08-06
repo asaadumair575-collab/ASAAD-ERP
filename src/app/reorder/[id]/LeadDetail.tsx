@@ -17,6 +17,7 @@ type CallLog = {
   status: string;
   callNote: string | null;
   calledAt: Date;
+  attemptedAt: Date | null;
   calledBy: { displayName: string | null; username: string; isAdmin?: boolean };
 };
 
@@ -85,15 +86,19 @@ export default function LeadDetail({ lead, leadId }: { lead: Lead; leadId: numbe
                   {callLogs.map((log, i) => {
                     const st = STATUS_LABELS[log.status] ?? { label: log.status, color: "text-gray-500" };
                     const date = log.calledAt instanceof Date ? log.calledAt : new Date(log.calledAt);
+                    const isNoAnswer = log.status === "NO_ANSWER";
+                    const attemptedAt = log.attemptedAt ? new Date(log.attemptedAt) : null;
+                    const diffSec = attemptedAt ? Math.floor((date.getTime() - attemptedAt.getTime()) / 1000) : null;
+                    const suspicious = isNoAnswer && (diffSec === null || diffSec < 20);
                     return (
-                      <div key={i} className="border border-gray-100 rounded-xl p-3">
+                      <div key={i} className={`border rounded-xl p-3 ${suspicious ? "border-red-200 bg-red-50" : "border-gray-100"}`}>
                         {/* Call number + date/time */}
                         <div className="flex items-center justify-between gap-2 mb-1.5">
                           <span className="text-xs font-bold text-gray-700">Call {i + 1}</span>
                           <span className="text-[11px] text-gray-400">
                             {date.toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
                             {" · "}
-                            {date.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                            {date.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Karachi" })}
                           </span>
                         </div>
                         {/* Outcome */}
@@ -108,7 +113,18 @@ export default function LeadDetail({ lead, leadId }: { lead: Lead; leadId: numbe
                             <p className="text-xs text-gray-600 leading-snug">{log.callNote}</p>
                           </div>
                         )}
-                        <p className="text-[11px] text-gray-300 mt-0.5">by {userLabel(log.calledBy)}</p>
+                        {/* Attempt audit — only show for NO_ANSWER */}
+                        {isNoAnswer && (
+                          <div className={`mt-1.5 text-[11px] rounded-lg px-2 py-1 flex items-center gap-1 ${suspicious ? "bg-red-100 text-red-700" : "bg-green-50 text-green-700"}`}>
+                            {suspicious ? "⚠️" : "✅"}
+                            {diffSec === null
+                              ? "No call attempt recorded before logging"
+                              : diffSec < 20
+                              ? `Logged only ${diffSec}s after opening — suspicious`
+                              : `Call opened ${diffSec}s before logging`}
+                          </div>
+                        )}
+                        <p className="text-[11px] text-gray-300 mt-1">by {userLabel(log.calledBy)}</p>
                       </div>
                     );
                   })}

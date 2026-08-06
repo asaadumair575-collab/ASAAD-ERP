@@ -351,34 +351,36 @@ model ReorderCampaign {
 }
 
 model ReorderLead {
-  id           Int               @id @default(autoincrement())
-  campaign     ReorderCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  campaignId   Int
-  customerName String
-  phone        String
-  email        String?
-  address      String?
-  city         String?
-  prevItem     String?
-  status       String            @default("PENDING")
-  callNote     String?
-  followUpDate DateTime?         @db.Date
-  calledAt     DateTime?
-  calledBy     User?             @relation("ReorderLeadCalledBy", fields: [calledById], references: [id])
-  calledById   Int?
-  createdAt    DateTime          @default(now())
-  callLogs     ReorderCallLog[]
+  id               Int               @id @default(autoincrement())
+  campaign         ReorderCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaignId       Int
+  customerName     String
+  phone            String
+  email            String?
+  address          String?
+  city             String?
+  prevItem         String?
+  status           String            @default("PENDING")
+  callNote         String?
+  followUpDate     DateTime?         @db.Date
+  calledAt         DateTime?
+  calledBy         User?             @relation("ReorderLeadCalledBy", fields: [calledById], references: [id])
+  calledById       Int?
+  createdAt        DateTime          @default(now())
+  pendingAttemptAt DateTime?
+  callLogs         ReorderCallLog[]
 }
 
 model ReorderCallLog {
-  id         Int         @id @default(autoincrement())
-  lead       ReorderLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  leadId     Int
-  status     String
-  callNote   String?
-  calledAt   DateTime    @default(now())
-  calledBy   User        @relation("ReorderCallLogCalledBy", fields: [calledById], references: [id])
-  calledById Int
+  id          Int         @id @default(autoincrement())
+  lead        ReorderLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId      Int
+  status      String
+  callNote    String?
+  calledAt    DateTime    @default(now())
+  calledBy    User        @relation("ReorderCallLogCalledBy", fields: [calledById], references: [id])
+  calledById  Int
+  attemptedAt DateTime?
 }
 
 model RetailFollowupLog {

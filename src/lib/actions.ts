@@ -2058,6 +2058,14 @@ export async function createReorderCampaign(
   return campaign.id;
 }
 
+export async function recordCallAttempt(leadId: number) {
+  const me = await requireAuth();
+  await prisma.reorderLead.update({
+    where: { id: leadId },
+    data: { pendingAttemptAt: new Date() },
+  });
+}
+
 export async function logReorderCall(
   leadId: number,
   status: string,
@@ -2083,8 +2091,15 @@ export async function logReorderCall(
   }
 
   const followUp = followUpDate ? new Date(followUpDate) : null;
-  // Clear follow-up date if lead is no longer interested
   const clearFollowUp = status !== "ORDER_PLACED";
+
+  // Read and clear the pending attempt timestamp
+  const lead = await prisma.reorderLead.findUnique({
+    where: { id: leadId },
+    select: { pendingAttemptAt: true },
+  });
+  const attemptedAt = lead?.pendingAttemptAt ?? null;
+
   await prisma.$transaction([
     prisma.reorderLead.update({
       where: { id: leadId },
@@ -2094,10 +2109,11 @@ export async function logReorderCall(
         calledAt: now,
         calledById: me.id,
         followUpDate: clearFollowUp ? null : (followUp ?? undefined),
+        pendingAttemptAt: null,
       },
     }),
     prisma.reorderCallLog.create({
-      data: { leadId, status, callNote: callNote || null, calledAt: now, calledById: me.id },
+      data: { leadId, status, callNote: callNote || null, calledAt: now, calledById: me.id, attemptedAt },
     }),
   ]);
   revalidatePath("/reorder");
@@ -2109,6 +2125,13 @@ export async function getLeadCallLogs(leadId: number) {
     where: { leadId },
     include: { calledBy: { select: { displayName: true, username: true, isAdmin: true } } },
     orderBy: { calledAt: "asc" },
+    select: {
+      status: true,
+      callNote: true,
+      calledAt: true,
+      attemptedAt: true,
+      calledBy: { select: { displayName: true, username: true, isAdmin: true } },
+    },
   });
 }
 

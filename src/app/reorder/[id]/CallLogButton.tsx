@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { logReorderCall, markReorderOrderReceived, deleteReorderLead, checkRetailOrder } from "@/lib/actions";
+import { logReorderCall, markReorderOrderReceived, deleteReorderLead, checkRetailOrder, recordCallAttempt } from "@/lib/actions";
 
 const OUTCOMES = [
   { value: "ORDER_PLACED",     label: "Interested",          color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
@@ -142,6 +142,8 @@ export default function CallLogButton({
 
   function openModal() {
     if (noAnswerBlocked && lead.status !== "NO_ANSWER") { setShowBlockAlert(true); return; }
+    // Record call attempt on server (fire and forget — don't block modal open)
+    recordCallAttempt(lead.id).catch(() => {});
     setStep(simplified || (callCount > 0 && lead.status !== "NO_ANSWER") ? "outcome" : "feedback");
     setFeedback("");
     setFeedbackNote("");
