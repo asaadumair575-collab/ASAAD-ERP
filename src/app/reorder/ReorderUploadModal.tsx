@@ -224,6 +224,9 @@ export default function ReorderUploadModal() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [parseInfo, setParseInfo] = useState<{ skippedStatus: number; mergedDupes: number; totalRows: number } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [divideMode, setDivideMode] = useState(false);
+  const [chunkSize, setChunkSize] = useState(1000);
+  const [divideProgress, setDivideProgress] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -245,6 +248,8 @@ export default function ReorderUploadModal() {
     setLeads([]);
     setParseInfo(null);
     setName("");
+    setDivideMode(false);
+    setDivideProgress(null);
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -257,6 +262,27 @@ export default function ReorderUploadModal() {
       router.push(`/reorder/${id}`);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function submitDivided() {
+    if (!name.trim() || leads.length === 0 || chunkSize < 1) return;
+    const size = Math.max(1, chunkSize);
+    const chunks: Lead[][] = [];
+    for (let i = 0; i < leads.length; i += size) chunks.push(leads.slice(i, i + size));
+    setSaving(true);
+    let lastId: number | null = null;
+    try {
+      for (let i = 0; i < chunks.length; i++) {
+        const partName = `${name.trim()} — Part ${i + 1}`;
+        setDivideProgress(`Uploading ${i + 1} / ${chunks.length}: ${partName}`);
+        lastId = await createReorderCampaign(partName, chunks[i]);
+      }
+      close();
+      if (lastId) router.push(`/reorder/${lastId}`);
+    } finally {
+      setSaving(false);
+      setDivideProgress(null);
     }
   }
 
@@ -350,17 +376,63 @@ export default function ReorderUploadModal() {
               )}
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-2">
-              <button onClick={close} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
-                Cancel
-              </button>
-              <button
-                onClick={submit}
-                disabled={saving || !name.trim() || leads.length === 0}
-                className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
-              >
-                {saving ? "Creating..." : `Create Campaign (${leads.length} leads)`}
-              </button>
+            <div className="px-6 py-4 border-t border-gray-100 space-y-3">
+              {/* Divide mode toggle — only shown when leads are loaded */}
+              {leads.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDivideMode((v) => !v)}
+                    className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${divideMode ? "bg-blue-600 text-white border-blue-600" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                  >
+                    ✂️ Divide & Upload
+                  </button>
+                  {divideMode && (
+                    <div className="flex items-center gap-2 flex-1">
+                      <span className="text-xs text-gray-500">Leads per campaign:</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={chunkSize}
+                        onChange={(e) => setChunkSize(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="w-24 border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                      />
+                      {chunkSize > 0 && (
+                        <span className="text-xs text-blue-600 font-medium">
+                          → {Math.ceil(leads.length / chunkSize)} campaigns
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {divideProgress && (
+                <p className="text-xs text-blue-600 font-medium">{divideProgress}</p>
+              )}
+
+              <div className="flex items-center justify-end gap-2">
+                <button onClick={close} disabled={saving} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-40">
+                  Cancel
+                </button>
+                {divideMode ? (
+                  <button
+                    onClick={submitDivided}
+                    disabled={saving || !name.trim() || leads.length === 0 || chunkSize < 1}
+                    className="bg-blue-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-40 transition-colors"
+                  >
+                    {saving ? divideProgress ?? "Uploading..." : `Upload ${Math.ceil(leads.length / chunkSize)} Campaigns`}
+                  </button>
+                ) : (
+                  <button
+                    onClick={submit}
+                    disabled={saving || !name.trim() || leads.length === 0}
+                    className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
+                  >
+                    {saving ? "Creating..." : `Create Campaign (${leads.length} leads)`}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
