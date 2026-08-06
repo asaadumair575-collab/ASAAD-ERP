@@ -7,6 +7,7 @@ import NoteCell from "./NoteCell";
 import LeadDetail from "./LeadDetail";
 import BackfillAddressButton from "./BackfillAddressButton";
 import { userLabel } from "@/lib/userLabel";
+import { todayPK, pkDayStart, pkDayEnd } from "@/lib/tz";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PENDING:          { label: "Pending",              color: "bg-gray-100 text-gray-500" },
@@ -99,12 +100,12 @@ export default async function ReorderCampaignPage({
   }
   const todayEmpStats = Array.from(todayEmpMap.values()).sort((a, b) => b.total - a.total);
 
-  // Today's call logs for the current user in this campaign (for 30% no-answer block)
+  // Today's call logs for the current user — all campaigns, Pakistan timezone
+  const pkToday = todayPK();
   const myTodayLogs = me.isAdmin ? [] : await prisma.reorderCallLog.findMany({
     where: {
-      lead: { campaignId: campaign.id },
       calledById: me.id,
-      calledAt: { gte: dayStart, lte: dayEnd },
+      calledAt: { gte: pkDayStart(pkToday), lte: pkDayEnd(pkToday) },
     },
     select: { status: true },
   });
