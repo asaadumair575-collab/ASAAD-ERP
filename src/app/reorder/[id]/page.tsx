@@ -50,7 +50,7 @@ export default async function ReorderCampaignPage({
           calledBy: { select: { id: true, displayName: true, username: true, isAdmin: true } },
           _count: { select: { callLogs: true } },
         },
-        orderBy: [{ status: "asc" }, { createdAt: "asc" }],
+        orderBy: [{ calledAt: { sort: "asc", nulls: "first" } }, { createdAt: "asc" }],
       },
     },
   });
