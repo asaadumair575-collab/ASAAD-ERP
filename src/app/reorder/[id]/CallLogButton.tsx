@@ -270,37 +270,44 @@ export default function CallLogButton({
       {showBlockAlert && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowBlockAlert(false)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            {/* Red header */}
             <div className="bg-red-600 px-6 py-5 text-center">
               <p className="text-4xl mb-2">🚫</p>
-              <h2 className="text-white text-lg font-bold tracking-tight">Call Blocked!</h2>
-              <p className="text-red-200 text-sm mt-1">Agla call log nahi ho sakta</p>
+              <h2 className="text-white text-lg font-bold tracking-tight">New Calls Blocked</h2>
+              <p className="text-red-200 text-sm mt-1">Too many unanswered calls today</p>
             </div>
-            {/* Body */}
             <div className="px-6 py-5 space-y-4 text-center">
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <p className="text-2xl font-bold text-red-700">
+                <p className="text-3xl font-bold text-red-700">
                   {todayStats?.noAnswer ?? 0} / {todayStats?.total ?? 0}
                 </p>
                 <p className="text-sm text-red-600 mt-0.5 font-medium">
-                  No Answer calls aaj — {todayStats && todayStats.total > 0 ? Math.round((todayStats.noAnswer / todayStats.total) * 100) : 0}%
+                  No-answer calls today — {todayStats && todayStats.total > 0 ? Math.round((todayStats.noAnswer / todayStats.total) * 100) : 0}% (limit: 30%)
                 </p>
               </div>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Aaj ki calls mein <span className="font-semibold text-red-600">30% se ziada</span> no-answer hain.
+                You cannot log new leads until your no-answer rate drops below 30%.
                 <br />
-                Pehle jo calls pickup nahi huin unhe dobara try karein.
+                Retry the leads who didn&apos;t pick up first.
               </p>
+              <button
+                onClick={() => {
+                  setShowBlockAlert(false);
+                  router.push(window.location.pathname + "?status=NO_ANSWER");
+                }}
+                className="w-full bg-yellow-500 text-white font-semibold text-sm py-3 rounded-xl hover:bg-yellow-600 transition-colors"
+              >
+                📵 Show No-Answer Leads ({todayStats?.noAnswer ?? 0})
+              </button>
               <p className="text-xs text-gray-400">
-                Limit: max 30% no-answer allowed · aaj minimum 3 calls ke baad activate hota hai
+                Triggered after min. 3 calls · resets each day
               </p>
             </div>
             <div className="px-6 pb-5">
               <button
                 onClick={() => setShowBlockAlert(false)}
-                className="w-full bg-red-600 text-white font-semibold text-sm py-3 rounded-xl hover:bg-red-700 transition-colors"
+                className="w-full border border-gray-200 text-gray-600 font-medium text-sm py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
               >
-                Samajh Gaya — Close
+                Close
               </button>
             </div>
           </div>
@@ -312,7 +319,7 @@ export default function CallLogButton({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setDeleteConfirmOpen(false)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div>
-              <h3 className="text-sm font-semibold text-gray-800">Delete karna chahte ho?</h3>
+              <h3 className="text-sm font-semibold text-gray-800">Delete this lead?</h3>
               <p className="text-xs text-gray-500 mt-1">{lead.customerName} · {lead.phone}</p>
             </div>
             <div className="flex gap-2 justify-end">
@@ -342,7 +349,7 @@ export default function CallLogButton({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setOrderConfirmOpen(false)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div>
-              <h3 className="text-sm font-semibold text-gray-800">🟢 Order Received?</h3>
+              <h3 className="text-sm font-semibold text-gray-800">🟢 Confirm Order Received</h3>
               <p className="text-xs text-gray-400 mt-0.5">{lead.customerName}</p>
             </div>
             <div>
@@ -357,7 +364,7 @@ export default function CallLogButton({
                 placeholder="e.g. 1234"
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
               />
-              {!orderId.trim() && <p className="text-xs text-red-400 mt-1">Order ID zaroori hai</p>}
+              {!orderId.trim() && <p className="text-xs text-red-400 mt-1">Order ID is required</p>}
               <OrderVerifyBadge result={quickVerify} />
             </div>
             <div className="flex gap-2 justify-end">
@@ -412,19 +419,19 @@ export default function CallLogButton({
                   disabled={pending}
                   className="w-full border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-40"
                 >
-                  📵 Call Not Picked — Save & Done
+                  📵 Not Picked — Save & Done
                 </button>
 
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-px bg-gray-100" />
-                  <span className="text-xs text-gray-300">ya call hui to</span>
+                  <span className="text-xs text-gray-300">or if they answered</span>
                   <div className="flex-1 h-px bg-gray-100" />
                 </div>
 
                 {/* Feedback buttons */}
                 <div>
                   <p className="text-xs font-semibold text-gray-700 mb-2">
-                    Customer ka feedback kya tha? <span className="text-red-500">*</span>
+                    What was the customer's response? <span className="text-red-500">*</span>
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {[
@@ -454,12 +461,12 @@ export default function CallLogButton({
                     value={feedbackNote}
                     onChange={(e) => setFeedbackNote(e.target.value)}
                     rows={3}
-                    placeholder="Customer ne kya kaha?"
+                    placeholder="What did the customer say?"
                     className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none ${
                       !feedbackNote.trim() ? "border-gray-300 focus:ring-gray-400" : "border-gray-200 focus:ring-black"
                     }`}
                   />
-                  {!feedbackNote.trim() && <p className="text-xs text-gray-400 mt-1">Note likhna zaroori hai</p>}
+                  {!feedbackNote.trim() && <p className="text-xs text-gray-400 mt-1">Note is required</p>}
                 </div>
 
                 <div className="flex gap-2 justify-end">
@@ -489,11 +496,11 @@ export default function CallLogButton({
                       disabled={pending}
                       className="w-full border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-40"
                     >
-                      📵 Call Not Picked — Save & Done
+                      📵 Not Picked — Save & Done
                     </button>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-px bg-gray-100" />
-                      <span className="text-xs text-gray-300">ya call hui to</span>
+                      <span className="text-xs text-gray-300">or if they answered</span>
                       <div className="flex-1 h-px bg-gray-100" />
                     </div>
                   </>
@@ -502,7 +509,7 @@ export default function CallLogButton({
                 {/* Outcome buttons */}
                 <div>
                   <p className="text-xs font-semibold text-gray-700 mb-2">
-                    {simplified ? "Order mila?" : "Call ka outcome kya raha?"} <span className="text-red-500">*</span>
+                    {simplified ? "Order received?" : "What was the outcome?"} <span className="text-red-500">*</span>
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {(simplified ? RETAIL_OUTCOMES : outcomeOptions).map((o) => (
@@ -537,7 +544,7 @@ export default function CallLogButton({
                       placeholder="e.g. 1234"
                       className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
                     />
-                    {!mainOrderId.trim() && <p className="text-xs text-red-400 mt-1">Order ID zaroori hai</p>}
+                    {!mainOrderId.trim() && <p className="text-xs text-red-400 mt-1">Order ID is required</p>}
                     <OrderVerifyBadge result={mainVerify} />
                   </div>
                 )}
@@ -558,7 +565,7 @@ export default function CallLogButton({
                       className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
                     />
                     {!simplifiedOrderId.trim() && (
-                      <p className="text-xs text-red-400 mt-1">Order ID zaroori hai</p>
+                      <p className="text-xs text-red-400 mt-1">Order ID is required</p>
                     )}
                     <OrderVerifyBadge result={simplVerify} />
                   </div>
@@ -604,7 +611,7 @@ export default function CallLogButton({
                 {!simplified && isInterested && (
                   <div className="bg-violet-50 border border-violet-100 rounded-xl p-3 space-y-2">
                     <p className="text-xs font-semibold text-violet-700">
-                      Abhi order kyun nahi? <span className="text-red-500">*</span>
+                      Why no order yet? <span className="text-red-500">*</span>
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {INTERESTED_REASONS.map((r) => (
@@ -628,11 +635,11 @@ export default function CallLogButton({
                         autoFocus
                         value={interestedOtherText}
                         onChange={(e) => setInterestedOtherText(e.target.value)}
-                        placeholder="Wajah likhein..."
+                        placeholder="Specify reason..."
                         className="w-full border border-violet-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
                       />
                     )}
-                    {!interestedReason && <p className="text-xs text-violet-400">Wajah select karni zaroori hai</p>}
+                    {!interestedReason && <p className="text-xs text-violet-400">Please select a reason</p>}
                   </div>
                 )}
 
@@ -656,7 +663,7 @@ export default function CallLogButton({
                 {!simplified && showReasons && isNotInterested && !isNotInterestedLead && (
                   <div className="bg-red-50 border border-red-100 rounded-xl p-3 space-y-2">
                     <p className="text-xs font-semibold text-red-700">
-                      Not interested ki wajah? <span className="text-red-500">*</span>
+                      Reason for not interested? <span className="text-red-500">*</span>
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {NOT_INTERESTED_REASONS.map((r) => (
@@ -680,11 +687,11 @@ export default function CallLogButton({
                         autoFocus
                         value={otherText}
                         onChange={(e) => setOtherText(e.target.value)}
-                        placeholder="Wajah likhein..."
+                        placeholder="Specify reason..."
                         className="w-full border border-red-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
                       />
                     )}
-                    {!reason && <p className="text-xs text-red-400">Wajah select karni zaroori hai</p>}
+                    {!reason && <p className="text-xs text-red-400">Please select a reason</p>}
                   </div>
                 )}
 
@@ -698,10 +705,10 @@ export default function CallLogButton({
                       value={outcomeNote}
                       onChange={(e) => setOutcomeNote(e.target.value)}
                       rows={2}
-                      placeholder="Koi baat ho to likhein..."
+                      placeholder="Any additional notes..."
                       className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
                     />
-                    {!simplified && !outcomeNote.trim() && <p className="text-xs text-gray-400 mt-1">Note likhna zaroori hai</p>}
+                    {!simplified && !outcomeNote.trim() && <p className="text-xs text-gray-400 mt-1">Note is required</p>}
                   </div>
                 )}
 
@@ -732,12 +739,12 @@ type VerifyResult = { found: boolean; order?: { id: number; customerName: string
 function OrderVerifyBadge({ result }: { result: null | "checking" | VerifyResult }) {
   if (!result) return null;
   if (result === "checking") {
-    return <p className="text-xs text-gray-400 mt-1.5">🔍 Checking...</p>;
+    return <p className="text-xs text-gray-400 mt-1.5">🔍 Verifying...</p>;
   }
   if (!result.found) {
     return (
       <div className="mt-1.5 text-xs rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-red-700 font-medium">
-        ❌ Retail orders mein yeh order nahi mila
+        ❌ Order not found in retail orders
       </div>
     );
   }
@@ -750,7 +757,7 @@ function OrderVerifyBadge({ result }: { result: null | "checking" | VerifyResult
   }
   return (
     <div className="mt-1.5 text-xs rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-amber-700 font-medium">
-      ⚠️ Order #{result.order!.id} mila ({result.order!.customerName}) — lekin phone match nahi karta
+      ⚠️ Order #{result.order!.id} found ({result.order!.customerName}) — but phone does not match
     </div>
   );
 }
