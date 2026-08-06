@@ -312,7 +312,6 @@ export default async function ReorderCampaignPage({
                         </p>
                       )}
                     </td>
-                    <td className="py-2.5 px-4 hidden sm:table-cell"><PhonePopup phone={l.phone} name={l.customerName} /></td>
                     <td className="py-2.5 px-4 text-gray-400 text-sm hidden md:table-cell">{l.city || "—"}</td>
                     <td className="py-2.5 px-4 text-gray-300 text-xs truncate max-w-[140px] hidden lg:table-cell">{l.prevItem || "—"}</td>
                     <td className="py-2.5 px-4">
