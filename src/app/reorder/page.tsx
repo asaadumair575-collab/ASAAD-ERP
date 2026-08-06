@@ -18,7 +18,7 @@ export default async function ReorderPage() {
     include: {
       createdBy: { select: { displayName: true, username: true, isAdmin: true } },
       _count: { select: { leads: true } },
-      leads: { select: { status: true } },
+      leads: { select: { status: true, _count: { select: { callLogs: true } } } },
     },
   });
 
@@ -51,12 +51,13 @@ export default async function ReorderPage() {
       ) : (
         <div className="space-y-3">
           {campaigns.map((c) => {
-            const total      = c.leads.length;
-            const pending    = c.leads.filter((l) => l.status === "PENDING").length;
-            const called     = c.leads.filter((l) => l.status !== "PENDING").length;
-            const interested = c.leads.filter((l) => l.status === "ORDER_PLACED").length;
-            const ordered    = c.leads.filter((l) => l.status === "ORDER_RECEIVED").length;
-            const pct = total > 0 ? Math.round((called / total) * 100) : 0;
+            const total           = c.leads.length;
+            const noAnswer        = c.leads.filter((l) => l.status === "NO_ANSWER").length;
+            const notInterested   = c.leads.filter((l) => l.status === "NOT_INTERESTED").length;
+            const interestedLater = c.leads.filter((l) => l.status === "INTERESTED_LATER").length;
+            const totalCallLogs   = c.leads.reduce((s, l) => s + l._count.callLogs, 0);
+            const calledLeads     = c.leads.filter((l) => l.status !== "PENDING").length;
+            const pct = total > 0 ? Math.round((calledLeads / total) * 100) : 0;
 
             const toggleActive = toggleReorderCampaignActive.bind(null, c.id, !c.isActive);
             return (
@@ -108,11 +109,11 @@ export default async function ReorderPage() {
                 {/* Stats row */}
                 <div className="mt-4 grid grid-cols-5 gap-3">
                   {[
-                    { label: "Total",      value: total,      color: "text-gray-700"   },
-                    { label: "Pending",    value: pending,    color: "text-amber-600"  },
-                    { label: "Called",     value: called,     color: "text-blue-600"   },
-                    { label: "Interested", value: interested, color: "text-violet-600" },
-                    { label: "Orders",     value: ordered,    color: "text-green-600"  },
+                    { label: "Total",           value: total,           color: "text-gray-700"   },
+                    { label: "No Answer",        value: noAnswer,        color: "text-yellow-600" },
+                    { label: "Not Interested",   value: notInterested,   color: "text-red-500"    },
+                    { label: "Int. Later",       value: interestedLater, color: "text-orange-500" },
+                    { label: "Calls Made",       value: totalCallLogs,   color: "text-blue-600"   },
                   ].map((s) => (
                     <div key={s.label} className="bg-gray-50 rounded-xl p-3 text-center">
                       <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
