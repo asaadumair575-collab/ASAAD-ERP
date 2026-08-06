@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useActionState } from "react";
 import SubmitButton from "@/components/SubmitButton";
 
 type Product = { id: number; name: string };
@@ -16,7 +16,7 @@ export default function RetailOrderForm({
   products,
   customers = [],
 }: {
-  action: (formData: FormData) => void;
+  action: (formData: FormData) => Promise<void>;
   products: Product[];
   customers?: Customer[];
 }) {
@@ -25,6 +25,10 @@ export default function RetailOrderForm({
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [search, setSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+
+  const [error, formAction] = useActionState(async (_: string | null, formData: FormData) => {
+    try { await action(formData); return null; } catch (e) { return String(e instanceof Error ? e.message : e); }
+  }, null);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -56,7 +60,10 @@ export default function RetailOrderForm({
   const balanceAfterAdvance = Math.max(0, total - (deliveryCharge || 0));
 
   return (
-    <form action={action} encType="multipart/form-data" className="space-y-5">
+    <form action={formAction} encType="multipart/form-data" className="space-y-5">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>
+      )}
       {/* Customer info */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
         <h2 className="text-sm font-semibold text-gray-700">Customer</h2>
