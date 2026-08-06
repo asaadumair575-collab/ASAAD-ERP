@@ -140,7 +140,7 @@ export default function CallLogButton({
       (!noteRequired || outcomeNote.trim().length > 0);
 
   function openModal() {
-    if (noAnswerBlocked) { setShowBlockAlert(true); return; }
+    if (noAnswerBlocked && lead.status !== "NO_ANSWER") { setShowBlockAlert(true); return; }
     setStep(simplified || (callCount > 0 && lead.status !== "NO_ANSWER") ? "outcome" : "feedback");
     setFeedback("");
     setFeedbackNote("");
