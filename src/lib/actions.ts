@@ -2063,9 +2063,25 @@ export async function logReorderCall(
   status: string,
   callNote: string,
   followUpDate?: string | null
-) {
+): Promise<{ error: string } | void> {
   const me = await requireAuth();
   const now = new Date();
+
+  // Server-side 30-second cooldown between consecutive NO_ANSWER logs
+  if (status === "NO_ANSWER") {
+    const lastLog = await prisma.reorderCallLog.findFirst({
+      where: { calledById: me.id },
+      orderBy: { calledAt: "desc" },
+      select: { calledAt: true, status: true },
+    });
+    if (lastLog && lastLog.status === "NO_ANSWER") {
+      const secondsAgo = Math.floor((now.getTime() - new Date(lastLog.calledAt).getTime()) / 1000);
+      if (secondsAgo < 30) {
+        return { error: `Please wait ${30 - secondsAgo} more second${30 - secondsAgo === 1 ? "" : "s"} before logging another unanswered call.` };
+      }
+    }
+  }
+
   const followUp = followUpDate ? new Date(followUpDate) : null;
   // Clear follow-up date if lead is no longer interested
   const clearFollowUp = status !== "ORDER_PLACED";

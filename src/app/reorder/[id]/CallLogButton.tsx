@@ -95,6 +95,7 @@ export default function CallLogButton({
   const [simplVerify,  setSimplVerify]  = useState<null | "checking" | VerifyResult>(null);
 
   const [pending, startTransition] = useTransition();
+  const [cooldownError, setCooldownError] = useState<string | null>(null);
   const router = useRouter();
 
   // Countdown timer — starts when modal opens, "Not Picked" blocked until 0
@@ -188,8 +189,13 @@ export default function CallLogButton({
   }
 
   function saveNoAnswer(note: string) {
+    setCooldownError(null);
     startTransition(async () => {
-      await logReorderCall(lead.id, "NO_ANSWER", note);
+      const result = await logReorderCall(lead.id, "NO_ANSWER", note);
+      if (result && "error" in result) {
+        setCooldownError(result.error);
+        return;
+      }
       setOpen(false);
       router.replace(window.location.pathname + window.location.search);
     });
@@ -454,6 +460,11 @@ export default function CallLogButton({
                 {countdown > 0 && (
                   <p className="text-xs text-gray-400 text-center">Wait {countdown}s — verifying call attempt</p>
                 )}
+                {cooldownError && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2 text-center font-medium">
+                    ⏱ {cooldownError}
+                  </div>
+                )}
 
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-px bg-gray-100" />
@@ -543,6 +554,11 @@ export default function CallLogButton({
                     </div>
                     {countdown > 0 && (
                       <p className="text-xs text-gray-400 text-center">Wait {countdown}s — verifying call attempt</p>
+                    )}
+                    {cooldownError && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2 text-center font-medium">
+                        ⏱ {cooldownError}
+                      </div>
                     )}
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-px bg-gray-100" />
