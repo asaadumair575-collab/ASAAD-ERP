@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-
-const NO_ANSWER_DELAY = 25; // seconds employee must wait before logging Not Picked / Number Closed
 import { logReorderCall, markReorderOrderReceived, deleteReorderLead, checkRetailOrder } from "@/lib/actions";
 
 const OUTCOMES = [
@@ -70,8 +68,6 @@ export default function CallLogButton({
   const [open, setOpen]         = useState(false);
   const [step, setStep]         = useState<"feedback" | "outcome">("feedback");
   const [showBlockAlert, setShowBlockAlert] = useState(false);
-  const [countdown, setCountdown] = useState(NO_ANSWER_DELAY);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Step 1
   const [feedback,     setFeedback]     = useState<"POSITIVE" | "NEGATIVE" | "">("");
@@ -97,22 +93,6 @@ export default function CallLogButton({
   const [pending, startTransition] = useTransition();
   const [cooldownError, setCooldownError] = useState<string | null>(null);
   const router = useRouter();
-
-  // Countdown timer — starts when modal opens, "Not Picked" blocked until 0
-  useEffect(() => {
-    if (open) {
-      setCountdown(NO_ANSWER_DELAY);
-      timerRef.current = setInterval(() => {
-        setCountdown((c) => {
-          if (c <= 1) { clearInterval(timerRef.current!); return 0; }
-          return c - 1;
-        });
-      }, 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
-    }
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [open]);
 
   const isInterestedLead     = lead.status === "ORDER_PLACED" || lead.status === "ORDER_RECEIVED" || lead.status === "INTERESTED_LATER";
   const isNotInterestedLead  = lead.status === "NOT_INTERESTED";
@@ -443,23 +423,20 @@ export default function CallLogButton({
                   <button
                     type="button"
                     onClick={() => saveNoAnswer("Call not picked")}
-                    disabled={pending || countdown > 0}
+                    disabled={pending}
                     className="border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-40"
                   >
-                    {countdown > 0 ? `📵 Not Picked (${countdown}s)` : "📵 Not Picked"}
+                    📵 Not Picked
                   </button>
                   <button
                     type="button"
                     onClick={() => saveNoAnswer("Number closed")}
-                    disabled={pending || countdown > 0}
+                    disabled={pending}
                     className="border border-red-200 bg-red-50 text-red-600 text-sm font-semibold rounded-xl py-2.5 hover:bg-red-100 transition-colors disabled:opacity-40"
                   >
-                    {countdown > 0 ? `🔴 Closed (${countdown}s)` : "🔴 Number Closed"}
+                    🔴 Number Closed
                   </button>
                 </div>
-                {countdown > 0 && (
-                  <p className="text-xs text-gray-400 text-center">Wait {countdown}s — verifying call attempt</p>
-                )}
                 {cooldownError && (
                   <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2 text-center font-medium">
                     ⏱ {cooldownError}
@@ -552,9 +529,6 @@ export default function CallLogButton({
                         {countdown > 0 ? `🔴 Closed (${countdown}s)` : "🔴 Number Closed"}
                       </button>
                     </div>
-                    {countdown > 0 && (
-                      <p className="text-xs text-gray-400 text-center">Wait {countdown}s — verifying call attempt</p>
-                    )}
                     {cooldownError && (
                       <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2 text-center font-medium">
                         ⏱ {cooldownError}
