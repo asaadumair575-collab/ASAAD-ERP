@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { logReorderCall, markReorderOrderReceived, deleteReorderLead, checkRetailOrder, recordCallAttempt } from "@/lib/actions";
+import { logReorderCall, markReorderOrderReceived, deleteReorderLead, checkRetailOrder, recordCallAttempt, recordCallAbort } from "@/lib/actions";
 
 const OUTCOMES = [
   { value: "ORDER_PLACED",     label: "Interested",           color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
@@ -51,9 +51,10 @@ export default function CallLogButton({
   callCount: number;
   simplified?: boolean;
 }) {
-  const [open, setOpen]           = useState(false);
-  const [step, setStep]           = useState<"delivery" | "feedback" | "outcome">("delivery");
-  const [showPhone, setShowPhone] = useState(false);
+  const [open, setOpen]               = useState(false);
+  const [step, setStep]               = useState<"delivery" | "feedback" | "outcome">("delivery");
+  const [showPhone, setShowPhone]     = useState(false);
+  const [abortConfirm, setAbortConfirm] = useState<"first" | "second" | null>(null);
 
   // Step 0 — delivery check
   const [maalMila,     setMaalMila]     = useState<boolean | null>(null);
@@ -120,6 +121,23 @@ export default function CallLogButton({
     setSimplVerify(null);
     setCooldownError(null);
     setOpen(true);
+  }
+
+  function tryClose() {
+    if (showPhone) {
+      setAbortConfirm("first");
+    } else {
+      setOpen(false);
+    }
+  }
+
+  function confirmAbort() {
+    startTransition(async () => {
+      await recordCallAbort(lead.id);
+      setAbortConfirm(null);
+      setOpen(false);
+      router.replace(window.location.pathname + window.location.search);
+    });
   }
 
   function saveMaalNahi() {
@@ -301,7 +319,7 @@ export default function CallLogButton({
       )}
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={tryClose}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
 
             {/* Header */}
@@ -380,7 +398,7 @@ export default function CallLogButton({
 
                 <div>
                   <p className="text-xs font-semibold text-gray-700 mb-2">
-                    Kya pichla order/maal mila tha? <span className="text-red-500">*</span>
+                    Kya customer ka pichla order deliver ho chuka hai? <span className="text-red-500">*</span>
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -392,7 +410,7 @@ export default function CallLogButton({
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
-                      ✅ Maal Mila
+                      ✅ Haan, Mil Gaya
                     </button>
                     <button
                       type="button"
@@ -403,7 +421,7 @@ export default function CallLogButton({
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
-                      📦 Maal Nahi Mila
+                      📦 Nahi Mila Abhi Tak
                     </button>
                   </div>
                 </div>
@@ -428,7 +446,7 @@ export default function CallLogButton({
                 )}
 
                 <div className="flex gap-2 justify-end">
-                  <button onClick={() => setOpen(false)} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
+                  <button onClick={tryClose} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
                     Cancel
                   </button>
                   {maalMila === false ? (
@@ -495,7 +513,7 @@ export default function CallLogButton({
                 </div>
 
                 <div className="flex gap-2 justify-end">
-                  <button onClick={() => setOpen(false)} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
+                  <button onClick={tryClose} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
                     Cancel
                   </button>
                   <button
@@ -666,7 +684,7 @@ export default function CallLogButton({
                 )}
 
                 <div className="flex gap-2 justify-end">
-                  <button onClick={() => setOpen(false)} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
+                  <button onClick={tryClose} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
                     Cancel
                   </button>
                   <button
@@ -680,6 +698,63 @@ export default function CallLogButton({
               </>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* Abort confirmation — first */}
+      {abortConfirm === "first" && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Cancel karna chahte hain?</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Aapne number dekh liya hai. Cancel karna admin ko record mein dikh jaayega.
+              </p>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setAbortConfirm(null)}
+                className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
+              >
+                Wapis Jao
+              </button>
+              <button
+                onClick={() => setAbortConfirm("second")}
+                className="bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-700"
+              >
+                Haan, Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Abort confirmation — second (final) */}
+      {abortConfirm === "second" && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-red-700">Bilkul Yaqeen Hai?</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Yeh lead aapki list se hata di jaayegi aur admin ko alert milega ki aapne number dekh ke cancel kiya.
+              </p>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setAbortConfirm(null)}
+                className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
+              >
+                Nahi, Ruko
+              </button>
+              <button
+                onClick={confirmAbort}
+                disabled={pending}
+                className="bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-40"
+              >
+                {pending ? "..." : "Haan, Pakka Cancel"}
+              </button>
+            </div>
           </div>
         </div>
       )}

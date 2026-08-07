@@ -369,6 +369,7 @@ model ReorderLead {
   createdAt        DateTime             @default(now())
   callLogs         ReorderCallLog[]
   callAttempts     ReorderCallAttempt[]
+  callAborts       ReorderCallAbort[]
 }
 
 model ReorderCallLog {
@@ -390,6 +391,14 @@ model ReorderCallAttempt {
   leadId   Int
   userId   Int
   openedAt DateTime    @default(now())
+}
+
+model ReorderCallAbort {
+  id        Int         @id @default(autoincrement())
+  lead      ReorderLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId    Int
+  userId    Int
+  abortedAt DateTime    @default(now())
 }
 
 model RetailFollowupLog {

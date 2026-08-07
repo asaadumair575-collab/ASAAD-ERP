@@ -2065,6 +2065,13 @@ export async function recordCallAttempt(leadId: number) {
   });
 }
 
+export async function recordCallAbort(leadId: number) {
+  const me = await requireAuth();
+  await prisma.reorderCallAbort.create({
+    data: { leadId, userId: me.id },
+  });
+}
+
 export async function logReorderCall(
   leadId: number,
   status: string,

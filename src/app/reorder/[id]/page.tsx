@@ -7,7 +7,6 @@ import NoteCell from "./NoteCell";
 import LeadDetail from "./LeadDetail";
 import BackfillAddressButton from "./BackfillAddressButton";
 import { userLabel } from "@/lib/userLabel";
-import PhonePopup from "./PhonePopup";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PENDING:          { label: "Pending",              color: "bg-gray-100 text-gray-500" },
@@ -48,6 +47,7 @@ export default async function ReorderCampaignPage({
         include: {
           calledBy: { select: { id: true, displayName: true, username: true, isAdmin: true } },
           _count: { select: { callLogs: true } },
+          callAborts: { select: { userId: true, abortedAt: true } },
         },
         orderBy: [{ calledAt: { sort: "asc", nulls: "first" } }, { createdAt: "asc" }],
       },
@@ -56,6 +56,8 @@ export default async function ReorderCampaignPage({
   if (!campaign) notFound();
 
   const leads = campaign.leads.filter((l) => {
+    // hide aborted leads from the employee who aborted (admin sees all)
+    if (!me.isAdmin && l.callAborts.some((a) => a.userId === me.id)) return false;
     if (status && l.status !== status) return false;
     if (callDate) {
       const calledAt = l.calledAt ? new Date(l.calledAt) : null;
@@ -301,6 +303,11 @@ export default async function ReorderCampaignPage({
                   <tr key={l.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="py-2.5 px-4 text-gray-300 text-xs hidden sm:table-cell">{i + 1}</td>
                     <td className="py-2.5 px-4">
+                      {me.isAdmin && l.callAborts.length > 0 && (
+                        <p className="text-[10px] font-semibold text-red-500 mb-0.5">
+                          ⚠️ {l.callAborts.length === 1 ? "1 employee" : `${l.callAborts.length} employees`} ne number dekh ke cancel kiya
+                        </p>
+                      )}
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <LeadDetail
                           lead={{ customerName: l.customerName, phone: l.phone, email: l.email, address: l.address, city: l.city, prevItem: l.prevItem }}
