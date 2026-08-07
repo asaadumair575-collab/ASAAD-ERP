@@ -280,7 +280,7 @@ export default async function ReorderCampaignPage({
       </form>
 
       {/* Leads table */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-x-auto">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-x-auto isolate">
         {leads.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-12">No leads match the filter</p>
         ) : (
@@ -294,7 +294,7 @@ export default async function ReorderCampaignPage({
                 <th className="py-3 px-4 text-left hidden lg:table-cell">Last Order</th>
                 <th className="py-3 px-4 text-left hidden sm:table-cell">Status</th>
                 <th className="py-3 px-4 text-left hidden sm:table-cell">Note</th>
-                <th className="py-3 px-4 text-left sticky right-0 bg-gray-50 z-10"></th>
+                <th className="py-3 px-4 text-left sticky right-0 bg-gray-50"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
