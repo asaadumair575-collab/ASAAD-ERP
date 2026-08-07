@@ -90,7 +90,7 @@ export default function LeadDetail({ lead, leadId, isAdmin = false }: { lead: Le
                     const isNoAnswer = log.status === "NO_ANSWER";
                     const attemptedAt = log.attemptedAt ? new Date(log.attemptedAt) : null;
                     const diffSec = attemptedAt ? Math.floor((date.getTime() - attemptedAt.getTime()) / 1000) : null;
-                    const timeSuspicious = isNoAnswer && (diffSec === null || diffSec < 30);
+                    const timeSuspicious = isNoAnswer && (diffSec === null || diffSec < 20);
                     const openSuspicious = log.openCount > 1;
                     const suspicious = timeSuspicious || openSuspicious;
                     return (
@@ -123,8 +123,8 @@ export default function LeadDetail({ lead, leadId, isAdmin = false }: { lead: Le
                               {timeSuspicious ? "⚠️" : "✅"}
                               {diffSec === null
                                 ? "No call attempt recorded — possible fake"
-                                : diffSec < 30
-                                ? `Only ${diffSec}s between dial & log — suspicious (min: 30s)`
+                                : diffSec < 20
+                                ? `Only ${diffSec}s between dial & log — suspicious (min: 20s)`
                                 : `${diffSec}s between opening & logging`}
                             </div>
                             <div className={`text-[11px] rounded-lg px-2 py-1 flex items-center gap-1 ${openSuspicious ? "bg-red-100 text-red-700" : "bg-green-50 text-green-700"}`}>
