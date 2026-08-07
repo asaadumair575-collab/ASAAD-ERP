@@ -124,11 +124,7 @@ export default function CallLogButton({
   }
 
   function tryClose() {
-    if (showPhone) {
-      setAbortConfirm("first");
-    } else {
-      setOpen(false);
-    }
+    setAbortConfirm("first");
   }
 
   function confirmAbort() {
@@ -398,7 +394,7 @@ export default function CallLogButton({
 
                 <div>
                   <p className="text-xs font-semibold text-gray-700 mb-2">
-                    Kya customer ka pichla order deliver ho chuka hai? <span className="text-red-500">*</span>
+                    Was the previous order delivered to the customer? <span className="text-red-500">*</span>
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -410,7 +406,7 @@ export default function CallLogButton({
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
-                      ✅ Haan, Mil Gaya
+                      ✅ Yes, Delivered
                     </button>
                     <button
                       type="button"
@@ -421,7 +417,7 @@ export default function CallLogButton({
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
-                      📦 Nahi Mila Abhi Tak
+                      📦 Not Delivered Yet
                     </button>
                   </div>
                 </div>
@@ -436,7 +432,7 @@ export default function CallLogButton({
                       value={maalNahiNote}
                       onChange={(e) => setMaalNahiNote(e.target.value)}
                       rows={3}
-                      placeholder="Customer ne kya kaha? Maal kab milega? Koi complaint?"
+                      placeholder="What did the customer say? When will it arrive? Any complaint?"
                       className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none ${
                         !maalNahiNote.trim() ? "border-gray-300 focus:ring-gray-400" : "border-gray-200 focus:ring-black"
                       }`}
