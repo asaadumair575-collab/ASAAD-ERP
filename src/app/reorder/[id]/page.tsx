@@ -298,7 +298,10 @@ export default async function ReorderCampaignPage({
             </thead>
             <tbody className="divide-y divide-gray-100">
               {leads.map((l, i) => {
-                const st = STATUS_LABELS[l.status] ?? STATUS_LABELS.PENDING;
+                const isNumberOff = l.status === "NO_ANSWER" && (l.callNote ?? "").toLowerCase().includes("number closed");
+                const st = isNumberOff
+                  ? { label: "Number Off", short: "Num Off", color: "bg-red-200 text-red-800", dot: "bg-red-600" }
+                  : (STATUS_LABELS[l.status] ?? STATUS_LABELS.PENDING);
                 return (
                   <tr key={l.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="py-2.5 px-4 text-gray-300 text-xs hidden sm:table-cell">{i + 1}</td>
