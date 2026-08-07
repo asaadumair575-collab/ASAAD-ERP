@@ -57,8 +57,7 @@ export default function CallLogButton({
   const [abortConfirm, setAbortConfirm] = useState<"first" | "second" | null>(null);
 
   // Step 0 — delivery check
-  const [maalMila,     setMaalMila]     = useState<boolean | null>(null);
-  const [maalNahiNote, setMaalNahiNote] = useState("");
+  const [maalMila, setMaalMila] = useState<boolean | null>(null);
 
   // Step 1 — feedback
   const [feedback,     setFeedback]     = useState<"POSITIVE" | "NEGATIVE" | "">("");
@@ -108,7 +107,6 @@ export default function CallLogButton({
     setShowPhone(false);
     setStep(simplified || (callCount > 0 && lead.status !== "NO_ANSWER") ? "outcome" : "delivery");
     setMaalMila(null);
-    setMaalNahiNote("");
     setFeedback("");
     setFeedbackNote("");
     setStatus("");
@@ -136,14 +134,6 @@ export default function CallLogButton({
     });
   }
 
-  function saveMaalNahi() {
-    if (!maalNahiNote.trim()) return;
-    startTransition(async () => {
-      await logReorderCall(lead.id, "CALLBACK", `[📦 Maal Nahi Mila] ${maalNahiNote.trim()}`);
-      setOpen(false);
-      router.replace(window.location.pathname + window.location.search);
-    });
-  }
 
   function handleStatusChange(val: string) {
     setStatus(val);
@@ -180,10 +170,10 @@ export default function CallLogButton({
       finalNote = `Order ID: ${mainOrderId.trim()}` + (outcomeNote.trim() ? ` — ${outcomeNote.trim()}` : "");
     }
 
-    // Prepend feedback if collected (first call)
-    const fullNote = feedback
-      ? `[${feedback === "POSITIVE" ? "👍 Positive" : "👎 Negative"}: ${feedbackNote.trim()}] ${finalNote}`.trim()
-      : finalNote;
+    // Prepend delivery status + feedback if collected (first call)
+    const deliveryPrefix = maalMila === false ? "[📦 Not Delivered Yet] " : "";
+    const feedbackPrefix = feedback ? `[${feedback === "POSITIVE" ? "👍 Positive" : "👎 Negative"}: ${feedbackNote.trim()}] ` : "";
+    const fullNote = `${deliveryPrefix}${feedbackPrefix}${finalNote}`.trim();
 
     startTransition(async () => {
       await logReorderCall(lead.id, status, fullNote);
@@ -422,46 +412,20 @@ export default function CallLogButton({
                   </div>
                 </div>
 
-                {maalMila === false && (
-                  <div>
-                    <label className="text-xs font-medium text-gray-600 block mb-1">
-                      Note <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      autoFocus
-                      value={maalNahiNote}
-                      onChange={(e) => setMaalNahiNote(e.target.value)}
-                      rows={3}
-                      placeholder="What did the customer say? When will it arrive? Any complaint?"
-                      className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none ${
-                        !maalNahiNote.trim() ? "border-gray-300 focus:ring-gray-400" : "border-gray-200 focus:ring-black"
-                      }`}
-                    />
-                    {!maalNahiNote.trim() && <p className="text-xs text-gray-400 mt-1">Note is required</p>}
-                  </div>
-                )}
-
                 <div className="flex gap-2 justify-end">
                   <button onClick={tryClose} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
                     Cancel
                   </button>
-                  {maalMila === false ? (
-                    <button
-                      onClick={saveMaalNahi}
-                      disabled={pending || !maalNahiNote.trim()}
-                      className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
-                    >
-                      {pending ? "Saving..." : "Save"}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => maalMila === true && setStep("feedback")}
-                      disabled={maalMila === null}
-                      className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
-                    >
-                      Next →
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      if (maalMila === true) setStep("feedback");
+                      else if (maalMila === false) setStep("outcome");
+                    }}
+                    disabled={maalMila === null}
+                    className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
+                  >
+                    Next →
+                  </button>
                 </div>
               </>
             )}
