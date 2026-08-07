@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { logReorderCall, markReorderOrderReceived, deleteReorderLead, checkRetailOrder, recordCallAttempt } from "@/lib/actions";
 
 const OUTCOMES = [
-  { value: "ORDER_PLACED",     label: "Interested",          color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
+  { value: "ORDER_PLACED",     label: "Interested",           color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
   { value: "INTERESTED_LATER", label: "Interested — Not Now", color: "bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100" },
   { value: "NOT_INTERESTED",   label: "Not Interested",       color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
+  { value: "CALLBACK",         label: "📦 Maal Nahi Mila",   color: "bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100" },
 ];
 
 const OUTCOMES_WITH_RECEIVED = [
@@ -15,6 +16,7 @@ const OUTCOMES_WITH_RECEIVED = [
   { value: "ORDER_PLACED",     label: "Still Interested",     color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
   { value: "INTERESTED_LATER", label: "Interested — Not Now", color: "bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100" },
   { value: "NOT_INTERESTED",   label: "Not Interested",       color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
+  { value: "CALLBACK",         label: "📦 Maal Nahi Mila",   color: "bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100" },
 ];
 
 const NOTE_PLACEHOLDER: Record<string, string> = {
@@ -22,6 +24,7 @@ const NOTE_PLACEHOLDER: Record<string, string> = {
   INTERESTED_LATER: "What did they say? When might they order?",
   NOT_INTERESTED:   "Why are they not interested? What did they say?",
   ORDER_RECEIVED:   "Any notes about the order?",
+  CALLBACK:         "What did the customer say? When will they receive the product?",
 };
 
 const RETAIL_OUTCOMES = [
@@ -48,8 +51,9 @@ export default function CallLogButton({
   callCount: number;
   simplified?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<"feedback" | "outcome">("feedback");
+  const [open, setOpen]       = useState(false);
+  const [step, setStep]       = useState<"feedback" | "outcome">("feedback");
+  const [showPhone, setShowPhone] = useState(false);
 
   // Step 1 — feedback
   const [feedback,     setFeedback]     = useState<"POSITIVE" | "NEGATIVE" | "">("");
@@ -96,7 +100,7 @@ export default function CallLogButton({
   }
 
   function openModal() {
-    recordCallAttempt(lead.id).catch(() => {});
+    setShowPhone(false);
     setStep(simplified || (callCount > 0 && lead.status !== "NO_ANSWER") ? "outcome" : "feedback");
     setFeedback("");
     setFeedbackNote("");
@@ -298,10 +302,20 @@ export default function CallLogButton({
               )}
             </div>
 
-            {/* Large phone number — for dialing */}
-            <div className="bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-center">
-              <p className="text-2xl font-bold font-mono tracking-widest text-gray-900 select-all">{lead.phone}</p>
-            </div>
+            {/* Phone number — hidden until revealed */}
+            {showPhone ? (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-center">
+                <p className="text-2xl font-bold font-mono tracking-widest text-gray-900 select-all">{lead.phone}</p>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => { setShowPhone(true); recordCallAttempt(lead.id).catch(() => {}); }}
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-center text-sm font-medium text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+              >
+                👁 Show Number
+              </button>
+            )}
 
             {/* Step bar — for first call or when previous was no-answer (not in simplified mode) */}
             {!simplified && (callCount === 0 || lead.status === "NO_ANSWER") && (
