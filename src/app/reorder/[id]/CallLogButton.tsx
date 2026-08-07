@@ -51,9 +51,13 @@ export default function CallLogButton({
   callCount: number;
   simplified?: boolean;
 }) {
-  const [open, setOpen]       = useState(false);
-  const [step, setStep]       = useState<"feedback" | "outcome">("feedback");
+  const [open, setOpen]           = useState(false);
+  const [step, setStep]           = useState<"delivery" | "feedback" | "outcome">("delivery");
   const [showPhone, setShowPhone] = useState(false);
+
+  // Step 0 — delivery check
+  const [maalMila,     setMaalMila]     = useState<boolean | null>(null);
+  const [maalNahiNote, setMaalNahiNote] = useState("");
 
   // Step 1 — feedback
   const [feedback,     setFeedback]     = useState<"POSITIVE" | "NEGATIVE" | "">("");
@@ -101,7 +105,9 @@ export default function CallLogButton({
 
   function openModal() {
     setShowPhone(false);
-    setStep(simplified || (callCount > 0 && lead.status !== "NO_ANSWER") ? "outcome" : "feedback");
+    setStep(simplified || (callCount > 0 && lead.status !== "NO_ANSWER") ? "outcome" : "delivery");
+    setMaalMila(null);
+    setMaalNahiNote("");
     setFeedback("");
     setFeedbackNote("");
     setStatus("");
@@ -114,6 +120,15 @@ export default function CallLogButton({
     setSimplVerify(null);
     setCooldownError(null);
     setOpen(true);
+  }
+
+  function saveMaalNahi() {
+    if (!maalNahiNote.trim()) return;
+    startTransition(async () => {
+      await logReorderCall(lead.id, "CALLBACK", `[📦 Maal Nahi Mila] ${maalNahiNote.trim()}`);
+      setOpen(false);
+      router.replace(window.location.pathname + window.location.search);
+    });
   }
 
   function handleStatusChange(val: string) {
@@ -295,8 +310,12 @@ export default function CallLogButton({
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">{callLabel}</p>
                 <h3 className="text-sm font-semibold text-gray-800">{lead.customerName}</h3>
               </div>
-              {!simplified && step === "outcome" && (callCount === 0 || lead.status === "NO_ANSWER") && (
-                <button type="button" onClick={() => setStep("feedback")} className="text-xs text-gray-400 hover:text-gray-600">
+              {!simplified && (callCount === 0 || lead.status === "NO_ANSWER") && step !== "delivery" && (
+                <button
+                  type="button"
+                  onClick={() => setStep(step === "outcome" ? "feedback" : "delivery")}
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                >
                   ← Back
                 </button>
               )}
@@ -319,14 +338,15 @@ export default function CallLogButton({
 
             {/* Step bar — for first call or when previous was no-answer (not in simplified mode) */}
             {!simplified && (callCount === 0 || lead.status === "NO_ANSWER") && (
-              <div className="flex items-center gap-2">
-                <div className={`flex-1 h-1 rounded-full ${step === "feedback" ? "bg-black" : "bg-green-500"}`} />
+              <div className="flex items-center gap-1">
+                <div className={`flex-1 h-1 rounded-full ${step === "delivery" ? "bg-black" : "bg-green-500"}`} />
+                <div className={`flex-1 h-1 rounded-full ${step === "feedback" ? "bg-black" : step === "outcome" ? "bg-green-500" : "bg-gray-200"}`} />
                 <div className={`flex-1 h-1 rounded-full ${step === "outcome"  ? "bg-black" : "bg-gray-200"}`} />
               </div>
             )}
 
-            {/* ── STEP 1: Feedback ── */}
-            {step === "feedback" && (
+            {/* ── STEP 0: Delivery check ── */}
+            {step === "delivery" && (
               <>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -358,6 +378,83 @@ export default function CallLogButton({
                   <div className="flex-1 h-px bg-gray-100" />
                 </div>
 
+                <div>
+                  <p className="text-xs font-semibold text-gray-700 mb-2">
+                    Kya pichla order/maal mila tha? <span className="text-red-500">*</span>
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setMaalMila(true)}
+                      className={`border rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${
+                        maalMila === true
+                          ? "bg-green-50 border-green-400 text-green-700 ring-2 ring-green-400 ring-offset-1"
+                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      ✅ Maal Mila
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMaalMila(false)}
+                      className={`border rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${
+                        maalMila === false
+                          ? "bg-blue-50 border-blue-400 text-blue-700 ring-2 ring-blue-400 ring-offset-1"
+                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      📦 Maal Nahi Mila
+                    </button>
+                  </div>
+                </div>
+
+                {maalMila === false && (
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 block mb-1">
+                      Note <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      autoFocus
+                      value={maalNahiNote}
+                      onChange={(e) => setMaalNahiNote(e.target.value)}
+                      rows={3}
+                      placeholder="Customer ne kya kaha? Maal kab milega? Koi complaint?"
+                      className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none ${
+                        !maalNahiNote.trim() ? "border-gray-300 focus:ring-gray-400" : "border-gray-200 focus:ring-black"
+                      }`}
+                    />
+                    {!maalNahiNote.trim() && <p className="text-xs text-gray-400 mt-1">Note is required</p>}
+                  </div>
+                )}
+
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => setOpen(false)} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
+                    Cancel
+                  </button>
+                  {maalMila === false ? (
+                    <button
+                      onClick={saveMaalNahi}
+                      disabled={pending || !maalNahiNote.trim()}
+                      className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
+                    >
+                      {pending ? "Saving..." : "Save"}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => maalMila === true && setStep("feedback")}
+                      disabled={maalMila === null}
+                      className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
+                    >
+                      Next →
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* ── STEP 1: Feedback ── */}
+            {step === "feedback" && (
+              <>
                 <div>
                   <p className="text-xs font-semibold text-gray-700 mb-2">
                     What was the customer&apos;s response? <span className="text-red-500">*</span>
