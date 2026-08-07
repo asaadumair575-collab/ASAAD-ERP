@@ -2194,25 +2194,29 @@ export async function markReorderOrderReceived(leadId: number, orderId: string) 
   revalidatePath("/reorder");
 }
 
-export async function checkRetailOrder(orderIdStr: string, phone: string): Promise<{
+export async function checkRetailOrder(orderIdStr: string, phone: string, customerName?: string): Promise<{
   found: boolean;
   order?: { id: number; customerName: string; phone: string | null; status: string };
   phoneMatch: boolean;
+  nameMatch: boolean;
 }> {
   await requireAuth();
   const numId = parseInt(orderIdStr.replace(/\D/g, ""), 10);
-  if (isNaN(numId)) return { found: false, phoneMatch: false };
+  if (isNaN(numId)) return { found: false, phoneMatch: false, nameMatch: false };
 
   const order = await prisma.retailOrder.findUnique({
     where: { id: numId },
     select: { id: true, customerName: true, phone: true, status: true },
   });
 
-  if (!order) return { found: false, phoneMatch: false };
+  if (!order) return { found: false, phoneMatch: false, nameMatch: false };
 
   const norm = (p: string) => p.replace(/\D/g, "");
   const phoneMatch = !!order.phone && norm(order.phone) === norm(phone);
-  return { found: true, order, phoneMatch };
+  const nameMatch = !!customerName &&
+    order.customerName.toLowerCase().includes(customerName.toLowerCase().split(" ")[0]) ||
+    (!!customerName && customerName.toLowerCase().includes(order.customerName.toLowerCase().split(" ")[0]));
+  return { found: true, order, phoneMatch, nameMatch };
 }
 
 export async function backfillReorderAddresses(

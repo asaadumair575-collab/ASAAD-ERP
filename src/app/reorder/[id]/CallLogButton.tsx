@@ -89,17 +89,20 @@ export default function CallLogButton({
   // Step 1 can proceed: feedback selected + note written
   const canProceed = !!feedback && feedbackNote.trim().length > 0;
 
+  const mainVerifyOk = mainVerify !== null && mainVerify !== "checking" && mainVerify.found && (mainVerify.phoneMatch || mainVerify.nameMatch);
+  const simplVerifyOk = simplVerify !== null && simplVerify !== "checking" && simplVerify.found && (simplVerify.phoneMatch || simplVerify.nameMatch);
+
   const canSave = simplified
     ? !!status &&
-      (!simplifiedIsOrderReceived || simplifiedOrderId.trim().length > 0) &&
+      (!simplifiedIsOrderReceived || (simplifiedOrderId.trim().length > 0 && simplVerifyOk)) &&
       (!simplifiedIsNotInterested || (!!simplifiedReason && (!simplifiedIsOther || simplifiedOther.trim().length > 0)))
     : !!status &&
-      (!isOrderReceived ? outcomeNote.trim().length > 0 : mainOrderId.trim().length > 0);
+      (!isOrderReceived ? outcomeNote.trim().length > 0 : (mainOrderId.trim().length > 0 && mainVerifyOk));
 
   async function verifyOrder(oid: string, setter: (v: null | "checking" | VerifyResult) => void) {
     if (!oid.trim()) { setter(null); return; }
     setter("checking");
-    const result = await checkRetailOrder(oid.trim(), lead.phone);
+    const result = await checkRetailOrder(oid.trim(), lead.phone, lead.customerName);
     setter(result);
   }
 
@@ -195,8 +198,10 @@ export default function CallLogButton({
     setOrderConfirmOpen(true);
   }
 
+  const quickVerifyOk = quickVerify !== null && quickVerify !== "checking" && quickVerify.found && (quickVerify.phoneMatch || quickVerify.nameMatch);
+
   function confirmOrderDone() {
-    if (!orderId.trim()) return;
+    if (!orderId.trim() || !quickVerifyOk) return;
     startTransition(async () => {
       await markReorderOrderReceived(lead.id, orderId.trim());
       setOrderConfirmOpen(false);
@@ -294,7 +299,7 @@ export default function CallLogButton({
               </button>
               <button
                 onClick={confirmOrderDone}
-                disabled={pending || !orderId.trim()}
+                disabled={pending || !orderId.trim() || !quickVerifyOk}
                 className="bg-green-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-green-700 disabled:opacity-40 transition-colors"
               >
                 {pending ? "Saving..." : "Order Received ✓"}
@@ -722,7 +727,7 @@ export default function CallLogButton({
   );
 }
 
-type VerifyResult = { found: boolean; order?: { id: number; customerName: string; phone: string | null; status: string }; phoneMatch: boolean };
+type VerifyResult = { found: boolean; order?: { id: number; customerName: string; phone: string | null; status: string }; phoneMatch: boolean; nameMatch: boolean };
 
 function OrderVerifyBadge({ result }: { result: null | "checking" | VerifyResult }) {
   if (!result) return null;
@@ -732,20 +737,23 @@ function OrderVerifyBadge({ result }: { result: null | "checking" | VerifyResult
   if (!result.found) {
     return (
       <div className="mt-1.5 text-xs rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-red-700 font-medium">
-        ❌ Order not found in retail orders
+        ❌ Order not found — cannot save as Order Received
       </div>
     );
   }
-  if (result.phoneMatch) {
+  const matched = result.phoneMatch || result.nameMatch;
+  if (matched) {
     return (
       <div className="mt-1.5 text-xs rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-green-700 font-medium">
-        ✅ Order #{result.order!.id} — {result.order!.customerName} — Phone match ✓
+        ✅ Order #{result.order!.id} — {result.order!.customerName}
+        {result.phoneMatch && " · Phone ✓"}
+        {result.nameMatch && " · Name ✓"}
       </div>
     );
   }
   return (
-    <div className="mt-1.5 text-xs rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-amber-700 font-medium">
-      ⚠️ Order #{result.order!.id} found ({result.order!.customerName}) — but phone does not match
+    <div className="mt-1.5 text-xs rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-red-700 font-medium">
+      ❌ Order #{result.order!.id} ({result.order!.customerName}) — phone &amp; name do not match. Cannot save.
     </div>
   );
 }
