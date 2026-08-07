@@ -242,7 +242,7 @@ export default function CallLogButton({
 
       {/* Delete confirmation */}
       {deleteConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setDeleteConfirmOpen(false)}>
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/40" onClick={() => setDeleteConfirmOpen(false)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div>
               <h3 className="text-sm font-semibold text-gray-800">Delete this lead?</h3>
@@ -272,7 +272,7 @@ export default function CallLogButton({
 
       {/* Order confirmation popup */}
       {orderConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setOrderConfirmOpen(false)}>
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/40" onClick={() => setOrderConfirmOpen(false)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div>
               <h3 className="text-sm font-semibold text-gray-800">🟢 Confirm Order Received</h3>
@@ -310,7 +310,7 @@ export default function CallLogButton({
       )}
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={tryClose}>
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/40" onClick={tryClose}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
 
             {/* Header */}
@@ -669,7 +669,7 @@ export default function CallLogButton({
 
       {/* Abort confirmation — first */}
       {abortConfirm === "first" && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 space-y-4">
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Are you sure you want to go back?</h3>
@@ -697,7 +697,7 @@ export default function CallLogButton({
 
       {/* Abort confirmation — second (final) */}
       {abortConfirm === "second" && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 space-y-4">
             <div>
               <h3 className="text-sm font-semibold text-red-700">Are you absolutely sure?</h3>
