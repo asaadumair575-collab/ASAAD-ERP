@@ -2072,6 +2072,12 @@ export async function recordCallAbort(leadId: number) {
   });
 }
 
+export async function restoreAbortedLead(leadId: number) {
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Unauthorized");
+  await prisma.reorderCallAbort.deleteMany({ where: { leadId } });
+}
+
 export async function logReorderCall(
   leadId: number,
   status: string,

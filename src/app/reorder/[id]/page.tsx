@@ -6,6 +6,7 @@ import CallLogButton from "./CallLogButton";
 import NoteCell from "./NoteCell";
 import LeadDetail from "./LeadDetail";
 import BackfillAddressButton from "./BackfillAddressButton";
+import RestoreLeadButton from "./RestoreLeadButton";
 import { userLabel } from "@/lib/userLabel";
 
 const STATUS_LABELS: Record<string, { label: string; short: string; color: string; dot: string }> = {
@@ -307,9 +308,9 @@ export default async function ReorderCampaignPage({
                     <td className="py-2.5 px-4 text-gray-300 text-xs hidden sm:table-cell">{i + 1}</td>
                     <td className="py-2.5 px-4">
                       {me.isAdmin && l.callAborts.length > 0 && (
-                        <p className="text-[10px] font-semibold text-red-500 mb-0.5">
-                          ⚠️ {l.callAborts.length === 1 ? "1 employee" : `${l.callAborts.length} employees`} ne number dekh ke cancel kiya
-                        </p>
+                        <div className="mb-0.5">
+                          <RestoreLeadButton leadId={l.id} count={l.callAborts.length} />
+                        </div>
                       )}
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <LeadDetail
