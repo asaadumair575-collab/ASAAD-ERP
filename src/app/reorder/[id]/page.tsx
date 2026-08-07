@@ -8,14 +8,14 @@ import LeadDetail from "./LeadDetail";
 import BackfillAddressButton from "./BackfillAddressButton";
 import { userLabel } from "@/lib/userLabel";
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  PENDING:          { label: "Pending",              color: "bg-gray-100 text-gray-500" },
-  NO_ANSWER:        { label: "No Answer",            color: "bg-yellow-100 text-yellow-700" },
-  CALLBACK:         { label: "Callback",             color: "bg-blue-100 text-blue-700" },
-  NOT_INTERESTED:   { label: "Not Interested",       color: "bg-red-100 text-red-600" },
-  ORDER_PLACED:     { label: "Interested",           color: "bg-violet-100 text-violet-700" },
-  INTERESTED_LATER: { label: "Interested — Not Now", color: "bg-orange-100 text-orange-600" },
-  ORDER_RECEIVED:   { label: "Order Received",       color: "bg-green-100 text-green-700" },
+const STATUS_LABELS: Record<string, { label: string; short: string; color: string; dot: string }> = {
+  PENDING:          { label: "Pending",              short: "Pending",    color: "bg-gray-100 text-gray-500",    dot: "bg-gray-400" },
+  NO_ANSWER:        { label: "No Answer",            short: "No Answer",  color: "bg-yellow-100 text-yellow-700", dot: "bg-yellow-500" },
+  CALLBACK:         { label: "Callback",             short: "Callback",   color: "bg-blue-100 text-blue-700",    dot: "bg-blue-500" },
+  NOT_INTERESTED:   { label: "Not Interested",       short: "Not Int.",   color: "bg-red-100 text-red-600",      dot: "bg-red-500" },
+  ORDER_PLACED:     { label: "Interested",           short: "Interested", color: "bg-violet-100 text-violet-700", dot: "bg-violet-500" },
+  INTERESTED_LATER: { label: "Interested — Not Now", short: "Int. Later", color: "bg-orange-100 text-orange-600", dot: "bg-orange-400" },
+  ORDER_RECEIVED:   { label: "Order Received",       short: "Ordered",    color: "bg-green-100 text-green-700",  dot: "bg-green-500" },
 };
 
 export default async function ReorderCampaignPage({
@@ -291,7 +291,7 @@ export default async function ReorderCampaignPage({
                 <th className="py-3 px-4 text-left hidden sm:table-cell">Phone</th>
                 <th className="py-3 px-4 text-left hidden md:table-cell">City</th>
                 <th className="py-3 px-4 text-left hidden lg:table-cell">Last Order</th>
-                <th className="py-3 px-4 text-left">Status</th>
+                <th className="py-3 px-4 text-left hidden sm:table-cell">Status</th>
                 <th className="py-3 px-4 text-left hidden sm:table-cell">Note</th>
                 <th className="py-3 px-4 text-left sticky right-0 bg-gray-50 z-10"></th>
               </tr>
@@ -314,6 +314,11 @@ export default async function ReorderCampaignPage({
                           leadId={l.id}
                           isAdmin={!!me.isAdmin}
                         />
+                        {/* Compact status shown only on mobile */}
+                        <span className={`sm:hidden inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap ${st.color}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
+                          {st.short}
+                        </span>
                         {l.calledBy && (
                           <span className="text-[11px] text-gray-400 leading-none">
                             · {userLabel(l.calledBy)}
@@ -324,9 +329,9 @@ export default async function ReorderCampaignPage({
                     </td>
                     <td className="py-2.5 px-4 text-gray-400 text-sm hidden md:table-cell">{l.city || "—"}</td>
                     <td className="py-2.5 px-4 text-gray-300 text-xs truncate max-w-[140px] hidden lg:table-cell">{l.prevItem || "—"}</td>
-                    <td className="py-2.5 px-4">
+                    <td className="py-2.5 px-4 hidden sm:table-cell">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${st.color}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${st.color}`}>
                         {st.label}
                       </span>
                       {l._count.callLogs > 1 && (
