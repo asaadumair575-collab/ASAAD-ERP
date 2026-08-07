@@ -707,9 +707,9 @@ export default function CallLogButton({
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 space-y-4">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Cancel karna chahte hain?</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Are you sure you want to go back?</h3>
               <p className="text-xs text-gray-500 mt-1">
-                Aapne number dekh liya hai. Cancel karna admin ko record mein dikh jaayega.
+                You have already viewed the phone number. Going back will be recorded and visible to admin.
               </p>
             </div>
             <div className="flex gap-2 justify-end">
@@ -717,13 +717,13 @@ export default function CallLogButton({
                 onClick={() => setAbortConfirm(null)}
                 className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
               >
-                Wapis Jao
+                Stay
               </button>
               <button
                 onClick={() => setAbortConfirm("second")}
                 className="bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-700"
               >
-                Haan, Cancel
+                Yes, Go Back
               </button>
             </div>
           </div>
@@ -735,9 +735,9 @@ export default function CallLogButton({
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-xs p-5 space-y-4">
             <div>
-              <h3 className="text-sm font-semibold text-red-700">Bilkul Yaqeen Hai?</h3>
+              <h3 className="text-sm font-semibold text-red-700">Are you absolutely sure?</h3>
               <p className="text-xs text-gray-500 mt-1">
-                Yeh lead aapki list se hata di jaayegi aur admin ko alert milega ki aapne number dekh ke cancel kiya.
+                This lead will be removed from your list and admin will be alerted that you viewed the number and went back.
               </p>
             </div>
             <div className="flex gap-2 justify-end">
@@ -745,14 +745,14 @@ export default function CallLogButton({
                 onClick={() => setAbortConfirm(null)}
                 className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50"
               >
-                Nahi, Ruko
+                Cancel
               </button>
               <button
                 onClick={confirmAbort}
                 disabled={pending}
                 className="bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-40"
               >
-                {pending ? "..." : "Haan, Pakka Cancel"}
+                {pending ? "..." : "Yes, I'm Sure"}
               </button>
             </div>
           </div>
