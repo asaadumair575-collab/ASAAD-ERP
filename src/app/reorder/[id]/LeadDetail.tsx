@@ -118,20 +118,22 @@ export default function LeadDetail({ lead, leadId, isAdmin = false }: { lead: Le
                           </div>
                         )}
                         {/* Attempt audit — admin only */}
-                        {isAdmin && (
+                        {isAdmin && (diffSec !== null || isNoAnswer) && (
                           <div className="mt-1.5 space-y-1">
-                            <div className={`text-[11px] rounded-lg px-2 py-1 flex items-center gap-1 ${timeSuspicious ? "bg-red-100 text-red-700" : "bg-green-50 text-green-700"}`}>
-                              {timeSuspicious ? "⚠️" : "✅"}
-                              {diffSec === null
-                                ? "No call attempt recorded"
-                                : isNoAnswer && diffSec < 20
-                                ? `Only ${diffSec}s between dial & log — suspicious (min: 20s)`
-                                : `${diffSec}s between opening & logging`}
-                            </div>
+                            {(diffSec !== null || isNoAnswer) && (
+                              <div className={`text-[11px] rounded-lg px-2 py-1 flex items-center gap-1 ${timeSuspicious ? "bg-red-100 text-red-700" : "bg-green-50 text-green-700"}`}>
+                                {timeSuspicious ? "⚠️" : "✅"}
+                                {diffSec === null
+                                  ? "No call attempt recorded — possible fake"
+                                  : isNoAnswer && diffSec < 20
+                                  ? `Only ${diffSec}s between dial & log — suspicious (min: 20s)`
+                                  : `${diffSec}s between opening & logging`}
+                              </div>
+                            )}
                             <div className={`text-[11px] rounded-lg px-2 py-1 flex items-center gap-1 ${openSuspicious ? "bg-red-100 text-red-700" : "bg-green-50 text-green-700"}`}>
                               {openSuspicious ? "⚠️" : "✅"}
                               {log.openCount === 0
-                                ? "Log Call not opened"
+                                ? isNoAnswer ? "Log Call not opened — possible fake" : "Log Call not opened"
                                 : log.openCount === 1
                                 ? "Log Call opened 1 time"
                                 : `Log Call opened ${log.openCount} times`}
