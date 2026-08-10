@@ -101,6 +101,16 @@ export async function createClient(formData: FormData) {
   redirect(`/clients/${client.id}`);
 }
 
+export async function setClientFixedRate(id: number, fixedRate: boolean, fixedRateAmount: number | null) {
+  await requireAuth();
+  await prisma.client.update({
+    where: { id },
+    data: { fixedRate, fixedRateAmount: fixedRate ? fixedRateAmount : null },
+  });
+  revalidatePath(`/clients/${id}`);
+  revalidatePath("/sales/invoices/new");
+}
+
 export async function updateClient(id: number, formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const businessName = String(formData.get("businessName") ?? "").trim() || null;

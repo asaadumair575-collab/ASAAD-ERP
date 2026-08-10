@@ -4,6 +4,7 @@ import Link from "next/link";
 import DeleteButton from "@/components/DeleteButton";
 import { notFound } from "next/navigation";
 import { averageMonthlyDzn, gradeForMonthlyDzn } from "@/lib/grade";
+import QuickFixedRateToggle from "@/components/QuickFixedRateToggle";
 
 export default async function ClientDetailPage({
   params,
@@ -124,6 +125,12 @@ export default async function ClientDetailPage({
           dark={balanceDue > 0}
         />
       </div>
+
+      <QuickFixedRateToggle
+        clientId={client.id}
+        defaultEnabled={client.fixedRate}
+        defaultAmount={client.fixedRateAmount}
+      />
 
       {draftOrders.length > 0 && (
         <div>
