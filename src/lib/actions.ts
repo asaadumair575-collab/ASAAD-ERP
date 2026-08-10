@@ -65,6 +65,8 @@ export async function createClient(formData: FormData) {
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const address = String(formData.get("address") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
+  const fixedRate = formData.get("fixedRate") === "on";
+  const fixedRateAmount = fixedRate ? (parseFloat(String(formData.get("fixedRateAmount") ?? "")) || null) : null;
 
   if (!name || !city) {
     throw new Error("Name and city are required");
@@ -91,7 +93,7 @@ export async function createClient(formData: FormData) {
   }
 
   const client = await prisma.client.create({
-    data: { name, businessName, city, phone, address, notes },
+    data: { name, businessName, city, phone, address, notes, fixedRate, fixedRateAmount },
   });
 
   revalidatePath("/clients");
@@ -106,6 +108,8 @@ export async function updateClient(id: number, formData: FormData) {
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const address = String(formData.get("address") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
+  const fixedRate = formData.get("fixedRate") === "on";
+  const fixedRateAmount = fixedRate ? (parseFloat(String(formData.get("fixedRateAmount") ?? "")) || null) : null;
 
   if (!name || !city) {
     throw new Error("Name and city are required");
@@ -113,7 +117,7 @@ export async function updateClient(id: number, formData: FormData) {
 
   await prisma.client.update({
     where: { id },
-    data: { name, businessName, city, phone, address, notes },
+    data: { name, businessName, city, phone, address, notes, fixedRate, fixedRateAmount },
   });
 
   revalidatePath("/clients");

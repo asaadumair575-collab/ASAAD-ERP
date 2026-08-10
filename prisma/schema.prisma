@@ -13,16 +13,18 @@ datasource db {
 }
 
 model Client {
-  id           Int      @id @default(autoincrement())
-  name         String
-  businessName String?
-  city         String
-  phone        String?
-  address      String?
-  notes        String?
-  createdAt    DateTime @default(now())
-  orders       Order[]
-  samples      Sample[]
+  id               Int      @id @default(autoincrement())
+  name             String
+  businessName     String?
+  city             String
+  phone            String?
+  address          String?
+  notes            String?
+  fixedRate        Boolean  @default(false)
+  fixedRateAmount  Float?
+  createdAt        DateTime @default(now())
+  orders           Order[]
+  samples          Sample[]
 }
 
 model Order {

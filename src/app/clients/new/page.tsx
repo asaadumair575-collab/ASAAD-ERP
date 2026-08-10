@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 import Link from "next/link";
+import FixedRateToggle from "@/components/FixedRateToggle";
 
 export default async function NewClientPage({
   searchParams,
@@ -121,6 +122,8 @@ export default async function NewClientPage({
             className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-shadow placeholder:text-gray-400"
           />
         </div>
+
+        <FixedRateToggle />
 
         <div className="flex justify-end pt-2">
           <SubmitButton

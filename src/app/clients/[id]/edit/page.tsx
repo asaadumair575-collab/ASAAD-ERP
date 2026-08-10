@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { updateClient } from "@/lib/actions";
 import { notFound } from "next/navigation";
 import SubmitButton from "@/components/SubmitButton";
+import FixedRateToggle from "@/components/FixedRateToggle";
 
 export default async function EditClientPage({
   params,
@@ -126,6 +127,8 @@ export default async function EditClientPage({
             className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-shadow placeholder:text-gray-400"
           />
         </div>
+
+        <FixedRateToggle defaultEnabled={client.fixedRate} defaultAmount={client.fixedRateAmount ?? undefined} />
 
         <div className="flex justify-end pt-2">
           <SubmitButton

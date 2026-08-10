@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import SubmitButton from "@/components/SubmitButton";
 
-type Client = { id: number; name: string; businessName: string | null };
+type Client = { id: number; name: string; businessName: string | null; fixedRate: boolean; fixedRateAmount: number | null };
 type Product = { id: number; name: string };
 type Row = {
   id: number;
@@ -13,7 +13,7 @@ type Row = {
   rate: number;
 };
 
-function CustomerSearchSelect({ clients }: { clients: Client[] }) {
+function CustomerSearchSelect({ clients, onSelect }: { clients: Client[]; onSelect: (c: Client | null) => void }) {
   const [selectedId, setSelectedId] = useState("");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -47,6 +47,7 @@ function CustomerSearchSelect({ clients }: { clients: Client[] }) {
         onChange={(e) => {
           setQuery(e.target.value);
           setSelectedId("");
+          onSelect(null);
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
@@ -65,10 +66,16 @@ function CustomerSearchSelect({ clients }: { clients: Client[] }) {
                   setSelectedId(String(c.id));
                   setQuery(label(c));
                   setOpen(false);
+                  onSelect(c);
                 }}
                 className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
               >
-                {label(c)}
+                <span>{label(c)}</span>
+                {c.fixedRate && c.fixedRateAmount && (
+                  <span className="ml-2 text-[11px] font-semibold text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded-full">
+                    Fixed ₨{c.fixedRateAmount}
+                  </span>
+                )}
               </button>
             ))
           )}
@@ -92,16 +99,25 @@ export default function InvoiceForm({
   ]);
   const [discount, setDiscount] = useState(0);
   const [taxPercent, setTaxPercent] = useState(0);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   function updateRow(id: number, patch: Partial<Row>) {
     setRows((r) => r.map((row) => (row.id === id ? { ...row, ...patch } : row)));
   }
 
+  function isVms72(name: string) {
+    return name.toLowerCase().replace(/\s/g, "").includes("vms72");
+  }
+
   function handleProductChange(id: number, productId: string) {
     const product = products.find((p) => p.id === parseInt(productId, 10));
+    const autoRate = product && isVms72(product.name) && selectedClient?.fixedRate && selectedClient.fixedRateAmount
+      ? selectedClient.fixedRateAmount
+      : undefined;
     updateRow(id, {
       productId,
       ...(product ? { description: product.name } : {}),
+      ...(autoRate !== undefined ? { rate: autoRate } : {}),
     });
   }
 
@@ -121,7 +137,13 @@ export default function InvoiceForm({
             <label className="block text-xs text-gray-500 mb-1.5">
               Customer<span className="text-black"> *</span>
             </label>
-            <CustomerSearchSelect clients={clients} />
+            <CustomerSearchSelect clients={clients} onSelect={setSelectedClient} />
+            {selectedClient?.fixedRate && selectedClient.fixedRateAmount && (
+              <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-violet-700 bg-violet-50 border border-violet-200 rounded-lg px-2.5 py-1">
+                <span>🔒</span>
+                <span>Fixed Rate Customer — VMS 72 will auto-fill at ₨{selectedClient.fixedRateAmount}/dz</span>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">Date</label>
