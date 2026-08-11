@@ -16,7 +16,6 @@ const OUTCOMES_WITH_RECEIVED = [
   { value: "ORDER_PLACED",     label: "Still Interested",     color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
   { value: "INTERESTED_LATER", label: "Interested — Not Now", color: "bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100" },
   { value: "NOT_INTERESTED",   label: "Not Interested",       color: "bg-red-50 border-red-300 text-red-600 hover:bg-red-100" },
-  { value: "CALLBACK",         label: "📦 Maal Nahi Mila",   color: "bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100" },
 ];
 
 const NOTE_PLACEHOLDER: Record<string, string> = {
@@ -502,8 +501,8 @@ export default function CallLogButton({
             {/* ── STEP 2: Outcome ── */}
             {step === "outcome" && (
               <>
-                {/* No Answer quick buttons for simplified mode */}
-                {simplified && (
+                {/* No Answer quick buttons — simplified mode OR second call */}
+                {(simplified || callCount > 0) && (
                   <>
                     <div className="grid grid-cols-2 gap-2">
                       <button
