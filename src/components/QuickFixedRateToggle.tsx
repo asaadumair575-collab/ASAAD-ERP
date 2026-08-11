@@ -41,8 +41,8 @@ export default function QuickFixedRateToggle({
           <p className="text-sm font-semibold text-gray-800">Fixed Rate Customer</p>
           <p className="text-xs text-gray-500 mt-0.5">
             {enabled && defaultAmount
-              ? `VMS 72 auto-fills at ₨${defaultAmount}/dz`
-              : "Auto-fill VMS 72 rate on every invoice"}
+              ? `H9 auto-fills at ₨${defaultAmount}/dz`
+              : "Auto-fill H9 rate on every invoice"}
           </p>
         </div>
         <button

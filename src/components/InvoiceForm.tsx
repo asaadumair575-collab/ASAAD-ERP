@@ -105,13 +105,14 @@ export default function InvoiceForm({
     setRows((r) => r.map((row) => (row.id === id ? { ...row, ...patch } : row)));
   }
 
-  function isVms72(name: string) {
-    return name.toLowerCase().replace(/\s/g, "").includes("vms72");
+  function isH9(name: string) {
+    const n = name.toLowerCase().replace(/\s/g, "");
+    return n.includes("h9");
   }
 
   function handleProductChange(id: number, productId: string) {
     const product = products.find((p) => p.id === parseInt(productId, 10));
-    const autoRate = product && isVms72(product.name) && selectedClient?.fixedRate && selectedClient.fixedRateAmount
+    const autoRate = product && isH9(product.name) && selectedClient?.fixedRate && selectedClient.fixedRateAmount
       ? selectedClient.fixedRateAmount
       : undefined;
     updateRow(id, {
@@ -141,7 +142,7 @@ export default function InvoiceForm({
             {selectedClient?.fixedRate && selectedClient.fixedRateAmount && (
               <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-violet-700 bg-violet-50 border border-violet-200 rounded-lg px-2.5 py-1">
                 <span>🔒</span>
-                <span>Fixed Rate Customer — VMS 72 will auto-fill at ₨{selectedClient.fixedRateAmount}/dz</span>
+                <span>Fixed Rate Customer — H9 will auto-fill at ₨{selectedClient.fixedRateAmount}/dz</span>
               </div>
             )}
           </div>
