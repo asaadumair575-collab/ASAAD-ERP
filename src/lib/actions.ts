@@ -2146,6 +2146,11 @@ export async function logReorderCall(
     });
   }
 
+  const lead = await prisma.reorderLead.findUnique({
+    where: { id: leadId },
+    select: { customerName: true, phone: true, campaign: { select: { name: true } } },
+  });
+
   await prisma.$transaction([
     prisma.reorderLead.update({
       where: { id: leadId },
@@ -2161,6 +2166,26 @@ export async function logReorderCall(
       data: { leadId, status, callNote: callNote || null, calledAt: now, calledById: me.id, attemptedAt, openCount },
     }),
   ]);
+
+  const callerName = me.displayName ?? me.username;
+  const STATUS_LABEL: Record<string, string> = {
+    ORDER_RECEIVED: "✅ Order Received",
+    ORDER_PLACED:   "📦 Interested",
+    INTERESTED_LATER: "🕐 Later",
+    NOT_INTERESTED: "❌ Not Interested",
+    NO_ANSWER:      "📵 No Answer",
+    CALLBACK:       "🔄 Callback",
+  };
+  const statusLabel = STATUS_LABEL[status] ?? status;
+  const customerName = lead?.customerName ?? "Unknown";
+  const campaignName = lead?.campaign?.name ?? "";
+
+  sendPushToAll({
+    title: `${callerName} — ${statusLabel}`,
+    body: `${customerName}${campaignName ? ` · ${campaignName}` : ""}${callNote ? `\n${callNote}` : ""}`,
+    url: "/reorder",
+  }).catch(() => {});
+
   revalidatePath("/reorder");
 }
 
