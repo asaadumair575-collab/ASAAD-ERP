@@ -28,14 +28,25 @@ export default async function ClientsPage({
           }
         : {}),
     },
-    include: { orders: { include: { items: true, payments: true } } },
+    include: {
+      orders: {
+        select: {
+          id: true,
+          confirmed: true,
+          paymentStatus: true,
+          saleAmount: true,
+          date: true,
+          payments: { select: { amount: true } },
+          items: { select: { quantity: true } },
+        },
+      },
+    },
     orderBy: { name: "asc" },
   });
 
-  const rawClientCities = await prisma.client.findMany({ select: { city: true } });
   const clientCityMap = new Map<string, string>();
   const clientCityCounts = new Map<string, number>();
-  for (const { city: rawCity } of rawClientCities) {
+  for (const { city: rawCity } of clients) {
     const trimmed = rawCity?.trim();
     if (!trimmed || trimmed === "-" || !/[a-zA-Z]/.test(trimmed)) continue;
     const key = trimmed.toLowerCase();

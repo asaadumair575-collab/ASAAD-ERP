@@ -6,7 +6,7 @@ export default async function PaidInvoicesPage() {
   const [orders, advanceCount] = await Promise.all([
     prisma.order.findMany({
       where: { confirmed: true, paymentStatus: "PAID" },
-      include: { client: true },
+      include: { client: { select: { id: true, name: true } } },
       orderBy: { date: "desc" },
     }),
     prisma.order.count({ where: { confirmed: true, paymentStatus: "PARTIAL" } }),

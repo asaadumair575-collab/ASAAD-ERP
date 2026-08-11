@@ -49,6 +49,12 @@ model Order {
   createdAt      DateTime    @default(now())
   items          OrderItem[]
   payments       Payment[]
+
+  @@index([clientId])
+  @@index([confirmed])
+  @@index([confirmed, paymentStatus])
+  @@index([confirmed, dispatched])
+  @@index([paymentStatus])
 }
 
 model Payment {
@@ -61,6 +67,8 @@ model Payment {
   screenshot String?  @db.Text
   date       DateTime @default(now())
   createdAt  DateTime @default(now())
+
+  @@index([orderId])
 }
 
 model OrderItem {
@@ -73,6 +81,9 @@ model OrderItem {
   quantity    Float
   rate        Float
   cost        Float?
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model Product {
@@ -129,6 +140,9 @@ model EmpCommissionEntry {
   status     String   @default("pending")
   adminNote  String?
   createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([date])
 }
 
 model CommissionRate {
@@ -161,6 +175,9 @@ model Sample {
   response     String?   @db.Text
   responseDate DateTime?
   createdAt    DateTime  @default(now())
+
+  @@index([clientId])
+  @@index([leadId])
 }
 
 model RetailCustomer {
@@ -196,6 +213,10 @@ model RetailOrder {
   createdByUserId  Int?
   items            RetailOrderItem[]
   payments         RetailPayment[]
+
+  @@index([retailCustomerId])
+  @@index([createdByUserId])
+  @@index([status])
 }
 
 model RetailOrderItem {
@@ -206,6 +227,8 @@ model RetailOrderItem {
   quantity    Float
   rate        Float
   costPrice   Float       @default(0)
+
+  @@index([orderId])
 }
 
 model RetailPayment {
@@ -216,6 +239,8 @@ model RetailPayment {
   note       String?
   screenshot String?
   date       DateTime    @default(now())
+
+  @@index([orderId])
 }
 
 model Lead {
@@ -260,6 +285,8 @@ model EcomOrderItem {
   quantity    Float
   packSize    Int        @default(12)
   rate        Float
+
+  @@index([orderId])
 }
 
 model EcomPayment {
@@ -269,6 +296,8 @@ model EcomPayment {
   amount  Float
   note    String?
   date    DateTime  @default(now())
+
+  @@index([orderId])
 }
 
 model CprBatch {
@@ -291,6 +320,9 @@ model EmpPerformance {
   newOrders     Int      @default(0)
   notes         String?
   createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([date])
 }
 
 model PerformanceTarget {
@@ -317,6 +349,10 @@ model Message {
   body       String   @db.Text
   readAt     DateTime?
   createdAt  DateTime @default(now())
+
+  @@index([receiverId])
+  @@index([senderId])
+  @@index([receiverId, readAt])
 }
 
 model BugReport {
@@ -329,6 +365,9 @@ model BugReport {
   reportedBy  User?    @relation(fields: [reportedById], references: [id])
   reportedById Int?
   createdAt   DateTime @default(now())
+
+  @@index([reportedById])
+  @@index([status])
 }
 
 
@@ -373,6 +412,11 @@ model ReorderLead {
   callLogs         ReorderCallLog[]
   callAttempts     ReorderCallAttempt[]
   callAborts       ReorderCallAbort[]
+
+  @@index([campaignId])
+  @@index([campaignId, status])
+  @@index([calledById])
+  @@index([status])
 }
 
 model ReorderCallLog {
@@ -386,6 +430,9 @@ model ReorderCallLog {
   calledById  Int
   attemptedAt DateTime?
   openCount   Int         @default(0)
+
+  @@index([leadId])
+  @@index([calledById])
 }
 
 model ReorderCallAttempt {
@@ -394,6 +441,8 @@ model ReorderCallAttempt {
   leadId   Int
   userId   Int
   openedAt DateTime    @default(now())
+
+  @@index([leadId])
 }
 
 model ReorderCallAbort {
@@ -402,6 +451,8 @@ model ReorderCallAbort {
   leadId    Int
   userId    Int
   abortedAt DateTime    @default(now())
+
+  @@index([leadId])
 }
 
 model RetailFollowupLog {
@@ -422,6 +473,8 @@ model PushSubscription {
   auth      String
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ── Calling Module ─────────────────────────────────────────────────────────
