@@ -361,20 +361,27 @@ export default function CallLogButton({
                   <button
                     type="button"
                     onClick={() => saveNoAnswer("Call not picked")}
-                    disabled={pending}
-                    className="border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-40"
+                    disabled={pending || !showPhone}
+                    title={!showPhone ? "Show number first" : undefined}
+                    className="border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     📵 Not Picked
                   </button>
                   <button
                     type="button"
                     onClick={() => saveNoAnswer("Number closed")}
-                    disabled={pending}
-                    className="border border-red-200 bg-red-50 text-red-600 text-sm font-semibold rounded-xl py-2.5 hover:bg-red-100 transition-colors disabled:opacity-40"
+                    disabled={pending || !showPhone}
+                    title={!showPhone ? "Show number first" : undefined}
+                    className="border border-red-200 bg-red-50 text-red-600 text-sm font-semibold rounded-xl py-2.5 hover:bg-red-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     🔴 Number Closed
                   </button>
                 </div>
+                {!showPhone && (
+                  <p className="text-[11px] text-center text-gray-400">
+                    👆 Show number first to enable call logging
+                  </p>
+                )}
                 {cooldownError && (
                   <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2 text-center font-medium">
                     ⏱ {cooldownError}
@@ -426,7 +433,7 @@ export default function CallLogButton({
                       if (maalMila === true) setStep("feedback");
                       else if (maalMila === false) setStep("outcome");
                     }}
-                    disabled={maalMila === null}
+                    disabled={maalMila === null || !showPhone}
                     className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
                   >
                     Next →
@@ -502,20 +509,27 @@ export default function CallLogButton({
                       <button
                         type="button"
                         onClick={() => saveNoAnswer("Call not picked")}
-                        disabled={pending}
-                        className="border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-40"
+                        disabled={pending || !showPhone}
+                        title={!showPhone ? "Show number first" : undefined}
+                        className="border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       >
                         📵 Not Picked
                       </button>
                       <button
                         type="button"
                         onClick={() => saveNoAnswer("Number closed")}
-                        disabled={pending}
-                        className="border border-red-200 bg-red-50 text-red-600 text-sm font-semibold rounded-xl py-2.5 hover:bg-red-100 transition-colors disabled:opacity-40"
+                        disabled={pending || !showPhone}
+                        title={!showPhone ? "Show number first" : undefined}
+                        className="border border-red-200 bg-red-50 text-red-600 text-sm font-semibold rounded-xl py-2.5 hover:bg-red-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       >
                         🔴 Number Closed
                       </button>
                     </div>
+                    {!showPhone && (
+                      <p className="text-[11px] text-center text-gray-400">
+                        👆 Show number first to enable call logging
+                      </p>
+                    )}
                     {cooldownError && (
                       <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2 text-center font-medium">
                         ⏱ {cooldownError}
