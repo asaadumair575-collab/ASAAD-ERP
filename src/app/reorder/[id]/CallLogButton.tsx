@@ -365,6 +365,9 @@ export default function CallLogButton({
               </button>
             )}
 
+            {/* Everything below phone button is locked until Show Number is clicked */}
+            <div className={!showPhone ? "pointer-events-none opacity-40 select-none" : ""}>
+
             {/* Step bar — for first call or when previous was no-answer (not in simplified mode) */}
             {!simplified && (callCount === 0 || lead.status === "NO_ANSWER") && (
               <div className="flex items-center gap-1">
@@ -697,6 +700,7 @@ export default function CallLogButton({
               </>
             )}
 
+            </div>{/* end locked wrapper */}
           </div>
         </div>
       )}
