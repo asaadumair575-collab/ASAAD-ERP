@@ -462,6 +462,8 @@ export async function createInvoice(formData: FormData) {
   const paymentTerms = String(formData.get("paymentTerms") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const terms = String(formData.get("terms") ?? "").trim() || null;
+  const feltColor = String(formData.get("feltColor") ?? "").trim() || null;
+  const stamp = String(formData.get("stamp") ?? "").trim() || null;
 
   const taxAmount = round2((subtotal - discount) * (taxPercent / 100));
   const saleAmount = round2(subtotal - discount + taxAmount);
@@ -483,6 +485,8 @@ export async function createInvoice(formData: FormData) {
       paymentTerms,
       notes,
       terms,
+      feltColor,
+      stamp,
       date,
       orderType,
       deliveryCharge,

@@ -43,6 +43,8 @@ model Order {
   paymentStatus  String      @default("UNPAID")
   orderType      String      @default("CREDIT")
   deliveryCharge Float?
+  feltColor      String?
+  stamp          String?
   confirmed      Boolean     @default(false)
   dispatched     Boolean     @default(false)
   dispatchedAt   DateTime?

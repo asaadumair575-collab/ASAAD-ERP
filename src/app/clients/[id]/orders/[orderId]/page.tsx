@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getBusinessProfile } from "@/lib/businessProfile";
 import { notFound } from "next/navigation";
 import InvoiceShare from "@/components/InvoiceShare";
+import OrderWhatsappButton from "@/components/OrderWhatsappButton";
 import {
   recordPayment,
   cancelOrder,
@@ -63,6 +64,23 @@ export default async function InvoicePage({
 
   return (
     <div className="max-w-2xl space-y-8 print:max-w-none print:space-y-0 print:min-h-[273mm] print:flex print:flex-col">
+      <div className="flex justify-end print:hidden">
+        <OrderWhatsappButton
+          order={{
+            date: order.date.toISOString(),
+            items: order.items.map((i) => ({ description: i.description, quantity: i.quantity })),
+            feltColor: order.feltColor,
+            stamp: order.stamp,
+            saleAmount: order.saleAmount,
+          }}
+          client={{
+            name: order.client.name,
+            city: order.client.city,
+            phone: order.client.phone,
+          }}
+        />
+      </div>
+
       <InvoiceShare
         message={message}
         pdfHref={`/clients/${clientId}/orders/${order.id}/pdf`}
@@ -140,6 +158,23 @@ export default async function InvoicePage({
             </div>
           </div>
         </div>
+
+        {(order.feltColor || order.stamp) && (
+          <div className="flex flex-wrap gap-4 py-3 px-4 bg-gray-50 rounded-xl text-sm print:text-base print:gap-8 print:px-6 print:py-4">
+            {order.feltColor && (
+              <div className="flex gap-2">
+                <span className="text-gray-500">Felt Color:</span>
+                <span className="font-medium">{order.feltColor}</span>
+              </div>
+            )}
+            {order.stamp && (
+              <div className="flex gap-2">
+                <span className="text-gray-500">Stamp:</span>
+                <span className="font-medium">{order.stamp}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         <table className="w-full text-sm print:text-lg">
           <thead>
