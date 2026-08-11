@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { logReorderCall, markReorderOrderReceived, deleteReorderLead, checkRetailOrder, recordCallAttempt, recordCallAbort } from "@/lib/actions";
 
@@ -77,6 +77,27 @@ export default function CallLogButton({
   const [pending, startTransition] = useTransition();
   const [cooldownError, setCooldownError] = useState<string | null>(null);
   const router = useRouter();
+
+  // Auto-abort when employee switches tab after Show Number
+  const showPhoneRef = useRef(showPhone);
+  const openRef = useRef(open);
+  showPhoneRef.current = showPhone;
+  openRef.current = open;
+
+  useEffect(() => {
+    function onVisibilityChange() {
+      if (document.hidden && openRef.current && showPhoneRef.current) {
+        startTransition(async () => {
+          await recordCallAbort(lead.id);
+          setOpen(false);
+          setAbortConfirm(null);
+          router.replace(window.location.pathname + window.location.search);
+        });
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [lead.id, router]);
 
   const isInterestedLead = lead.status === "ORDER_PLACED" || lead.status === "ORDER_RECEIVED" || lead.status === "INTERESTED_LATER";
   const outcomeOptions   = isInterestedLead ? OUTCOMES_WITH_RECEIVED : OUTCOMES;
