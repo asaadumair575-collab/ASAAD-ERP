@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { sendPushToAll } from "@/lib/push";
 import * as XLSX from "xlsx";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import {
@@ -496,6 +497,14 @@ export async function createInvoice(formData: FormData) {
   revalidatePath("/clients");
   revalidatePath("/sales/invoices");
   revalidatePath("/");
+
+  const invoiceNumber = `INV-${String(order.id).padStart(4, "0")}`;
+  sendPushToAll({
+    title: "New Order Posted",
+    body: `${invoiceNumber} — ${client.name} — ₨${saleAmount.toLocaleString()}`,
+    url: `/clients/${clientId}/orders/${order.id}`,
+  }).catch(() => {});
+
   redirect(`/clients/${clientId}/orders/${order.id}`);
 }
 

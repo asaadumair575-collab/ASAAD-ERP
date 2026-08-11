@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useTransition } from "react";
 import { logoutAction } from "@/lib/actions";
 import Link from "next/link";
+import NotificationToggle from "@/components/NotificationToggle";
 
 export default function TopHeader({
   onMenuClick,
@@ -67,6 +68,7 @@ export default function TopHeader({
       </form>
 
       <div className="flex items-center gap-1 ml-auto">
+        <NotificationToggle />
         {/* Messages bell */}
         <Link href="/messages" className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
           <svg viewBox="0 0 20 20" fill="none" className="w-[18px] h-[18px]">
