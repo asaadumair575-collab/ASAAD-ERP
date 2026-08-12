@@ -2316,3 +2316,37 @@ export async function toggleReorderCampaignActive(id: number, isActive: boolean)
   revalidatePath("/reorder");
 }
 
+
+// ── Complaints ────────────────────────────────────────────────────────────────
+
+export async function submitComplaint(formData: FormData) {
+  const me = await requireAuth();
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const category = String(formData.get("category") ?? "GENERAL");
+
+  if (!title) throw new Error("Title is required");
+  if (!description) throw new Error("Description is required");
+
+  await prisma.complaint.create({
+    data: { title, description, category, submittedById: me.id },
+  });
+
+  sendPushToAll({
+    title: `New Complaint — ${me.displayName ?? me.username}`,
+    body: title,
+    url: "/complaints",
+  }).catch(() => {});
+
+  revalidatePath("/complaints");
+  redirect("/complaints");
+}
+
+export async function resolveComplaint(id: number, formData: FormData) {
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Unauthorized");
+  const status = String(formData.get("status") ?? "RESOLVED");
+  const adminNote = String(formData.get("adminNote") ?? "").trim() || null;
+  await prisma.complaint.update({ where: { id }, data: { status, adminNote } });
+  revalidatePath("/complaints");
+}

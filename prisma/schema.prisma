@@ -130,6 +130,7 @@ model User {
   reorderCallLogs      ReorderCallLog[] @relation("ReorderCallLogCalledBy")
   retailFollowupLogs   RetailFollowupLog[] @relation("RetailFollowupLogCalledBy")
   pushSubscriptions    PushSubscription[]
+  complaints           Complaint[]
 }
 
 model EmpCommissionEntry {
@@ -465,6 +466,21 @@ model RetailFollowupLog {
   calledAt   DateTime @default(now())
   calledBy   User     @relation("RetailFollowupLogCalledBy", fields: [calledById], references: [id])
   calledById Int
+}
+
+model Complaint {
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String   @db.Text
+  category      String   @default("GENERAL")
+  status        String   @default("OPEN")
+  adminNote     String?  @db.Text
+  submittedBy   User?    @relation(fields: [submittedById], references: [id])
+  submittedById Int?
+  createdAt     DateTime @default(now())
+
+  @@index([submittedById])
+  @@index([status])
 }
 
 model PushSubscription {

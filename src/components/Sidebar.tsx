@@ -411,6 +411,14 @@ export default function Sidebar({
             Users
           </NavLink>
         )}
+        <NavLink
+          href="/complaints"
+          active={pathname.startsWith("/complaints")}
+          icon={icons.sales}
+          onClick={closeMobile}
+        >
+          Complaints
+        </NavLink>
         {isAdmin && (
           <NavLink
             href="/bug-reports"
