@@ -2321,6 +2321,7 @@ export async function toggleReorderCampaignActive(id: number, isActive: boolean)
 
 export async function submitComplaint(formData: FormData) {
   const me = await requireAuth();
+  const complaintType = String(formData.get("complaintType") ?? "INTERNAL");
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const category = String(formData.get("category") ?? "GENERAL");
@@ -2328,9 +2329,22 @@ export async function submitComplaint(formData: FormData) {
   if (!title) throw new Error("Title is required");
   if (!description) throw new Error("Description is required");
 
-  await prisma.complaint.create({
-    data: { title, description, category, submittedById: me.id },
-  });
+  if (complaintType === "CUSTOMER") {
+    const customerName = String(formData.get("customerName") ?? "").trim();
+    const customerPhone = String(formData.get("customerPhone") ?? "").trim();
+    const orderId = String(formData.get("orderId") ?? "").trim();
+    if (!customerName) throw new Error("Customer name is required");
+    if (!customerPhone) throw new Error("Customer phone is required");
+    if (!orderId) throw new Error("Order ID is required");
+
+    await prisma.complaint.create({
+      data: { complaintType, title, description, category, customerName, customerPhone, orderId, submittedById: me.id },
+    });
+  } else {
+    await prisma.complaint.create({
+      data: { complaintType, title, description, category, submittedById: me.id },
+    });
+  }
 
   sendPushToAll({
     title: `New Complaint — ${me.displayName ?? me.username}`,

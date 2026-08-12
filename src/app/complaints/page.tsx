@@ -9,6 +9,11 @@ const CATEGORY_LABEL: Record<string, string> = {
   WORKPLACE: "Workplace",
   SALARY:    "Salary / Pay",
   WORKLOAD:  "Workload",
+  SOFTWARE:  "Software Issue",
+  QUALITY:   "Product Quality",
+  DELIVERY:  "Delivery Issue",
+  PAYMENT:   "Payment Issue",
+  BEHAVIOR:  "Staff Behavior",
   OTHER:     "Other",
 };
 
@@ -61,13 +66,21 @@ export default async function ComplaintsPage() {
                     <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[c.status] ?? "bg-gray-100 text-gray-500"}`}>
                       {c.status.replace("_", " ")}
                     </span>
+                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                      c.complaintType === "CUSTOMER"
+                        ? "bg-orange-100 text-orange-700"
+                        : "bg-purple-100 text-purple-700"
+                    }`}>
+                      {c.complaintType === "CUSTOMER" ? "Customer" : "Internal"}
+                    </span>
                     <span className="text-[11px] text-gray-400 px-2 py-0.5 rounded-full bg-gray-50 border border-gray-100">
                       {CATEGORY_LABEL[c.category] ?? c.category}
                     </span>
                   </div>
+
                   {me.isAdmin && c.submittedBy && (
                     <p className="text-xs text-gray-400 mt-0.5">
-                      {c.submittedBy.displayName ?? c.submittedBy.username} · {c.createdAt.toLocaleDateString()}
+                      by {c.submittedBy.displayName ?? c.submittedBy.username} · {c.createdAt.toLocaleDateString()}
                     </p>
                   )}
                   {!me.isAdmin && (
@@ -75,6 +88,30 @@ export default async function ComplaintsPage() {
                   )}
                 </div>
               </div>
+
+              {/* customer info block */}
+              {c.complaintType === "CUSTOMER" && (c.customerName || c.customerPhone || c.orderId) && (
+                <div className="bg-orange-50 border border-orange-100 rounded-xl px-4 py-3 grid grid-cols-3 gap-3">
+                  {c.customerName && (
+                    <div>
+                      <p className="text-[10px] font-semibold text-orange-500 uppercase tracking-wide mb-0.5">Customer</p>
+                      <p className="text-sm text-orange-900 font-medium">{c.customerName}</p>
+                    </div>
+                  )}
+                  {c.customerPhone && (
+                    <div>
+                      <p className="text-[10px] font-semibold text-orange-500 uppercase tracking-wide mb-0.5">Phone</p>
+                      <p className="text-sm text-orange-900 font-medium">{c.customerPhone}</p>
+                    </div>
+                  )}
+                  {c.orderId && (
+                    <div>
+                      <p className="text-[10px] font-semibold text-orange-500 uppercase tracking-wide mb-0.5">Order ID</p>
+                      <p className="text-sm text-orange-900 font-medium">{c.orderId}</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <p className="text-sm text-gray-600 whitespace-pre-line">{c.description}</p>
 

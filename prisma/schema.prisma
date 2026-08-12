@@ -469,18 +469,24 @@ model RetailFollowupLog {
 }
 
 model Complaint {
-  id            Int      @id @default(autoincrement())
-  title         String
-  description   String   @db.Text
-  category      String   @default("GENERAL")
-  status        String   @default("OPEN")
-  adminNote     String?  @db.Text
-  submittedBy   User?    @relation(fields: [submittedById], references: [id])
-  submittedById Int?
-  createdAt     DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+  complaintType   String   @default("INTERNAL")  // INTERNAL | CUSTOMER
+  title           String
+  description     String   @db.Text
+  category        String   @default("GENERAL")
+  status          String   @default("OPEN")
+  adminNote       String?  @db.Text
+  // customer complaint fields
+  customerName    String?
+  customerPhone   String?
+  orderId         String?
+  submittedBy     User?    @relation(fields: [submittedById], references: [id])
+  submittedById   Int?
+  createdAt       DateTime @default(now())
 
   @@index([submittedById])
   @@index([status])
+  @@index([complaintType])
 }
 
 model PushSubscription {
