@@ -32,6 +32,8 @@ export default function NewComplaintPage() {
       try {
         await submitComplaint(fd);
       } catch (err: unknown) {
+        // re-throw Next.js redirect — it must not be swallowed
+        if (err && typeof err === "object" && "digest" in err) throw err;
         setError(err instanceof Error ? err.message : "Something went wrong");
       }
     });
