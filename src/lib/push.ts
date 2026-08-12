@@ -1,13 +1,20 @@
 import webpush from "web-push";
 import { prisma } from "@/lib/prisma";
 
-webpush.setVapidDetails(
-  process.env.VAPID_EMAIL!,
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+let vapidConfigured = false;
+function ensureVapid() {
+  if (vapidConfigured) return true;
+  const email = process.env.VAPID_EMAIL;
+  const pub = process.env.VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  if (!email || !pub || !priv) return false;
+  webpush.setVapidDetails(email, pub, priv);
+  vapidConfigured = true;
+  return true;
+}
 
 export async function sendPushToAll(payload: { title: string; body: string; url?: string }) {
+  if (!ensureVapid()) return;
   const subs = await prisma.pushSubscription.findMany();
   const message = JSON.stringify(payload);
 
