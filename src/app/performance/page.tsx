@@ -302,12 +302,20 @@ export default async function PerformancePage({
           <p className="text-xs text-gray-400 mt-0.5">{selectedUserLabel} · {dateLabel}</p>
         </div>
         {isAdmin && (
-          <Link
-            href="/performance/targets"
-            className="border border-gray-200 text-gray-600 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-          >
-            Set Targets
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href="/performance/report"
+              className="bg-black text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors shrink-0"
+            >
+              Get Report
+            </Link>
+            <Link
+              href="/performance/targets"
+              className="border border-gray-200 text-gray-600 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+            >
+              Set Targets
+            </Link>
+          </div>
         )}
       </div>
 
