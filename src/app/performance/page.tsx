@@ -19,6 +19,156 @@ function dateLabelForStr(dateStr: string, todayStr: string) {
   });
 }
 
+function formatPkTime(date: Date) {
+  const pkMs = date.getTime() + 5 * 60 * 60 * 1000;
+  const h = Math.floor((pkMs / (1000 * 60 * 60)) % 24);
+  const m = Math.floor((pkMs / (1000 * 60)) % 60);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${m.toString().padStart(2, "0")} ${ampm}`;
+}
+
+function hourLabel(h: number) {
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}`;
+}
+function hourLabelFull(h: number) {
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:00 ${ampm}`;
+}
+
+// SVG bar chart rendered server-side
+function HourlyBarChart({
+  hourData,
+}: {
+  hourData: { hour: number; calls: number; orders: number }[];
+}) {
+  if (hourData.length === 0) return null;
+
+  const W = 560;
+  const H = 130;
+  const padL = 28;
+  const padR = 12;
+  const padT = 12;
+  const padB = 28;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  const maxVal = Math.max(...hourData.map((d) => d.calls + d.orders), 1);
+  const yTicks = maxVal <= 5 ? maxVal : 5;
+
+  const slotW = chartW / hourData.length;
+  const barGroup = slotW * 0.72;
+  const barW = hourData.length > 1 ? Math.max(4, barGroup / 2 - 1) : Math.max(8, barGroup / 2 - 1);
+  const gap = 2;
+
+  function yPos(v: number) {
+    return padT + chartH - (v / maxVal) * chartH;
+  }
+  function barH(v: number) {
+    return (v / maxVal) * chartH;
+  }
+
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      width="100%"
+      style={{ display: "block", overflow: "visible" }}
+      aria-label="Hourly calls and orders chart"
+    >
+      {/* Y grid lines */}
+      {Array.from({ length: yTicks + 1 }, (_, i) => {
+        const v = Math.round((maxVal * i) / yTicks);
+        const y = yPos(v);
+        return (
+          <g key={i}>
+            <line
+              x1={padL} y1={y} x2={W - padR} y2={y}
+              stroke="#f3f4f6" strokeWidth="1"
+            />
+            {v > 0 && (
+              <text x={padL - 4} y={y + 3.5} textAnchor="end" fontSize="9" fill="#9ca3af">
+                {v}
+              </text>
+            )}
+          </g>
+        );
+      })}
+
+      {/* Baseline */}
+      <line x1={padL} y1={padT + chartH} x2={W - padR} y2={padT + chartH} stroke="#e5e7eb" strokeWidth="1" />
+
+      {/* Bars */}
+      {hourData.map((d, i) => {
+        const cx = padL + i * slotW + slotW / 2;
+        const callBarH = barH(d.calls);
+        const orderBarH = barH(d.orders);
+        const callX = cx - barW - gap / 2;
+        const orderX = cx + gap / 2;
+        const baseline = padT + chartH;
+
+        return (
+          <g key={d.hour}>
+            {/* Calls bar */}
+            {d.calls > 0 && (
+              <>
+                <rect
+                  x={callX} y={baseline - callBarH}
+                  width={barW} height={callBarH}
+                  fill="#3b82f6" rx="3" ry="3"
+                />
+                {callBarH > 14 && (
+                  <text x={callX + barW / 2} y={baseline - callBarH + 9} textAnchor="middle" fontSize="9" fill="white" fontWeight="600">
+                    {d.calls}
+                  </text>
+                )}
+              </>
+            )}
+            {/* Orders bar */}
+            {d.orders > 0 && (
+              <>
+                <rect
+                  x={orderX} y={baseline - orderBarH}
+                  width={barW} height={orderBarH}
+                  fill="#a855f7" rx="3" ry="3"
+                />
+                {orderBarH > 14 && (
+                  <text x={orderX + barW / 2} y={baseline - orderBarH + 9} textAnchor="middle" fontSize="9" fill="white" fontWeight="600">
+                    {d.orders}
+                  </text>
+                )}
+              </>
+            )}
+            {/* X label */}
+            <text
+              x={cx} y={baseline + 12}
+              textAnchor="middle" fontSize="9" fill="#9ca3af"
+            >
+              {hourLabel(d.hour)}
+            </text>
+            {/* AM/PM marker on first of each */}
+            {(i === 0 || (d.hour === 12)) && (
+              <text x={cx} y={baseline + 20} textAnchor="middle" fontSize="7.5" fill="#d1d5db">
+                {d.hour < 12 ? "AM" : "PM"}
+              </text>
+            )}
+          </g>
+        );
+      })}
+
+      {/* Legend */}
+      <g transform={`translate(${padL}, ${padT - 4})`}>
+        <rect x="0" y="0" width="8" height="8" fill="#3b82f6" rx="2" />
+        <text x="11" y="7.5" fontSize="9" fill="#6b7280">Calls</text>
+        <rect x="42" y="0" width="8" height="8" fill="#a855f7" rx="2" />
+        <text x="53" y="7.5" fontSize="9" fill="#6b7280">Orders</text>
+      </g>
+    </svg>
+  );
+}
+
 export default async function PerformancePage({
   searchParams,
 }: {
@@ -52,7 +202,6 @@ export default async function PerformancePage({
     ? await prisma.user.findMany({ where: { isAdmin: false }, orderBy: { displayName: "asc" } })
     : [];
 
-  // Calls from ReorderCallLog (has individual timestamps per call)
   const callLogs = await prisma.reorderCallLog.findMany({
     where: {
       calledAt: { gte: dayStart, lte: dayEnd },
@@ -62,13 +211,11 @@ export default async function PerformancePage({
       id: true,
       calledAt: true,
       status: true,
-      calledBy: { select: { displayName: true, username: true } },
       lead: { select: { customerName: true } },
     },
     orderBy: { calledAt: "asc" },
   });
 
-  // Orders from RetailOrder
   const orders = await prisma.retailOrder.findMany({
     where: {
       date: { gte: dayStart, lte: dayEnd },
@@ -80,36 +227,52 @@ export default async function PerformancePage({
       customerName: true,
       totalAmount: true,
       date: true,
-      createdBy: { select: { displayName: true, username: true } },
     },
     orderBy: { date: "asc" },
   });
 
   const totalCalls = callLogs.length;
   const totalOrders = orders.length;
+  const convRate = totalCalls > 0 ? Math.round((totalOrders / totalCalls) * 100) : null;
 
-  // Group calls by hour (in PK timezone, UTC+5)
+  // Group by PK hour
   const callsByHour = new Map<number, typeof callLogs>();
   for (const log of callLogs) {
     const pkHour = (log.calledAt.getUTCHours() + 5) % 24;
-    const existing = callsByHour.get(pkHour) ?? [];
-    existing.push(log);
-    callsByHour.set(pkHour, existing);
+    const arr = callsByHour.get(pkHour) ?? [];
+    arr.push(log);
+    callsByHour.set(pkHour, arr);
   }
 
-  // Group orders by hour too
   const ordersByHour = new Map<number, typeof orders>();
   for (const o of orders) {
     const pkHour = (o.date.getUTCHours() + 5) % 24;
-    const existing = ordersByHour.get(pkHour) ?? [];
-    existing.push(o);
-    ordersByHour.set(pkHour, existing);
+    const arr = ordersByHour.get(pkHour) ?? [];
+    arr.push(o);
+    ordersByHour.set(pkHour, arr);
   }
 
-  // All active hours
   const allHours = Array.from(
     new Set([...callsByHour.keys(), ...ordersByHour.keys()])
   ).sort((a, b) => a - b);
+
+  // Bar chart data — include all hours between first and last active hour
+  const chartData = allHours.length > 0
+    ? Array.from(
+        { length: allHours[allHours.length - 1] - allHours[0] + 1 },
+        (_, i) => {
+          const h = allHours[0] + i;
+          return { hour: h, calls: callsByHour.get(h)?.length ?? 0, orders: ordersByHour.get(h)?.length ?? 0 };
+        }
+      )
+    : [];
+
+  // Peak hour for calls
+  let peakHour: number | null = null;
+  let peakCount = 0;
+  for (const [h, logs] of callsByHour) {
+    if (logs.length > peakCount) { peakCount = logs.length; peakHour = h; }
+  }
 
   const selectedUserLabel = filterUserId
     ? (users.find((u) => u.id === filterUserId)
@@ -118,21 +281,6 @@ export default async function PerformancePage({
     : isAdmin ? "All Employees" : userLabel(me!);
 
   const dateLabel = dateLabelForStr(selectedDateStr, todayStr);
-
-  function formatPkTime(date: Date) {
-    const pkMs = date.getTime() + 5 * 60 * 60 * 1000;
-    const h = Math.floor((pkMs / (1000 * 60 * 60)) % 24);
-    const m = Math.floor((pkMs / (1000 * 60)) % 60);
-    const ampm = h >= 12 ? "PM" : "AM";
-    const h12 = h % 12 === 0 ? 12 : h % 12;
-    return `${h12}:${m.toString().padStart(2, "0")} ${ampm}`;
-  }
-
-  function hourLabel(h: number) {
-    const ampm = h >= 12 ? "PM" : "AM";
-    const h12 = h % 12 === 0 ? 12 : h % 12;
-    return `${h12}:00 ${ampm}`;
-  }
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -156,25 +304,49 @@ export default async function PerformancePage({
       </Suspense>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-          <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Calls Made</p>
-          <p className="text-4xl font-bold text-blue-600 tabular-nums">{totalCalls}</p>
-          <p className="text-xs text-gray-400 mt-1">{dateLabel}</p>
+          <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1 font-semibold">Calls Made</p>
+          <p className="text-3xl font-bold text-blue-600 tabular-nums leading-none">{totalCalls}</p>
+          <p className="text-[10px] text-gray-400 mt-2">{dateLabel}</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-          <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Orders Taken</p>
-          <p className="text-4xl font-bold text-purple-600 tabular-nums">{totalOrders}</p>
-          <p className="text-xs text-gray-400 mt-1">{dateLabel}</p>
+          <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1 font-semibold">Orders Taken</p>
+          <p className="text-3xl font-bold text-purple-600 tabular-nums leading-none">{totalOrders}</p>
+          <p className="text-[10px] text-gray-400 mt-2">{dateLabel}</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+          <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1 font-semibold">Conversion</p>
+          <p className="text-3xl font-bold text-green-600 tabular-nums leading-none">
+            {convRate !== null ? `${convRate}%` : "—"}
+          </p>
+          <p className="text-[10px] text-gray-400 mt-2">
+            {totalCalls > 0 ? `${totalOrders} of ${totalCalls} calls` : "No calls yet"}
+          </p>
         </div>
       </div>
+
+      {/* Bar chart */}
+      {chartData.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-5 pt-4 pb-3">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Calls &amp; Orders by Hour</p>
+            {peakHour !== null && (
+              <p className="text-[11px] text-gray-400">
+                Peak: <span className="font-semibold text-gray-600">{hourLabelFull(peakHour)}</span> · {peakCount} calls
+              </p>
+            )}
+          </div>
+          <HourlyBarChart hourData={chartData} />
+        </div>
+      )}
 
       {/* Hourly timeline */}
       {allHours.length > 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-3 border-b border-gray-100">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-              Activity Timeline
+              Activity Log
             </p>
           </div>
           <div className="divide-y divide-gray-50">
@@ -183,10 +355,9 @@ export default async function PerformancePage({
               const hourOrders = ordersByHour.get(hour) ?? [];
               return (
                 <div key={hour} className="px-5 py-4">
-                  {/* Hour header */}
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-xs font-bold text-gray-500 w-16 shrink-0">
-                      {hourLabel(hour)}
+                      {hourLabelFull(hour)}
                     </span>
                     <div className="flex gap-2">
                       {hourCalls.length > 0 && (
@@ -202,7 +373,6 @@ export default async function PerformancePage({
                     </div>
                   </div>
 
-                  {/* Call entries */}
                   <div className="space-y-1.5 ml-16">
                     {hourCalls.map((log) => (
                       <div key={log.id} className="flex items-center gap-2">
@@ -219,7 +389,6 @@ export default async function PerformancePage({
                       </div>
                     ))}
 
-                    {/* Order entries */}
                     {hourOrders.map((o) => (
                       <div key={o.id} className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
