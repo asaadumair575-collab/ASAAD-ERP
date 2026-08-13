@@ -477,6 +477,7 @@ model Complaint {
   category        String   @default("GENERAL")
   status          String   @default("OPEN")
   adminNote       String?  @db.Text
+  metadata        Json?
   // customer complaint fields
   customerName    String?
   customerPhone   String?

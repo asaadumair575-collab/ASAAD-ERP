@@ -1,18 +1,6 @@
 import Link from "next/link";
 import PriorityBadge from "./PriorityBadge";
-
-const CATEGORY_LABEL: Record<string, string> = {
-  GENERAL:   "General",
-  WORKPLACE: "Workplace",
-  SALARY:    "Salary / Pay",
-  WORKLOAD:  "Workload",
-  SOFTWARE:  "Software Issue",
-  QUALITY:   "Product Quality",
-  DELIVERY:  "Delivery Issue",
-  PAYMENT:   "Payment Issue",
-  BEHAVIOR:  "Staff Behavior",
-  OTHER:     "Other",
-};
+import { ISSUE_TYPES } from "./issueTypes";
 
 const STATUS_STYLE: Record<string, string> = {
   OPEN:        "bg-yellow-100 text-yellow-800",
@@ -33,6 +21,7 @@ type Complaint = {
 };
 
 export default function ComplaintCard({ c, isAdmin }: { c: Complaint; isAdmin: boolean }) {
+  const issueLabel = ISSUE_TYPES.find((t) => t.value === c.category)?.label;
   return (
     <div className="border border-gray-200 rounded-2xl px-5 py-4 bg-white flex items-center justify-between gap-3">
       <div className="flex-1 min-w-0">
@@ -47,9 +36,11 @@ export default function ComplaintCard({ c, isAdmin }: { c: Complaint; isAdmin: b
             {c.complaintType === "CUSTOMER" ? "Customer" : "Internal"}
           </span>
           <PriorityBadge priority={c.priority} />
-          <span className="text-[11px] text-gray-400 px-2 py-0.5 rounded-full bg-gray-50 border border-gray-100 shrink-0">
-            {CATEGORY_LABEL[c.category] ?? c.category}
-          </span>
+          {issueLabel && (
+            <span className="text-[11px] text-gray-400 px-2 py-0.5 rounded-full bg-gray-50 border border-gray-100 shrink-0">
+              {issueLabel}
+            </span>
+          )}
         </div>
         <p className="text-xs text-gray-400 mt-0.5">
           {isAdmin && c.submittedBy ? `${c.submittedBy.displayName ?? c.submittedBy.username} · ` : ""}

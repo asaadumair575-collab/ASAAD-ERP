@@ -2322,30 +2322,49 @@ export async function toggleReorderCampaignActive(id: number, isActive: boolean)
 export async function submitComplaint(formData: FormData) {
   const me = await requireAuth();
   const complaintType = String(formData.get("complaintType") ?? "INTERNAL");
+  const issueType = String(formData.get("issueType") ?? "OTHER_INTERNAL");
   const priority = String(formData.get("priority") ?? "MEDIUM");
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
-  const category = String(formData.get("category") ?? "GENERAL");
 
   if (!title) throw new Error("Title is required");
   if (!description) throw new Error("Description is required");
 
-  if (complaintType === "CUSTOMER") {
-    const customerName = String(formData.get("customerName") ?? "").trim();
-    const customerPhone = String(formData.get("customerPhone") ?? "").trim();
-    const orderId = String(formData.get("orderId") ?? "").trim();
-    if (!customerName) throw new Error("Customer name is required");
-    if (!customerPhone) throw new Error("Customer phone is required");
-    if (!orderId) throw new Error("Order ID is required");
-
-    await prisma.complaint.create({
-      data: { complaintType, priority, title, description, category, customerName, customerPhone, orderId, submittedById: me.id },
-    });
-  } else {
-    await prisma.complaint.create({
-      data: { complaintType, priority, title, description, category, submittedById: me.id },
-    });
+  // collect dynamic metadata fields (non-file text fields)
+  const KNOWN_KEYS = new Set(["complaintType","issueType","priority","title","description"]);
+  const metadata: Record<string, string> = {};
+  for (const [key, val] of formData.entries()) {
+    if (KNOWN_KEYS.has(key)) continue;
+    if (val instanceof File) {
+      if (val.size > 0) {
+        const buf = Buffer.from(await val.arrayBuffer());
+        metadata[key] = `data:${val.type};base64,${buf.toString("base64")}`;
+      }
+    } else {
+      const s = String(val).trim();
+      if (s) metadata[key] = s;
+    }
   }
+
+  // pull out known customer fields for indexed columns
+  const customerName = metadata.customerName ?? null;
+  const customerPhone = metadata.customerPhone ?? null;
+  const orderId = metadata.orderId ?? null;
+
+  await prisma.complaint.create({
+    data: {
+      complaintType,
+      priority,
+      title,
+      description,
+      category: issueType,
+      customerName,
+      customerPhone,
+      orderId,
+      metadata: Object.keys(metadata).length ? metadata : undefined,
+      submittedById: me.id,
+    },
+  });
 
   sendPushToAll({
     title: `New Complaint — ${me.displayName ?? me.username}`,

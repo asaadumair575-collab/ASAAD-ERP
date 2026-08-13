@@ -1,36 +1,28 @@
 "use client";
 import { useState, useTransition } from "react";
 import { submitComplaint } from "@/lib/actions";
-
-const INTERNAL_CATEGORIES = [
-  { value: "GENERAL",   label: "General" },
-  { value: "WORKPLACE", label: "Workplace" },
-  { value: "SALARY",    label: "Salary / Pay" },
-  { value: "WORKLOAD",  label: "Workload" },
-  { value: "SOFTWARE",  label: "Software Issue" },
-  { value: "OTHER",     label: "Other" },
-];
-
-const CUSTOMER_CATEGORIES = [
-  { value: "QUALITY",   label: "Product Quality" },
-  { value: "DELIVERY",  label: "Delivery Issue" },
-  { value: "PAYMENT",   label: "Payment Issue" },
-  { value: "BEHAVIOR",  label: "Staff Behavior" },
-  { value: "OTHER",     label: "Other" },
-];
+import { CUSTOMER_ISSUES, INTERNAL_ISSUES, type IssueType } from "../issueTypes";
 
 const PRIORITIES = [
-  { value: "LOW",    label: "Low",    color: "bg-gray-100 text-gray-600" },
-  { value: "MEDIUM", label: "Medium", color: "bg-blue-100 text-blue-700" },
-  { value: "HIGH",   label: "High",   color: "bg-orange-100 text-orange-700" },
-  { value: "URGENT", label: "Urgent", color: "bg-red-100 text-red-700" },
+  { value: "LOW",    label: "Low" },
+  { value: "MEDIUM", label: "Medium" },
+  { value: "HIGH",   label: "High" },
+  { value: "URGENT", label: "Urgent" },
 ];
 
 export default function NewComplaintPage() {
-  const [type, setType] = useState<"INTERNAL" | "CUSTOMER">("INTERNAL");
+  const [group, setGroup] = useState<"INTERNAL" | "CUSTOMER">("INTERNAL");
+  const [issueType, setIssueType] = useState<IssueType | null>(null);
   const [priority, setPriority] = useState("MEDIUM");
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
+
+  const issueList = group === "CUSTOMER" ? CUSTOMER_ISSUES : INTERNAL_ISSUES;
+
+  function handleGroupChange(g: "INTERNAL" | "CUSTOMER") {
+    setGroup(g);
+    setIssueType(null);
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -40,14 +32,11 @@ export default function NewComplaintPage() {
       try {
         await submitComplaint(fd);
       } catch (err: unknown) {
-        // re-throw Next.js redirect — it must not be swallowed
         if (err && typeof err === "object" && "digest" in err) throw err;
         setError(err instanceof Error ? err.message : "Something went wrong");
       }
     });
   }
-
-  const categories = type === "CUSTOMER" ? CUSTOMER_CATEGORIES : INTERNAL_CATEGORIES;
 
   return (
     <div className="max-w-lg space-y-6">
@@ -56,7 +45,7 @@ export default function NewComplaintPage() {
         <p className="text-sm text-gray-500 mt-0.5">Your complaint will be reviewed by admin.</p>
       </div>
 
-      {/* type toggle */}
+      {/* Step 1 — group */}
       <div className="flex gap-2 p-1 bg-gray-100 rounded-xl w-fit">
         {[
           { val: "INTERNAL", label: "Internal / Software" },
@@ -65,9 +54,9 @@ export default function NewComplaintPage() {
           <button
             key={t.val}
             type="button"
-            onClick={() => setType(t.val as "INTERNAL" | "CUSTOMER")}
+            onClick={() => handleGroupChange(t.val as "INTERNAL" | "CUSTOMER")}
             className={`text-sm font-medium px-4 py-2 rounded-lg transition-colors ${
-              type === t.val ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"
+              group === t.val ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"
             }`}
           >
             {t.label}
@@ -75,125 +64,147 @@ export default function NewComplaintPage() {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 border border-gray-200 rounded-2xl p-6 bg-white">
-        <input type="hidden" name="complaintType" value={type} />
-        <input type="hidden" name="priority" value={priority} />
-
-        {/* customer-only fields */}
-        {type === "CUSTOMER" && (
-          <div className="space-y-4 pb-4 border-b border-gray-100">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Customer Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="customerName"
-                required
-                placeholder="Full name of the customer"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Customer Phone <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="tel"
-                name="customerPhone"
-                required
-                placeholder="+92 3XX XXXXXXX"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                Order ID <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="orderId"
-                required
-                placeholder="e.g. INV-1234 or #5678"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-              />
-            </div>
-          </div>
-        )}
-
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1.5">Priority</label>
-          <div className="flex gap-2">
-            {PRIORITIES.map((p) => (
+      {/* Step 2 — issue type tiles */}
+      {!issueType && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Select issue type</p>
+          <div className="grid grid-cols-1 gap-2">
+            {issueList.map((it) => (
               <button
-                key={p.value}
+                key={it.value}
                 type="button"
-                onClick={() => setPriority(p.value)}
-                className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
-                  priority === p.value
-                    ? "border-black bg-black text-white"
-                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                }`}
+                onClick={() => setIssueType(it)}
+                className="text-left px-4 py-3 border border-gray-200 rounded-xl bg-white hover:border-black hover:bg-gray-50 transition-colors"
               >
-                {p.label}
+                <span className="text-sm font-medium text-gray-800">{it.label}</span>
               </button>
             ))}
           </div>
         </div>
+      )}
 
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1.5">Category</label>
-          <select
-            name="category"
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
-          >
-            {categories.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
-        </div>
+      {/* Step 3 — form fields */}
+      {issueType && (
+        <form onSubmit={handleSubmit} className="space-y-4 border border-gray-200 rounded-2xl p-6 bg-white">
+          <input type="hidden" name="complaintType" value={group} />
+          <input type="hidden" name="issueType" value={issueType.value} />
+          <input type="hidden" name="priority" value={priority} />
 
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1.5">
-            Title <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="title"
-            required
-            placeholder="Brief summary of the issue"
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-          />
-        </div>
+          {/* selected issue header */}
+          <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+            <span className="text-sm font-semibold text-gray-800">{issueType.label}</span>
+            <button
+              type="button"
+              onClick={() => setIssueType(null)}
+              className="text-xs text-gray-400 hover:text-gray-600"
+            >
+              ← Change
+            </button>
+          </div>
 
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1.5">
-            Details <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            name="description"
-            required
-            rows={5}
-            placeholder="Describe the issue in detail..."
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
-          />
-        </div>
+          {/* dynamic fields for this issue type */}
+          {issueType.fields.map((field) => (
+            <div key={field.key}>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                {field.label}{" "}
+                {field.required && <span className="text-red-500">*</span>}
+              </label>
+              {field.type === "file" ? (
+                <input
+                  type="file"
+                  name={field.key}
+                  required={field.required}
+                  accept={"accept" in field ? field.accept : undefined}
+                  className="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border file:border-gray-200 file:text-xs file:font-medium file:bg-gray-50 hover:file:bg-gray-100"
+                />
+              ) : field.type === "select" ? (
+                <select
+                  name={field.key}
+                  required={field.required}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
+                >
+                  {"options" in field && field.options.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type={field.type}
+                  name={field.key}
+                  required={field.required}
+                  placeholder={"placeholder" in field ? field.placeholder : ""}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                />
+              )}
+            </div>
+          ))}
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+          {/* title */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="title"
+              required
+              defaultValue={issueType.defaultTitle}
+              placeholder="Brief summary"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+            />
+          </div>
 
-        <div className="flex gap-3 pt-1">
-          <button
-            type="submit"
-            disabled={pending}
-            className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
-          >
-            {pending ? "Submitting..." : "Submit Complaint"}
-          </button>
-          <a href="/complaints" className="text-sm text-gray-400 hover:text-gray-600 px-3 py-2.5">
-            Cancel
-          </a>
-        </div>
-      </form>
+          {/* description */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">
+              Details <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              name="description"
+              required
+              rows={4}
+              placeholder="Describe the issue in detail..."
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none"
+            />
+          </div>
+
+          {/* priority */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Priority</label>
+            <div className="flex gap-2">
+              {PRIORITIES.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => setPriority(p.value)}
+                  className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                    priority === p.value
+                      ? "border-black bg-black text-white"
+                      : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && <p className="text-sm text-red-500">{error}</p>}
+
+          <div className="flex gap-3 pt-1">
+            <button
+              type="submit"
+              disabled={pending}
+              className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
+            >
+              {pending ? "Submitting..." : "Submit Complaint"}
+            </button>
+            <a href="/complaints" className="text-sm text-gray-400 hover:text-gray-600 px-3 py-2.5">
+              Cancel
+            </a>
+          </div>
+        </form>
+      )}
     </div>
   );
 }
