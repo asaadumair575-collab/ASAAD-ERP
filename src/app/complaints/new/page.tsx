@@ -102,6 +102,34 @@ export default function NewComplaintPage() {
             </button>
           </div>
 
+          {/* customer name & phone — mandatory for all */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                Customer Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="customerName"
+                required
+                placeholder="Full name"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                Customer Phone <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                name="customerPhone"
+                required
+                placeholder="+92 3XX XXXXXXX"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              />
+            </div>
+          </div>
+
           {/* dynamic fields for this issue type */}
           {issueType.fields.map((field) => (
             <div key={field.key}>

@@ -2330,6 +2330,11 @@ export async function submitComplaint(formData: FormData) {
   if (!title) throw new Error("Title is required");
   if (!description) throw new Error("Description is required");
 
+  const customerName = String(formData.get("customerName") ?? "").trim();
+  const customerPhone = String(formData.get("customerPhone") ?? "").trim();
+  if (!customerName) throw new Error("Customer name is required");
+  if (!customerPhone) throw new Error("Customer phone is required");
+
   // collect dynamic metadata fields (non-file text fields)
   const KNOWN_KEYS = new Set(["complaintType","issueType","priority","title","description"]);
   const metadata: Record<string, string> = {};
@@ -2346,9 +2351,6 @@ export async function submitComplaint(formData: FormData) {
     }
   }
 
-  // pull out known customer fields for indexed columns
-  const customerName = metadata.customerName ?? null;
-  const customerPhone = metadata.customerPhone ?? null;
   const orderId = metadata.orderId ?? null;
 
   await prisma.complaint.create({

@@ -59,9 +59,7 @@ export const ISSUE_TYPES: IssueType[] = [
     group: "CUSTOMER",
     defaultTitle: "Customer Issue",
     fields: [
-      { key: "customerName",  label: "Customer Name",  type: "text", required: true,  placeholder: "Full name" },
-      { key: "customerPhone", label: "Customer Phone", type: "text", required: true,  placeholder: "+92 3XX XXXXXXX" },
-      { key: "orderId",       label: "Order ID",       type: "text", required: false, placeholder: "e.g. INV-1234 (if applicable)" },
+      { key: "orderId", label: "Order ID", type: "text", required: false, placeholder: "e.g. INV-1234 (if applicable)" },
     ],
   },
 
