@@ -2366,9 +2366,16 @@ export async function submitComplaint(formData: FormData) {
     },
   });
 
+  const issueLabel: Record<string, string> = {
+    BALL_QUALITY: "Ball Quality Issue", PAYMENT_NOT_RECEIVED: "Payment Not Received",
+    WRONG_ITEM: "Wrong Item Sent", DELIVERY_ISSUE: "Delivery Issue",
+    CUSTOMER_BEHAVIOR: "Customer Behavior", SALARY_ISSUE: "Salary Issue",
+    SOFTWARE_BUG: "Software Bug", WORKLOAD: "Workload", WORKPLACE: "Workplace",
+    OTHER_INTERNAL: "Other",
+  };
   sendPushToAll({
-    title: `New Complaint — ${me.displayName ?? me.username}`,
-    body: title,
+    title: `🚨 New Complaint — ${issueLabel[issueType] ?? issueType}`,
+    body: `${me.displayName ?? me.username}: ${title}`,
     url: "/complaints",
   }).catch(() => {});
 
