@@ -1263,7 +1263,7 @@ export async function updateSampleResponse(sampleId: number, formData: FormData)
 
 // ── Retail / COD ──────────────────────────────────────────────────────────────
 
-export async function createRetailOrder(formData: FormData) {
+export async function createRetailOrder(_prev: string | null, formData: FormData): Promise<string | null> {
   const me = await requireAuth();
   const retailCustomerIdRaw = formData.get("retailCustomerId");
   const retailCustomerId = retailCustomerIdRaw ? parseInt(String(retailCustomerIdRaw), 10) : null;
@@ -1279,7 +1279,7 @@ export async function createRetailOrder(formData: FormData) {
     if (rc) { customerName = rc.name; phone = phone ?? rc.phone; city = city ?? rc.city; }
   }
 
-  if (!customerName) throw new Error("Customer name is required");
+  if (!customerName) return "Customer name is required";
 
   const descriptions = formData.getAll("itemDescription").map((v) => String(v).trim());
   const quantities = formData.getAll("itemQuantity").map((v) => parseFloat(String(v)));
@@ -1290,11 +1290,11 @@ export async function createRetailOrder(formData: FormData) {
     .map((description, i) => ({ description, quantity: quantities[i], rate: rates[i], costPrice: costPrices[i] ?? 0 }))
     .filter((it) => it.description && !isNaN(it.quantity) && !isNaN(it.rate));
 
-  if (items.length === 0) throw new Error("At least one item is required");
+  if (items.length === 0) return "At least one item is required";
 
   if (phone) {
     const existing = await prisma.retailOrder.findFirst({ where: { phone }, select: { id: true, customerName: true } });
-    if (existing) throw new Error(`Phone number already exists — Order R-${String(existing.id).padStart(3, "0")} (${existing.customerName})`);
+    if (existing) return `Phone already exists — Order R-${String(existing.id).padStart(3, "0")} (${existing.customerName})`;
   }
 
   const totalAmount = round2(items.reduce((s, i) => s + i.quantity * i.rate, 0));
@@ -1305,7 +1305,7 @@ export async function createRetailOrder(formData: FormData) {
     const buffer = Buffer.from(await advScreenshotFile.arrayBuffer());
     advanceScreenshot = `data:${advScreenshotFile.type};base64,${buffer.toString("base64")}`;
   } else if (deliveryCharge > 0) {
-    throw new Error("Advance screenshot is required");
+    return "Advance screenshot is required when delivery charge is set";
   }
 
   const order = await prisma.retailOrder.create({

@@ -16,7 +16,7 @@ export default function RetailOrderForm({
   products,
   customers = [],
 }: {
-  action: (formData: FormData) => Promise<void>;
+  action: (prev: string | null, formData: FormData) => Promise<string | null>;
   products: Product[];
   customers?: Customer[];
 }) {
@@ -26,9 +26,7 @@ export default function RetailOrderForm({
   const [search, setSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const [error, formAction] = useActionState(async (_: string | null, formData: FormData) => {
-    try { await action(formData); return null; } catch (e) { return String(e instanceof Error ? e.message : e); }
-  }, null);
+  const [error, formAction] = useActionState(action, null);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
