@@ -2364,3 +2364,11 @@ export async function resolveComplaint(id: number, formData: FormData) {
   await prisma.complaint.update({ where: { id }, data: { status, adminNote } });
   revalidatePath("/complaints");
 }
+
+export async function deleteComplaint(id: number) {
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Unauthorized");
+  await prisma.complaint.delete({ where: { id } });
+  revalidatePath("/complaints");
+  redirect("/complaints");
+}

@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ComplaintActions from "../ComplaintActions";
+import DeleteComplaintButton from "../DeleteComplaintButton";
 
 const CATEGORY_LABEL: Record<string, string> = {
   GENERAL:   "General",
@@ -39,8 +40,9 @@ export default async function ComplaintDetailPage({ params }: { params: Promise<
 
   return (
     <div className="max-w-xl space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3">
         <Link href="/complaints" className="text-sm text-gray-400 hover:text-gray-600">← Complaints</Link>
+        {me.isAdmin && <DeleteComplaintButton id={c.id} />}
       </div>
 
       <div className="border border-gray-200 rounded-2xl bg-white overflow-hidden">
