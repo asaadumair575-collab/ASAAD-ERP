@@ -7,6 +7,7 @@ import DeleteComplaintButton from "../DeleteComplaintButton";
 import PriorityBadge from "../PriorityBadge";
 import PriorityChanger from "../PriorityChanger";
 import { ISSUE_TYPES } from "../issueTypes";
+import ComplaintThread from "../ComplaintThread";
 
 const STATUS_STYLE: Record<string, string> = {
   OPEN:        "bg-yellow-100 text-yellow-800",
@@ -31,7 +32,13 @@ export default async function ComplaintDetailPage({ params }: { params: Promise<
 
   const c = await prisma.complaint.findUnique({
     where: { id: parseInt(id, 10) },
-    include: { submittedBy: { select: { displayName: true, username: true } } },
+    include: {
+      submittedBy: { select: { displayName: true, username: true } },
+      messages: {
+        orderBy: { createdAt: "asc" },
+        include: { user: { select: { displayName: true, username: true, isAdmin: true } } },
+      },
+    },
   });
 
   if (!c) notFound();
@@ -135,6 +142,13 @@ export default async function ComplaintDetailPage({ params }: { params: Promise<
             {c.status === "OPEN" && <ComplaintActions id={c.id} />}
           </div>
         )}
+
+        {/* conversation thread */}
+        <ComplaintThread
+          complaintId={c.id}
+          messages={c.messages}
+          meIsAdmin={me.isAdmin}
+        />
       </div>
     </div>
   );

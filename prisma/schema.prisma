@@ -132,6 +132,7 @@ model User {
   retailFollowupLogs   RetailFollowupLog[] @relation("RetailFollowupLogCalledBy")
   pushSubscriptions    PushSubscription[]
   complaints           Complaint[]
+  complaintMessages    ComplaintMessage[]
 }
 
 model EmpCommissionEntry {
@@ -487,10 +488,24 @@ model Complaint {
   submittedById   Int?
   createdAt       DateTime @default(now())
 
+  messages       ComplaintMessage[]
+
   @@index([submittedById])
   @@index([status])
   @@index([complaintType])
   @@index([priority])
+}
+
+model ComplaintMessage {
+  id          Int      @id @default(autoincrement())
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  complaintId Int
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  message     String   @db.Text
+  createdAt   DateTime @default(now())
+
+  @@index([complaintId])
 }
 
 model PushSubscription {

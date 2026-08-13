@@ -2401,6 +2401,28 @@ export async function setComplaintPriority(id: number, priority: string) {
   revalidatePath("/complaints");
 }
 
+export async function addComplaintMessage(complaintId: number, formData: FormData) {
+  const me = await requireAuth();
+  const message = String(formData.get("message") ?? "").trim();
+  if (!message) return;
+
+  // only admin or the complaint submitter can message
+  const complaint = await prisma.complaint.findUnique({ where: { id: complaintId }, select: { submittedById: true } });
+  if (!complaint) throw new Error("Not found");
+  if (!me.isAdmin && complaint.submittedById !== me.id) throw new Error("Unauthorized");
+
+  await prisma.complaintMessage.create({ data: { complaintId, userId: me.id, message } });
+
+  // notify the other party
+  sendPushToAll({
+    title: `Reply on Complaint`,
+    body: `${me.displayName ?? me.username}: ${message.slice(0, 80)}`,
+    url: `/complaints/${complaintId}`,
+  }).catch(() => {});
+
+  revalidatePath(`/complaints/${complaintId}`);
+}
+
 export async function deleteComplaint(id: number) {
   const me = await requireAuth();
   if (!me.isAdmin) throw new Error("Unauthorized");
