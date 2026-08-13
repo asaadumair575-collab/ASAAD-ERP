@@ -279,6 +279,46 @@ export default async function PerformancePage({
       )
     : [];
 
+  // Free time gaps between 11am-4pm PK (calls only), gaps >= 10 min
+  const WINDOW_START_H = 11; // 11:00 AM PK
+  const WINDOW_END_H   = 16; // 4:00 PM PK
+  const MIN_GAP_MS = 10 * 60 * 1000;
+
+  // Convert PK hour:minute to a UTC Date on the selected day
+  function pkHM(h: number, m: number): Date {
+    // selectedDateStr is YYYY-MM-DD in PK (UTC+5)
+    // PK midnight = UTC selectedDate - 5h, so PK h:m = UTC (h-5):m on same date
+    const utcH = h - 5;
+    const d = new Date(selectedDateStr + "T00:00:00Z");
+    d.setUTCHours(utcH, m, 0, 0);
+    return d;
+  }
+
+  const windowStart = pkHM(WINDOW_START_H, 0);
+  const windowEnd   = pkHM(WINDOW_END_H,   0);
+
+  // All call timestamps in the window, sorted
+  const callsInWindow = callLogs
+    .map((l) => l.calledAt)
+    .filter((t) => t >= windowStart && t <= windowEnd)
+    .sort((a, b) => a.getTime() - b.getTime());
+
+  // Compute gaps
+  type Gap = { from: Date; to: Date; minutes: number };
+  const freeGaps: Gap[] = [];
+
+  const checkpoints = [windowStart, ...callsInWindow, windowEnd];
+  for (let i = 0; i < checkpoints.length - 1; i++) {
+    const gapMs = checkpoints[i + 1].getTime() - checkpoints[i].getTime();
+    if (gapMs >= MIN_GAP_MS) {
+      freeGaps.push({
+        from: checkpoints[i],
+        to:   checkpoints[i + 1],
+        minutes: Math.round(gapMs / 60000),
+      });
+    }
+  }
+
   // Peak hour for calls
   let peakHour: number | null = null;
   let peakCount = 0;
@@ -438,6 +478,50 @@ export default async function PerformancePage({
             )}
           </div>
           <HourlyBarChart hourData={chartData} />
+        </div>
+      )}
+
+      {/* Free time gaps 11am–4pm */}
+      {(totalCalls > 0 || totalOrders > 0) && (
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              Idle Gaps · 11:00 AM – 4:00 PM
+            </p>
+            <p className="text-[11px] text-gray-400">gaps ≥ 10 min</p>
+          </div>
+          {freeGaps.length === 0 ? (
+            <div className="px-5 py-4 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+              <p className="text-sm text-green-700 font-medium">No idle gaps — consistently active during peak hours</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {freeGaps.map((gap, i) => {
+                const isLong = gap.minutes >= 60;
+                const isMed  = gap.minutes >= 30;
+                return (
+                  <div key={i} className={`px-5 py-3 flex items-center gap-4 ${isLong ? "bg-red-50/60" : isMed ? "bg-amber-50/60" : ""}`}>
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${isLong ? "bg-red-400" : isMed ? "bg-amber-400" : "bg-yellow-300"}`} />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-800">
+                        {formatPkTime(gap.from)} – {formatPkTime(gap.to)}
+                      </p>
+                    </div>
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                      isLong ? "bg-red-100 text-red-700" :
+                      isMed  ? "bg-amber-100 text-amber-700" :
+                               "bg-yellow-100 text-yellow-700"
+                    }`}>
+                      {gap.minutes >= 60
+                        ? `${Math.floor(gap.minutes / 60)}h ${gap.minutes % 60}m`
+                        : `${gap.minutes} min`} free
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

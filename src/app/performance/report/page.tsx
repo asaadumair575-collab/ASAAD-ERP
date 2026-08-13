@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { pkDayStart, pkDayEnd, toLocalDateStr, todayPK } from "@/lib/tz";
 import { userLabel } from "@/lib/userLabel";
 import ReportForm from "./ReportForm";
+import PrintButton from "./PrintButton";
 import Link from "next/link";
 
 function grade(pct: number | null): { label: string; color: string; bg: string } {
@@ -167,14 +168,7 @@ export default async function ReportPage({
           <h1 className="text-xl font-semibold tracking-tight mt-1">Performance Report</h1>
           {rangeLabel && <p className="text-xs text-gray-400 mt-0.5">{rangeLabel}</p>}
         </div>
-        {hasRange && reportData.length > 0 && (
-          <button
-            onClick={undefined}
-            className="border border-gray-200 text-gray-600 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors print:hidden"
-          >
-            🖨 Print
-          </button>
-        )}
+        {hasRange && reportData.length > 0 && <PrintButton />}
       </div>
 
       {/* Date picker */}
