@@ -322,13 +322,30 @@ export default function InvoiceForm({
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">Stamp</label>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              Stamp <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="stamp"
+              required
               placeholder="e.g. 105 Sports, Custom"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
             />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              Packing <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="packing"
+              required
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
+            >
+              <option value="">— Select —</option>
+              <option value="Bora">Bora</option>
+              <option value="CTN">CTN</option>
+            </select>
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">

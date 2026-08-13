@@ -71,6 +71,7 @@ export default async function InvoicePage({
             items: order.items.map((i) => ({ description: i.description, quantity: i.quantity })),
             feltColor: order.feltColor,
             stamp: order.stamp,
+            packing: order.packing,
             saleAmount: order.saleAmount,
           }}
           client={{
@@ -159,7 +160,7 @@ export default async function InvoicePage({
           </div>
         </div>
 
-        {(order.feltColor || order.stamp) && (
+        {(order.feltColor || order.stamp || order.packing) && (
           <div className="flex flex-wrap gap-4 py-3 px-4 bg-gray-50 rounded-xl text-sm print:text-base print:gap-8 print:px-6 print:py-4">
             {order.feltColor && (
               <div className="flex gap-2">
@@ -171,6 +172,12 @@ export default async function InvoicePage({
               <div className="flex gap-2">
                 <span className="text-gray-500">Stamp:</span>
                 <span className="font-medium">{order.stamp}</span>
+              </div>
+            )}
+            {order.packing && (
+              <div className="flex gap-2">
+                <span className="text-gray-500">Packing:</span>
+                <span className="font-medium">{order.packing}</span>
               </div>
             )}
           </div>

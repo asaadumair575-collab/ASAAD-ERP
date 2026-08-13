@@ -10,6 +10,7 @@ export default function OrderWhatsappButton({
     items: { description: string; quantity: number }[];
     feltColor: string | null;
     stamp: string | null;
+    packing: string | null;
     saleAmount: number;
   };
   client: {
@@ -34,6 +35,7 @@ export default function OrderWhatsappButton({
 
     if (order.stamp) lines.push(`Stamp: ${order.stamp}`);
     if (order.feltColor) lines.push(`Felt Color: ${order.feltColor}`);
+    if (order.packing) lines.push(`Packing: ${order.packing}`);
 
     lines.push("");
     lines.push(client.name);

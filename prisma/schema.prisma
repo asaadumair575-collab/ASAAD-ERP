@@ -45,6 +45,7 @@ model Order {
   deliveryCharge Float?
   feltColor      String?
   stamp          String?
+  packing        String?
   confirmed      Boolean     @default(false)
   dispatched     Boolean     @default(false)
   dispatchedAt   DateTime?
