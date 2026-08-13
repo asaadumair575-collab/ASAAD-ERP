@@ -98,11 +98,32 @@ model Product {
 }
 
 model BusinessProfile {
-  id      Int     @id @default(autoincrement())
-  name    String
-  phone   String?
-  address String?
-  logo    String? @db.Text
+  id                 Int     @id @default(autoincrement())
+  name               String
+  phone              String?
+  address            String?
+  logo               String? @db.Text
+  bankName           String?
+  bankAccountTitle   String?
+  bankAccountNumber  String?
+}
+
+model DraftOrder {
+  id           Int      @id @default(autoincrement())
+  customerName String
+  phone        String?
+  address      String?
+  city         String?
+  items        String?
+  advanceAmount Float   @default(200)
+  confirmed    Boolean  @default(false)
+  confirmedAt  DateTime?
+  createdBy    User?    @relation(fields: [createdById], references: [id])
+  createdById  Int?
+  createdAt    DateTime @default(now())
+
+  @@index([createdById])
+  @@index([confirmed])
 }
 
 model CostRate {
@@ -133,6 +154,7 @@ model User {
   pushSubscriptions    PushSubscription[]
   complaints           Complaint[]
   complaintMessages    ComplaintMessage[]
+  draftOrders          DraftOrder[]
 }
 
 model EmpCommissionEntry {

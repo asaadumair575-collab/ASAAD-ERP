@@ -2322,6 +2322,57 @@ export async function undoCampaignAudit(id: number) {
   revalidatePath("/reorder/audit");
 }
 
+// ── Draft Orders ──────────────────────────────────────────────────────────────
+
+export async function createDraftOrder(formData: FormData) {
+  const me = await requireAuth();
+  const draft = await prisma.draftOrder.create({
+    data: {
+      customerName:  String(formData.get("customerName") ?? "").trim(),
+      phone:         String(formData.get("phone") ?? "").trim() || null,
+      address:       String(formData.get("address") ?? "").trim() || null,
+      city:          String(formData.get("city") ?? "").trim() || null,
+      items:         String(formData.get("items") ?? "").trim() || null,
+      advanceAmount: parseFloat(String(formData.get("advanceAmount") ?? "200")) || 200,
+      createdById:   me.id,
+    },
+  });
+  revalidatePath("/retail/drafts");
+  redirect(`/retail/drafts/${draft.id}`);
+}
+
+export async function confirmDraftOrder(id: number) {
+  await requireAuth();
+  await prisma.draftOrder.update({
+    where: { id },
+    data: { confirmed: true, confirmedAt: new Date() },
+  });
+  revalidatePath("/retail/drafts");
+}
+
+export async function deleteDraftOrder(id: number) {
+  await requireAuth();
+  await prisma.draftOrder.delete({ where: { id } });
+  revalidatePath("/retail/drafts");
+  redirect("/retail/drafts");
+}
+
+export async function saveBankDetails(formData: FormData) {
+  const me = await requireAuth();
+  if (!me.isAdmin) return;
+  const profile = await prisma.businessProfile.findFirst();
+  if (!profile) return;
+  await prisma.businessProfile.update({
+    where: { id: profile.id },
+    data: {
+      bankName:          String(formData.get("bankName") ?? "").trim() || null,
+      bankAccountTitle:  String(formData.get("bankAccountTitle") ?? "").trim() || null,
+      bankAccountNumber: String(formData.get("bankAccountNumber") ?? "").trim() || null,
+    },
+  });
+  revalidatePath("/retail/drafts");
+}
+
 export async function deleteReorderCampaign(id: number) {
   await requireAuth();
   await prisma.reorderCampaign.delete({ where: { id } });
