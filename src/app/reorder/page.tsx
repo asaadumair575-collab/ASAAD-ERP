@@ -6,7 +6,7 @@ import ReorderUploadModal from "./ReorderUploadModal";
 import DeleteCampaignButton from "./DeleteCampaignButton";
 import LeadSearch from "./LeadSearch";
 import { userLabel } from "@/lib/userLabel";
-import { toggleReorderCampaignActive } from "@/lib/actions";
+import { toggleReorderCampaignActive, sendCampaignForAudit } from "@/lib/actions";
 
 export default async function ReorderPage() {
   const me = await getSessionUser();
@@ -38,6 +38,14 @@ export default async function ReorderPage() {
             🔄 Retail Follow-up
           </Link>
           <ReorderUploadModal />
+          {me.isAdmin && (
+            <Link
+              href="/reorder/audit"
+              className="border border-purple-200 bg-purple-50 text-purple-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-purple-100 transition-colors shrink-0"
+            >
+              🔍 Audit
+            </Link>
+          )}
         </div>
       </div>
 
@@ -58,16 +66,30 @@ export default async function ReorderPage() {
             const totalCallLogs   = c.leads.reduce((s, l) => s + l._count.callLogs, 0);
             const calledLeads     = c.leads.filter((l) => l.status !== "PENDING").length;
             const pct = total > 0 ? Math.round((calledLeads / total) * 100) : 0;
+            const isCompleted = total > 0 && calledLeads === total;
 
             const toggleActive = toggleReorderCampaignActive.bind(null, c.id, !c.isActive);
+            const auditAction  = sendCampaignForAudit.bind(null, c.id);
             return (
-              <div key={c.id} className={`bg-white border rounded-2xl shadow-sm p-5 ${c.isActive ? "border-gray-200" : "border-gray-200 opacity-60"}`}>
+              <div key={c.id} className={`bg-white border rounded-2xl shadow-sm p-5 relative overflow-hidden ${
+                isCompleted ? "border-green-300" : c.isActive ? "border-gray-200" : "border-gray-200 opacity-60"
+              }`}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Link href={`/reorder/${c.id}`} className="text-base font-semibold text-gray-900 hover:text-black truncate">
                         {c.name}
                       </Link>
+                      {isCompleted && (
+                        <span className="text-[10px] font-bold bg-green-100 text-green-700 border border-green-300 px-2 py-0.5 rounded-full shrink-0">
+                          ✓ Completed
+                        </span>
+                      )}
+                      {c.sentForAudit && (
+                        <span className="text-[10px] font-semibold bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full shrink-0">
+                          Sent for Audit
+                        </span>
+                      )}
                       {c.isRetailFollowup && (
                         <span className="text-[10px] font-semibold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full shrink-0">Retail</span>
                       )}
@@ -105,6 +127,24 @@ export default async function ReorderPage() {
                     {me.isAdmin && <DeleteCampaignButton id={c.id} />}
                   </div>
                 </div>
+
+                {/* Send for audit — employees see this when complete */}
+                {isCompleted && !c.sentForAudit && (
+                  <form action={auditAction} className="mt-3">
+                    <button
+                      type="submit"
+                      className="w-full text-xs font-semibold bg-green-50 border border-green-300 text-green-700 py-2 rounded-xl hover:bg-green-100 transition-colors"
+                    >
+                      📋 Send to Admin for Audit
+                    </button>
+                  </form>
+                )}
+                {isCompleted && c.sentForAudit && (
+                  <div className="mt-3 text-center text-xs text-purple-600 bg-purple-50 border border-purple-200 py-2 rounded-xl">
+                    ✓ Sent for audit
+                    {c.auditRequestedAt && ` · ${new Date(c.auditRequestedAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}`}
+                  </div>
+                )}
 
                 {/* Stats row */}
                 <div className="mt-4 grid grid-cols-5 gap-3">

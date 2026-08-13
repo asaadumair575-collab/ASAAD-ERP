@@ -2302,6 +2302,16 @@ export async function backfillReorderAddresses(
   return updated;
 }
 
+export async function sendCampaignForAudit(id: number) {
+  await requireAuth();
+  await prisma.reorderCampaign.update({
+    where: { id },
+    data: { sentForAudit: true, auditRequestedAt: new Date() },
+  });
+  revalidatePath("/reorder");
+  revalidatePath("/reorder/audit");
+}
+
 export async function deleteReorderCampaign(id: number) {
   await requireAuth();
   await prisma.reorderCampaign.delete({ where: { id } });

@@ -394,6 +394,8 @@ model ReorderCampaign {
   createdById       Int?
   isRetailFollowup  Boolean       @default(false)
   isActive          Boolean       @default(true)
+  sentForAudit      Boolean       @default(false)
+  auditRequestedAt  DateTime?
   leads             ReorderLead[]
 }
 
