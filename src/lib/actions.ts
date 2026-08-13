@@ -2312,6 +2312,16 @@ export async function sendCampaignForAudit(id: number) {
   revalidatePath("/reorder/audit");
 }
 
+export async function undoCampaignAudit(id: number) {
+  await requireAuth();
+  await prisma.reorderCampaign.update({
+    where: { id },
+    data: { sentForAudit: false, auditRequestedAt: null },
+  });
+  revalidatePath("/reorder");
+  revalidatePath("/reorder/audit");
+}
+
 export async function deleteReorderCampaign(id: number) {
   await requireAuth();
   await prisma.reorderCampaign.delete({ where: { id } });

@@ -6,7 +6,7 @@ import ReorderUploadModal from "./ReorderUploadModal";
 import DeleteCampaignButton from "./DeleteCampaignButton";
 import LeadSearch from "./LeadSearch";
 import { userLabel } from "@/lib/userLabel";
-import { toggleReorderCampaignActive, sendCampaignForAudit } from "@/lib/actions";
+import { toggleReorderCampaignActive, sendCampaignForAudit, undoCampaignAudit } from "@/lib/actions";
 
 export default async function ReorderPage() {
   const me = await getSessionUser();
@@ -70,6 +70,7 @@ export default async function ReorderPage() {
 
             const toggleActive = toggleReorderCampaignActive.bind(null, c.id, !c.isActive);
             const auditAction  = sendCampaignForAudit.bind(null, c.id);
+            const undoAudit    = undoCampaignAudit.bind(null, c.id);
             return (
               <div key={c.id} className={`bg-white border rounded-2xl shadow-sm p-5 relative overflow-hidden ${
                 isCompleted ? "border-green-300" : c.isActive ? "border-gray-200" : "border-gray-200 opacity-60"
@@ -140,9 +141,16 @@ export default async function ReorderPage() {
                   </form>
                 )}
                 {isCompleted && c.sentForAudit && (
-                  <div className="mt-3 text-center text-xs text-purple-600 bg-purple-50 border border-purple-200 py-2 rounded-xl">
-                    ✓ Sent for audit
-                    {c.auditRequestedAt && ` · ${new Date(c.auditRequestedAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}`}
+                  <div className="mt-3 flex items-center justify-between bg-purple-50 border border-purple-200 rounded-xl px-4 py-2">
+                    <span className="text-xs text-purple-600">
+                      ✓ Sent for audit
+                      {c.auditRequestedAt && ` · ${new Date(c.auditRequestedAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}`}
+                    </span>
+                    <form action={undoAudit}>
+                      <button type="submit" className="text-xs text-purple-500 hover:text-purple-800 underline underline-offset-2">
+                        Undo
+                      </button>
+                    </form>
                   </div>
                 )}
 
