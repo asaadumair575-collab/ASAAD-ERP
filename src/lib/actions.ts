@@ -1292,11 +1292,6 @@ export async function createRetailOrder(_prev: string | null, formData: FormData
 
   if (items.length === 0) return "At least one item is required";
 
-  if (phone) {
-    const existing = await prisma.retailOrder.findFirst({ where: { phone }, select: { id: true, customerName: true } });
-    if (existing) return `Phone already exists — Order R-${String(existing.id).padStart(3, "0")} (${existing.customerName})`;
-  }
-
   const totalAmount = round2(items.reduce((s, i) => s + i.quantity * i.rate, 0));
 
   let advanceScreenshot: string | null = null;
