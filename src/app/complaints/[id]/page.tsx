@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ComplaintActions from "../ComplaintActions";
 import DeleteComplaintButton from "../DeleteComplaintButton";
+import PriorityBadge from "../PriorityBadge";
+import PriorityChanger from "../PriorityChanger";
 
 const CATEGORY_LABEL: Record<string, string> = {
   GENERAL:   "General",
@@ -55,6 +57,7 @@ export default async function ComplaintDetailPage({ params }: { params: Promise<
             </span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            <PriorityBadge priority={c.priority} />
             <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
               c.complaintType === "CUSTOMER" ? "bg-orange-100 text-orange-700" : "bg-purple-100 text-purple-700"
             }`}>
@@ -110,10 +113,11 @@ export default async function ComplaintDetailPage({ params }: { params: Promise<
           </div>
         )}
 
-        {/* admin action */}
-        {me.isAdmin && c.status === "OPEN" && (
-          <div className="px-6 py-5">
-            <ComplaintActions id={c.id} />
+        {/* admin actions */}
+        {me.isAdmin && (
+          <div className="px-6 py-5 space-y-4 border-t border-gray-100">
+            <PriorityChanger id={c.id} current={c.priority} />
+            {c.status === "OPEN" && <ComplaintActions id={c.id} />}
           </div>
         )}
       </div>

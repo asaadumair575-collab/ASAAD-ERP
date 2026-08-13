@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PriorityBadge from "./PriorityBadge";
 
 const CATEGORY_LABEL: Record<string, string> = {
   GENERAL:   "General",
@@ -26,6 +27,7 @@ type Complaint = {
   category: string;
   status: string;
   complaintType: string;
+  priority: string;
   createdAt: Date;
   submittedBy: { displayName: string | null; username: string } | null;
 };
@@ -44,6 +46,7 @@ export default function ComplaintCard({ c, isAdmin }: { c: Complaint; isAdmin: b
           }`}>
             {c.complaintType === "CUSTOMER" ? "Customer" : "Internal"}
           </span>
+          <PriorityBadge priority={c.priority} />
           <span className="text-[11px] text-gray-400 px-2 py-0.5 rounded-full bg-gray-50 border border-gray-100 shrink-0">
             {CATEGORY_LABEL[c.category] ?? c.category}
           </span>

@@ -19,8 +19,16 @@ const CUSTOMER_CATEGORIES = [
   { value: "OTHER",     label: "Other" },
 ];
 
+const PRIORITIES = [
+  { value: "LOW",    label: "Low",    color: "bg-gray-100 text-gray-600" },
+  { value: "MEDIUM", label: "Medium", color: "bg-blue-100 text-blue-700" },
+  { value: "HIGH",   label: "High",   color: "bg-orange-100 text-orange-700" },
+  { value: "URGENT", label: "Urgent", color: "bg-red-100 text-red-700" },
+];
+
 export default function NewComplaintPage() {
   const [type, setType] = useState<"INTERNAL" | "CUSTOMER">("INTERNAL");
+  const [priority, setPriority] = useState("MEDIUM");
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
 
@@ -69,6 +77,7 @@ export default function NewComplaintPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4 border border-gray-200 rounded-2xl p-6 bg-white">
         <input type="hidden" name="complaintType" value={type} />
+        <input type="hidden" name="priority" value={priority} />
 
         {/* customer-only fields */}
         {type === "CUSTOMER" && (
@@ -111,6 +120,26 @@ export default function NewComplaintPage() {
             </div>
           </div>
         )}
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">Priority</label>
+          <div className="flex gap-2">
+            {PRIORITIES.map((p) => (
+              <button
+                key={p.value}
+                type="button"
+                onClick={() => setPriority(p.value)}
+                className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                  priority === p.value
+                    ? "border-black bg-black text-white"
+                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1.5">Category</label>

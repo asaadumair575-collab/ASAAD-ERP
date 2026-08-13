@@ -2322,6 +2322,7 @@ export async function toggleReorderCampaignActive(id: number, isActive: boolean)
 export async function submitComplaint(formData: FormData) {
   const me = await requireAuth();
   const complaintType = String(formData.get("complaintType") ?? "INTERNAL");
+  const priority = String(formData.get("priority") ?? "MEDIUM");
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const category = String(formData.get("category") ?? "GENERAL");
@@ -2338,11 +2339,11 @@ export async function submitComplaint(formData: FormData) {
     if (!orderId) throw new Error("Order ID is required");
 
     await prisma.complaint.create({
-      data: { complaintType, title, description, category, customerName, customerPhone, orderId, submittedById: me.id },
+      data: { complaintType, priority, title, description, category, customerName, customerPhone, orderId, submittedById: me.id },
     });
   } else {
     await prisma.complaint.create({
-      data: { complaintType, title, description, category, submittedById: me.id },
+      data: { complaintType, priority, title, description, category, submittedById: me.id },
     });
   }
 
@@ -2362,6 +2363,13 @@ export async function resolveComplaint(id: number, formData: FormData) {
   const status = String(formData.get("status") ?? "RESOLVED");
   const adminNote = String(formData.get("adminNote") ?? "").trim() || null;
   await prisma.complaint.update({ where: { id }, data: { status, adminNote } });
+  revalidatePath("/complaints");
+}
+
+export async function setComplaintPriority(id: number, priority: string) {
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Unauthorized");
+  await prisma.complaint.update({ where: { id }, data: { priority } });
   revalidatePath("/complaints");
 }
 

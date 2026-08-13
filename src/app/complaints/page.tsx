@@ -14,6 +14,18 @@ export default async function ComplaintsPage() {
     include: { submittedBy: { select: { displayName: true, username: true } } },
   });
 
+  const PRIORITY_ORDER: Record<string, number> = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+  complaints.sort((a, b) => {
+    // OPEN/IN_PROGRESS first, then by priority, then by date
+    const aOpen = a.status === "OPEN" || a.status === "IN_PROGRESS" ? 0 : 1;
+    const bOpen = b.status === "OPEN" || b.status === "IN_PROGRESS" ? 0 : 1;
+    if (aOpen !== bOpen) return aOpen - bOpen;
+    const pa = PRIORITY_ORDER[a.priority] ?? 2;
+    const pb = PRIORITY_ORDER[b.priority] ?? 2;
+    if (pa !== pb) return pa - pb;
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
+
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center justify-between">
