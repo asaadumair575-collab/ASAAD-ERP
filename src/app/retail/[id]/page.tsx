@@ -24,10 +24,13 @@ export default async function RetailOrderPage({
   const { receipt } = await searchParams;
   const orderId = parseInt(id, 10);
 
-  const order = await prisma.retailOrder.findUnique({
-    where: { id: orderId },
-    include: { items: true, payments: { orderBy: { date: "asc" } } },
-  });
+  const [order, profile] = await Promise.all([
+    prisma.retailOrder.findUnique({
+      where: { id: orderId },
+      include: { items: true, payments: { orderBy: { date: "asc" } } },
+    }),
+    prisma.businessProfile.findFirst(),
+  ]);
 
   if (!order) notFound();
 
@@ -72,7 +75,17 @@ export default async function RetailOrderPage({
         <div className="space-y-3">
         <div id="retail-receipt" className="bg-white border-2 border-black rounded-2xl p-6 shadow-sm space-y-4">
           <div className="text-center border-b border-dashed border-gray-300 pb-4">
-            <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Payment Receipt</p>
+            {profile?.logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.logo} alt={profile.name} className="h-12 mx-auto mb-2 object-contain" />
+            ) : (
+              <div className="w-12 h-12 mx-auto mb-2 bg-black rounded-full flex items-center justify-center">
+                <span className="text-white text-xl font-black">{(profile?.name ?? "A").charAt(0)}</span>
+              </div>
+            )}
+            <p className="text-base font-black tracking-tight text-gray-900">{profile?.name ?? "ASAAD ERP"}</p>
+            <p className="text-[10px] font-semibold text-gray-600 mt-0.5">03351005301</p>
+            <p className="text-xs text-gray-400 uppercase tracking-widest mt-2 mb-1">Payment Receipt</p>
             <p className="text-2xl font-bold tracking-tight">R-{String(order.id).padStart(3, "0")}</p>
             <p className="text-sm text-gray-500 mt-0.5">{order.date.toISOString().slice(0, 10)}</p>
             <div className="flex items-center justify-center gap-2 mt-3">
