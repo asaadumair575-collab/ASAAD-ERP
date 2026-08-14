@@ -73,9 +73,7 @@ export default async function DraftSlipPage({
             </div>
           )}
           <p className="text-base font-black tracking-tight text-gray-900">{profile?.name ?? "ASAAD ERP"}</p>
-          {profile?.phone && (
-            <p className="text-[10px] font-semibold text-gray-600 mt-0.5">{profile.phone}</p>
-          )}
+          <p className="text-[10px] font-semibold text-gray-600 mt-0.5">03351005301</p>
           {profile?.address && (
             <p className="text-[9px] text-gray-400 mt-0.5">{profile.address}</p>
           )}
