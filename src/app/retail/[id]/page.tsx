@@ -71,9 +71,8 @@ export default async function RetailOrderPage({
         </span>
       </div>
 
-      {/* Receipt box — shown after recording payment */}
-      {receipt && (
-        <div className="space-y-3">
+      {/* Receipt box */}
+      <div className="space-y-3">
         <div id="retail-receipt" className="relative bg-white border-2 border-black rounded-2xl p-6 shadow-sm space-y-4 overflow-hidden">
           {/* Security watermark — prevents screenshot editing */}
           <div className="absolute inset-0 pointer-events-none select-none overflow-hidden rounded-2xl" aria-hidden="true">
@@ -159,8 +158,7 @@ export default async function RetailOrderPage({
         <div className="flex justify-end">
           <ReceiptCopyButton targetId="retail-receipt" />
         </div>
-        </div>
-      )}
+      </div>
 
       {/* Customer card */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
@@ -246,16 +244,12 @@ export default async function RetailOrderPage({
         isAdmin={isAdmin}
       />
 
-      {/* Receipt & Delete */}
-      <div className="pt-2 flex items-center justify-between">
-        <Link
-          href={`/retail/${order.id}?receipt=1`}
-          className="text-xs text-gray-500 hover:text-black underline underline-offset-2"
-        >
-          Open Receipt
-        </Link>
-        {isAdmin && <RetailDeleteButton action={deleteOrderBound} />}
-      </div>
+      {/* Delete */}
+      {isAdmin && (
+        <div className="pt-2 flex justify-end">
+          <RetailDeleteButton action={deleteOrderBound} />
+        </div>
+      )}
     </div>
   );
 }
