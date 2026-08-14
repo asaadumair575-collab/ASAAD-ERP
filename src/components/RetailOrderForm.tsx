@@ -24,11 +24,14 @@ export default function RetailOrderForm({
   customers?: Customer[];
   initialValues?: InitialValues;
 }) {
+  const hasInitial = !!(initialValues.name || initialValues.phone);
   const [rows, setRows] = useState<Row[]>([{ id: 0, description: "", quantity: 0, rate: 0, costPrice: 1550 }]);
   const [deliveryCharge, setDeliveryCharge] = useState<number | "">("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [search, setSearch] = useState(initialValues.name ?? "");
   const [showDropdown, setShowDropdown] = useState(false);
+  // When coming from draft, skip search and show manual entry directly
+  const [manualMode, setManualMode] = useState(hasInitial);
 
   const [error, formAction] = useActionState(action, null);
 
@@ -68,51 +71,53 @@ export default function RetailOrderForm({
       )}
       {/* Customer info */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
-        <h2 className="text-sm font-semibold text-gray-700">Customer</h2>
-
-        {/* Search box */}
-        <div className="relative">
-          <label className="block text-xs text-gray-500 mb-1.5">Search existing customer</label>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Type name, phone or city…"
-              value={search}
-              autoComplete="off"
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setShowDropdown(true);
-                if (!e.target.value) setSelectedCustomer(null);
-              }}
-              onFocus={() => setShowDropdown(true)}
-              onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white pr-8"
-            />
-            {selectedCustomer && (
-              <button
-                type="button"
-                onClick={clearCustomer}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 text-lg leading-none"
-              >×</button>
-            )}
-          </div>
-
-          {showDropdown && filtered.length > 0 && !selectedCustomer && (
-            <div className="absolute z-10 w-full mt-1 border border-gray-200 rounded-xl bg-white shadow-lg max-h-52 overflow-y-auto">
-              {filtered.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onMouseDown={() => selectCustomer(c)}
-                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-50 flex justify-between items-center gap-2"
-                >
-                  <span className="font-medium">{c.name}</span>
-                  <span className="text-xs text-gray-400 shrink-0">{[c.phone, c.city].filter(Boolean).join(" · ")}</span>
-                </button>
-              ))}
-            </div>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-gray-700">Customer</h2>
+          {!selectedCustomer && (
+            <button type="button" onClick={() => setManualMode(!manualMode)}
+              className="text-xs text-gray-400 hover:text-black underline underline-offset-2">
+              {manualMode ? "Search existing" : "Add new"}
+            </button>
           )}
         </div>
+
+        {/* Search box — hidden when manualMode */}
+        {!manualMode && (
+          <div className="relative">
+            <label className="block text-xs text-gray-500 mb-1.5">Search existing customer</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Type name, phone or city…"
+                value={search}
+                autoComplete="off"
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setShowDropdown(true);
+                  if (!e.target.value) setSelectedCustomer(null);
+                }}
+                onFocus={() => setShowDropdown(true)}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white pr-8"
+              />
+              {selectedCustomer && (
+                <button type="button" onClick={clearCustomer}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 text-lg leading-none">×</button>
+              )}
+            </div>
+            {showDropdown && filtered.length > 0 && !selectedCustomer && (
+              <div className="absolute z-10 w-full mt-1 border border-gray-200 rounded-xl bg-white shadow-lg max-h-52 overflow-y-auto">
+                {filtered.map((c) => (
+                  <button key={c.id} type="button" onMouseDown={() => selectCustomer(c)}
+                    className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-50 flex justify-between items-center gap-2">
+                    <span className="font-medium">{c.name}</span>
+                    <span className="text-xs text-gray-400 shrink-0">{[c.phone, c.city].filter(Boolean).join(" · ")}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {selectedCustomer ? (
           <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm">
@@ -125,7 +130,7 @@ export default function RetailOrderForm({
             <input type="hidden" name="retailCustomerId" value={selectedCustomer.id} />
             <input type="hidden" name="customerName" value={selectedCustomer.name} />
           </div>
-        ) : (
+        ) : manualMode ? (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-1">
               <label className="block text-xs text-gray-500 mb-1.5">Name <span className="text-black">*</span></label>
@@ -152,7 +157,7 @@ export default function RetailOrderForm({
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
             </div>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Items */}
