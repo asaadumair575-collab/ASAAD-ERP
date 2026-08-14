@@ -12,6 +12,7 @@ import {
   deletePayment,
 } from "@/lib/actions";
 import OrderItemRow from "@/components/OrderItemRow";
+import PrintDate from "@/components/PrintDate";
 
 export async function generateMetadata({
   params,
@@ -145,7 +146,8 @@ export default async function InvoicePage({
           <div className="space-y-1 text-right print:space-y-3">
             <div className="flex justify-between gap-6 text-sm print:text-lg">
               <span className="text-gray-500">Date:</span>
-              <span>{formattedDate}</span>
+              <span className="print:hidden">{formattedDate}</span>
+              <PrintDate />
             </div>
             {order.paymentTerms && (
               <div className="flex justify-between gap-6 text-sm print:text-lg">
