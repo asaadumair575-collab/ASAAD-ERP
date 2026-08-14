@@ -13,58 +13,29 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
     try {
       const html2canvas = (await import("html2canvas")).default;
 
-      const rect = el.getBoundingClientRect();
       const canvas = await html2canvas(el, {
         backgroundColor: "#ffffff",
         scale: 3,
         useCORS: true,
         allowTaint: true,
         logging: false,
-        width: rect.width,
-        height: rect.height,
-        scrollX: -window.scrollX,
-        scrollY: -window.scrollY,
+        // skip the watermark overlay — it causes canvas errors
+        ignoreElements: (node) => node instanceof HTMLElement && node.getAttribute("aria-hidden") === "true",
       });
 
-      const dataUrl = canvas.toDataURL("image/png");
-
-      // Open image in new tab — user can long-press → Save to Gallery (mobile)
-      const win = window.open();
-      if (win) {
-        win.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Receipt</title>
-            <style>
-              * { margin: 0; padding: 0; box-sizing: border-box; }
-              body { background: #f5f5f5; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
-              img { max-width: 100%; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.15); }
-              p { margin-top: 16px; font-family: sans-serif; font-size: 13px; color: #888; text-align: center; }
-            </style>
-          </head>
-          <body>
-            <img src="${dataUrl}" alt="Receipt" />
-            <p>📱 Press and hold image → Save to Gallery</p>
-          </body>
-          </html>
-        `);
-        win.document.close();
+      canvas.toBlob((blob) => {
+        if (!blob) { setStatus("error"); return; }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "receipt.png";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
         setStatus("done");
         setTimeout(() => setStatus("idle"), 2000);
-        return;
-      }
-
-      // Fallback if popup blocked: direct download
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = "receipt.png";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setStatus("done");
-      setTimeout(() => setStatus("idle"), 2000);
+      }, "image/png");
 
     } catch {
       setStatus("error");
@@ -88,7 +59,7 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
         </>
       )}
       {status === "working" && "Generating…"}
-      {status === "done" && <span className="text-green-600">✓ Done!</span>}
+      {status === "done" && <span className="text-green-600">✓ Saved!</span>}
       {status === "error" && <span className="text-red-500">✕ Try Again</span>}
     </button>
   );
