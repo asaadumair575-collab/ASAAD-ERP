@@ -1326,6 +1326,7 @@ export async function createRetailOrder(_prev: string | null, formData: FormData
 }
 
 export async function recordRetailPayment(orderId: number, formData: FormData) {
+  const me = await requireAuth();
   const amount = parseFloat(String(formData.get("amount") ?? "0"));
   const note = String(formData.get("note") ?? "").trim() || null;
   if (isNaN(amount) || amount <= 0) throw new Error("Enter a valid amount");
@@ -1342,6 +1343,7 @@ export async function recordRetailPayment(orderId: number, formData: FormData) {
     include: { payments: true },
   });
   if (!order) throw new Error("Order not found");
+  if (!me.isAdmin && order.createdByUserId !== me.id) throw new Error("Access denied");
 
   await prisma.retailPayment.create({ data: { orderId, amount, note, screenshot } });
 
@@ -1358,6 +1360,7 @@ export async function recordRetailPayment(orderId: number, formData: FormData) {
 
 export async function updateRetailItemCostPrice(orderId: number, itemId: number, formData: FormData) {
   "use server";
+  await requireAdmin();
   const costPrice = parseFloat(String(formData.get("costPrice") ?? "0")) || 0;
   await prisma.retailOrderItem.update({ where: { id: itemId }, data: { costPrice } });
   revalidatePath(`/retail/orders/${orderId}`);
@@ -1366,6 +1369,10 @@ export async function updateRetailItemCostPrice(orderId: number, itemId: number,
 
 export async function updateRetailCourierCharge(orderId: number, formData: FormData) {
   "use server";
+  const me = await requireAuth();
+  const order = await prisma.retailOrder.findUnique({ where: { id: orderId }, select: { createdByUserId: true } });
+  if (!order) throw new Error("Order not found");
+  if (!me.isAdmin && order.createdByUserId !== me.id) throw new Error("Access denied");
   const courierCharge = parseFloat(String(formData.get("courierCharge") ?? "0")) || 0;
   await prisma.retailOrder.update({ where: { id: orderId }, data: { courierCharge } });
   revalidatePath(`/retail/orders/${orderId}`);
@@ -1396,12 +1403,14 @@ export async function deleteRetailOrder(orderId: number) {
 
 export async function setRetailTrackingNumber(orderId: number, formData: FormData) {
   "use server";
+  await requireAdmin();
   const trackingNumber = String(formData.get("trackingNumber") ?? "").trim() || null;
   await prisma.retailOrder.update({ where: { id: orderId }, data: { trackingNumber } });
   revalidatePath(`/retail/orders/${orderId}`);
 }
 
 export async function setRetailDispatched(orderId: number, dispatched: boolean) {
+  await requireAdmin();
   await prisma.retailOrder.update({
     where: { id: orderId },
     data: {
