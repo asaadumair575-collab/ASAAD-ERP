@@ -57,17 +57,17 @@ export default async function DraftSlipPage({
       <div className="bg-white border border-gray-300 rounded-xl overflow-hidden shadow-md print:shadow-none print:border-gray-400">
 
         {/* Logo + Business name */}
-        <div className="px-5 pt-5 pb-3 text-center border-b border-gray-200">
+        <div className="px-5 pt-4 pb-2.5 text-center border-b border-gray-200">
           {profile?.logo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={profile.logo}
               alt={profile.name}
-              className="h-16 mx-auto mb-2 object-contain"
+              className="h-12 mx-auto mb-1.5 object-contain"
             />
           ) : (
-            <div className="w-16 h-16 mx-auto mb-2 bg-black rounded-full flex items-center justify-center">
-              <span className="text-white text-3xl font-black">
+            <div className="w-12 h-12 mx-auto mb-1.5 bg-black rounded-full flex items-center justify-center">
+              <span className="text-white text-2xl font-black">
                 {(profile?.name ?? "A").charAt(0)}
               </span>
             </div>
@@ -82,7 +82,7 @@ export default async function DraftSlipPage({
         </div>
 
         {/* Slip title + number */}
-        <div className="px-5 py-2 flex items-center justify-between border-b border-dashed border-gray-300 bg-gray-50">
+        <div className="px-5 py-1.5 flex items-center justify-between border-b border-dashed border-gray-300 bg-gray-50">
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Payment Request</p>
           <div className="text-right">
             <p className="text-[10px] font-bold text-gray-700">{slipNo}</p>
@@ -91,7 +91,7 @@ export default async function DraftSlipPage({
         </div>
 
         {/* Customer details */}
-        <div className="px-5 py-3 border-b border-gray-100 space-y-2">
+        <div className="px-5 py-2.5 border-b border-gray-100 space-y-1.5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Prepared For</p>
@@ -120,25 +120,25 @@ export default async function DraftSlipPage({
         </div>
 
         {/* Advance amount */}
-        <div className="px-5 py-5 border-b border-dashed border-gray-200 text-center">
-          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">
+        <div className="px-5 py-4 border-b border-dashed border-gray-200 text-center">
+          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-1.5">
             Advance Payment Required
           </p>
-          <p className="text-4xl font-black text-gray-900 tracking-tight leading-none">
+          <p className="text-3xl font-black text-gray-900 tracking-tight leading-none">
             Rs. {draft.advanceAmount.toLocaleString()}
           </p>
-          <p className="text-[9px] font-medium text-gray-400 mt-2 tracking-widest uppercase">
+          <p className="text-[9px] font-medium text-gray-400 mt-1.5 tracking-widest uppercase">
             To Confirm Your Order
           </p>
         </div>
 
         {/* Bank details */}
         {(profile?.bankAccountNumber || profile?.bankName) ? (
-          <div className="px-5 py-4 border-b border-gray-100">
-            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 text-center mb-3">
+          <div className="px-5 py-3 border-b border-gray-100">
+            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 text-center mb-2">
               Transfer To
             </p>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {profile.bankName && (
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] text-gray-400 uppercase tracking-wide">Bank</span>
@@ -152,8 +152,8 @@ export default async function DraftSlipPage({
                 </div>
               )}
               {profile.bankAccountNumber && (
-                <div className="mt-1.5 rounded-lg border-2 border-gray-900 px-4 py-2.5 text-center">
-                  <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">Account No.</p>
+                <div className="mt-1 rounded-lg border-2 border-gray-900 px-4 py-2 text-center">
+                  <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Account No.</p>
                   <p className="text-sm font-black text-gray-900 tracking-wider break-all">{profile.bankAccountNumber}</p>
                 </div>
               )}
@@ -166,7 +166,7 @@ export default async function DraftSlipPage({
         )}
 
         {/* Footer */}
-        <div className="px-5 py-3 text-center space-y-1">
+        <div className="px-5 py-2.5 text-center space-y-0.5">
           <p className="text-[10px] text-gray-500">
             After payment, send screenshot on WhatsApp.
           </p>
