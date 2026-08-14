@@ -81,24 +81,17 @@ export default async function DraftSlipPage({
           )}
         </div>
 
-        {/* Slip title + number */}
-        <div className="px-5 py-2 border-b border-dashed border-gray-300 bg-gray-50 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Payment Request</p>
-            <p className="text-[10px] font-bold text-gray-700 mt-0.5">{slipNo}</p>
-            <p className="text-[9px] text-gray-400">{dateStr}</p>
-          </div>
-          <div>
-            {draft.confirmed ? (
-              <span className="inline-flex items-center gap-1 bg-green-50 border border-green-300 text-green-700 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
-                ✓ Advance Received
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 bg-amber-50 border border-amber-300 text-amber-700 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
-                ⏳ Waiting for Advance
-              </span>
-            )}
-          </div>
+        {/* Status */}
+        <div className="px-5 py-2 border-b border-dashed border-gray-300 bg-gray-50 flex justify-center">
+          {draft.confirmed ? (
+            <span className="inline-flex items-center gap-1 bg-green-50 border border-green-300 text-green-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
+              ✓ Advance Received
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 bg-amber-50 border border-amber-300 text-amber-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
+              ⏳ Waiting for Advance
+            </span>
+          )}
         </div>
 
         {/* Customer details */}
