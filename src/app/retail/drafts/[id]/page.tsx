@@ -120,39 +120,41 @@ export default async function DraftSlipPage({
         </div>
 
         {/* Advance amount */}
-        <div className="px-7 py-6 border-b border-dashed border-gray-300 text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-2">
-            Apna Order Confirm Karne Ke Liye
+        <div className="px-7 py-8 border-b border-dashed border-gray-200 text-center">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-3">
+            Advance Payment Required
           </p>
-          <p className="text-6xl font-black text-gray-900 tracking-tight leading-none">
-            ₨{draft.advanceAmount.toLocaleString()}
+          <p className="text-5xl font-black text-gray-900 tracking-tight leading-none">
+            Rs. {draft.advanceAmount.toLocaleString()}
           </p>
-          <p className="text-sm font-semibold text-gray-500 mt-2 uppercase tracking-widest">Advance Bhejein</p>
+          <p className="text-[11px] font-medium text-gray-400 mt-3 tracking-widest uppercase">
+            To Confirm Your Order
+          </p>
         </div>
 
         {/* Bank details */}
         {(profile?.bankAccountNumber || profile?.bankName) ? (
-          <div className="px-7 py-5 border-b border-gray-100">
-            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 text-center mb-4">
-              Bank Account Details
+          <div className="px-7 py-6 border-b border-gray-100">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 text-center mb-5">
+              Transfer To
             </p>
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {profile.bankName && (
                 <div className="flex justify-between items-center">
-                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Bank</span>
-                  <span className="text-sm font-bold text-gray-900">{profile.bankName}</span>
+                  <span className="text-[11px] text-gray-400 uppercase tracking-wide">Bank</span>
+                  <span className="text-sm font-semibold text-gray-800">{profile.bankName}</span>
                 </div>
               )}
               {profile.bankAccountTitle && (
                 <div className="flex justify-between items-center">
-                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Account Title</span>
-                  <span className="text-sm font-bold text-gray-900">{profile.bankAccountTitle}</span>
+                  <span className="text-[11px] text-gray-400 uppercase tracking-wide">Account Title</span>
+                  <span className="text-sm font-semibold text-gray-800">{profile.bankAccountTitle}</span>
                 </div>
               )}
               {profile.bankAccountNumber && (
-                <div className="mt-1 flex justify-between items-center bg-gray-900 text-white rounded-lg px-4 py-3">
-                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Account No.</span>
-                  <span className="text-base font-black tracking-widest">{profile.bankAccountNumber}</span>
+                <div className="mt-2 rounded-xl border-2 border-gray-900 px-5 py-3.5 flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Account No.</span>
+                  <span className="text-base font-black text-gray-900 tracking-wider">{profile.bankAccountNumber}</span>
                 </div>
               )}
             </div>
@@ -164,15 +166,15 @@ export default async function DraftSlipPage({
         )}
 
         {/* Footer */}
-        <div className="px-7 py-5 text-center space-y-1">
+        <div className="px-7 py-5 text-center space-y-1.5">
           <p className="text-xs text-gray-500 leading-relaxed">
-            Payment ke baad screenshot WhatsApp pe bhejein.
+            After payment, send screenshot on WhatsApp.
           </p>
           <p className="text-xs text-gray-400">
-            Advance receive hone ke baad aapka order process kiya jayega.
+            Your order will be processed once advance is received.
           </p>
           {draft.confirmed && (
-            <div className="mt-3 inline-flex items-center gap-1.5 border border-gray-300 text-gray-700 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide">
+            <div className="mt-3 inline-flex items-center gap-1.5 border border-gray-900 text-gray-900 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide">
               ✓ Advance Confirmed
             </div>
           )}
