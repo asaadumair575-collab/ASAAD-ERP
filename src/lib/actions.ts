@@ -1280,9 +1280,17 @@ export async function createRetailOrder(_prev: string | null, formData: FormData
   let city: string | null = String(formData.get("city") ?? "").trim() || null;
   const address: string | null = String(formData.get("address") ?? "").trim() || null;
 
+  let resolvedCustomerId: number | null = retailCustomerId;
+
   if (retailCustomerId) {
     const rc = await prisma.retailCustomer.findUnique({ where: { id: retailCustomerId } });
     if (rc) { customerName = rc.name; phone = phone ?? rc.phone; city = city ?? rc.city; }
+  } else if (customerName) {
+    // Auto-create customer from manual entry
+    const rc = await prisma.retailCustomer.create({
+      data: { name: customerName, phone, city, address },
+    });
+    resolvedCustomerId = rc.id;
   }
 
   if (!customerName) return "Customer name is required";
@@ -1313,7 +1321,7 @@ export async function createRetailOrder(_prev: string | null, formData: FormData
     data: {
       customerName, phone, city, address, notes, deliveryCharge, totalAmount,
       createdByUserId: me.id,
-      retailCustomerId: retailCustomerId ?? undefined,
+      retailCustomerId: resolvedCustomerId ?? undefined,
       status: deliveryCharge > 0 ? "PARTIAL" : "PENDING",
       items: { create: items },
       payments: deliveryCharge > 0
