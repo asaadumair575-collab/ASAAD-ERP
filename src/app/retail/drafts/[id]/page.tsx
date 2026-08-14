@@ -57,32 +57,32 @@ export default async function DraftSlipPage({
       <div className="bg-white border border-gray-300 rounded-xl overflow-hidden shadow-md print:shadow-none print:border-gray-400">
 
         {/* Logo + Business name */}
-        <div className="px-5 pt-4 pb-2.5 text-center border-b border-gray-200">
+        <div className="px-5 pt-3 pb-2 text-center border-b border-gray-200">
           {profile?.logo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={profile.logo}
               alt={profile.name}
-              className="h-12 mx-auto mb-1.5 object-contain"
+              className="h-10 mx-auto mb-1 object-contain"
             />
           ) : (
-            <div className="w-12 h-12 mx-auto mb-1.5 bg-black rounded-full flex items-center justify-center">
-              <span className="text-white text-2xl font-black">
+            <div className="w-10 h-10 mx-auto mb-1 bg-black rounded-full flex items-center justify-center">
+              <span className="text-white text-xl font-black">
                 {(profile?.name ?? "A").charAt(0)}
               </span>
             </div>
           )}
-          <p className="text-lg font-black tracking-tight text-gray-900">{profile?.name ?? "ASAAD ERP"}</p>
+          <p className="text-base font-black tracking-tight text-gray-900">{profile?.name ?? "ASAAD ERP"}</p>
           {profile?.phone && (
-            <p className="text-xs font-semibold text-gray-600 mt-0.5">{profile.phone}</p>
+            <p className="text-[10px] font-semibold text-gray-600 mt-0.5">{profile.phone}</p>
           )}
           {profile?.address && (
-            <p className="text-[10px] text-gray-400 mt-0.5">{profile.address}</p>
+            <p className="text-[9px] text-gray-400 mt-0.5">{profile.address}</p>
           )}
         </div>
 
         {/* Slip title + number */}
-        <div className="px-5 py-1.5 flex items-center justify-between border-b border-dashed border-gray-300 bg-gray-50">
+        <div className="px-5 py-1 flex items-center justify-between border-b border-dashed border-gray-300 bg-gray-50">
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Payment Request</p>
           <div className="text-right">
             <p className="text-[10px] font-bold text-gray-700">{slipNo}</p>
@@ -91,7 +91,7 @@ export default async function DraftSlipPage({
         </div>
 
         {/* Customer details */}
-        <div className="px-5 py-2.5 border-b border-gray-100 space-y-1.5">
+        <div className="px-5 py-2 border-b border-gray-100 space-y-1.5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Prepared For</p>
@@ -120,16 +120,30 @@ export default async function DraftSlipPage({
         </div>
 
         {/* Advance amount */}
-        <div className="px-5 py-4 border-b border-dashed border-gray-200 text-center">
-          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-1.5">
+        <div className="px-5 py-3 border-b border-dashed border-gray-200 text-center">
+          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-1">
             Advance Payment Required
           </p>
           <p className="text-3xl font-black text-gray-900 tracking-tight leading-none">
             Rs. {draft.advanceAmount.toLocaleString()}
           </p>
-          <p className="text-[9px] font-medium text-gray-400 mt-1.5 tracking-widest uppercase">
+          <p className="text-[9px] font-medium text-gray-400 mt-1 tracking-widest uppercase">
             To Confirm Your Order
           </p>
+        </div>
+
+        {/* Status */}
+        <div className="px-5 py-2 border-b border-gray-100 flex items-center justify-between">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Status</span>
+          {draft.confirmed ? (
+            <span className="inline-flex items-center gap-1 bg-green-50 border border-green-300 text-green-700 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide">
+              ✓ Advance Received
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 bg-amber-50 border border-amber-300 text-amber-700 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide">
+              ⏳ Waiting for Advance
+            </span>
+          )}
         </div>
 
         {/* Bank details */}
@@ -173,11 +187,6 @@ export default async function DraftSlipPage({
           <p className="text-[10px] text-gray-400">
             Your order will be processed once advance is received.
           </p>
-          {draft.confirmed && (
-            <div className="mt-2 inline-flex items-center gap-1.5 border border-gray-900 text-gray-900 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
-              ✓ Advance Confirmed
-            </div>
-          )}
         </div>
       </div>
 
