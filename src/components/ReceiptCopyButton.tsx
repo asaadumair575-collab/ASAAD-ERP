@@ -16,7 +16,7 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
       const rect = el.getBoundingClientRect();
       const canvas = await html2canvas(el, {
         backgroundColor: "#ffffff",
-        scale: 2,
+        scale: 3,
         useCORS: true,
         allowTaint: true,
         logging: false,
@@ -24,40 +24,42 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
         height: rect.height,
         scrollX: -window.scrollX,
         scrollY: -window.scrollY,
-        windowWidth: document.documentElement.scrollWidth,
-        windowHeight: document.documentElement.scrollHeight,
       });
 
-      const getBlob = (): Promise<Blob> =>
-        new Promise((res, rej) =>
-          canvas.toBlob((b) => (b ? res(b) : rej(new Error("toBlob failed"))), "image/png")
-        );
+      const dataUrl = canvas.toDataURL("image/png");
 
-      // Mobile: Web Share API (WhatsApp etc.)
-      if (navigator.canShare) {
-        const blob = await getBlob();
-        const file = new File([blob], "receipt.png", { type: "image/png" });
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: "Receipt" });
-          setStatus("done");
-          setTimeout(() => setStatus("idle"), 2000);
-          return;
-        }
-      }
-
-      // Desktop Chrome: copy to clipboard
-      if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
-        const blob = await getBlob();
-        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      // Open image in new tab — user can long-press → Save to Gallery (mobile)
+      const win = window.open();
+      if (win) {
+        win.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Receipt</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { background: #f5f5f5; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; }
+              img { max-width: 100%; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.15); }
+              p { margin-top: 16px; font-family: sans-serif; font-size: 13px; color: #888; text-align: center; }
+            </style>
+          </head>
+          <body>
+            <img src="${dataUrl}" alt="Receipt" />
+            <p>📱 Press and hold image → Save to Gallery</p>
+          </body>
+          </html>
+        `);
+        win.document.close();
         setStatus("done");
         setTimeout(() => setStatus("idle"), 2000);
         return;
       }
 
-      // Fallback: download file
+      // Fallback if popup blocked: direct download
       const a = document.createElement("a");
-      a.href = canvas.toDataURL("image/png");
-      a.download = `receipt-${targetId}.png`;
+      a.href = dataUrl;
+      a.download = "receipt.png";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -86,7 +88,7 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
         </>
       )}
       {status === "working" && "Generating…"}
-      {status === "done" && <span className="text-green-600">✓ Saved!</span>}
+      {status === "done" && <span className="text-green-600">✓ Done!</span>}
       {status === "error" && <span className="text-red-500">✕ Try Again</span>}
     </button>
   );
