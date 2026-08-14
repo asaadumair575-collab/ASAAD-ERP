@@ -63,18 +63,18 @@ export default async function DraftSlipPage({
             <img
               src={profile.logo}
               alt={profile.name}
-              className="h-16 mx-auto mb-3 object-contain"
+              className="h-24 mx-auto mb-3 object-contain"
             />
           ) : (
-            <div className="w-16 h-16 mx-auto mb-3 bg-black rounded-full flex items-center justify-center">
-              <span className="text-white text-2xl font-black">
+            <div className="w-24 h-24 mx-auto mb-3 bg-black rounded-full flex items-center justify-center">
+              <span className="text-white text-4xl font-black">
                 {(profile?.name ?? "A").charAt(0)}
               </span>
             </div>
           )}
           <p className="text-xl font-black tracking-tight text-gray-900">{profile?.name ?? "ASAAD ERP"}</p>
           {profile?.phone && (
-            <p className="text-xs text-gray-500 mt-0.5">{profile.phone}</p>
+            <p className="text-sm font-semibold text-gray-700 mt-1">{profile.phone}</p>
           )}
           {profile?.address && (
             <p className="text-xs text-gray-400 mt-0.5">{profile.address}</p>
