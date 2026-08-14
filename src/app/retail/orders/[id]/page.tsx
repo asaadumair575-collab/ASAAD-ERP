@@ -31,13 +31,17 @@ export default async function RetailOrderPage({
   const { receipt } = await searchParams;
   const orderId = parseInt(id, 10);
 
-  const order = await prisma.retailOrder.findUnique({
-    where: { id: orderId },
-    include: { items: true, payments: { orderBy: { date: "asc" } } },
-  });
+  const [order, profile] = await Promise.all([
+    prisma.retailOrder.findUnique({
+      where: { id: orderId },
+      include: { items: true, payments: { orderBy: { date: "asc" } } },
+    }),
+    prisma.businessProfile.findFirst(),
+  ]);
 
   if (!order) notFound();
 
+  const slipNo = `R-${String(order.id).padStart(3, "0")}`;
   const received = order.payments.reduce((s, p) => s + p.amount, 0);
   const balance = Math.max(0, order.totalAmount - received);
 
@@ -79,14 +83,54 @@ export default async function RetailOrderPage({
       </div>
 
 
-      {/* Receipt box — shown after recording payment */}
-      {receipt && (
-        <div className="space-y-3">
-        <div id="retail-receipt" className="bg-white border-2 border-black rounded-2xl p-6 shadow-sm space-y-4">
+      {/* Receipt box — always visible */}
+      <div className="space-y-3">
+        <div id="retail-receipt" className="relative bg-white border-2 border-black rounded-2xl p-6 shadow-sm space-y-4 overflow-hidden">
+          {/* Security watermark */}
+          <div className="absolute inset-0 pointer-events-none select-none overflow-hidden rounded-2xl" aria-hidden="true">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} style={{
+                position: "absolute",
+                top: `${i * 70 - 30}px`,
+                left: "-120px",
+                right: "-120px",
+                transform: "rotate(-30deg)",
+                whiteSpace: "nowrap",
+                fontSize: "13px",
+                fontWeight: 900,
+                letterSpacing: "0.25em",
+                color: "rgba(0,0,0,0.06)",
+                userSelect: "none",
+              }}>
+                {Array.from({ length: 6 }).map((_, j) => (
+                  <span key={j}>{profile?.name ?? "ASAAD ERP"} &nbsp;•&nbsp; VERIFIED &nbsp;•&nbsp; {slipNo} &nbsp;•&nbsp; </span>
+                ))}
+              </div>
+            ))}
+          </div>
+
           <div className="text-center border-b border-dashed border-gray-300 pb-4">
-            <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Payment Receipt</p>
-            <p className="text-2xl font-bold tracking-tight">R-{String(order.id).padStart(3, "0")}</p>
+            {profile?.logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.logo} alt={profile.name} className="h-12 mx-auto mb-2 object-contain" />
+            ) : (
+              <div className="w-12 h-12 mx-auto mb-2 bg-black rounded-full flex items-center justify-center">
+                <span className="text-white text-xl font-black">{(profile?.name ?? "A").charAt(0)}</span>
+              </div>
+            )}
+            <p className="text-base font-black tracking-tight text-gray-900">{profile?.name ?? "ASAAD ERP"}</p>
+            <p className="text-[10px] font-semibold text-gray-600 mt-0.5">03351005301</p>
+            <p className="text-xs text-gray-400 uppercase tracking-widest mt-2 mb-1">Payment Receipt</p>
+            <p className="text-2xl font-bold tracking-tight">{slipNo}</p>
             <p className="text-sm text-gray-500 mt-0.5">{order.date.toISOString().slice(0, 10)}</p>
+            <div className="flex items-center justify-center gap-2 mt-3">
+              <span className="inline-flex items-center gap-1 bg-green-50 border border-green-300 text-green-700 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                ✓ Advance Received
+              </span>
+              <span className="inline-flex items-center gap-1 bg-green-50 border border-green-300 text-green-700 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                ✓ Order Confirmed
+              </span>
+            </div>
           </div>
 
           <div>
@@ -112,8 +156,8 @@ export default async function RetailOrderPage({
               <span className="font-semibold tabular-nums">Rs {fmt(order.totalAmount)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Advance Received</span>
-              <span className="font-semibold text-green-700 tabular-nums">Rs {fmt(order.deliveryCharge ?? 0)}</span>
+              <span className="text-gray-500">Amount Received</span>
+              <span className="font-semibold text-green-700 tabular-nums">Rs {fmt(received)}</span>
             </div>
             <div className="flex justify-between text-sm font-bold border-t border-gray-200 pt-1.5 mt-1.5">
               <span>Balance Due</span>
@@ -122,13 +166,11 @@ export default async function RetailOrderPage({
               </span>
             </div>
           </div>
-
         </div>
         <div className="flex justify-end">
           <ReceiptCopyButton targetId="retail-receipt" />
         </div>
-        </div>
-      )}
+      </div>
 
       {/* Customer card */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
