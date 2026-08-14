@@ -83,9 +83,15 @@ export default async function DraftSlipPage({
 
         {/* Status */}
         <div className="px-5 py-2 border-b border-dashed border-gray-300 bg-gray-50 flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-            {draft.confirmed ? "Confirmed" : "Not Confirmed"}
-          </span>
+          {draft.confirmed ? (
+            <span className="inline-flex items-center bg-green-50 border border-green-300 text-green-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
+              Confirmed
+            </span>
+          ) : (
+            <span className="inline-flex items-center bg-red-50 border border-red-300 text-red-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
+              Not Confirmed
+            </span>
+          )}
           {draft.confirmed ? (
             <span className="inline-flex items-center gap-1 bg-green-50 border border-green-300 text-green-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
               ✓ Advance Received
