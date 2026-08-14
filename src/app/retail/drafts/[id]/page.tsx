@@ -178,7 +178,7 @@ export default async function DraftSlipPage({
               <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Jazz Cash</p>
               <p className="text-sm font-black text-gray-900 tracking-wide">03168604935</p>
               {profile?.bankAccountTitle && (
-                <p className="text-[9px] text-gray-500">{profile.bankAccountTitle}</p>
+                <p className="text-[10px] font-extrabold text-gray-900">{profile.bankAccountTitle}</p>
               )}
             </div>
             {/* Bank */}
@@ -187,12 +187,12 @@ export default async function DraftSlipPage({
                 {profile?.bankName ?? "Bank"}
               </p>
               {profile?.bankAccountNumber ? (
-                <p className="text-sm font-black text-gray-900 tracking-wide break-all">{profile.bankAccountNumber}</p>
+                <p className="text-xs font-semibold text-gray-400 tracking-wide break-all">{profile.bankAccountNumber}</p>
               ) : (
                 <p className="text-[9px] text-red-400">Not configured</p>
               )}
               {profile?.bankAccountTitle && (
-                <p className="text-[9px] text-gray-500">{profile.bankAccountTitle}</p>
+                <p className="text-[10px] font-extrabold text-gray-900">{profile.bankAccountTitle}</p>
               )}
             </div>
           </div>
