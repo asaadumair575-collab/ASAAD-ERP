@@ -65,44 +65,13 @@ export const ISSUE_TYPES: IssueType[] = [
 
   // ── Internal complaints ──────────────────────────────────────
   {
-    value: "SALARY_ISSUE",
-    label: "Salary / Pay Issue",
-    group: "INTERNAL",
-    defaultTitle: "Salary Complaint",
-    fields: [
-      { key: "month",  label: "Month",             type: "text",   required: true,  placeholder: "e.g. July 2026" },
-      { key: "amount", label: "Expected Amount (₨)", type: "number", required: false, placeholder: "0" },
-    ],
-  },
-  {
     value: "SOFTWARE_BUG",
-    label: "Software / System Bug",
+    label: "Software / System Issue",
     group: "INTERNAL",
     defaultTitle: "Software Issue",
     fields: [
       { key: "screenshot", label: "Screenshot (optional)", type: "file", required: false, accept: "image/*" },
     ],
-  },
-  {
-    value: "WORKLOAD",
-    label: "Workload Issue",
-    group: "INTERNAL",
-    defaultTitle: "Workload Complaint",
-    fields: [],
-  },
-  {
-    value: "WORKPLACE",
-    label: "Workplace Issue",
-    group: "INTERNAL",
-    defaultTitle: "Workplace Complaint",
-    fields: [],
-  },
-  {
-    value: "OTHER_INTERNAL",
-    label: "Other Internal Issue",
-    group: "INTERNAL",
-    defaultTitle: "",
-    fields: [],
   },
 ];
 
