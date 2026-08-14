@@ -1439,9 +1439,11 @@ export async function createRetailCustomer(formData: FormData) {
   const city = String(formData.get("city") ?? "").trim() || null;
   const address = String(formData.get("address") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
+  const fromDraft = formData.get("fromDraft") === "1";
   if (!name) throw new Error("Name is required");
   const customer = await prisma.retailCustomer.create({ data: { name, phone, city, address, notes } });
   revalidatePath("/retail/customers");
+  if (fromDraft) redirect(`/retail/new?customerId=${customer.id}`);
   redirect(`/retail/customers/${customer.id}`);
 }
 

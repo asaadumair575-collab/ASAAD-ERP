@@ -32,11 +32,12 @@ export default async function DraftSlipPage({
     day: "numeric", month: "long", year: "numeric",
   });
 
-  const retailUrl = `/retail/new?${new URLSearchParams({
+  const retailUrl = `/retail/customers/new?${new URLSearchParams({
     ...(draft.customerName ? { name: draft.customerName } : {}),
     ...(draft.phone        ? { phone: draft.phone }       : {}),
     ...(draft.city         ? { city: draft.city }         : {}),
     ...(draft.address      ? { address: draft.address }   : {}),
+    fromDraft: "1",
   }).toString()}`;
 
   const slipNo = `#${String(draft.id).padStart(5, "0")}`;
