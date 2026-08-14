@@ -54,7 +54,29 @@ export default async function DraftSlipPage({
       </div>
 
       {/* ── SLIP ── */}
-      <div className="bg-white border border-gray-300 rounded-xl overflow-hidden shadow-md print:shadow-none print:border-gray-400">
+      <div className="relative bg-white border border-gray-300 rounded-xl overflow-hidden shadow-md print:shadow-none print:border-gray-400">
+        {/* Security watermark */}
+        <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} style={{
+              position: "absolute",
+              top: `${i * 70 - 30}px`,
+              left: "-120px",
+              right: "-120px",
+              transform: "rotate(-30deg)",
+              whiteSpace: "nowrap",
+              fontSize: "13px",
+              fontWeight: 900,
+              letterSpacing: "0.25em",
+              color: "rgba(0,0,0,0.06)",
+              userSelect: "none",
+            }}>
+              {Array.from({ length: 6 }).map((_, j) => (
+                <span key={j}>{profile?.name ?? "ASAAD ERP"} &nbsp;•&nbsp; VERIFIED &nbsp;•&nbsp; {slipNo} &nbsp;•&nbsp; </span>
+              ))}
+            </div>
+          ))}
+        </div>
 
         {/* Logo + Business name */}
         <div className="px-5 pt-3 pb-2 text-center border-b border-gray-200">

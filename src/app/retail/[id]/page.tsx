@@ -35,6 +35,7 @@ export default async function RetailOrderPage({
   if (!order) notFound();
 
   const received = order.payments.reduce((s, p) => s + p.amount, 0);
+  const slipNo = `R-${String(order.id).padStart(3, "0")}`;
   const balance = Math.max(0, order.totalAmount - received);
 
   const perms = parsePermissions(me?.permissions ?? {});
@@ -73,7 +74,29 @@ export default async function RetailOrderPage({
       {/* Receipt box — shown after recording payment */}
       {receipt && (
         <div className="space-y-3">
-        <div id="retail-receipt" className="bg-white border-2 border-black rounded-2xl p-6 shadow-sm space-y-4">
+        <div id="retail-receipt" className="relative bg-white border-2 border-black rounded-2xl p-6 shadow-sm space-y-4 overflow-hidden">
+          {/* Security watermark — prevents screenshot editing */}
+          <div className="absolute inset-0 pointer-events-none select-none overflow-hidden rounded-2xl" aria-hidden="true">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} style={{
+                position: "absolute",
+                top: `${i * 70 - 30}px`,
+                left: "-120px",
+                right: "-120px",
+                transform: "rotate(-30deg)",
+                whiteSpace: "nowrap",
+                fontSize: "13px",
+                fontWeight: 900,
+                letterSpacing: "0.25em",
+                color: "rgba(0,0,0,0.06)",
+                userSelect: "none",
+              }}>
+                {Array.from({ length: 6 }).map((_, j) => (
+                  <span key={j}>{profile?.name ?? "ASAAD ERP"} &nbsp;•&nbsp; VERIFIED &nbsp;•&nbsp; {slipNo} &nbsp;•&nbsp; </span>
+                ))}
+              </div>
+            ))}
+          </div>
           <div className="text-center border-b border-dashed border-gray-300 pb-4">
             {profile?.logo ? (
               // eslint-disable-next-line @next/next/no-img-element
