@@ -5,10 +5,8 @@ import type { default as Html2CanvasType } from "html2canvas";
 
 export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
   const [status, setStatus] = useState<"idle" | "working" | "done" | "error">("idle");
-  const [errMsg, setErrMsg] = useState("");
   const h2cRef = useRef<typeof Html2CanvasType | null>(null);
 
-  // Pre-load html2canvas so it's ready when user taps
   useEffect(() => {
     import("html2canvas").then((m) => { h2cRef.current = m.default; });
   }, []);
@@ -21,6 +19,22 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
     try {
       const html2canvas = h2cRef.current ?? (await import("html2canvas")).default;
 
+      // html2canvas can't parse oklch() (Tailwind v4 colors).
+      // Fix: inline all computed colors as rgb() before rendering, then restore.
+      const nodes = Array.from(el.querySelectorAll("*")) as HTMLElement[];
+      const saved = nodes.map((n) => n.getAttribute("style") ?? "");
+
+      nodes.forEach((n) => {
+        const cs = window.getComputedStyle(n);
+        n.style.color = cs.color;
+        n.style.backgroundColor = cs.backgroundColor;
+        n.style.borderColor = cs.borderColor;
+        n.style.borderTopColor = cs.borderTopColor;
+        n.style.borderRightColor = cs.borderRightColor;
+        n.style.borderBottomColor = cs.borderBottomColor;
+        n.style.borderLeftColor = cs.borderLeftColor;
+      });
+
       const canvas = await html2canvas(el, {
         backgroundColor: "#ffffff",
         scale: 2,
@@ -31,9 +45,13 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
           node instanceof HTMLElement && node.getAttribute("aria-hidden") === "true",
       });
 
-      // toDataURL is synchronous — no gesture timeout issue
-      const dataUrl = canvas.toDataURL("image/png");
+      // Restore original styles
+      nodes.forEach((n, i) => {
+        if (saved[i]) n.setAttribute("style", saved[i]);
+        else n.removeAttribute("style");
+      });
 
+      const dataUrl = canvas.toDataURL("image/png");
       const a = document.createElement("a");
       a.href = dataUrl;
       a.download = "receipt.png";
@@ -43,16 +61,13 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
 
       setStatus("done");
       setTimeout(() => setStatus("idle"), 2000);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setErrMsg(msg);
+    } catch {
       setStatus("error");
-      setTimeout(() => { setStatus("idle"); setErrMsg(""); }, 8000);
+      setTimeout(() => setStatus("idle"), 3000);
     }
   }
 
   return (
-    <div className="flex flex-col items-end">
     <button
       type="button"
       onClick={handleSave}
@@ -69,11 +84,7 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
       )}
       {status === "working" && "Generating…"}
       {status === "done" && <span className="text-green-600">✓ Saved!</span>}
-      {status === "error" && <span className="text-red-500">✕ Error</span>}
+      {status === "error" && <span className="text-red-500">✕ Try Again</span>}
     </button>
-    {status === "error" && errMsg && (
-      <p className="text-xs text-red-400 mt-1 max-w-xs break-words">{errMsg}</p>
-    )}
-    </div>
   );
 }
