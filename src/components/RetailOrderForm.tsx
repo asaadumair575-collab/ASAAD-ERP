@@ -11,19 +11,23 @@ function round2(n: number) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
+type InitialValues = { name?: string; phone?: string; city?: string; address?: string };
+
 export default function RetailOrderForm({
   action,
   products,
   customers = [],
+  initialValues = {},
 }: {
   action: (prev: string | null, formData: FormData) => Promise<string | null>;
   products: Product[];
   customers?: Customer[];
+  initialValues?: InitialValues;
 }) {
   const [rows, setRows] = useState<Row[]>([{ id: 0, description: "", quantity: 0, rate: 0, costPrice: 1550 }]);
   const [deliveryCharge, setDeliveryCharge] = useState<number | "">("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialValues.name ?? "");
   const [showDropdown, setShowDropdown] = useState(false);
 
   const [error, formAction] = useActionState(action, null);
@@ -126,16 +130,25 @@ export default function RetailOrderForm({
             <div className="sm:col-span-1">
               <label className="block text-xs text-gray-500 mb-1.5">Name <span className="text-black">*</span></label>
               <input type="text" name="customerName" required placeholder="e.g. Ahmed"
+                defaultValue={initialValues.name ?? ""}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1.5">Phone <span className="text-black">*</span></label>
               <input type="tel" name="phone" required placeholder="03xx-xxxxxxx"
+                defaultValue={initialValues.phone ?? ""}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1.5">City <span className="text-black">*</span></label>
               <input type="text" name="city" required placeholder="e.g. Lahore"
+                defaultValue={initialValues.city ?? ""}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
+            </div>
+            <div className="sm:col-span-3">
+              <label className="block text-xs text-gray-500 mb-1.5">Address</label>
+              <input type="text" name="address" placeholder="Street, area..."
+                defaultValue={initialValues.address ?? ""}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
             </div>
           </div>

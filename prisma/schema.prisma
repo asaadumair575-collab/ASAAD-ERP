@@ -227,6 +227,7 @@ model RetailOrder {
   customerName     String
   phone            String?
   city             String?
+  address          String?
   totalAmount      Float
   deliveryCharge   Float            @default(0)
   courierCharge        Float            @default(0)

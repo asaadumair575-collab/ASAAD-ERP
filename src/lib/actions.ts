@@ -1278,6 +1278,7 @@ export async function createRetailOrder(_prev: string | null, formData: FormData
   let customerName = String(formData.get("customerName") ?? "").trim();
   let phone: string | null = String(formData.get("phone") ?? "").trim() || null;
   let city: string | null = String(formData.get("city") ?? "").trim() || null;
+  const address: string | null = String(formData.get("address") ?? "").trim() || null;
 
   if (retailCustomerId) {
     const rc = await prisma.retailCustomer.findUnique({ where: { id: retailCustomerId } });
@@ -1310,7 +1311,7 @@ export async function createRetailOrder(_prev: string | null, formData: FormData
 
   const order = await prisma.retailOrder.create({
     data: {
-      customerName, phone, city, notes, deliveryCharge, totalAmount,
+      customerName, phone, city, address, notes, deliveryCharge, totalAmount,
       createdByUserId: me.id,
       retailCustomerId: retailCustomerId ?? undefined,
       status: deliveryCharge > 0 ? "PARTIAL" : "PENDING",
