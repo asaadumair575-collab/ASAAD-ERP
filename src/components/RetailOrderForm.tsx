@@ -212,23 +212,7 @@ export default function RetailOrderForm({
             </div>
           ))}
         </div>
-        <div className="flex items-center justify-between pt-2">
-          <button
-            type="button"
-            onClick={() => setRows((r) => [...r, { id: Date.now(), description: "", quantity: 0, rate: 0, costPrice: 1550 }])}
-            className="text-sm text-gray-500 hover:text-black underline"
-          >
-            + Add item
-          </button>
-          {rows.length > 1 && (
-            <button
-              type="button"
-              onClick={() => setRows((r) => r.slice(0, -1))}
-              className="text-xs text-gray-400 hover:text-red-500"
-            >
-              Remove last
-            </button>
-          )}
+        <div className="flex justify-end pt-2">
           <div className="text-base font-semibold">
             Total: Rs {total.toLocaleString()}
           </div>
