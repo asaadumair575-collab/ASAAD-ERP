@@ -152,9 +152,9 @@ export default async function DraftSlipPage({
                 </div>
               )}
               {profile.bankAccountNumber && (
-                <div className="mt-2 rounded-xl border-2 border-gray-900 px-5 py-3.5 flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Account No.</span>
-                  <span className="text-base font-black text-gray-900 tracking-wider">{profile.bankAccountNumber}</span>
+                <div className="mt-2 rounded-xl border-2 border-gray-900 px-5 py-3.5 text-center">
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Account No.</p>
+                  <p className="text-base font-black text-gray-900 tracking-wider break-all">{profile.bankAccountNumber}</p>
                 </div>
               )}
             </div>
