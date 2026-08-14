@@ -32,7 +32,6 @@ export default async function DraftSlipPage({
     day: "numeric", month: "long", year: "numeric",
   });
 
-  // Build retail new order URL with prefilled params
   const retailUrl = `/retail/new?${new URLSearchParams({
     ...(draft.customerName ? { name: draft.customerName } : {}),
     ...(draft.phone        ? { phone: draft.phone }       : {}),
@@ -40,125 +39,147 @@ export default async function DraftSlipPage({
     ...(draft.address      ? { address: draft.address }   : {}),
   }).toString()}`;
 
+  const slipNo = `#${String(draft.id).padStart(5, "0")}`;
+
   return (
-    <div className="max-w-lg space-y-4">
-      {/* Back + actions */}
-      <div className="flex items-center justify-between gap-3 print:hidden">
+    <div className="max-w-sm mx-auto space-y-4">
+      {/* Nav — hidden on print */}
+      <div className="flex items-center justify-between print:hidden">
         <Link href="/retail/drafts" className="text-xs text-gray-400 hover:text-gray-600">← Drafts</Link>
-        <div className="flex gap-2">
-          {!draft.confirmed && (
-            <form action={deleteAction}>
-              <button type="submit" className="text-xs text-red-400 hover:text-red-600 border border-red-100 px-3 py-1.5 rounded-lg">
-                Delete
-              </button>
-            </form>
-          )}
-        </div>
+        {!draft.confirmed && (
+          <form action={deleteAction}>
+            <button type="submit" className="text-xs text-red-400 hover:text-red-600">Delete</button>
+          </form>
+        )}
       </div>
 
-      {/* THE SLIP */}
-      <div id="slip" className="bg-white border-2 border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+      {/* ── SLIP ── */}
+      <div className="bg-white border border-gray-300 rounded-xl overflow-hidden shadow-md print:shadow-none print:border-gray-400">
 
-        {/* Header with logo */}
-        <div className="bg-gray-900 px-6 py-5 text-white text-center">
-          {profile?.logo && (
+        {/* Logo + Business name */}
+        <div className="px-7 pt-7 pb-5 text-center border-b border-gray-200">
+          {profile?.logo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={profile.logo} alt="logo" className="h-12 mx-auto mb-2 object-contain" />
+            <img
+              src={profile.logo}
+              alt={profile.name}
+              className="h-16 mx-auto mb-3 object-contain"
+            />
+          ) : (
+            <div className="w-16 h-16 mx-auto mb-3 bg-black rounded-full flex items-center justify-center">
+              <span className="text-white text-2xl font-black">
+                {(profile?.name ?? "A").charAt(0)}
+              </span>
+            </div>
           )}
-          <p className="text-lg font-bold tracking-wide">{profile?.name ?? "ASAAD ERP"}</p>
-          {profile?.phone && <p className="text-xs text-gray-400 mt-0.5">{profile.phone}</p>}
+          <p className="text-xl font-black tracking-tight text-gray-900">{profile?.name ?? "ASAAD ERP"}</p>
+          {profile?.phone && (
+            <p className="text-xs text-gray-500 mt-0.5">{profile.phone}</p>
+          )}
+          {profile?.address && (
+            <p className="text-xs text-gray-400 mt-0.5">{profile.address}</p>
+          )}
         </div>
 
-        {/* Slip title */}
-        <div className="bg-orange-50 border-b border-orange-100 px-6 py-3 text-center">
-          <p className="text-sm font-bold text-orange-700 uppercase tracking-widest">Order Confirmation Slip</p>
-          <p className="text-[11px] text-orange-500 mt-0.5">#{String(draft.id).padStart(5, "0")} · {dateStr}</p>
-        </div>
-
-        {/* Customer info */}
-        <div className="px-6 py-4 border-b border-gray-100 grid grid-cols-2 gap-3">
-          <div>
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Customer</p>
-            <p className="text-sm font-semibold text-gray-900 mt-0.5">{draft.customerName}</p>
+        {/* Slip title + number */}
+        <div className="px-7 py-3 flex items-center justify-between border-b border-dashed border-gray-300 bg-gray-50">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Payment Request</p>
+          <div className="text-right">
+            <p className="text-[11px] font-bold text-gray-700">{slipNo}</p>
+            <p className="text-[10px] text-gray-400">{dateStr}</p>
           </div>
-          {draft.phone && (
+        </div>
+
+        {/* Customer details */}
+        <div className="px-7 py-5 border-b border-gray-100 space-y-3">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Phone</p>
-              <p className="text-sm font-semibold text-gray-900 mt-0.5">{draft.phone}</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Prepared For</p>
+              <p className="text-base font-bold text-gray-900">{draft.customerName}</p>
+              {draft.phone && <p className="text-sm text-gray-600 mt-0.5">{draft.phone}</p>}
             </div>
-          )}
-          {draft.city && (
-            <div>
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">City</p>
-              <p className="text-sm font-semibold text-gray-900 mt-0.5">{draft.city}</p>
-            </div>
-          )}
+            {draft.city && (
+              <div className="text-right">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">City</p>
+                <p className="text-sm font-semibold text-gray-700">{draft.city}</p>
+              </div>
+            )}
+          </div>
           {draft.address && (
-            <div className="col-span-2">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Address</p>
-              <p className="text-sm text-gray-800 mt-0.5">{draft.address}</p>
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Address</p>
+              <p className="text-sm text-gray-700">{draft.address}</p>
             </div>
           )}
           {draft.items && (
-            <div className="col-span-2">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Order Items</p>
-              <p className="text-sm text-gray-800 mt-0.5">{draft.items}</p>
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Order Details</p>
+              <p className="text-sm text-gray-700">{draft.items}</p>
             </div>
           )}
         </div>
 
-        {/* Advance amount — BIG */}
-        <div className="px-6 py-6 bg-black text-white text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">Apna Order Confirm Karne Ke Liye</p>
-          <p className="text-5xl font-black tracking-tight">₨{draft.advanceAmount.toLocaleString()}</p>
-          <p className="text-sm font-semibold text-gray-300 mt-1">Advance Bhejein</p>
+        {/* Advance amount */}
+        <div className="px-7 py-6 border-b border-dashed border-gray-300 text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-2">
+            Apna Order Confirm Karne Ke Liye
+          </p>
+          <p className="text-6xl font-black text-gray-900 tracking-tight leading-none">
+            ₨{draft.advanceAmount.toLocaleString()}
+          </p>
+          <p className="text-sm font-semibold text-gray-500 mt-2 uppercase tracking-widest">Advance Bhejein</p>
         </div>
 
-        {/* Bank account */}
+        {/* Bank details */}
         {(profile?.bankAccountNumber || profile?.bankName) ? (
-          <div className="px-6 py-5 border-b border-gray-100 bg-gray-50">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center mb-3">Bank Details</p>
-            <div className="space-y-2">
+          <div className="px-7 py-5 border-b border-gray-100">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 text-center mb-4">
+              Bank Account Details
+            </p>
+            <div className="space-y-2.5">
               {profile.bankName && (
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">Bank</span>
-                  <span className="text-sm font-semibold text-gray-900">{profile.bankName}</span>
+                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Bank</span>
+                  <span className="text-sm font-bold text-gray-900">{profile.bankName}</span>
                 </div>
               )}
               {profile.bankAccountTitle && (
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">Account Title</span>
-                  <span className="text-sm font-semibold text-gray-900">{profile.bankAccountTitle}</span>
+                  <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Account Title</span>
+                  <span className="text-sm font-bold text-gray-900">{profile.bankAccountTitle}</span>
                 </div>
               )}
               {profile.bankAccountNumber && (
-                <div className="flex justify-between items-center bg-white rounded-xl px-4 py-2 border border-gray-200">
-                  <span className="text-xs text-gray-500">Account Number</span>
-                  <span className="text-base font-black text-gray-900 tracking-wider">{profile.bankAccountNumber}</span>
+                <div className="mt-1 flex justify-between items-center bg-gray-900 text-white rounded-lg px-4 py-3">
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Account No.</span>
+                  <span className="text-base font-black tracking-widest">{profile.bankAccountNumber}</span>
                 </div>
               )}
             </div>
           </div>
         ) : (
-          <div className="px-6 py-4 border-b border-gray-100 text-center text-xs text-red-400">
-            ⚠ Bank account not configured — go to Drafts settings
+          <div className="px-7 py-4 border-b border-gray-100 text-center text-xs text-red-400">
+            ⚠ Bank account not configured
           </div>
         )}
 
-        {/* Footer note */}
-        <div className="px-6 py-4 text-center">
-          <p className="text-xs text-gray-500">
-            Payment ke baad screenshot bhejein. Advance receive hone ke baad aapka order process kiya jayega.
+        {/* Footer */}
+        <div className="px-7 py-5 text-center space-y-1">
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Payment ke baad screenshot WhatsApp pe bhejein.
+          </p>
+          <p className="text-xs text-gray-400">
+            Advance receive hone ke baad aapka order process kiya jayega.
           </p>
           {draft.confirmed && (
-            <div className="mt-3 inline-flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-full text-xs font-semibold">
+            <div className="mt-3 inline-flex items-center gap-1.5 border border-gray-300 text-gray-700 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide">
               ✓ Advance Confirmed
             </div>
           )}
         </div>
       </div>
 
-      {/* Action buttons — below slip */}
+      {/* Buttons */}
       <SlipActions
         confirmed={draft.confirmed}
         retailUrl={retailUrl}
