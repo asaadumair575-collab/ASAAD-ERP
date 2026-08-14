@@ -270,7 +270,8 @@ export default async function RetailOrderPage({
             type="text"
             name="trackingNumber"
             defaultValue={order.trackingNumber ?? ""}
-            placeholder="PostEx CN number daalen (e.g. 21676630000015)"
+            placeholder="e.g. 28676630000031"
+            minLength={14}
             className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-black"
           />
           <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-gray-800 transition-colors">
