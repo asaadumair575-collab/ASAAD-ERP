@@ -1305,6 +1305,7 @@ export async function createRetailOrder(_prev: string | null, formData: FormData
     .filter((it) => it.description && !isNaN(it.quantity) && !isNaN(it.rate));
 
   if (items.length === 0) return "At least one item is required";
+  if (!deliveryCharge || deliveryCharge <= 0) return "Advance payment is required to create a retail order";
 
   const totalAmount = round2(items.reduce((s, i) => s + i.quantity * i.rate, 0));
 
@@ -1313,8 +1314,8 @@ export async function createRetailOrder(_prev: string | null, formData: FormData
   if (advScreenshotFile instanceof File && advScreenshotFile.size > 0) {
     const buffer = Buffer.from(await advScreenshotFile.arrayBuffer());
     advanceScreenshot = `data:${advScreenshotFile.type};base64,${buffer.toString("base64")}`;
-  } else if (deliveryCharge > 0) {
-    return "Advance screenshot is required when delivery charge is set";
+  } else {
+    return "Payment screenshot is required";
   }
 
   const order = await prisma.retailOrder.create({

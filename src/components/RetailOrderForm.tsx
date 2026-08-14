@@ -235,41 +235,42 @@ export default function RetailOrderForm({
         </div>
       </div>
 
-      {/* Delivery advance */}
+      {/* Delivery advance — mandatory */}
       <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 shadow-sm space-y-3">
-        <h2 className="text-sm font-semibold text-orange-800">Delivery Advance (COD)</h2>
+        <h2 className="text-sm font-semibold text-orange-800">Advance Payment (COD) <span className="text-red-600">*</span></h2>
         <div className="flex flex-wrap gap-4 items-end">
           <div>
-            <label className="block text-xs text-orange-700 mb-1.5">Advance Amount (Rs)</label>
+            <label className="block text-xs text-orange-700 mb-1.5">Advance Amount (Rs) <span className="text-red-600">*</span></label>
             <input
               type="number"
               name="deliveryCharge"
-              min="0"
+              min="1"
               step="1"
+              required
               value={deliveryCharge}
               onChange={(e) => setDeliveryCharge(e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
-              placeholder="0"
+              placeholder="Required"
               className="border border-orange-200 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
             />
           </div>
-          <div className="text-sm text-orange-700 pb-2">
-            <span className="font-medium">Balance after advance:</span>{" "}
-            <span className="font-semibold">Rs {balanceAfterAdvance.toLocaleString()}</span>
-            <p className="text-xs text-orange-500 mt-0.5">This will be collected later — use Record Payment.</p>
-          </div>
+          {(deliveryCharge || 0) > 0 && (
+            <div className="text-sm text-orange-700 pb-2">
+              <span className="font-medium">Balance after advance:</span>{" "}
+              <span className="font-semibold">Rs {balanceAfterAdvance.toLocaleString()}</span>
+              <p className="text-xs text-orange-500 mt-0.5">This will be collected later — use Record Payment.</p>
+            </div>
+          )}
         </div>
-        {(deliveryCharge || 0) > 0 && (
-          <div>
-            <label className="block text-xs text-orange-700 mb-1.5">Screenshot <span className="text-red-600">*</span></label>
-            <input
-              type="file"
-              name="advanceScreenshot"
-              required
-              accept="image/*"
-              className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 file:mr-3 file:border-0 file:bg-orange-100 file:text-xs file:font-medium file:px-3 file:py-1 file:rounded-md"
-            />
-          </div>
-        )}
+        <div>
+          <label className="block text-xs text-orange-700 mb-1.5">Payment Screenshot <span className="text-red-600">*</span></label>
+          <input
+            type="file"
+            name="advanceScreenshot"
+            required
+            accept="image/*"
+            className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 file:mr-3 file:border-0 file:bg-orange-100 file:text-xs file:font-medium file:px-3 file:py-1 file:rounded-md"
+          />
+        </div>
       </div>
 
       {/* Notes */}
