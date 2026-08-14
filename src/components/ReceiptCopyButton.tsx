@@ -5,6 +5,7 @@ import type { default as Html2CanvasType } from "html2canvas";
 
 export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
   const [status, setStatus] = useState<"idle" | "working" | "done" | "error">("idle");
+  const [errMsg, setErrMsg] = useState("");
   const h2cRef = useRef<typeof Html2CanvasType | null>(null);
 
   // Pre-load html2canvas so it's ready when user taps
@@ -42,13 +43,16 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
 
       setStatus("done");
       setTimeout(() => setStatus("idle"), 2000);
-    } catch {
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setErrMsg(msg);
       setStatus("error");
-      setTimeout(() => setStatus("idle"), 3000);
+      setTimeout(() => { setStatus("idle"); setErrMsg(""); }, 8000);
     }
   }
 
   return (
+    <div className="flex flex-col items-end">
     <button
       type="button"
       onClick={handleSave}
@@ -67,5 +71,9 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
       {status === "done" && <span className="text-green-600">✓ Saved!</span>}
       {status === "error" && <span className="text-red-500">✕ Error</span>}
     </button>
+    {status === "error" && errMsg && (
+      <p className="text-xs text-red-400 mt-1 max-w-xs break-words">{errMsg}</p>
+    )}
+    </div>
   );
 }
