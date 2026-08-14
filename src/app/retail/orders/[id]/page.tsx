@@ -167,27 +167,7 @@ export default async function RetailOrderPage({
             </div>
           </div>
 
-          {/* Official stamp */}
-          <div className="flex justify-end pt-1">
-            <div style={{ transform: "rotate(-12deg)", opacity: 0.85 }}>
-              <svg width="90" height="90" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="45" cy="45" r="42" stroke="#1a7a3c" strokeWidth="2.5" />
-                <circle cx="45" cy="45" r="35" stroke="#1a7a3c" strokeWidth="1" strokeDasharray="3 2" />
-                <text textAnchor="middle" fill="#1a7a3c" fontSize="8" fontWeight="700" letterSpacing="2">
-                  <textPath href="#topArc" startOffset="50%">{profile?.name?.toUpperCase() ?? "ASAAD ERP"}</textPath>
-                </text>
-                <text textAnchor="middle" fill="#1a7a3c" fontSize="7" fontWeight="600" letterSpacing="1.5">
-                  <textPath href="#bottomArc" startOffset="50%">OFFICIAL RECEIPT</textPath>
-                </text>
-                <text x="45" y="48" textAnchor="middle" fill="#1a7a3c" fontSize="11" fontWeight="900" letterSpacing="1.5">VERIFIED</text>
-                <text x="45" y="60" textAnchor="middle" fill="#1a7a3c" fontSize="7" fontWeight="600">{slipNo}</text>
-                <defs>
-                  <path id="topArc" d="M 10,45 A 35,35 0 0,1 80,45" />
-                  <path id="bottomArc" d="M 15,55 A 35,35 0 0,0 75,55" />
-                </defs>
-              </svg>
-            </div>
-          </div>
+
         </div>
         <div className="flex justify-end">
           <ReceiptCopyButton targetId="retail-receipt" />
