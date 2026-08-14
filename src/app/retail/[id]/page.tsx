@@ -75,6 +75,14 @@ export default async function RetailOrderPage({
             <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Payment Receipt</p>
             <p className="text-2xl font-bold tracking-tight">R-{String(order.id).padStart(3, "0")}</p>
             <p className="text-sm text-gray-500 mt-0.5">{order.date.toISOString().slice(0, 10)}</p>
+            <div className="flex items-center justify-center gap-2 mt-3">
+              <span className="inline-flex items-center gap-1 bg-green-50 border border-green-300 text-green-700 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                ✓ Advance Received
+              </span>
+              <span className="inline-flex items-center gap-1 bg-green-50 border border-green-300 text-green-700 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                ✓ Order Confirmed
+              </span>
+            </div>
           </div>
 
           <div>
