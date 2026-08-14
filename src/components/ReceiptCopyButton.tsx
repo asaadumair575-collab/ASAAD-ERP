@@ -1,9 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import type { default as Html2CanvasType } from "html2canvas";
 
 export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
   const [status, setStatus] = useState<"idle" | "working" | "done" | "error">("idle");
+  const h2cRef = useRef<typeof Html2CanvasType | null>(null);
+
+  // Pre-load html2canvas so it's ready when user taps
+  useEffect(() => {
+    import("html2canvas").then((m) => { h2cRef.current = m.default; });
+  }, []);
 
   async function handleSave() {
     const el = document.getElementById(targetId);
@@ -11,32 +18,30 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
     setStatus("working");
 
     try {
-      const html2canvas = (await import("html2canvas")).default;
+      const html2canvas = h2cRef.current ?? (await import("html2canvas")).default;
 
       const canvas = await html2canvas(el, {
         backgroundColor: "#ffffff",
-        scale: 3,
+        scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
-        // skip the watermark overlay — it causes canvas errors
-        ignoreElements: (node) => node instanceof HTMLElement && node.getAttribute("aria-hidden") === "true",
+        ignoreElements: (node) =>
+          node instanceof HTMLElement && node.getAttribute("aria-hidden") === "true",
       });
 
-      canvas.toBlob((blob) => {
-        if (!blob) { setStatus("error"); return; }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "receipt.png";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        setStatus("done");
-        setTimeout(() => setStatus("idle"), 2000);
-      }, "image/png");
+      // toDataURL is synchronous — no gesture timeout issue
+      const dataUrl = canvas.toDataURL("image/png");
 
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = "receipt.png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      setStatus("done");
+      setTimeout(() => setStatus("idle"), 2000);
     } catch {
       setStatus("error");
       setTimeout(() => setStatus("idle"), 3000);
@@ -60,7 +65,7 @@ export default function ReceiptCopyButton({ targetId }: { targetId: string }) {
       )}
       {status === "working" && "Generating…"}
       {status === "done" && <span className="text-green-600">✓ Saved!</span>}
-      {status === "error" && <span className="text-red-500">✕ Try Again</span>}
+      {status === "error" && <span className="text-red-500">✕ Error</span>}
     </button>
   );
 }
