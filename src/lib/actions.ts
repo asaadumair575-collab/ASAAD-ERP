@@ -1305,6 +1305,7 @@ export async function createRetailOrder(_prev: string | null, formData: FormData
     .filter((it) => it.description && !isNaN(it.quantity) && !isNaN(it.rate));
 
   if (items.length === 0) return "At least one item is required";
+  if (items.some((it) => it.quantity > 2)) return "Maximum 2 dozen per item allowed for retail orders";
   if (!deliveryCharge || deliveryCharge <= 0) return "Advance payment is required to create a retail order";
 
   const totalAmount = round2(items.reduce((s, i) => s + i.quantity * i.rate, 0));

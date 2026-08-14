@@ -186,16 +186,16 @@ export default function RetailOrderForm({
                   className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-black bg-white"
                 />
               </div>
-              <input
-                type="number"
+              <select
                 name="itemQuantity"
-                min="0"
-                step="0.25"
                 value={row.quantity || ""}
-                placeholder="0"
                 onChange={(e) => updateRow(row.id, { quantity: parseFloat(e.target.value) || 0 })}
                 className="border border-gray-200 rounded-lg px-2 py-2 text-sm text-center focus:outline-none focus:ring-1 focus:ring-black bg-white"
-              />
+              >
+                <option value="">—</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+              </select>
               <input
                 type="number"
                 name="itemRate"
