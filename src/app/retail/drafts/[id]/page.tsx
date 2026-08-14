@@ -167,38 +167,36 @@ export default async function DraftSlipPage({
         </div>
 
 
-        {/* Bank details */}
-        {(profile?.bankAccountNumber || profile?.bankName) ? (
-          <div className="px-5 py-3 border-b border-gray-100">
-            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 text-center mb-2">
-              Transfer To
-            </p>
-            <div className="space-y-1.5">
-              {profile.bankName && (
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] text-gray-400 uppercase tracking-wide">Bank</span>
-                  <span className="text-xs font-semibold text-gray-800">{profile.bankName}</span>
-                </div>
+        {/* Payment options */}
+        <div className="border-b border-gray-100">
+          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 text-center pt-3 mb-2">
+            Transfer To
+          </p>
+          <div className="flex divide-x divide-gray-200 px-2 pb-3">
+            {/* Jazz Cash */}
+            <div className="flex-1 flex flex-col items-center gap-1 px-3 py-1 text-center">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Jazz Cash</p>
+              <p className="text-sm font-black text-gray-900 tracking-wide">03168604935</p>
+              {profile?.bankAccountTitle && (
+                <p className="text-[9px] text-gray-500">{profile.bankAccountTitle}</p>
               )}
-              {profile.bankAccountTitle && (
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] text-gray-400 uppercase tracking-wide">Account Title</span>
-                  <span className="text-xs font-semibold text-gray-800">{profile.bankAccountTitle}</span>
-                </div>
+            </div>
+            {/* Bank */}
+            <div className="flex-1 flex flex-col items-center gap-1 px-3 py-1 text-center">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                {profile?.bankName ?? "Bank"}
+              </p>
+              {profile?.bankAccountNumber ? (
+                <p className="text-sm font-black text-gray-900 tracking-wide break-all">{profile.bankAccountNumber}</p>
+              ) : (
+                <p className="text-[9px] text-red-400">Not configured</p>
               )}
-              {profile.bankAccountNumber && (
-                <div className="mt-1 rounded-lg border-2 border-gray-900 px-4 py-2 text-center">
-                  <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Account No.</p>
-                  <p className="text-sm font-black text-gray-900 tracking-wider break-all">{profile.bankAccountNumber}</p>
-                </div>
+              {profile?.bankAccountTitle && (
+                <p className="text-[9px] text-gray-500">{profile.bankAccountTitle}</p>
               )}
             </div>
           </div>
-        ) : (
-          <div className="px-5 py-3 border-b border-gray-100 text-center text-xs text-red-400">
-            ⚠ Bank account not configured
-          </div>
-        )}
+        </div>
 
         {/* Footer */}
         <div className="px-5 py-2.5 text-center space-y-0.5">
