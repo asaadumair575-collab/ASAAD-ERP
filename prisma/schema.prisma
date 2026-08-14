@@ -140,6 +140,7 @@ model User {
   displayName          String?
   isAdmin              Boolean              @default(false)
   permissions          Json                 @default("{}")
+  apiToken             String?              @unique
   createdAt            DateTime             @default(now())
   empCommissionEntries EmpCommissionEntry[]
   empPerformances      EmpPerformance[]
@@ -155,6 +156,7 @@ model User {
   complaints           Complaint[]
   complaintMessages    ComplaintMessage[]
   draftOrders          DraftOrder[]
+  phoneCallLogs        PhoneCallLog[]
 }
 
 model EmpCommissionEntry {
@@ -530,6 +532,23 @@ model ComplaintMessage {
   createdAt   DateTime @default(now())
 
   @@index([complaintId])
+}
+
+model PhoneCallLog {
+  id           Int      @id @default(autoincrement())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int
+  phoneNumber  String
+  contactName  String?
+  duration     Int      // seconds
+  callType     String   // INCOMING | OUTGOING | MISSED
+  calledAt     DateTime
+  synced       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, phoneNumber, calledAt])
+  @@index([userId])
+  @@index([userId, calledAt])
 }
 
 model PushSubscription {
