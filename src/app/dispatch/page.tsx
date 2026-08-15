@@ -39,7 +39,7 @@ export default async function DispatchPendingPage({
   }
 
   const orders = await prisma.order.findMany({
-    where: { confirmed: true, dispatched: false },
+    where: { confirmed: true, dispatched: false, paymentStatus: "PAID" },
     include: { client: { select: { id: true, name: true } } },
     orderBy: { date: "desc" },
   });
