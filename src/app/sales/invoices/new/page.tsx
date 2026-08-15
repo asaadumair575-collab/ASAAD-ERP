@@ -5,7 +5,10 @@ import InvoiceForm from "@/components/InvoiceForm";
 export default async function NewInvoicePage() {
   const [clients, products] = await Promise.all([
     prisma.client.findMany({
-      select: { id: true, name: true, businessName: true, fixedRate: true, fixedRateAmount: true },
+      select: {
+        id: true, name: true, businessName: true, fixedRate: true, fixedRateAmount: true,
+        productRates: { select: { productId: true, rate: true } },
+      },
       orderBy: { name: "asc" },
     }),
     prisma.product.findMany({ orderBy: { name: "asc" } }),

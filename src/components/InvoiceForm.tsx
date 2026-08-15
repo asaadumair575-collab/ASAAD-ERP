@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import SubmitButton from "@/components/SubmitButton";
 
-type Client = { id: number; name: string; businessName: string | null; fixedRate: boolean; fixedRateAmount: number | null };
+type Client = { id: number; name: string; businessName: string | null; fixedRate: boolean; fixedRateAmount: number | null; productRates?: { productId: number; rate: number }[] };
 type Product = { id: number; name: string };
 type Row = {
   id: number;
@@ -71,9 +71,9 @@ function CustomerSearchSelect({ clients, onSelect }: { clients: Client[]; onSele
                 className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
               >
                 <span>{label(c)}</span>
-                {c.fixedRate && c.fixedRateAmount && (
+                {c.productRates && c.productRates.length > 0 && (
                   <span className="ml-2 text-[11px] font-semibold text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded-full">
-                    Fixed ₨{c.fixedRateAmount}
+                    Fixed Rates ({c.productRates.length})
                   </span>
                 )}
               </button>
@@ -112,9 +112,11 @@ export default function InvoiceForm({
 
   function handleProductChange(id: number, productId: string) {
     const product = products.find((p) => p.id === parseInt(productId, 10));
-    const autoRate = product && isH9(product.name) && selectedClient?.fixedRate && selectedClient.fixedRateAmount
-      ? selectedClient.fixedRateAmount
-      : undefined;
+    // Check per-product fixed rate first, then fall back to legacy H9 fixed rate
+    const perProductRate = product && selectedClient?.productRates?.find((r) => r.productId === product.id)?.rate;
+    const legacyRate = product && isH9(product.name) && selectedClient?.fixedRate && selectedClient.fixedRateAmount
+      ? selectedClient.fixedRateAmount : undefined;
+    const autoRate = perProductRate ?? legacyRate;
     updateRow(id, {
       productId,
       ...(product ? { description: product.name } : {}),
@@ -139,10 +141,10 @@ export default function InvoiceForm({
               Customer<span className="text-black"> *</span>
             </label>
             <CustomerSearchSelect clients={clients} onSelect={setSelectedClient} />
-            {selectedClient?.fixedRate && selectedClient.fixedRateAmount && (
+            {selectedClient?.productRates && selectedClient.productRates.length > 0 && (
               <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-violet-700 bg-violet-50 border border-violet-200 rounded-lg px-2.5 py-1">
                 <span>🔒</span>
-                <span>Fixed Rate Customer — H9 will auto-fill at ₨{selectedClient.fixedRateAmount}/dz</span>
+                <span>Fixed Rate Customer — rates will auto-fill when product is selected</span>
               </div>
             )}
           </div>
