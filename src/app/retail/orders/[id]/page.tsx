@@ -7,6 +7,7 @@ import { parsePermissions, canDoSub } from "@/lib/permissions";
 import RetailPaymentSection from "@/components/RetailPaymentSection";
 import RetailDeleteButton from "@/components/RetailDeleteButton";
 import ReceiptCopyButton from "@/components/ReceiptCopyButton";
+import TrackingNumberForm from "@/components/TrackingNumberForm";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -265,19 +266,7 @@ export default async function RetailOrderPage({
             <span className="text-xs font-mono text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">{order.trackingNumber}</span>
           )}
         </div>
-        <form action={setTrackingBound} className="flex gap-2">
-          <input
-            type="text"
-            name="trackingNumber"
-            defaultValue={order.trackingNumber ?? ""}
-            placeholder="e.g. 28676630000031"
-            minLength={14}
-            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-black"
-          />
-          <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-gray-800 transition-colors">
-            Save
-          </button>
-        </form>
+        <TrackingNumberForm defaultValue={order.trackingNumber ?? ""} action={setTrackingBound} />
         {order.trackingNumber && (
           <a
             href={`/order-status?q=${order.trackingNumber}`}

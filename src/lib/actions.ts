@@ -1413,10 +1413,11 @@ export async function deleteRetailOrder(orderId: number) {
 }
 
 export async function setRetailTrackingNumber(orderId: number, formData: FormData) {
-  "use server";
   await requireAdmin();
   const trackingNumber = String(formData.get("trackingNumber") ?? "").trim() || null;
-  if (trackingNumber && trackingNumber.length < 14) throw new Error("Tracking number kam se kam 14 digits ka hona chahiye");
+  if (trackingNumber && trackingNumber.replace(/\s/g, "").length < 14) {
+    throw new Error("Tracking number kam se kam 14 digits ka hona chahiye");
+  }
   await prisma.retailOrder.update({ where: { id: orderId }, data: { trackingNumber } });
   revalidatePath(`/retail/orders/${orderId}`);
 }
