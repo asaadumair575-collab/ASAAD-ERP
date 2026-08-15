@@ -112,6 +112,22 @@ export async function setClientFixedRate(id: number, fixedRate: boolean, fixedRa
   revalidatePath("/sales/invoices/new");
 }
 
+export async function upsertClientProductRate(clientId: number, productId: number, rate: number) {
+  await requireAuth();
+  await prisma.clientProductRate.upsert({
+    where: { clientId_productId: { clientId, productId } },
+    update: { rate },
+    create: { clientId, productId, rate },
+  });
+  revalidatePath(`/clients/${clientId}`);
+}
+
+export async function deleteClientProductRate(clientId: number, productId: number) {
+  await requireAuth();
+  await prisma.clientProductRate.deleteMany({ where: { clientId, productId } });
+  revalidatePath(`/clients/${clientId}`);
+}
+
 export async function updateClient(id: number, formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const businessName = String(formData.get("businessName") ?? "").trim() || null;

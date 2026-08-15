@@ -25,6 +25,20 @@ model Client {
   createdAt        DateTime @default(now())
   orders           Order[]
   samples          Sample[]
+  productRates     ClientProductRate[]
+}
+
+model ClientProductRate {
+  id        Int      @id @default(autoincrement())
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId  Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId Int
+  rate      Float
+  createdAt DateTime @default(now())
+
+  @@unique([clientId, productId])
+  @@index([clientId])
 }
 
 model Order {
@@ -90,11 +104,12 @@ model OrderItem {
 }
 
 model Product {
-  id         Int         @id @default(autoincrement())
-  name       String
-  cost       Float?
-  createdAt  DateTime    @default(now())
-  orderItems OrderItem[]
+  id           Int                 @id @default(autoincrement())
+  name         String
+  cost         Float?
+  createdAt    DateTime            @default(now())
+  orderItems   OrderItem[]
+  clientRates  ClientProductRate[]
 }
 
 model BusinessProfile {

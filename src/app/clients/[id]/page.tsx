@@ -14,15 +14,19 @@ export default async function ClientDetailPage({
   const { id } = await params;
   const clientId = parseInt(id, 10);
 
-  const client = await prisma.client.findUnique({
-    where: { id: clientId },
-    include: {
-      orders: {
-        orderBy: { date: "desc" },
-        include: { items: true, payments: true },
+  const [client, products] = await Promise.all([
+    prisma.client.findUnique({
+      where: { id: clientId },
+      include: {
+        orders: {
+          orderBy: { date: "desc" },
+          include: { items: true, payments: true },
+        },
+        productRates: { include: { product: true } },
       },
-    },
-  });
+    }),
+    prisma.product.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   if (!client) notFound();
 
@@ -130,6 +134,8 @@ export default async function ClientDetailPage({
         clientId={client.id}
         defaultEnabled={client.fixedRate}
         defaultAmount={client.fixedRateAmount}
+        products={products}
+        existingRates={client.productRates.map((r) => ({ productId: r.productId, productName: r.product.name, rate: r.rate }))}
       />
 
       {draftOrders.length > 0 && (
