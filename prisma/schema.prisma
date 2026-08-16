@@ -281,6 +281,7 @@ model RetailPayment {
   order      RetailOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId    Int
   amount     Float
+  channel    String      @default("BANK")
   note       String?
   screenshot String?
   date       DateTime    @default(now())

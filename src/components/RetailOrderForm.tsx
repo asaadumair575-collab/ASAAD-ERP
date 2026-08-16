@@ -245,15 +245,29 @@ export default function RetailOrderForm({
             </div>
           )}
         </div>
-        <div>
-          <label className="block text-xs text-orange-700 mb-1.5">Payment Screenshot <span className="text-red-600">*</span></label>
-          <input
-            type="file"
-            name="advanceScreenshot"
-            required
-            accept="image/*"
-            className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 file:mr-3 file:border-0 file:bg-orange-100 file:text-xs file:font-medium file:px-3 file:py-1 file:rounded-md"
-          />
+        <div className="flex gap-3">
+          <div className="w-40 shrink-0">
+            <label className="block text-xs text-orange-700 mb-1.5">Received In <span className="text-red-600">*</span></label>
+            <select
+              name="paymentChannel"
+              required
+              className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+            >
+              <option value="">Select...</option>
+              <option value="JAZZ_CASH">Jazz Cash</option>
+              <option value="BANK">Bank</option>
+            </select>
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs text-orange-700 mb-1.5">Payment Screenshot <span className="text-red-600">*</span></label>
+            <input
+              type="file"
+              name="advanceScreenshot"
+              required
+              accept="image/*"
+              className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 file:mr-3 file:border-0 file:bg-orange-100 file:text-xs file:font-medium file:px-3 file:py-1 file:rounded-md"
+            />
+          </div>
         </div>
       </div>
 

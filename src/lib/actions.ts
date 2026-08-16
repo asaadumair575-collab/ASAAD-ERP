@@ -1290,6 +1290,7 @@ export async function createRetailOrder(_prev: string | null, formData: FormData
   const retailCustomerId = retailCustomerIdRaw ? parseInt(String(retailCustomerIdRaw), 10) : null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const deliveryCharge = parseFloat(String(formData.get("deliveryCharge") ?? "0")) || 0;
+  const paymentChannel = String(formData.get("paymentChannel") ?? "BANK").trim() || "BANK";
 
   let customerName = String(formData.get("customerName") ?? "").trim();
   let phone: string | null = String(formData.get("phone") ?? "").trim() || null;
@@ -1343,7 +1344,7 @@ export async function createRetailOrder(_prev: string | null, formData: FormData
       status: deliveryCharge > 0 ? "PARTIAL" : "PENDING",
       items: { create: items },
       payments: deliveryCharge > 0
-        ? { create: [{ amount: deliveryCharge, note: "Delivery Advance", screenshot: advanceScreenshot }] }
+        ? { create: [{ amount: deliveryCharge, channel: paymentChannel, note: "Delivery Advance", screenshot: advanceScreenshot }] }
         : undefined,
     },
   });
