@@ -15,6 +15,35 @@ import {
   getSessionUser,
 } from "@/lib/auth";
 
+function cityPrefix(city: string | null | undefined): string {
+  const cleaned = (city ?? "").replace(/[^a-zA-Z]/g, "").toUpperCase();
+  return cleaned.slice(0, 3).padEnd(3, "X") || "XXX";
+}
+
+async function generateClientCode(city: string): Promise<string> {
+  const prefix = cityPrefix(city);
+  const existing = await prisma.client.findMany({
+    where: { code: { startsWith: prefix + "-W" } },
+    select: { code: true },
+  });
+  const usedNums = existing.map((c) => parseInt((c.code ?? "").replace(`${prefix}-W`, "") || "0", 10)).filter(Boolean);
+  let n = 1;
+  while (usedNums.includes(n)) n++;
+  return `${prefix}-W${String(n).padStart(3, "0")}`;
+}
+
+async function generateRetailCustomerCode(city: string | null): Promise<string> {
+  const prefix = cityPrefix(city);
+  const existing = await prisma.retailCustomer.findMany({
+    where: { code: { startsWith: prefix + "-R" } },
+    select: { code: true },
+  });
+  const usedNums = existing.map((c) => parseInt((c.code ?? "").replace(`${prefix}-R`, "") || "0", 10)).filter(Boolean);
+  let n = 1;
+  while (usedNums.includes(n)) n++;
+  return `${prefix}-R${String(n).padStart(3, "0")}`;
+}
+
 async function requireAuth() {
   const me = await getSessionUser();
   if (!me) throw new Error("Not authenticated");
@@ -93,8 +122,9 @@ export async function createClient(formData: FormData) {
     );
   }
 
+  const code = await generateClientCode(city);
   const client = await prisma.client.create({
-    data: { name, businessName, city, phone, address, notes, fixedRate, fixedRateAmount },
+    data: { code, name, businessName, city, phone, address, notes, fixedRate, fixedRateAmount },
   });
 
   revalidatePath("/clients");
@@ -1247,8 +1277,10 @@ export async function convertLeadToClient(id: number, formData: FormData) {
 
   const enteredName = (formData.get("name") as string | null)?.trim();
 
+  const leadCode = await generateClientCode(lead.city);
   const client = await prisma.client.create({
     data: {
+      code: leadCode,
       name: enteredName || lead.name || lead.shopNumber,
       businessName: lead.shopNumber,
       city: lead.city,
@@ -1304,8 +1336,9 @@ export async function createRetailOrder(_prev: string | null, formData: FormData
     if (rc) { customerName = rc.name; phone = phone ?? rc.phone; city = city ?? rc.city; }
   } else if (customerName) {
     // Auto-create customer from manual entry
+    const autoCode = await generateRetailCustomerCode(city);
     const rc = await prisma.retailCustomer.create({
-      data: { name: customerName, phone, city, address },
+      data: { code: autoCode, name: customerName, phone, city, address },
     });
     resolvedCustomerId = rc.id;
   }
@@ -1466,7 +1499,8 @@ export async function createRetailCustomer(formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const fromDraft = formData.get("fromDraft") === "1";
   if (!name) throw new Error("Name is required");
-  const customer = await prisma.retailCustomer.create({ data: { name, phone, city, address, notes } });
+  const code = await generateRetailCustomerCode(city);
+  const customer = await prisma.retailCustomer.create({ data: { code, name, phone, city, address, notes } });
   revalidatePath("/retail/customers");
   if (fromDraft) redirect(`/retail/new?customerId=${customer.id}`);
   redirect(`/retail/customers/${customer.id}`);

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import SubmitButton from "@/components/SubmitButton";
 
-type Client = { id: number; name: string; businessName: string | null; fixedRate: boolean; fixedRateAmount: number | null; productRates?: { productId: number; rate: number }[] };
+type Client = { id: number; code?: string | null; name: string; businessName: string | null; fixedRate: boolean; fixedRateAmount: number | null; productRates?: { productId: number; rate: number }[] };
 type Product = { id: number; name: string };
 type Row = {
   id: number;
@@ -71,6 +71,11 @@ function CustomerSearchSelect({ clients, onSelect }: { clients: Client[]; onSele
                 className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
               >
                 <span>{label(c)}</span>
+                {c.code && (
+                  <span className="ml-1.5 text-[10px] font-mono font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                    {c.code}
+                  </span>
+                )}
                 {c.productRates && c.productRates.length > 0 && (
                   <span className="ml-2 text-[11px] font-semibold text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded-full">
                     Fixed Rates ({c.productRates.length})

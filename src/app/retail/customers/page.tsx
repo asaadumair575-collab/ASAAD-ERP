@@ -106,6 +106,11 @@ export default async function RetailCustomersPage({
                       <Link href={`/retail/customers/${c.id}`} className="font-medium hover:underline">
                         {c.name}
                       </Link>
+                      {c.code && (
+                        <span className="ml-2 text-[10px] font-mono font-semibold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">
+                          {c.code}
+                        </span>
+                      )}
                     </td>
                     <td className="py-3 px-5 text-gray-500">{c.phone ?? "—"}</td>
                     <td className="py-3 px-5 text-gray-500">{c.city ?? "—"}</td>

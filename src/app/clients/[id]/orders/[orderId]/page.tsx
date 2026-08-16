@@ -140,6 +140,11 @@ export default async function InvoicePage({
             <p className="font-medium print:text-xl">
               {order.client.name}
               {order.client.businessName ? ` (${order.client.businessName})` : ""}
+              {order.client.code && (
+                <span className="ml-2 text-[10px] font-mono font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded print:bg-transparent print:text-blue-700 print:text-sm">
+                  {order.client.code}
+                </span>
+              )}
             </p>
             <p className="text-sm text-gray-500 print:text-lg">{order.client.city}</p>
           </div>

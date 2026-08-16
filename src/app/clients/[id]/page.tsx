@@ -89,6 +89,11 @@ export default async function ClientDetailPage({
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
               {client.name}
             </h1>
+            {client.code && (
+              <span className="text-xs font-mono font-semibold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded">
+                {client.code}
+              </span>
+            )}
             <span
               className={`text-xs font-medium px-2.5 py-1 rounded-full ${grade.badgeClass}`}
             >

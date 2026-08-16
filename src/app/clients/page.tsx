@@ -215,6 +215,11 @@ export default async function ClientsPage({
                       <Link href={`/clients/${c.id}`} className="font-medium hover:underline">
                         {c.name}
                       </Link>
+                      {c.code && (
+                        <span className="ml-2 text-[10px] font-mono font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                          {c.code}
+                        </span>
+                      )}
                     </td>
                     <td className="py-3 px-5 text-gray-500">{c.businessName ?? "-"}</td>
                     <td className="py-3 px-5 text-gray-500">{c.city}</td>
