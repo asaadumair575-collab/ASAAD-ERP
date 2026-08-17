@@ -151,7 +151,7 @@ export default async function EmpCommissionPage() {
                         <td className="py-3 px-5 text-right font-semibold text-red-600">Rs {fmt(w.amount)}</td>
                         <td className="py-3 px-5 text-gray-500 text-xs">{w.note ?? "—"}</td>
                         <td className="py-3 px-5 text-right">
-                          <DeleteButton action={delBound} message="Is withdrawal ko delete karna chahte ho?" />
+                          <DeleteButton action={delBound} label="↩ Undo" message="Is withdrawal ko undo karna chahte ho? Balance wapas aa jayega." />
                         </td>
                       </tr>
                     );
