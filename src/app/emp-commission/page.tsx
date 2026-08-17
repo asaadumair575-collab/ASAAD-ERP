@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { parsePermissions, canView } from "@/lib/permissions";
-import { approveEmpCommission, rejectEmpCommission, deleteEmpCommissionEntry, submitEmpCommission } from "@/lib/actions";
+import { approveEmpCommission, rejectEmpCommission, deleteEmpCommissionEntry, submitEmpCommission, recordEmpWithdrawal, deleteEmpWithdrawal } from "@/lib/actions";
 import DeleteButton from "@/components/DeleteButton";
 import SubmitButton from "@/components/SubmitButton";
 import { userLabel } from "@/lib/userLabel";
@@ -25,36 +25,140 @@ export default async function EmpCommissionPage() {
 
   /* ── ADMIN VIEW ── */
   if (me.isAdmin) {
-    const entries = await prisma.empCommissionEntry.findMany({
-      include: { user: { select: { id: true, displayName: true, username: true, isAdmin: true } } },
-      orderBy: { createdAt: "desc" },
-    });
+    const [entries, withdrawals, employees] = await Promise.all([
+      prisma.empCommissionEntry.findMany({
+        include: { user: { select: { id: true, displayName: true, username: true, isAdmin: true } } },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.empWithdrawal.findMany({
+        include: { user: { select: { id: true, displayName: true, username: true } } },
+        orderBy: { date: "desc" },
+      }),
+      prisma.user.findMany({
+        where: { isAdmin: false },
+        select: { id: true, displayName: true, username: true },
+        orderBy: { username: "asc" },
+      }),
+    ]);
 
     const pending  = entries.filter((e) => e.status === "pending");
     const approved = entries.filter((e) => e.status === "approved");
 
-    const totals: Record<number, { name: string; total: number }> = {};
+    // Per-employee balance
+    const balances: Record<number, { name: string; earned: number; withdrawn: number }> = {};
     for (const e of approved) {
-      if (!totals[e.userId]) totals[e.userId] = { name: userLabel(e.user), total: 0 };
-      totals[e.userId].total += e.orders * RATE;
+      if (!balances[e.userId]) balances[e.userId] = { name: userLabel(e.user), earned: 0, withdrawn: 0 };
+      balances[e.userId].earned += e.orders * RATE;
     }
+    for (const w of withdrawals) {
+      if (!balances[w.userId]) balances[w.userId] = { name: userLabel(w.user), earned: 0, withdrawn: 0 };
+      balances[w.userId].withdrawn += w.amount;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
 
     return (
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Employee Commission</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Rs 30 per order · approve or reject employee submissions.</p>
+          <p className="text-sm text-gray-500 mt-0.5">Rs 30 per order · approve/reject submissions · record withdrawals.</p>
         </div>
 
-        {/* Per-employee approved totals */}
-        {Object.values(totals).length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {Object.values(totals).map((t) => (
-              <div key={t.name} className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-                <p className="text-xs text-gray-500 truncate">{t.name}</p>
-                <p className="text-xl font-semibold mt-1">Rs {fmt(t.total)}</p>
-              </div>
-            ))}
+        {/* Per-employee balance cards */}
+        {Object.entries(balances).length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {Object.entries(balances).map(([uid, b]) => {
+              const balance = b.earned - b.withdrawn;
+              return (
+                <div key={uid} className={`rounded-2xl p-4 shadow-sm border ${balance > 0 ? "bg-white border-gray-200" : "bg-gray-50 border-gray-100"}`}>
+                  <p className="text-xs text-gray-500 font-medium truncate">{b.name}</p>
+                  <div className="flex justify-between items-end mt-2">
+                    <div>
+                      <p className="text-xs text-gray-400">Kamai</p>
+                      <p className="text-sm font-semibold text-gray-700">Rs {fmt(b.earned)}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-gray-400">Withdrawn</p>
+                      <p className="text-sm font-semibold text-red-500">Rs {fmt(b.withdrawn)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-400">Baaki</p>
+                      <p className={`text-lg font-bold ${balance > 0 ? "text-green-600" : "text-gray-400"}`}>Rs {fmt(balance)}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Record withdrawal form */}
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm space-y-3">
+          <h2 className="text-sm font-semibold text-amber-800">Withdrawal Record Karo</h2>
+          <form action={recordEmpWithdrawal} className="flex flex-wrap gap-3 items-end">
+            <div>
+              <label className="block text-xs text-amber-700 mb-1.5">Employee</label>
+              <select name="userId" required className="border border-amber-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                <option value="">Select…</option>
+                {employees.map((u) => (
+                  <option key={u.id} value={u.id}>{u.displayName || u.username}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-amber-700 mb-1.5">Amount (Rs)</label>
+              <input type="number" name="amount" required min={1} placeholder="e.g. 5000"
+                className="w-32 border border-amber-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
+            </div>
+            <div>
+              <label className="block text-xs text-amber-700 mb-1.5">Date</label>
+              <input type="date" name="date" required defaultValue={today}
+                className="border border-amber-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
+            </div>
+            <div className="flex-1 min-w-[150px]">
+              <label className="block text-xs text-amber-700 mb-1.5">Note (optional)</label>
+              <input type="text" name="note" placeholder="e.g. Salary, Commission advance"
+                className="w-full border border-amber-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
+            </div>
+            <SubmitButton pendingText="…" className="bg-amber-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-amber-700 transition-colors whitespace-nowrap">
+              Record Withdrawal
+            </SubmitButton>
+          </form>
+        </div>
+
+        {/* Withdrawal history */}
+        {withdrawals.length > 0 && (
+          <div className="space-y-2">
+            <h2 className="text-sm font-semibold text-gray-700">Withdrawal History</h2>
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
+                    <th className="py-3 px-5">Employee</th>
+                    <th className="py-3 px-5">Date</th>
+                    <th className="py-3 px-5 text-right">Amount</th>
+                    <th className="py-3 px-5">Note</th>
+                    <th className="py-3 px-5"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {withdrawals.map((w) => {
+                    const delBound = deleteEmpWithdrawal.bind(null, w.id);
+                    return (
+                      <tr key={w.id} className="hover:bg-gray-50/70 transition-colors">
+                        <td className="py-3 px-5 font-medium">{userLabel(w.user)}</td>
+                        <td className="py-3 px-5 text-gray-500 whitespace-nowrap">{fmtDate(w.date)}</td>
+                        <td className="py-3 px-5 text-right font-semibold text-red-600">Rs {fmt(w.amount)}</td>
+                        <td className="py-3 px-5 text-gray-500 text-xs">{w.note ?? "—"}</td>
+                        <td className="py-3 px-5 text-right">
+                          <DeleteButton action={delBound} message="Is withdrawal ko delete karna chahte ho?" />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -198,16 +302,18 @@ export default async function EmpCommissionPage() {
   }
 
   /* ── EMPLOYEE VIEW ── */
-  const entries = await prisma.empCommissionEntry.findMany({
-    where: { userId: me.id },
-    orderBy: { date: "desc" },
-  });
+  const [entries, withdrawals] = await Promise.all([
+    prisma.empCommissionEntry.findMany({ where: { userId: me.id }, orderBy: { date: "desc" } }),
+    prisma.empWithdrawal.findMany({ where: { userId: me.id }, orderBy: { date: "desc" } }),
+  ]);
 
   const approved = entries.filter((e) => e.status === "approved");
   const pending  = entries.filter((e) => e.status === "pending");
   const rejected = entries.filter((e) => e.status === "rejected");
 
   const totalEarned = approved.reduce((s, e) => s + e.orders * RATE, 0);
+  const totalWithdrawn = withdrawals.reduce((s, w) => s + w.amount, 0);
+  const remainingBalance = totalEarned - totalWithdrawn;
   const totalOrders = approved.reduce((s, e) => s + e.orders, 0);
   const thisMonthOrders = approved
     .filter((e) => new Date(e.date).getMonth() === new Date().getMonth() &&
@@ -233,16 +339,21 @@ export default async function EmpCommissionPage() {
         <p className="text-sm text-zinc-400 mb-0.5">Assalamu Alaikum,</p>
         <h1 className="text-2xl font-bold tracking-tight">{name} 👋</h1>
         <p className="text-zinc-300 text-sm mt-2">{msg}</p>
-        <div className="mt-5 flex items-end justify-between gap-3">
+        <div className="mt-5 grid grid-cols-3 gap-3">
           <div>
             <p className="text-xs text-zinc-400 uppercase tracking-wide">Total Kamai</p>
-            <p className="text-4xl font-extrabold tracking-tight mt-0.5">Rs {fmt(totalEarned)}</p>
-            <p className="text-xs text-zinc-400 mt-1">{totalOrders} orders approved</p>
+            <p className="text-2xl font-extrabold tracking-tight mt-0.5">Rs {fmt(totalEarned)}</p>
+            <p className="text-xs text-zinc-400 mt-1">{totalOrders} orders</p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-zinc-400 uppercase tracking-wide">Withdrawn</p>
+            <p className="text-2xl font-bold text-red-400 mt-0.5">Rs {fmt(totalWithdrawn)}</p>
+            <p className="text-xs text-zinc-400 mt-1">{withdrawals.length} dafa</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-zinc-400 uppercase tracking-wide">Is Mahine</p>
-            <p className="text-2xl font-bold text-green-400 mt-0.5">{thisMonthOrders} orders</p>
-            <p className="text-xs text-zinc-400 mt-1">Rs {fmt(thisMonthOrders * RATE)}</p>
+            <p className="text-xs text-zinc-400 uppercase tracking-wide">Baaki Balance</p>
+            <p className={`text-2xl font-extrabold mt-0.5 ${remainingBalance > 0 ? "text-green-400" : "text-zinc-400"}`}>Rs {fmt(remainingBalance)}</p>
+            <p className="text-xs text-zinc-400 mt-1">milna baaki</p>
           </div>
         </div>
       </div>
@@ -292,6 +403,24 @@ export default async function EmpCommissionPage() {
           </SubmitButton>
         </form>
       </div>
+
+      {/* Withdrawal history */}
+      {withdrawals.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold text-gray-700">Withdrawal History</h2>
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm divide-y divide-gray-50">
+            {withdrawals.map((w) => (
+              <div key={w.id} className="flex justify-between items-center px-4 py-3">
+                <div>
+                  <p className="text-xs text-gray-400">{fmtDate(w.date)}</p>
+                  {w.note && <p className="text-xs text-gray-500 mt-0.5">{w.note}</p>}
+                </div>
+                <span className="text-base font-bold text-red-500">- Rs {fmt(w.amount)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Entries */}
       {entries.length > 0 && (

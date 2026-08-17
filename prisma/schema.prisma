@@ -159,6 +159,7 @@ model User {
   apiToken             String?              @unique
   createdAt            DateTime             @default(now())
   empCommissionEntries EmpCommissionEntry[]
+  empWithdrawals       EmpWithdrawal[]
   empPerformances      EmpPerformance[]
   retailOrders         RetailOrder[]
   bugReports           BugReport[]
@@ -188,6 +189,18 @@ model EmpCommissionEntry {
 
   @@index([userId])
   @@index([date])
+}
+
+model EmpWithdrawal {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  amount    Float
+  note      String?
+  date      DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model CommissionRate {

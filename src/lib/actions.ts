@@ -1564,6 +1564,25 @@ export async function deleteEmpCommissionEntry(id: number) {
   revalidatePath("/emp-commission");
 }
 
+export async function recordEmpWithdrawal(formData: FormData) {
+  await requireAdmin();
+  const userId = parseInt(String(formData.get("userId") ?? ""), 10);
+  const amount = parseFloat(String(formData.get("amount") ?? "")) || 0;
+  const note = String(formData.get("note") ?? "").trim() || null;
+  const dateRaw = String(formData.get("date") ?? "").trim();
+  if (!userId || amount <= 0 || !dateRaw) throw new Error("Invalid withdrawal data");
+  await prisma.empWithdrawal.create({
+    data: { userId, amount, note, date: new Date(`${dateRaw}T12:00:00`) },
+  });
+  revalidatePath("/emp-commission");
+}
+
+export async function deleteEmpWithdrawal(id: number) {
+  await requireAdmin();
+  await prisma.empWithdrawal.delete({ where: { id } });
+  revalidatePath("/emp-commission");
+}
+
 // ── Ecommerce ─────────────────────────────────────────────────────────────────
 
 export async function createEcomOrder(formData: FormData) {
