@@ -306,6 +306,7 @@ export default async function RetailOrderPage({
           note: p.note,
           date: p.date.toISOString(),
           screenshot: p.screenshot,
+          channel: p.channel,
         }))}
         recordAction={recordPaymentBound}
         deleteAction={deleteRetailPayment}

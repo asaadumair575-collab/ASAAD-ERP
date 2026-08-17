@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import SubmitButton from "@/components/SubmitButton";
 
-type Payment = { id: number; amount: number; note: string | null; date: string; screenshot?: string | null };
+type Payment = { id: number; amount: number; note: string | null; date: string; screenshot?: string | null; channel?: string | null };
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -155,6 +155,11 @@ function PaymentRow({
           <span className="text-gray-400 text-xs">{p.date.slice(0, 10)}</span>
           {p.note && (
             <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{p.note}</span>
+          )}
+          {p.channel && (
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${p.channel === "JAZZ_CASH" ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}`}>
+              {p.channel === "JAZZ_CASH" ? "Jazz Cash" : "Bank"}
+            </span>
           )}
           {p.screenshot && (
             <button type="button" onClick={() => setShowImg((v) => !v)} className="text-xs text-blue-600 hover:underline">
