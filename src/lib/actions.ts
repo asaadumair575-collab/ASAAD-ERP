@@ -1473,7 +1473,7 @@ export async function setRetailTrackingNumber(orderId: number, formData: FormDat
 }
 
 export async function setRetailDispatched(orderId: number, dispatched: boolean) {
-  await requireAdmin();
+  await requireAuth();
   if (dispatched) {
     const order = await prisma.retailOrder.findUnique({ where: { id: orderId }, select: { trackingNumber: true } });
     if (!order?.trackingNumber?.trim()) throw new Error("Dispatch se pehle PostEx tracking number daalna zaroori hai");
