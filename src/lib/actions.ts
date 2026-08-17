@@ -1463,7 +1463,7 @@ export async function deleteRetailOrder(orderId: number) {
 }
 
 export async function setRetailTrackingNumber(orderId: number, formData: FormData) {
-  await requireAdmin();
+  await requireAuth();
   const trackingNumber = String(formData.get("trackingNumber") ?? "").trim() || null;
   if (trackingNumber && trackingNumber.replace(/\s/g, "").length < 14) {
     throw new Error("Tracking number kam se kam 14 digits ka hona chahiye");
