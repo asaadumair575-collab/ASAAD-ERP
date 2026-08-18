@@ -74,7 +74,7 @@ export default async function EmpCommissionPage() {
                   <p className="text-xs text-gray-500 font-medium truncate">{b.name}</p>
                   <div className="flex justify-between items-end mt-2">
                     <div>
-                      <p className="text-xs text-gray-400">Kamai</p>
+                      <p className="text-xs text-gray-400">Earned</p>
                       <p className="text-sm font-semibold text-gray-700">Rs {fmt(b.earned)}</p>
                     </div>
                     <div className="text-center">
@@ -82,7 +82,7 @@ export default async function EmpCommissionPage() {
                       <p className="text-sm font-semibold text-red-500">Rs {fmt(b.withdrawn)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-400">Baaki</p>
+                      <p className="text-xs text-gray-400">Remaining</p>
                       <p className={`text-lg font-bold ${balance > 0 ? "text-green-600" : "text-gray-400"}`}>Rs {fmt(balance)}</p>
                     </div>
                   </div>
@@ -94,7 +94,7 @@ export default async function EmpCommissionPage() {
 
         {/* Record withdrawal form */}
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm space-y-3">
-          <h2 className="text-sm font-semibold text-amber-800">Withdrawal Record Karo</h2>
+          <h2 className="text-sm font-semibold text-amber-800">Record Withdrawal</h2>
           <form action={recordEmpWithdrawal} className="flex flex-wrap gap-3 items-end">
             <div>
               <label className="block text-xs text-amber-700 mb-1.5">Employee</label>
@@ -151,7 +151,7 @@ export default async function EmpCommissionPage() {
                         <td className="py-3 px-5 text-right font-semibold text-red-600">Rs {fmt(w.amount)}</td>
                         <td className="py-3 px-5 text-gray-500 text-xs">{w.note ?? "—"}</td>
                         <td className="py-3 px-5 text-right">
-                          <DeleteButton action={delBound} label="↩ Undo" message="Is withdrawal ko undo karna chahte ho? Balance wapas aa jayega." />
+                          <DeleteButton action={delBound} label="↩ Undo" message="Undo this withdrawal? The balance will be restored." />
                         </td>
                       </tr>
                     );
@@ -323,11 +323,11 @@ export default async function EmpCommissionPage() {
   const name = me.displayName || me.username;
 
   const motivations = [
-    "Mehnat ka phal meetha hota hai 💪",
-    "Har order aik qadam aage hai 🚀",
-    "Aaj bhi kamaal karo! ⭐",
-    "Consistency hi success hai 🏆",
-    "Aapki محنت rang laayegi! 🌟",
+    "Hard work always pays off 💪",
+    "Every order is a step forward 🚀",
+    "Make today count! ⭐",
+    "Consistency is the key to success 🏆",
+    "Your effort will show in your results! 🌟",
   ];
   const msg = motivations[new Date().getDay() % motivations.length];
 
@@ -336,24 +336,24 @@ export default async function EmpCommissionPage() {
 
       {/* Hero greeting */}
       <div className="bg-gradient-to-br from-zinc-900 to-zinc-700 text-white rounded-3xl p-6 shadow-lg">
-        <p className="text-sm text-zinc-400 mb-0.5">Assalamu Alaikum,</p>
+        <p className="text-sm text-zinc-400 mb-0.5">Welcome,</p>
         <h1 className="text-2xl font-bold tracking-tight">{name} 👋</h1>
         <p className="text-zinc-300 text-sm mt-2">{msg}</p>
         <div className="mt-5 grid grid-cols-3 gap-3">
           <div>
-            <p className="text-xs text-zinc-400 uppercase tracking-wide">Total Kamai</p>
+            <p className="text-xs text-zinc-400 uppercase tracking-wide">Total Earned</p>
             <p className="text-2xl font-extrabold tracking-tight mt-0.5">Rs {fmt(totalEarned)}</p>
             <p className="text-xs text-zinc-400 mt-1">{totalOrders} orders</p>
           </div>
           <div className="text-center">
             <p className="text-xs text-zinc-400 uppercase tracking-wide">Withdrawn</p>
             <p className="text-2xl font-bold text-red-400 mt-0.5">Rs {fmt(totalWithdrawn)}</p>
-            <p className="text-xs text-zinc-400 mt-1">{withdrawals.length} dafa</p>
+            <p className="text-xs text-zinc-400 mt-1">{withdrawals.length} payouts</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-zinc-400 uppercase tracking-wide">Baaki Balance</p>
+            <p className="text-xs text-zinc-400 uppercase tracking-wide">Remaining Balance</p>
             <p className={`text-2xl font-extrabold mt-0.5 ${remainingBalance > 0 ? "text-green-400" : "text-zinc-400"}`}>Rs {fmt(remainingBalance)}</p>
-            <p className="text-xs text-zinc-400 mt-1">milna baaki</p>
+            <p className="text-xs text-zinc-400 mt-1">pending</p>
           </div>
         </div>
       </div>
@@ -378,27 +378,27 @@ export default async function EmpCommissionPage() {
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
         <div className="flex items-center gap-2">
           <span className="text-lg">📋</span>
-          <h2 className="text-sm font-semibold">Aaj ke Orders Submit Karo</h2>
+          <h2 className="text-sm font-semibold">Submit Today's Orders</h2>
         </div>
         <form action={submitEmpCommission} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">Taareekh <span className="text-black">*</span></label>
+              <label className="block text-xs text-gray-500 mb-1.5">Date <span className="text-black">*</span></label>
               <input type="date" name="date" required defaultValue={today}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">Orders ki tadad <span className="text-black">*</span></label>
-              <input type="number" name="orders" required min={1} placeholder="jaise 12"
+              <label className="block text-xs text-gray-500 mb-1.5">Number of Orders <span className="text-black">*</span></label>
+              <input type="number" name="orders" required min={1} placeholder="e.g. 12"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
             </div>
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">Note (optional)</label>
-            <input type="text" name="note" placeholder="jaise: half day, extra kaam"
+            <input type="text" name="note" placeholder="e.g. half day, extra work"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
           </div>
-          <SubmitButton pendingText="Submit ho raha hai…" className="w-full bg-black text-white text-sm font-semibold px-5 py-3 rounded-xl hover:bg-gray-800 transition-colors">
+          <SubmitButton pendingText="Submitting…" className="w-full bg-black text-white text-sm font-semibold px-5 py-3 rounded-xl hover:bg-gray-800 transition-colors">
             ✓ Submit for Approval
           </SubmitButton>
         </form>
@@ -425,7 +425,7 @@ export default async function EmpCommissionPage() {
       {/* Entries */}
       {entries.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-gray-700">Meri Requests</h2>
+          <h2 className="text-sm font-semibold text-gray-700">My Submissions</h2>
           {entries.map((e) => {
             const isPending  = e.status === "pending";
             const isApproved = e.status === "approved";
@@ -454,7 +454,7 @@ export default async function EmpCommissionPage() {
                 </div>
                 {isRejected && (
                   <div className="mt-2.5 bg-red-100 text-red-700 text-xs rounded-xl px-3 py-2">
-                    <span className="font-semibold">Admin note:</span> {e.adminNote ?? "Entry reject kar di gayi."}
+                    <span className="font-semibold">Admin note:</span> {e.adminNote ?? "This entry has been rejected."}
                   </div>
                 )}
               </div>
@@ -466,8 +466,8 @@ export default async function EmpCommissionPage() {
       {entries.length === 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-10 text-center shadow-sm">
           <p className="text-3xl mb-2">🚀</p>
-          <p className="text-sm font-medium text-gray-700">Pehli entry submit karo!</p>
-          <p className="text-xs text-gray-400 mt-1">Upar form bhar ke shuru karo.</p>
+          <p className="text-sm font-medium text-gray-700">Submit your first entry!</p>
+          <p className="text-xs text-gray-400 mt-1">Fill the form above to get started.</p>
         </div>
       )}
     </div>
