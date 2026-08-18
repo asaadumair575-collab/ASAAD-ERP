@@ -238,7 +238,7 @@ export default function Sidebar({
           </>
         )}
 
-        {canView(permissions, "retail", isAdmin) && (
+        {canView(permissions, "reorder", isAdmin) && (
           <>
             <button
               type="button"
@@ -259,9 +259,18 @@ export default function Sidebar({
             </button>
             {openSection === "reorder" && (
               <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
-                <NavLink href="/reorder" active={pathname === "/reorder"} compact onClick={closeMobile}>Campaigns</NavLink>
-                <NavLink href="/reorder/retail-followup" active={pathname.startsWith("/reorder/retail-followup")} compact onClick={closeMobile}>Retail Follow-up</NavLink>
-                <NavLink href="/reorder/dashboard" active={pathname.startsWith("/reorder/dashboard")} compact onClick={closeMobile}>Dashboard</NavLink>
+                {canViewSub(permissions, "reorder_campaigns", isAdmin) && (
+                  <NavLink href="/reorder" active={pathname === "/reorder"} compact onClick={closeMobile}>Campaigns</NavLink>
+                )}
+                {canViewSub(permissions, "reorder_retail_followup", isAdmin) && (
+                  <NavLink href="/reorder/retail-followup" active={pathname.startsWith("/reorder/retail-followup")} compact onClick={closeMobile}>Retail Follow-up</NavLink>
+                )}
+                {canViewSub(permissions, "reorder_dashboard", isAdmin) && (
+                  <NavLink href="/reorder/dashboard" active={pathname.startsWith("/reorder/dashboard")} compact onClick={closeMobile}>Dashboard</NavLink>
+                )}
+                {canViewSub(permissions, "reorder_audit", isAdmin) && (
+                  <NavLink href="/reorder/audit" active={pathname.startsWith("/reorder/audit")} compact onClick={closeMobile}>Audit Log</NavLink>
+                )}
               </div>
             )}
           </>
@@ -357,9 +366,11 @@ export default function Sidebar({
                 {isAdmin ? "Commission" : "My Commission"}
               </NavLink>
             )}
-            <NavLink href="/performance" active={pathname.startsWith("/performance")} compact onClick={closeMobile}>
-              Performance
-            </NavLink>
+            {canView(permissions, "performance", isAdmin) && (
+              <NavLink href="/performance" active={pathname.startsWith("/performance")} compact onClick={closeMobile}>
+                Performance
+              </NavLink>
+            )}
           </div>
         )}
 
@@ -385,15 +396,17 @@ export default function Sidebar({
             Users
           </NavLink>
         )}
-        <NavLink
-          href="/complaints"
-          active={pathname.startsWith("/complaints")}
-          icon={icons.sales}
-          onClick={closeMobile}
-        >
-          Complaints
-        </NavLink>
-        {isAdmin && (
+        {canView(permissions, "complaints", isAdmin) && (
+          <NavLink
+            href="/complaints"
+            active={pathname.startsWith("/complaints")}
+            icon={icons.sales}
+            onClick={closeMobile}
+          >
+            Complaints
+          </NavLink>
+        )}
+        {canView(permissions, "bug_reports", isAdmin) && (
           <NavLink
             href="/bug-reports"
             active={pathname.startsWith("/bug-reports")}
