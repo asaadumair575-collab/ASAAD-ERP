@@ -250,22 +250,39 @@ export default async function ReorderPage({
 
                 {/* Audit history (admin only) */}
                 {me.isAdmin && c.auditLogs.length > 0 && (
-                  <div className="mt-3 border-t border-gray-100 pt-3 space-y-1">
+                  <div className="mt-3 border-t border-gray-100 pt-3 space-y-3">
                     <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">Audit History</p>
-                    {c.auditLogs.map((log, i) => (
-                      <div key={log.id} className="flex items-start gap-2 text-[11px]">
-                        <span className="text-gray-400 shrink-0">Round {i + 1}:</span>
-                        <span className="text-gray-500">
-                          Sent {new Date(log.sentAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
-                          {log.returnedAt && (
-                            <> · Returned {new Date(log.returnedAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}</>
+                    {c.auditLogs.map((log, i) => {
+                      const stats = log.roundStats as { totalCalls: number; statuses: Record<string, number> } | null;
+                      return (
+                        <div key={log.id} className="bg-gray-50 rounded-xl p-3 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-gray-700">Round {i + 1}</span>
+                            <span className="text-[11px] text-gray-400">
+                              Sent {new Date(log.sentAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
+                              {log.returnedAt && <> · Returned {new Date(log.returnedAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}</>}
+                            </span>
+                          </div>
+                          {stats && (
+                            <div className="flex flex-wrap gap-2">
+                              <span className="text-[11px] bg-white border border-gray-200 rounded-lg px-2 py-0.5 text-gray-600">
+                                {stats.totalCalls} calls in this round
+                              </span>
+                              {Object.entries(stats.statuses).map(([s, count]) => (
+                                <span key={s} className="text-[11px] bg-white border border-gray-200 rounded-lg px-2 py-0.5 text-gray-500">
+                                  {s.replace(/_/g, " ")}: {count}
+                                </span>
+                              ))}
+                            </div>
                           )}
                           {log.feedback && (
-                            <> · <span className="text-orange-600 italic">{log.feedback}</span></>
+                            <p className="text-[11px] text-orange-600 italic border-t border-orange-100 pt-1.5">
+                              Feedback: {log.feedback}
+                            </p>
                           )}
-                        </span>
-                      </div>
-                    ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 

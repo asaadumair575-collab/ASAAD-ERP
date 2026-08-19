@@ -466,6 +466,7 @@ model CampaignAuditLog {
   sentAt       DateTime
   returnedAt   DateTime?
   feedback     String?
+  roundStats   Json?
   createdAt    DateTime        @default(now())
   @@index([campaignId])
 }

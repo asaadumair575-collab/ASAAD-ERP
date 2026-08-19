@@ -2421,13 +2421,32 @@ export async function backfillReorderAddresses(
 export async function sendCampaignForAudit(id: number) {
   await requireAuth();
   const now = new Date();
+
+  // Find when the last round ended (admin returned it), or campaign creation
+  const campaign = await prisma.reorderCampaign.findUnique({
+    where: { id },
+    select: { createdAt: true, auditReturnedAt: true },
+  });
+  const roundStart = campaign?.auditReturnedAt ?? campaign?.createdAt ?? new Date(0);
+
+  // Collect call logs made since roundStart
+  const logs = await prisma.reorderCallLog.findMany({
+    where: { lead: { campaignId: id }, calledAt: { gte: roundStart } },
+    select: { status: true },
+  });
+  const statusCounts: Record<string, number> = {};
+  for (const l of logs) {
+    statusCounts[l.status] = (statusCounts[l.status] ?? 0) + 1;
+  }
+  const roundStats = { totalCalls: logs.length, statuses: statusCounts, from: roundStart.toISOString(), to: now.toISOString() };
+
   await prisma.$transaction([
     prisma.reorderCampaign.update({
       where: { id },
       data: { sentForAudit: true, auditRequestedAt: now, auditFeedback: null, auditReturnedAt: null },
     }),
     prisma.campaignAuditLog.create({
-      data: { campaignId: id, sentAt: now },
+      data: { campaignId: id, sentAt: now, roundStats },
     }),
   ]);
   revalidatePath("/reorder");
