@@ -2420,20 +2420,57 @@ export async function backfillReorderAddresses(
 
 export async function sendCampaignForAudit(id: number) {
   await requireAuth();
-  await prisma.reorderCampaign.update({
-    where: { id },
-    data: { sentForAudit: true, auditRequestedAt: new Date() },
-  });
+  const now = new Date();
+  await prisma.$transaction([
+    prisma.reorderCampaign.update({
+      where: { id },
+      data: { sentForAudit: true, auditRequestedAt: now, auditFeedback: null, auditReturnedAt: null },
+    }),
+    prisma.campaignAuditLog.create({
+      data: { campaignId: id, sentAt: now },
+    }),
+  ]);
   revalidatePath("/reorder");
   revalidatePath("/reorder/audit");
 }
 
 export async function undoCampaignAudit(id: number) {
   await requireAuth();
-  await prisma.reorderCampaign.update({
-    where: { id },
-    data: { sentForAudit: false, auditRequestedAt: null },
+  // Remove the latest audit log entry that hasn't been returned yet
+  const latest = await prisma.campaignAuditLog.findFirst({
+    where: { campaignId: id, returnedAt: null },
+    orderBy: { sentAt: "desc" },
   });
+  await prisma.$transaction([
+    prisma.reorderCampaign.update({
+      where: { id },
+      data: { sentForAudit: false, auditRequestedAt: null },
+    }),
+    ...(latest ? [prisma.campaignAuditLog.delete({ where: { id: latest.id } })] : []),
+  ]);
+  revalidatePath("/reorder");
+  revalidatePath("/reorder/audit");
+}
+
+export async function returnCampaignFromAudit(id: number, formData: FormData) {
+  await requireAdmin();
+  const feedback = String(formData.get("feedback") ?? "").trim() || null;
+  const now = new Date();
+  // Close the latest open audit log entry
+  const latest = await prisma.campaignAuditLog.findFirst({
+    where: { campaignId: id, returnedAt: null },
+    orderBy: { sentAt: "desc" },
+  });
+  await prisma.$transaction([
+    prisma.reorderCampaign.update({
+      where: { id },
+      data: { sentForAudit: false, auditFeedback: feedback, auditReturnedAt: now },
+    }),
+    ...(latest ? [prisma.campaignAuditLog.update({
+      where: { id: latest.id },
+      data: { returnedAt: now, feedback },
+    })] : []),
+  ]);
   revalidatePath("/reorder");
   revalidatePath("/reorder/audit");
 }
