@@ -322,6 +322,13 @@ export default async function EmpCommissionPage() {
   const today = new Date().toISOString().split("T")[0];
   const name = me.displayName || me.username;
 
+  // Count today's retail orders by this employee for the hint
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  const todayEnd   = new Date(); todayEnd.setHours(23, 59, 59, 999);
+  const todayErpOrders = await prisma.retailOrder.count({
+    where: { createdByUserId: me.id, createdAt: { gte: todayStart, lte: todayEnd } },
+  });
+
   const motivations = [
     "Hard work always pays off 💪",
     "Every order is a step forward 🚀",
@@ -391,6 +398,9 @@ export default async function EmpCommissionPage() {
               <label className="block text-xs text-gray-500 mb-1.5">Number of Orders <span className="text-black">*</span></label>
               <input type="number" name="orders" required min={1} placeholder="e.g. 12"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+              <p className="text-[11px] text-gray-400 mt-1">
+                You created <span className="font-semibold text-gray-600">{todayErpOrders}</span> retail order{todayErpOrders !== 1 ? "s" : ""} in ERP today
+              </p>
             </div>
           </div>
           <div>

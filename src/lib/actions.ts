@@ -1535,6 +1535,24 @@ export async function submitEmpCommission(formData: FormData) {
   const orders = parseInt(String(formData.get("orders") ?? "0"), 10);
   const note = String(formData.get("note") ?? "").trim() || null;
   if (!date || orders < 1) throw new Error("Invalid entry");
+
+  // Cross-check: count retail orders created by this employee on that date
+  const dayStart = new Date(date);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(date);
+  dayEnd.setHours(23, 59, 59, 999);
+  const erpOrderCount = await prisma.retailOrder.count({
+    where: {
+      createdByUserId: me.id,
+      createdAt: { gte: dayStart, lte: dayEnd },
+    },
+  });
+  if (orders > erpOrderCount) {
+    throw new Error(
+      `You entered ${orders} order${orders > 1 ? "s" : ""} but only ${erpOrderCount} retail order${erpOrderCount !== 1 ? "s" : ""} were found in the ERP for you on this date. Please enter the correct number.`
+    );
+  }
+
   await prisma.empCommissionEntry.create({
     data: { userId: me.id, date: new Date(date), orders, note, status: "pending" },
   });
