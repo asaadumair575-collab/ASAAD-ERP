@@ -1468,7 +1468,7 @@ export async function setRetailTrackingNumber(orderId: number, formData: FormDat
   if (trackingNumber && trackingNumber.replace(/\s/g, "").length < 14) {
     throw new Error("Tracking number kam se kam 14 digits ka hona chahiye");
   }
-  await prisma.retailOrder.update({ where: { id: orderId }, data: { trackingNumber } });
+  await prisma.retailOrder.update({ where: { id: orderId }, data: { trackingNumber, trackingSetAt: trackingNumber ? new Date() : null } });
   revalidatePath(`/retail/orders/${orderId}`);
 }
 

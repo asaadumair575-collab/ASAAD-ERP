@@ -266,15 +266,11 @@ export default async function RetailOrderPage({
             <span className="text-xs font-mono text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">{order.trackingNumber}</span>
           )}
         </div>
-        <TrackingNumberForm defaultValue={order.trackingNumber ?? ""} action={setTrackingBound} />
-        {order.trackingNumber && (
-          <a
-            href={`/order-status?q=${order.trackingNumber}`}
-            className="text-xs text-blue-600 hover:underline"
-          >
-            → Order Status Check pe dekho
-          </a>
-        )}
+        <TrackingNumberForm
+          defaultValue={order.trackingNumber ?? ""}
+          trackingSetAt={order.trackingSetAt ? order.trackingSetAt.toISOString() : null}
+          action={setTrackingBound}
+        />
       </div>
 
       {/* Payment summary */}
