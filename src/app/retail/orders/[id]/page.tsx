@@ -240,19 +240,12 @@ export default async function RetailOrderPage({
             </p>
           )}
         </div>
-        {!order.dispatched && !order.trackingNumber ? (
+        {order.dispatched ? null : !order.trackingNumber ? (
           <span className="text-xs text-orange-700 font-medium">⚠ Pehle tracking number daalen</span>
         ) : (
           <form action={toggleDispatchBound}>
-            <button
-              type="submit"
-              className={`text-sm font-medium px-4 py-2 rounded-lg transition-colors ${
-                order.dispatched
-                  ? "bg-white text-blue-700 border border-blue-200 hover:bg-blue-50"
-                  : "bg-orange-600 text-white hover:bg-orange-700"
-              }`}
-            >
-              {order.dispatched ? "Mark Not Dispatched" : "Mark as Dispatched"}
+            <button type="submit" className="text-sm font-medium px-4 py-2 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors">
+              Mark as Dispatched
             </button>
           </form>
         )}
