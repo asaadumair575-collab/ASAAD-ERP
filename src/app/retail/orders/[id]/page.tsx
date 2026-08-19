@@ -268,7 +268,7 @@ export default async function RetailOrderPage({
         </div>
         <TrackingNumberForm
           defaultValue={order.trackingNumber ?? ""}
-          trackingSetAt={order.trackingSetAt ? order.trackingSetAt.toISOString() : null}
+          isAdmin={isAdmin}
           action={setTrackingBound}
         />
       </div>
