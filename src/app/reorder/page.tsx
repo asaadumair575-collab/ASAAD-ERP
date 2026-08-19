@@ -8,11 +8,18 @@ import LeadSearch from "./LeadSearch";
 import { userLabel } from "@/lib/userLabel";
 import { toggleReorderCampaignActive, sendCampaignForAudit, undoCampaignAudit } from "@/lib/actions";
 
-export default async function ReorderPage() {
+export default async function ReorderPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
-  const campaigns = await prisma.reorderCampaign.findMany({
+  const { tab } = await searchParams;
+  const activeTab = tab === "inactive" ? "inactive" : "active";
+
+  const allCampaigns = await prisma.reorderCampaign.findMany({
     where: me.isAdmin ? undefined : { isActive: true },
     orderBy: { createdAt: "desc" },
     include: {
@@ -21,6 +28,10 @@ export default async function ReorderPage() {
       leads: { select: { status: true, _count: { select: { callLogs: true } } } },
     },
   });
+
+  const active   = allCampaigns.filter((c) => c.isActive);
+  const inactive = allCampaigns.filter((c) => !c.isActive);
+  const campaigns = activeTab === "active" ? active : inactive;
 
   return (
     <div className="space-y-6">
@@ -49,12 +60,53 @@ export default async function ReorderPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+        <Link
+          href="/reorder"
+          className={`px-5 py-2 text-sm font-medium rounded-lg transition-colors ${
+            activeTab === "active"
+              ? "bg-white text-gray-900 shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Active
+          {active.length > 0 && (
+            <span className={`ml-2 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
+              activeTab === "active" ? "bg-black text-white" : "bg-gray-300 text-gray-600"
+            }`}>
+              {active.length}
+            </span>
+          )}
+        </Link>
+        <Link
+          href="/reorder?tab=inactive"
+          className={`px-5 py-2 text-sm font-medium rounded-lg transition-colors ${
+            activeTab === "inactive"
+              ? "bg-white text-gray-900 shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Not Active
+          {inactive.length > 0 && (
+            <span className={`ml-2 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
+              activeTab === "inactive" ? "bg-black text-white" : "bg-gray-300 text-gray-600"
+            }`}>
+              {inactive.length}
+            </span>
+          )}
+        </Link>
+      </div>
 
       {campaigns.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
           <p className="text-4xl mb-3">📞</p>
-          <p className="text-sm font-medium text-gray-500">No campaigns yet</p>
-          <p className="text-xs text-gray-400 mt-1">Upload a delivered-parcels CSV to start</p>
+          <p className="text-sm font-medium text-gray-500">
+            {activeTab === "active" ? "No active campaigns" : "No inactive campaigns"}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            {activeTab === "active" ? "Upload a delivered-parcels CSV to start" : "All campaigns are currently active"}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -73,7 +125,7 @@ export default async function ReorderPage() {
             const undoAudit    = undoCampaignAudit.bind(null, c.id);
             return (
               <div key={c.id} className={`bg-white border rounded-2xl shadow-sm p-5 relative overflow-hidden ${
-                isCompleted ? "border-green-300" : c.isActive ? "border-gray-200" : "border-gray-200 opacity-60"
+                isCompleted ? "border-green-300" : "border-gray-200"
               }`}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -93,9 +145,6 @@ export default async function ReorderPage() {
                       )}
                       {c.isRetailFollowup && (
                         <span className="text-[10px] font-semibold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full shrink-0">Retail</span>
-                      )}
-                      {!c.isActive && (
-                        <span className="text-[10px] font-semibold bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full shrink-0">Paused</span>
                       )}
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5">
