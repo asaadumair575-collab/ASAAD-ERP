@@ -16,12 +16,19 @@ function fmtDate(d: Date) {
   return new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
 }
 
-export default async function EmpCommissionPage() {
+export default async function EmpCommissionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
   const perms = parsePermissions(me.permissions);
   if (!me.isAdmin && !canView(perms, "emp_commission", false)) redirect("/");
+
+  const { tab } = await searchParams;
+  const activeTab = tab === "withdrawals" ? "withdrawals" : "commission";
 
   /* ── ADMIN VIEW ── */
   if (me.isAdmin) {
@@ -57,12 +64,29 @@ export default async function EmpCommissionPage() {
 
     const today = new Date().toISOString().split("T")[0];
 
+    const pendingWithdrawals = withdrawals.filter((w) => w.status === "pending");
+
     return (
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Employee Commission</h1>
           <p className="text-sm text-gray-500 mt-0.5">Rs 30 per order · approve/reject submissions · record withdrawals.</p>
         </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+          <a href="/emp-commission" className={`px-5 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === "commission" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+            Commission
+          </a>
+          <a href="/emp-commission?tab=withdrawals" className={`px-5 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${activeTab === "withdrawals" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+            Withdrawals
+            {pendingWithdrawals.length > 0 && (
+              <span className="text-[10px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded-full">{pendingWithdrawals.length}</span>
+            )}
+          </a>
+        </div>
+
+        {activeTab === "commission" && (<>
 
         {/* Per-employee balance cards */}
         {Object.entries(balances).length > 0 && (
@@ -125,6 +149,10 @@ export default async function EmpCommissionPage() {
             </SubmitButton>
           </form>
         </div>
+
+        </>)}
+
+        {activeTab === "withdrawals" && (<>
 
         {/* Pending withdrawal requests */}
         {withdrawals.filter((w) => w.status === "pending").length > 0 && (
@@ -201,6 +229,10 @@ export default async function EmpCommissionPage() {
             </div>
           </div>
         )}
+
+        </>)}
+
+        {activeTab === "commission" && (<>
 
         {/* Pending approvals */}
         {pending.length > 0 && (
@@ -337,6 +369,7 @@ export default async function EmpCommissionPage() {
             </div>
           );
         })()}
+        </>)}
       </div>
     );
   }
@@ -377,6 +410,8 @@ export default async function EmpCommissionPage() {
     "Your effort will show in your results! 🌟",
   ];
   const msg = motivations[new Date().getDay() % motivations.length];
+
+  const pendingWithdrawalsEmp = withdrawals.filter((w) => w.status === "pending");
 
   return (
     <div className="space-y-5">
@@ -421,6 +456,21 @@ export default async function EmpCommissionPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+        <a href="/emp-commission" className={`px-5 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === "commission" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+          Commission
+        </a>
+        <a href="/emp-commission?tab=withdrawals" className={`px-5 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${activeTab === "withdrawals" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+          Withdrawals
+          {pendingWithdrawalsEmp.length > 0 && (
+            <span className="text-[10px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded-full">{pendingWithdrawalsEmp.length}</span>
+          )}
+        </a>
+      </div>
+
+      {activeTab === "commission" && (<>
+
       {/* Submit form */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
         <div className="flex items-center gap-2">
@@ -453,6 +503,10 @@ export default async function EmpCommissionPage() {
           </SubmitButton>
         </form>
       </div>
+
+      </>)}
+
+      {activeTab === "withdrawals" && (<>
 
       {/* Request withdrawal */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
@@ -502,6 +556,10 @@ export default async function EmpCommissionPage() {
         </div>
       )}
 
+      </>)}
+
+      {activeTab === "commission" && (<>
+
       {/* Entries */}
       {entries.length > 0 && (
         <div className="space-y-3">
@@ -550,6 +608,8 @@ export default async function EmpCommissionPage() {
           <p className="text-xs text-gray-400 mt-1">Fill the form above to get started.</p>
         </div>
       )}
+
+      </>)}
     </div>
   );
 }
