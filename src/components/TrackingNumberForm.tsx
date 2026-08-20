@@ -15,9 +15,9 @@ export default function TrackingNumberForm({
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
-  function handleCopy() {
-    if (!defaultValue) return;
-    navigator.clipboard.writeText(defaultValue).then(() => {
+  function handleCopy(value: string) {
+    if (!value) return;
+    navigator.clipboard.writeText(value).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -37,7 +37,14 @@ export default function TrackingNumberForm({
     });
   }
 
-  // Non-admin: read-only display with inline copy icon
+  const CopyIcon = ({ copied }: { copied: boolean }) =>
+    copied ? (
+      <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4 text-green-500"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    ) : (
+      <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4"><rect x="5" y="5" width="8" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.3"/><path d="M3 11V3a1 1 0 011-1h7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+    );
+
+  // Employee + tracking already saved → read-only with copy
   if (!isAdmin && defaultValue) {
     return (
       <div className="relative flex items-center">
@@ -46,30 +53,17 @@ export default function TrackingNumberForm({
         </span>
         <button
           type="button"
-          onClick={handleCopy}
+          onClick={() => handleCopy(defaultValue)}
           title="Copy tracking number"
           className="absolute right-2.5 text-gray-400 hover:text-gray-700 transition-colors"
         >
-          {copied ? (
-            <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4 text-green-500"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          ) : (
-            <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4"><rect x="5" y="5" width="8" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.3"/><path d="M3 11V3a1 1 0 011-1h7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
-          )}
+          <CopyIcon copied={copied} />
         </button>
       </div>
     );
   }
 
-  // Non-admin, no tracking yet: show empty read-only
-  if (!isAdmin) {
-    return (
-      <div className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-400 bg-gray-50">
-        Not set
-      </div>
-    );
-  }
-
-  // Admin: editable form with inline copy icon
+  // Editable form (admin always, employee if not yet set)
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
       <div className="flex gap-2">
@@ -85,15 +79,11 @@ export default function TrackingNumberForm({
           {defaultValue && (
             <button
               type="button"
-              onClick={handleCopy}
+              onClick={() => handleCopy(defaultValue)}
               title="Copy tracking number"
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
             >
-              {copied ? (
-                <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4 text-green-500"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              ) : (
-                <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4"><rect x="5" y="5" width="8" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.3"/><path d="M3 11V3a1 1 0 011-1h7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
-              )}
+              <CopyIcon copied={copied} />
             </button>
           )}
         </div>

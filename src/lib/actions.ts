@@ -1473,10 +1473,11 @@ export async function setRetailTrackingNumber(orderId: number, formData: FormDat
 }
 
 export async function setRetailDispatched(orderId: number, dispatched: boolean) {
-  const me = await requireAuth();
-  if (dispatched && me.isAdmin) {
+  await requireAuth();
+  if (dispatched) {
     const order = await prisma.retailOrder.findUnique({ where: { id: orderId }, select: { trackingNumber: true } });
-    if (!order?.trackingNumber?.trim()) throw new Error("Add a tracking number before marking as dispatched");
+    if (!order?.trackingNumber || order.trackingNumber.replace(/\s/g, "").length < 14)
+      throw new Error("Enter a valid 14-digit tracking number before dispatching");
   }
   await prisma.retailOrder.update({
     where: { id: orderId },

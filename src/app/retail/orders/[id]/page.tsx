@@ -8,6 +8,7 @@ import RetailPaymentSection from "@/components/RetailPaymentSection";
 import RetailDeleteButton from "@/components/RetailDeleteButton";
 import ReceiptCopyButton from "@/components/ReceiptCopyButton";
 import TrackingNumberForm from "@/components/TrackingNumberForm";
+import DispatchButton from "@/components/DispatchButton";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -240,15 +241,11 @@ export default async function RetailOrderPage({
             </p>
           )}
         </div>
-        {order.dispatched ? null : isAdmin && !order.trackingNumber ? (
-          <span className="text-xs text-orange-700 font-medium">⚠ Add tracking number first</span>
-        ) : !order.dispatched ? (
-          <form action={toggleDispatchBound}>
-            <button type="submit" className="text-sm font-medium px-4 py-2 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors">
-              Mark as Dispatched
-            </button>
-          </form>
-        ) : null}
+        <DispatchButton
+          dispatched={order.dispatched}
+          trackingNumber={order.trackingNumber ?? null}
+          toggleAction={toggleDispatchBound}
+        />
       </div>
 
       {/* PostEx Tracking Number */}
