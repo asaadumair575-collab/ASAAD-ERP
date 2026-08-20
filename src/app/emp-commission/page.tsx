@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { parsePermissions, canView } from "@/lib/permissions";
-import { approveEmpCommission, rejectEmpCommission, deleteEmpCommissionEntry, submitEmpCommission, recordEmpWithdrawal, deleteEmpWithdrawal, requestEmpWithdrawal, approveEmpWithdrawal, rejectEmpWithdrawal } from "@/lib/actions";
+import { approveEmpCommission, rejectEmpCommission, deleteEmpCommissionEntry, submitEmpCommission, deleteEmpWithdrawal, requestEmpWithdrawal, approveEmpWithdrawal, rejectEmpWithdrawal } from "@/lib/actions";
 import DeleteButton from "@/components/DeleteButton";
 import SubmitButton from "@/components/SubmitButton";
 import { userLabel } from "@/lib/userLabel";
@@ -62,8 +62,6 @@ export default async function EmpCommissionPage({
       balances[w.userId].withdrawn += w.amount;
     }
 
-    const today = new Date().toISOString().split("T")[0];
-
     const pendingWithdrawals = withdrawals.filter((w) => w.status === "pending");
 
     return (
@@ -115,40 +113,6 @@ export default async function EmpCommissionPage({
             })}
           </div>
         )}
-
-        {/* Record withdrawal form */}
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm space-y-3">
-          <h2 className="text-sm font-semibold text-amber-800">Record Withdrawal</h2>
-          <form action={recordEmpWithdrawal} className="flex flex-wrap gap-3 items-end">
-            <div>
-              <label className="block text-xs text-amber-700 mb-1.5">Employee</label>
-              <select name="userId" required className="border border-amber-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400">
-                <option value="">Select…</option>
-                {employees.map((u) => (
-                  <option key={u.id} value={u.id}>{u.displayName || u.username}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-amber-700 mb-1.5">Amount (Rs)</label>
-              <input type="number" name="amount" required min={1} placeholder="e.g. 5000"
-                className="w-32 border border-amber-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
-            </div>
-            <div>
-              <label className="block text-xs text-amber-700 mb-1.5">Date</label>
-              <input type="date" name="date" required defaultValue={today}
-                className="border border-amber-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
-            </div>
-            <div className="flex-1 min-w-[150px]">
-              <label className="block text-xs text-amber-700 mb-1.5">Note (optional)</label>
-              <input type="text" name="note" placeholder="e.g. Salary, Commission advance"
-                className="w-full border border-amber-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
-            </div>
-            <SubmitButton pendingText="…" className="bg-amber-600 text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-amber-700 transition-colors whitespace-nowrap">
-              Record Withdrawal
-            </SubmitButton>
-          </form>
-        </div>
 
         </>)}
 
@@ -517,6 +481,16 @@ export default async function EmpCommissionPage({
             <input type="number" name="amount" required min={1} placeholder="e.g. 5000"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
           </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">Account Details</label>
+            <input type="text" name="accountDetails" defaultValue="03190571884 easy paisa"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+          </div>
+          <label className="flex items-start gap-2.5 cursor-pointer select-none">
+            <input type="checkbox" name="useAccount" value="1" defaultChecked
+              className="mt-0.5 accent-black h-4 w-4 shrink-0" />
+            <span className="text-xs text-gray-600">I want commission in this account</span>
+          </label>
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">Note (optional)</label>
             <input type="text" name="note" placeholder="e.g. Salary, advance"

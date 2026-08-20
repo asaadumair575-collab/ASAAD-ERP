@@ -1609,9 +1609,15 @@ export async function deleteEmpWithdrawal(id: number) {
 export async function requestEmpWithdrawal(formData: FormData) {
   const me = await requireAuth();
   const amount = parseFloat(String(formData.get("amount") ?? "")) || 0;
-  const note = String(formData.get("note") ?? "").trim() || null;
+  const userNote = String(formData.get("note") ?? "").trim();
+  const accountDetails = String(formData.get("accountDetails") ?? "").trim();
+  const useAccount = formData.get("useAccount") === "1";
   const today = new Date();
   if (amount <= 0) throw new Error("Enter a valid amount");
+  const parts: string[] = [];
+  if (useAccount && accountDetails) parts.push(`Account: ${accountDetails}`);
+  if (userNote) parts.push(userNote);
+  const note = parts.join(" · ") || null;
   await prisma.empWithdrawal.create({
     data: { userId: me.id, amount, note, date: today, status: "pending" },
   });
