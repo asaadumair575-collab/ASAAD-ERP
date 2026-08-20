@@ -240,15 +240,15 @@ export default async function RetailOrderPage({
             </p>
           )}
         </div>
-        {order.dispatched ? null : !order.trackingNumber ? (
-          <span className="text-xs text-orange-700 font-medium">⚠ Pehle tracking number daalen</span>
-        ) : (
+        {order.dispatched ? null : isAdmin && !order.trackingNumber ? (
+          <span className="text-xs text-orange-700 font-medium">⚠ Add tracking number first</span>
+        ) : !order.dispatched ? (
           <form action={toggleDispatchBound}>
             <button type="submit" className="text-sm font-medium px-4 py-2 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors">
               Mark as Dispatched
             </button>
           </form>
-        )}
+        ) : null}
       </div>
 
       {/* PostEx Tracking Number */}
