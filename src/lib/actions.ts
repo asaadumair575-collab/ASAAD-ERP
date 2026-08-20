@@ -1492,17 +1492,20 @@ export async function setRetailDispatched(orderId: number, dispatched: boolean) 
 
 // ── Retail Customers ──────────────────────────────────────────────────────────
 
-export async function createRetailCustomer(formData: FormData) {
+export async function createRetailCustomer(
+  _prev: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
   const name = String(formData.get("name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const city = String(formData.get("city") ?? "").trim() || null;
   const address = String(formData.get("address") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const fromDraft = formData.get("fromDraft") === "1";
-  if (!name) throw new Error("Name is required");
+  if (!name) return { error: "Name is required" };
   if (phone) {
     const existing = await prisma.retailCustomer.findFirst({ where: { phone } });
-    if (existing) throw new Error(`A customer with this phone number already exists: ${existing.name}`);
+    if (existing) return { error: `This customer is already in retail customers: ${existing.name}` };
   }
   const code = await generateRetailCustomerCode(city);
   const customer = await prisma.retailCustomer.create({ data: { code, name, phone, city, address, notes } });
