@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { parsePermissions, canView } from "@/lib/permissions";
-import { approveEmpCommission, rejectEmpCommission, deleteEmpCommissionEntry, submitEmpCommission, recordEmpWithdrawal, deleteEmpWithdrawal } from "@/lib/actions";
+import { approveEmpCommission, rejectEmpCommission, deleteEmpCommissionEntry, submitEmpCommission, recordEmpWithdrawal, deleteEmpWithdrawal, requestEmpWithdrawal, approveEmpWithdrawal, rejectEmpWithdrawal } from "@/lib/actions";
 import DeleteButton from "@/components/DeleteButton";
 import SubmitButton from "@/components/SubmitButton";
 import { userLabel } from "@/lib/userLabel";
@@ -50,7 +50,7 @@ export default async function EmpCommissionPage() {
       if (!balances[e.userId]) balances[e.userId] = { name: userLabel(e.user), earned: 0, withdrawn: 0 };
       balances[e.userId].earned += e.orders * RATE;
     }
-    for (const w of withdrawals) {
+    for (const w of withdrawals.filter((w) => w.status === "approved")) {
       if (!balances[w.userId]) balances[w.userId] = { name: userLabel(w.user), earned: 0, withdrawn: 0 };
       balances[w.userId].withdrawn += w.amount;
     }
@@ -126,8 +126,48 @@ export default async function EmpCommissionPage() {
           </form>
         </div>
 
-        {/* Withdrawal history */}
-        {withdrawals.length > 0 && (
+        {/* Pending withdrawal requests */}
+        {withdrawals.filter((w) => w.status === "pending").length > 0 && (
+          <div className="space-y-2">
+            <h2 className="text-sm font-semibold text-amber-700 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
+              Withdrawal Requests ({withdrawals.filter((w) => w.status === "pending").length})
+            </h2>
+            <div className="space-y-2">
+              {withdrawals.filter((w) => w.status === "pending").map((w) => {
+                const approveBound = approveEmpWithdrawal.bind(null, w.id);
+                const rejectBound = rejectEmpWithdrawal.bind(null, w.id);
+                return (
+                  <div key={w.id} className="bg-white border border-amber-200 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold">{userLabel(w.user)}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{fmtDate(w.date)}</p>
+                        {w.note && <p className="text-xs text-gray-500 mt-1">{w.note}</p>}
+                      </div>
+                      <p className="text-xl font-bold text-amber-700 shrink-0">Rs {fmt(w.amount)}</p>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <form action={approveBound} className="flex-1">
+                        <button type="submit" className="w-full bg-green-600 text-white text-xs font-semibold py-2 rounded-lg hover:bg-green-700 transition-colors">
+                          ✓ Approve
+                        </button>
+                      </form>
+                      <form action={rejectBound} className="flex-1">
+                        <button type="submit" className="w-full border border-red-200 text-red-600 text-xs font-semibold py-2 rounded-lg hover:bg-red-50 transition-colors">
+                          ✕ Reject
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Withdrawal history (approved only) */}
+        {withdrawals.filter((w) => w.status === "approved").length > 0 && (
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-gray-700">Withdrawal History</h2>
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
@@ -142,7 +182,7 @@ export default async function EmpCommissionPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {withdrawals.map((w) => {
+                  {withdrawals.filter((w) => w.status === "approved").map((w) => {
                     const delBound = deleteEmpWithdrawal.bind(null, w.id);
                     return (
                       <tr key={w.id} className="hover:bg-gray-50/70 transition-colors">
@@ -312,7 +352,7 @@ export default async function EmpCommissionPage() {
   const rejected = entries.filter((e) => e.status === "rejected");
 
   const totalEarned = approved.reduce((s, e) => s + e.orders * RATE, 0);
-  const totalWithdrawn = withdrawals.reduce((s, w) => s + w.amount, 0);
+  const totalWithdrawn = withdrawals.filter((w) => w.status === "approved").reduce((s, w) => s + w.amount, 0);
   const remainingBalance = totalEarned - totalWithdrawn;
   const totalOrders = approved.reduce((s, e) => s + e.orders, 0);
   const thisMonthOrders = approved
@@ -414,18 +454,48 @@ export default async function EmpCommissionPage() {
         </form>
       </div>
 
+      {/* Request withdrawal */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
+        <h2 className="text-sm font-semibold">Request Withdrawal</h2>
+        <form action={requestEmpWithdrawal} className="space-y-3">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">Amount (Rs) <span className="text-black">*</span></label>
+            <input type="number" name="amount" required min={1} placeholder="e.g. 5000"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">Note (optional)</label>
+            <input type="text" name="note" placeholder="e.g. Salary, advance"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+          </div>
+          <SubmitButton pendingText="Submitting…" className="w-full border border-gray-200 text-sm font-medium py-2.5 rounded-xl hover:bg-gray-50 transition-colors">
+            Request Withdrawal
+          </SubmitButton>
+        </form>
+      </div>
+
       {/* Withdrawal history */}
       {withdrawals.length > 0 && (
         <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-gray-700">Withdrawal History</h2>
+          <h2 className="text-sm font-semibold text-gray-700">Withdrawal Requests</h2>
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm divide-y divide-gray-50">
             {withdrawals.map((w) => (
-              <div key={w.id} className="flex justify-between items-center px-4 py-3">
-                <div>
+              <div key={w.id} className="flex justify-between items-center px-4 py-3 gap-3">
+                <div className="min-w-0">
                   <p className="text-xs text-gray-400">{fmtDate(w.date)}</p>
                   {w.note && <p className="text-xs text-gray-500 mt-0.5">{w.note}</p>}
                 </div>
-                <span className="text-base font-bold text-red-500">- Rs {fmt(w.amount)}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  {w.status === "pending" && (
+                    <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">⏳ Pending</span>
+                  )}
+                  {w.status === "rejected" && (
+                    <span className="text-[10px] font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">✕ Rejected</span>
+                  )}
+                  <span className={`text-base font-bold ${w.status === "approved" ? "text-red-500" : "text-gray-400"}`}>
+                    - Rs {fmt(w.amount)}
+                  </span>
+                </div>
               </div>
             ))}
           </div>

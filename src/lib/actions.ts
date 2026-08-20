@@ -1606,6 +1606,31 @@ export async function deleteEmpWithdrawal(id: number) {
   revalidatePath("/emp-commission");
 }
 
+export async function requestEmpWithdrawal(formData: FormData) {
+  const me = await requireAuth();
+  const amount = parseFloat(String(formData.get("amount") ?? "")) || 0;
+  const note = String(formData.get("note") ?? "").trim() || null;
+  const today = new Date();
+  if (amount <= 0) throw new Error("Enter a valid amount");
+  await prisma.empWithdrawal.create({
+    data: { userId: me.id, amount, note, date: today, status: "pending" },
+  });
+  revalidatePath("/emp-commission");
+}
+
+export async function approveEmpWithdrawal(id: number) {
+  await requireAdmin();
+  await prisma.empWithdrawal.update({ where: { id }, data: { status: "approved" } });
+  revalidatePath("/emp-commission");
+}
+
+export async function rejectEmpWithdrawal(id: number, formData: FormData) {
+  await requireAdmin();
+  const adminNote = String(formData.get("adminNote") ?? "").trim() || null;
+  await prisma.empWithdrawal.update({ where: { id }, data: { status: "rejected", adminNote } });
+  revalidatePath("/emp-commission");
+}
+
 // ── Ecommerce ─────────────────────────────────────────────────────────────────
 
 export async function createEcomOrder(formData: FormData) {
