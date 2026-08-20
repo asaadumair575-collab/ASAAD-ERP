@@ -1500,6 +1500,10 @@ export async function createRetailCustomer(formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const fromDraft = formData.get("fromDraft") === "1";
   if (!name) throw new Error("Name is required");
+  if (phone) {
+    const existing = await prisma.retailCustomer.findFirst({ where: { phone } });
+    if (existing) throw new Error(`A customer with this phone number already exists: ${existing.name}`);
+  }
   const code = await generateRetailCustomerCode(city);
   const customer = await prisma.retailCustomer.create({ data: { code, name, phone, city, address, notes } });
   revalidatePath("/retail/customers");
