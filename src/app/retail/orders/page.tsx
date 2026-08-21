@@ -119,20 +119,12 @@ export default async function RetailPage({
             </thead>
             <tbody className="divide-y divide-gray-50">
               {orders.map((o) => {
-                const exported = !!o.exportedAt;
                 return (
-                  <tr key={o.id} className={`transition-colors ${exported ? "opacity-50" : "hover:bg-gray-50/70"}`}>
+                  <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
                     <td className="py-3 px-5">
-                      {exported ? (
-                        <span className="font-medium text-gray-400 text-xs">
-                          R-{String(o.id).padStart(3, "0")}
-                          <span className="ml-1.5 text-[10px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full">exported</span>
-                        </span>
-                      ) : (
-                        <Link href={`/retail/orders/${o.id}`} className="font-medium hover:underline text-gray-700">
-                          R-{String(o.id).padStart(3, "0")}
-                        </Link>
-                      )}
+                      <Link href={`/retail/orders/${o.id}`} className="font-medium hover:underline text-gray-700">
+                        R-{String(o.id).padStart(3, "0")}
+                      </Link>
                     </td>
                     <td className="py-3 px-5">
                       <p className="font-medium">{o.customerName}</p>
