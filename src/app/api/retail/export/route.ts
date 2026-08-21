@@ -40,14 +40,17 @@ export async function GET(req: NextRequest) {
   const orders = await prisma.retailOrder.findMany({
     where: {
       date: { gte: fromDate, lte: toDate },
-      exportedAt: null,
     },
-    include: { items: true },
+    include: {
+      items: true,
+      payments: true,
+      retailCustomer: { select: { address: true } },
+    },
     orderBy: { date: "asc" },
   });
 
   if (orders.length === 0) {
-    return NextResponse.json({ error: "No un-exported orders in this date range." }, { status: 404 });
+    return NextResponse.json({ error: "No orders found for this date." }, { status: 404 });
   }
 
   const headers = [
@@ -72,9 +75,12 @@ export async function GET(req: NextRequest) {
     const notes = itemsNotes(o.items);
     const weight = calcWeight(o.items);
     const totalItems = o.items.reduce((s, i) => s + i.quantity, 0);
+    const received = o.payments.reduce((s, p) => s + p.amount, 0);
+    const balance = Math.max(0, o.totalAmount - received);
+    const address = o.address || o.retailCustomer?.address || "";
     return [
-      slipNo, o.totalAmount, notes, o.customerName,
-      o.phone ? normalizePhone(o.phone) : "", o.address ?? "", o.city ?? "",
+      slipNo, balance, notes, o.customerName,
+      o.phone ? normalizePhone(o.phone) : "", address, o.city ?? "",
       totalItems, AIRWAY_BILL_COPIES, notes,
       ADDRESS_CODE, RETURN_ADDRESS_CODE, ORDER_TYPE, weight,
     ];
@@ -91,11 +97,14 @@ export async function GET(req: NextRequest) {
   XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
   const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
 
-  // Mark all exported orders
-  await prisma.retailOrder.updateMany({
-    where: { id: { in: orders.map((o) => o.id) } },
-    data: { exportedAt: new Date() },
-  });
+  // Mark as exported (only those not already marked)
+  const unexported = orders.filter((o) => !o.exportedAt).map((o) => o.id);
+  if (unexported.length > 0) {
+    await prisma.retailOrder.updateMany({
+      where: { id: { in: unexported } },
+      data: { exportedAt: new Date() },
+    });
+  }
 
   const dateStr = new Date().toISOString().slice(0, 10);
   const filename = `courier-orders-${from}-to-${to}.xlsx`;
