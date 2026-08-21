@@ -13,6 +13,12 @@ function itemsNotes(items: { description: string; quantity: number }[]): string 
   return items.map((i) => `${i.description} x${i.quantity}`).join(", ");
 }
 
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("92") && digits.length === 12) return "0" + digits.slice(2);
+  return phone;
+}
+
 function calcWeight(items: { quantity: number }[]): number {
   const totalBalls = items.reduce((s, i) => s + i.quantity, 0);
   return Math.round(totalBalls * KG_PER_BALL * 10) / 10;
@@ -68,7 +74,7 @@ export async function GET(req: NextRequest) {
     const totalItems = o.items.reduce((s, i) => s + i.quantity, 0);
     return [
       slipNo, o.totalAmount, notes, o.customerName,
-      o.phone ?? "", o.address ?? "", o.city ?? "",
+      o.phone ? normalizePhone(o.phone) : "", o.address ?? "", o.city ?? "",
       totalItems, AIRWAY_BILL_COPIES, notes,
       ADDRESS_CODE, RETURN_ADDRESS_CODE, ORDER_TYPE, weight,
     ];
