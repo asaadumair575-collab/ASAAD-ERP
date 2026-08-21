@@ -3,8 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import * as XLSX from "xlsx";
 
-const ADDRESS_CODE = "314410";
-const RETURN_ADDRESS_CODE = "314410";
+const ADDRESS_CODE = "001";
+const RETURN_ADDRESS_CODE = "001";
 const AIRWAY_BILL_COPIES = 1;
 const ORDER_TYPE = "Normal";
 const KG_PER_BALL = 0.7 / 12;
