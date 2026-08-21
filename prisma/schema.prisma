@@ -269,6 +269,7 @@ model RetailOrder {
   dispatchedAt     DateTime?
   trackingNumber   String?
   trackingSetAt    DateTime?
+  exportedAt       DateTime?
   notes            String?
   date             DateTime         @default(now())
   createdAt        DateTime         @default(now())

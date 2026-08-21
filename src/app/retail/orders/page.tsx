@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import RetailImportModal from "@/components/RetailImportModal";
+import RetailExportModal from "@/components/RetailExportModal";
 import { userLabel } from "@/lib/userLabel";
 import { getSessionUser } from "@/lib/auth";
 
@@ -56,20 +57,7 @@ export default async function RetailPage({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <RetailImportModal />
-          {isAdmin && (() => {
-            const exportParams = new URLSearchParams();
-            if (from) exportParams.set("from", from);
-            if (to) exportParams.set("to", to);
-            if (status) exportParams.set("status", status);
-            return (
-              <a
-                href={`/api/retail/export?${exportParams.toString()}`}
-                className="border border-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                ↓ Export Excel
-              </a>
-            );
-          })()}
+          {isAdmin && <RetailExportModal />}
           <Link
             href="/retail/orders/new"
             className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
@@ -131,12 +119,20 @@ export default async function RetailPage({
             </thead>
             <tbody className="divide-y divide-gray-50">
               {orders.map((o) => {
+                const exported = !!o.exportedAt;
                 return (
-                  <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
+                  <tr key={o.id} className={`transition-colors ${exported ? "opacity-50" : "hover:bg-gray-50/70"}`}>
                     <td className="py-3 px-5">
-                      <Link href={`/retail/orders/${o.id}`} className="font-medium hover:underline text-gray-700">
-                        R-{String(o.id).padStart(3, "0")}
-                      </Link>
+                      {exported ? (
+                        <span className="font-medium text-gray-400 text-xs">
+                          R-{String(o.id).padStart(3, "0")}
+                          <span className="ml-1.5 text-[10px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full">exported</span>
+                        </span>
+                      ) : (
+                        <Link href={`/retail/orders/${o.id}`} className="font-medium hover:underline text-gray-700">
+                          R-{String(o.id).padStart(3, "0")}
+                        </Link>
+                      )}
                     </td>
                     <td className="py-3 px-5">
                       <p className="font-medium">{o.customerName}</p>
