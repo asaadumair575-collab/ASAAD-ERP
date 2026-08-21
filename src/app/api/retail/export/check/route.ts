@@ -12,10 +12,9 @@ export async function GET(req: NextRequest) {
   const fromDate = new Date(`${date}T00:00:00`);
   const toDate = new Date(`${date}T23:59:59.999`);
 
-  const [total, exported] = await Promise.all([
-    prisma.retailOrder.count({ where: { date: { gte: fromDate, lte: toDate } } }),
-    prisma.retailOrder.count({ where: { date: { gte: fromDate, lte: toDate }, exportedAt: { not: null } } }),
-  ]);
+  const total = await prisma.retailOrder.count({
+    where: { date: { gte: fromDate, lte: toDate } },
+  });
 
-  return NextResponse.json({ total, exported, pending: total - exported });
+  return NextResponse.json({ total });
 }

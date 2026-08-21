@@ -97,16 +97,6 @@ export async function GET(req: NextRequest) {
   XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
   const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
 
-  // Mark as exported (only those not already marked)
-  const unexported = orders.filter((o) => !o.exportedAt).map((o) => o.id);
-  if (unexported.length > 0) {
-    await prisma.retailOrder.updateMany({
-      where: { id: { in: unexported } },
-      data: { exportedAt: new Date() },
-    });
-  }
-
-  const dateStr = new Date().toISOString().slice(0, 10);
   const filename = `courier-orders-${from}-to-${to}.xlsx`;
 
   return new NextResponse(buf, {
