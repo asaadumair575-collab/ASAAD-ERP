@@ -3,6 +3,7 @@ import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import RetailImportModal from "@/components/RetailImportModal";
 import { userLabel } from "@/lib/userLabel";
+import { getSessionUser } from "@/lib/auth";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -18,6 +19,8 @@ export default async function RetailPage({
   searchParams: Promise<{ status?: string; q?: string; from?: string; to?: string }>;
 }) {
   const { status, q, from, to } = await searchParams;
+  const me = await getSessionUser();
+  const isAdmin = me?.isAdmin ?? false;
 
   const fromDate = from ? new Date(`${from}T00:00:00`) : undefined;
   const toDate = to ? new Date(`${to}T23:59:59.999`) : undefined;
@@ -53,6 +56,20 @@ export default async function RetailPage({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <RetailImportModal />
+          {isAdmin && (() => {
+            const exportParams = new URLSearchParams();
+            if (from) exportParams.set("from", from);
+            if (to) exportParams.set("to", to);
+            if (status) exportParams.set("status", status);
+            return (
+              <a
+                href={`/api/retail/export?${exportParams.toString()}`}
+                className="border border-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                ↓ Export Excel
+              </a>
+            );
+          })()}
           <Link
             href="/retail/orders/new"
             className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
