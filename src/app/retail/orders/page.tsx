@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import RetailExportModal from "@/components/RetailExportModal";
+import BulkDispatchDisabledButton from "@/components/BulkDispatchDisabledButton";
 import { userLabel } from "@/lib/userLabel";
 import { getSessionUser } from "@/lib/auth";
 
@@ -55,12 +56,7 @@ export default async function RetailPage({
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Link
-            href="/retail/dispatch-import"
-            className="border border-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            ↓ Bulk Dispatch
-          </Link>
+          <BulkDispatchDisabledButton />
           <RetailExportModal />
           <Link
             href="/retail/orders/new"
