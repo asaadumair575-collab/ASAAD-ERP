@@ -2061,6 +2061,97 @@ export async function applyCPR(rows: CPRRow[], fileCount = 1): Promise<{ payment
   return { payments, returned, notFound };
 }
 
+// ── Retail CPR Settlement ──────────────────────────────────────────────────────
+
+export type RetailCPRPreviewRow = CPRRow & {
+  found: boolean;
+  customerName: string | null;
+  orderId: number | null;
+  slipNo: string | null;
+  alreadyProcessed: boolean;
+  courierCharge: number;
+  netReceivable: number;
+};
+
+async function findRetailOrderByTracking(tracking: string) {
+  const t = tracking.trim();
+  const exact = await prisma.retailOrder.findFirst({ where: { trackingNumber: t } });
+  if (exact) return exact;
+  const candidates = await prisma.retailOrder.findMany({
+    where: { trackingNumber: { not: null } },
+    select: { id: true, trackingNumber: true },
+  });
+  const partial = candidates.find((o) => o.trackingNumber && t.includes(o.trackingNumber));
+  if (!partial) return null;
+  return prisma.retailOrder.findUnique({ where: { id: partial.id } });
+}
+
+export async function previewRetailCPR(rows: CPRRow[]): Promise<RetailCPRPreviewRow[]> {
+  await requireAuth();
+  const result: RetailCPRPreviewRow[] = [];
+  for (const row of rows) {
+    const order = await findRetailOrderByTracking(row.trackingNumber);
+    const full = order ? await prisma.retailOrder.findUnique({
+      where: { id: order.id },
+      select: { id: true, customerName: true, status: true, payments: { select: { id: true, note: true } } },
+    }) : null;
+    const alreadyProcessed = !!full && (
+      (row.status === "Delivered" && full.payments.some((p) => p.note === "CPR settlement")) ||
+      (row.status === "Return" && full.status === "RETURNED")
+    );
+    const courierCharge = row.codAmount - row.netAmount;
+    result.push({
+      ...row,
+      found: !!full,
+      customerName: full?.customerName ?? null,
+      orderId: full?.id ?? null,
+      slipNo: full ? `R-${String(full.id).padStart(3, "0")}` : null,
+      alreadyProcessed,
+      courierCharge,
+      netReceivable: row.netAmount,
+    });
+  }
+  return result;
+}
+
+export async function applyRetailCPR(rows: CPRRow[]): Promise<{ payments: number; returned: number; notFound: number }> {
+  await requireAdmin();
+  let payments = 0, returned = 0, notFound = 0;
+
+  for (const row of rows) {
+    const order = await findRetailOrderByTracking(row.trackingNumber);
+    if (!order) { notFound++; continue; }
+
+    if (row.status === "Delivered") {
+      const existing = await prisma.retailPayment.findFirst({ where: { orderId: order.id, note: "CPR settlement" } });
+      if (existing) continue;
+      const courierCharge = row.codAmount - row.netAmount;
+      await prisma.retailOrder.update({
+        where: { id: order.id },
+        data: { courierCharge, status: "DELIVERED" },
+      });
+      if (row.netAmount > 0) {
+        await prisma.retailPayment.create({
+          data: { orderId: order.id, amount: row.netAmount, date: new Date(), note: "CPR settlement" },
+        });
+      }
+      payments++;
+    } else if (row.status === "Return") {
+      const o = await prisma.retailOrder.findUnique({ where: { id: order.id }, select: { status: true } });
+      if (o?.status === "RETURNED") continue;
+      await prisma.retailOrder.update({
+        where: { id: order.id },
+        data: { status: "RETURNED", returnDeliveryCost: row.shippingCharges },
+      });
+      returned++;
+    }
+  }
+
+  revalidatePath("/retail/orders");
+  revalidatePath("/retail/finance");
+  return { payments, returned, notFound };
+}
+
 export async function reportBug(formData: FormData) {
   const me = await requireAuth();
   const title = (formData.get("title") as string | null)?.trim();

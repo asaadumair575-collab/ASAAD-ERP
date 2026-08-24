@@ -233,6 +233,9 @@ export default function Sidebar({
                   <NavLink href="/retail/dispatch" active={pathname.startsWith("/retail/dispatch")} compact onClick={closeMobile}>Dispatch</NavLink>
                 )}
                 <NavLink href="/retail/drafts" active={pathname.startsWith("/retail/drafts")} compact onClick={closeMobile}>Draft Orders</NavLink>
+                {isAdmin && (
+                  <NavLink href="/retail/cpr" active={pathname.startsWith("/retail/cpr")} compact onClick={closeMobile}>CPR Import</NavLink>
+                )}
               </div>
             )}
           </>
