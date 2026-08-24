@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
   const order = await prisma.ecomOrder.create({
     data: {
       shopifyOrderId,
+      draft: true,
       customerName,
       phone,
       city,

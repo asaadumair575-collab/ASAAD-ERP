@@ -337,6 +337,7 @@ model EcomOrder {
   address         String?
   trackingNumber  String?
   shopifyOrderId  String?
+  draft           Boolean         @default(false)
   createdAt       DateTime        @default(now())
   items         EcomOrderItem[]
   payments      EcomPayment[]

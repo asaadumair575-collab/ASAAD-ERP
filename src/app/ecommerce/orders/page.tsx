@@ -22,6 +22,7 @@ export default async function EcomOrdersPage({
 
   const orders = await prisma.ecomOrder.findMany({
     where: {
+      draft: false,
       ...(fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {}),
       ...(status === "RETURNED" ? { returned: true } : status ? { status } : {}),
       ...(q ? { OR: [{ customerName: { contains: q, mode: "insensitive" } }, { phone: { contains: q } }, { city: { contains: q, mode: "insensitive" } }] } : {}),
