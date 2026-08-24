@@ -59,15 +59,37 @@ export default async function DraftOrdersPage({
     orderBy: { date: "desc" },
   });
 
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const todayOrders = orders.filter(o => o.date >= todayStart);
+  const totalAmount = orders.reduce((s, o) => s + o.totalAmount, 0);
+  const pendingCount = orders.filter(o => !o.draftStatus).length;
+
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Draft Orders</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Incoming Shopify orders — confirm to process.</p>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Draft Orders</h1>
+        <p className="text-sm text-gray-500 mt-0.5">Incoming Shopify orders — confirm to process.</p>
+      </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm">
+          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Total Orders</p>
+          <p className="text-3xl font-bold text-gray-900 mt-1">{orders.length}</p>
         </div>
-        <span className="bg-orange-100 text-orange-700 font-semibold text-sm px-3 py-1 rounded-full">{orders.length} orders</span>
+        <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm">
+          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Today</p>
+          <p className="text-3xl font-bold text-orange-600 mt-1">{todayOrders.length}</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm">
+          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Pending Review</p>
+          <p className="text-3xl font-bold text-yellow-600 mt-1">{pendingCount}</p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm">
+          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Total Amount</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">Rs {fmt(totalAmount)}</p>
+        </div>
       </div>
 
       {/* Filter */}
