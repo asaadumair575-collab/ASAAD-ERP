@@ -10,7 +10,7 @@ function yesterday() {
 
 export default function RetailExportModal() {
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState(yesterday());
+  const [date, setDate] = useState("");
   const [total, setTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
