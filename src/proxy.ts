@@ -12,6 +12,10 @@ export function proxy(request: NextRequest) {
   const next = () =>
     NextResponse.next({ request: { headers: requestHeaders } });
 
+  if (pathname.startsWith("/api/shopify/")) {
+    return next();
+  }
+
   if (pathname === "/login") {
     if (username) {
       return NextResponse.redirect(new URL("/", request.url));
