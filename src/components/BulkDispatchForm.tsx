@@ -59,11 +59,12 @@ export default function BulkDispatchForm() {
   }
 
   async function handleApply() {
-    if (!rawRows.length) return;
+    if (!freshRows.length) return;
     setError(null);
     setApplying(true);
+    const toApply = rawRows.filter((r) => freshRows.some((f) => f.slipNo === r.slipNo));
     try {
-      const res = await applyBulkDispatch(rawRows);
+      const res = await applyBulkDispatch(toApply);
       setResult(res);
       setPreview(null);
       setRawRows([]);
@@ -163,7 +164,7 @@ export default function BulkDispatchForm() {
           {alreadySetRows.length > 0 && (
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100 bg-yellow-50">
-                <p className="text-xs font-medium text-yellow-700 uppercase tracking-wide">Tracking Already Set — Will Re-Apply</p>
+                <p className="text-xs font-medium text-yellow-700 uppercase tracking-wide">Tracking Already Set — Will Be Skipped</p>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -200,13 +201,13 @@ export default function BulkDispatchForm() {
             </div>
           )}
 
-          {foundRows.length > 0 && (
+          {freshRows.length > 0 && (
             <button
               onClick={handleApply}
               disabled={applying}
               className="w-full bg-black text-white text-sm font-semibold py-3 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
-              {applying ? "Applying…" : `✓ Apply — Update ${freshRows.length + alreadySetRows.length} orders`}
+              {applying ? "Applying…" : `✓ Apply — Update ${freshRows.length} orders`}
             </button>
           )}
         </div>
