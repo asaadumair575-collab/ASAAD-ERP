@@ -97,7 +97,7 @@ export default async function ShopifyOrdersPage({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Shopify Orders</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Draft Orders</h1>
           <p className="text-sm text-gray-500 mt-0.5">Orders imported automatically from your Shopify store.</p>
         </div>
       </div>
