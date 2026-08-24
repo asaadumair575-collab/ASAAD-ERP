@@ -3,6 +3,7 @@ import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import RetailExportModal from "@/components/RetailExportModal";
 import BulkDispatchDisabledButton from "@/components/BulkDispatchDisabledButton";
+import DeleteAllRetailOrdersButton from "@/components/DeleteAllRetailOrdersButton";
 import { userLabel } from "@/lib/userLabel";
 import { getSessionUser } from "@/lib/auth";
 
@@ -56,6 +57,7 @@ export default async function RetailPage({
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {isAdmin && <DeleteAllRetailOrdersButton />}
           <BulkDispatchDisabledButton />
           <RetailExportModal />
           <Link
