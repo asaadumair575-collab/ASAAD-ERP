@@ -6,9 +6,9 @@ export async function POST() {
   const me = await getSessionUser();
   if (!me?.isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  await prisma.retailOrderItem.deleteMany({});
-  await prisma.retailPayment.deleteMany({});
-  const { count } = await prisma.retailOrder.deleteMany({});
+  await prisma.ecomOrderItem.deleteMany({});
+  await prisma.ecomPayment.deleteMany({});
+  const { count } = await prisma.ecomOrder.deleteMany({});
 
   return NextResponse.json({ ok: true, deleted: count });
 }
