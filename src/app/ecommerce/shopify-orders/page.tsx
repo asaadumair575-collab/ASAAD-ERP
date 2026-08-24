@@ -110,42 +110,52 @@ export default async function DraftOrdersPage({
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100 text-xs text-gray-400 font-medium uppercase tracking-wide text-left">
-                <th className="py-3 px-5">Order</th>
-                <th className="py-3 px-5">Date</th>
-                <th className="py-3 px-5">Customer</th>
-                <th className="py-3 px-5">Items</th>
-                <th className="py-3 px-5 text-right">Amount</th>
-                <th className="py-3 px-5">Status</th>
-                <th className="py-3 px-5"></th>
+              <tr className="border-b border-gray-200 text-xs text-gray-500 font-medium text-left">
+                <th className="py-2.5 pl-4 pr-2 w-8">
+                  <input type="checkbox" className="rounded border-gray-300" disabled />
+                </th>
+                <th className="py-2.5 px-3">Order</th>
+                <th className="py-2.5 px-3">Date</th>
+                <th className="py-2.5 px-3">Customer</th>
+                <th className="py-2.5 px-3">Items</th>
+                <th className="py-2.5 px-3 text-right">Total</th>
+                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 pr-4 w-8"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-100">
               {orders.map((o) => {
                 const label = o.notes?.replace("Shopify Order ", "") ?? `#${o.shopifyOrderId}`;
                 const statusMeta = o.draftStatus ? STATUS_META[o.draftStatus] : null;
                 return (
-                  <tr key={o.id} className="hover:bg-gray-50/60 transition-colors group">
-                    <td className="py-3 px-5 font-mono text-xs font-semibold text-gray-600">{label}</td>
-                    <td className="py-3 px-5 text-gray-400 text-xs whitespace-nowrap">{timeAgo(o.date)}</td>
-                    <td className="py-3 px-5">
-                      <p className="font-medium text-gray-900">{o.customerName}</p>
-                      {(o.phone || o.city) && <p className="text-xs text-gray-400">{[o.phone, o.city].filter(Boolean).join(" · ")}</p>}
+                  <tr key={o.id} className="hover:bg-gray-50 transition-colors group">
+                    <td className="py-2.5 pl-4 pr-2">
+                      <input type="checkbox" className="rounded border-gray-300" />
                     </td>
-                    <td className="py-3 px-5 text-gray-500 text-xs max-w-[200px]">
+                    <td className="py-2.5 px-3 font-semibold text-gray-900">{label}</td>
+                    <td className="py-2.5 px-3 text-gray-500 text-xs whitespace-nowrap">{timeAgo(o.date)}</td>
+                    <td className="py-2.5 px-3">
+                      <p className="text-gray-900">{o.customerName}</p>
+                      {o.city && <p className="text-xs text-gray-400">{o.city}</p>}
+                    </td>
+                    <td className="py-2.5 px-3 text-gray-500 text-xs max-w-[200px] truncate">
                       {o.items.map((i) => `${i.description} ×${i.quantity}`).join(", ")}
                     </td>
-                    <td className="py-3 px-5 text-right tabular-nums font-semibold text-gray-900">Rs {fmt(o.totalAmount)}</td>
-                    <td className="py-3 px-5">
+                    <td className="py-2.5 px-3 text-right tabular-nums font-medium text-gray-900">Rs {fmt(o.totalAmount)}</td>
+                    <td className="py-2.5 px-3">
                       {statusMeta ? (
-                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${statusMeta.color}`}>
+                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border ${statusMeta.color}`}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
                           {statusMeta.label}
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-300">—</span>
+                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-500">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                          New
+                        </span>
                       )}
                     </td>
-                    <td className="py-3 px-5 text-right">
+                    <td className="py-2.5 pr-4">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <DraftStatusSelect id={o.id} initial={o.draftStatus ?? null} compact />
                         <ConfirmDraftButton id={o.id} />
