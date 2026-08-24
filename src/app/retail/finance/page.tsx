@@ -143,7 +143,7 @@ export default async function RetailFinancePage({
               <tbody className="divide-y divide-gray-50">
                 {orders.map((o) => {
                   const received = o.payments.reduce((s, p) => s + p.amount, 0);
-                  const balance = Math.max(0, o.totalAmount - received);
+                  const balance = Math.max(0, o.totalAmount - (o.courierCharge ?? 0) - received);
                   const cogs = o.items.reduce((s, i) => s + i.quantity * COST_PER_DOZEN, 0);
                   const courier = o.courierCharge ?? 0;
                   const profit = o.totalAmount - cogs - courier;
