@@ -3,7 +3,6 @@ import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import DraftStatusSelect from "@/components/DraftStatusSelect";
-import ConfirmDraftButton from "@/components/ConfirmDraftButton";
 import DateRangeFilter from "@/components/DateRangeFilter";
 
 function fmt(n: number) {
@@ -156,10 +155,7 @@ export default async function DraftOrdersPage({
                       )}
                     </td>
                     <td className="py-2.5 pr-4">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <DraftStatusSelect id={o.id} initial={o.draftStatus ?? null} compact />
-                        <ConfirmDraftButton id={o.id} />
-                      </div>
+                      <DraftStatusSelect id={o.id} initial={o.draftStatus ?? null} compact />
                     </td>
                   </tr>
                 );

@@ -4,14 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const STATUSES = [
-  { value: "CALL_NOT_PICKED", label: "📵 Call Not Picked" },
-  { value: "NUMBER_OFF",      label: "🔕 Number Off" },
-  { value: "CANCELLED",       label: "❌ Cancel Order" },
-  { value: "CONFIRMED",       label: "✅ Confirm Order" },
+  { value: "CALL_NOT_PICKED", label: "Call Not Picked", emoji: "📵" },
+  { value: "NUMBER_OFF",      label: "Number Off",      emoji: "🔕" },
+  { value: "CANCELLED",       label: "Cancel Order",    emoji: "❌" },
+  { value: "CONFIRMED",       label: "Confirm Order",   emoji: "✅" },
 ];
 
-// Full pill-button row (used in old card view — not used now)
-// Compact = small dropdown (used in table row on hover)
 export default function DraftStatusSelect({
   id,
   initial,
@@ -21,36 +19,63 @@ export default function DraftStatusSelect({
   initial: string | null;
   compact?: boolean;
 }) {
-  const [value, setValue] = useState(initial ?? "");
+  const [pending, setPending] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
-  async function handle(newVal: string) {
-    if (saving) return;
-    setValue(newVal);
+  async function confirm() {
+    if (!pending || saving) return;
     setSaving(true);
     await fetch("/api/ecom/draft-status", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, draftStatus: newVal }),
+      body: JSON.stringify({ id, draftStatus: pending }),
     });
     setSaving(false);
-    if (newVal === "CONFIRMED") router.refresh();
+    setPending(null);
+    router.refresh();
   }
+
+  function cancel() {
+    setPending(null);
+  }
+
+  const selectedMeta = STATUSES.find((s) => s.value === pending);
 
   if (compact) {
     return (
-      <select
-        value={value}
-        onChange={(e) => handle(e.target.value)}
-        disabled={saving}
-        className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50"
-      >
-        <option value="">— Set status —</option>
-        {STATUSES.map((s) => (
-          <option key={s.value} value={s.value}>{s.label}</option>
-        ))}
-      </select>
+      <div className="flex items-center gap-2">
+        <select
+          value={pending ?? ""}
+          onChange={(e) => setPending(e.target.value || null)}
+          disabled={saving}
+          className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50"
+        >
+          <option value="">— Set status —</option>
+          {STATUSES.map((s) => (
+            <option key={s.value} value={s.value}>{s.emoji} {s.label}</option>
+          ))}
+        </select>
+
+        {pending && (
+          <div className="flex items-center gap-1.5 animate-in fade-in slide-in-from-left-2 duration-150">
+            <button
+              onClick={confirm}
+              disabled={saving}
+              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
+            >
+              {saving ? "…" : "Confirm"}
+            </button>
+            <button
+              onClick={cancel}
+              disabled={saving}
+              className="text-xs px-2 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -66,20 +91,24 @@ export default function DraftStatusSelect({
     <div className="flex flex-wrap items-center gap-2">
       <span className="text-xs text-gray-400 font-medium">Status:</span>
       {STATUSES.map((s) => {
-        const isActive = value === s.value;
+        const isActive = pending === s.value || (!pending && initial === s.value);
         const colors = PILL_COLORS[s.value];
         return (
           <button
             key={s.value}
-            onClick={() => handle(isActive ? "" : s.value)}
+            onClick={() => setPending(isActive ? null : s.value)}
             disabled={saving}
             className={`text-xs font-medium px-3 py-1 rounded-full border transition-all ${isActive ? colors.active : colors.inactive} disabled:opacity-50`}
           >
-            {s.label}
+            {s.emoji} {s.label}
           </button>
         );
       })}
-      {saving && <span className="text-xs text-gray-400">saving…</span>}
+      {pending && (
+        <button onClick={confirm} disabled={saving} className="text-xs font-semibold px-3 py-1 rounded-full bg-black text-white hover:bg-gray-800 disabled:opacity-50 transition-colors">
+          {saving ? "Saving…" : `Save`}
+        </button>
+      )}
     </div>
   );
 }
