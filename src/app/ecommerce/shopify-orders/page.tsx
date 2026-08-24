@@ -131,7 +131,11 @@ export default async function DraftOrdersPage({
                     <td className="py-2.5 pl-4 pr-2">
                       <input type="checkbox" className="rounded border-gray-300" />
                     </td>
-                    <td className="py-2.5 px-3 font-semibold text-gray-900">{label}</td>
+                    <td className="py-2.5 px-3 font-semibold text-gray-900">
+                      <Link href={`/ecommerce/shopify-orders/${o.id}`} className="hover:text-blue-600 hover:underline transition-colors">
+                        {label}
+                      </Link>
+                    </td>
                     <td className="py-2.5 px-3 text-gray-500 text-xs whitespace-nowrap">{timeAgo(o.date)}</td>
                     <td className="py-2.5 px-3">
                       <p className="text-gray-900">{o.customerName}</p>
