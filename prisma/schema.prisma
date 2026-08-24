@@ -615,3 +615,12 @@ model PushSubscription {
 }
 
 // ── Calling Module ─────────────────────────────────────────────────────────
+
+
+model RetailExportLog {
+  id         Int      @id @default(autoincrement())
+  date       String
+  exportedAt DateTime @default(now())
+
+  @@index([date])
+}

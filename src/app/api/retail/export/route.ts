@@ -97,7 +97,11 @@ export async function GET(req: NextRequest) {
   XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
   const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
 
-  const filename = `courier-orders-${from}-to-${to}.xlsx`;
+  // Log this export and get sequential number
+  await prisma.retailExportLog.create({ data: { date: from } });
+  const exportCount = await prisma.retailExportLog.count({ where: { date: from } });
+
+  const filename = `Courier Upload ${from} (${exportCount}).xlsx`;
 
   return new NextResponse(buf, {
     headers: {

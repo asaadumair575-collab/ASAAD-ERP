@@ -12,16 +12,18 @@ export default function RetailExportModal() {
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState("");
   const [total, setTotal] = useState<number | null>(null);
+  const [exportCount, setExportCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!open || !date) return;
     setTotal(null);
+    setExportCount(null);
     const controller = new AbortController();
     fetch(`/api/retail/export/check?date=${date}`, { signal: controller.signal })
       .then((r) => r.json())
-      .then((data: { total: number }) => setTotal(data.total))
+      .then((data: { total: number; exportCount: number }) => { setTotal(data.total); setExportCount(data.exportCount); })
       .catch(() => {});
     return () => controller.abort();
   }, [open, date]);
@@ -41,7 +43,7 @@ export default function RetailExportModal() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `courier-orders-${date}.xlsx`;
+      a.download = `Courier Upload ${date} (${(exportCount ?? 0) + 1}).xlsx`;
       a.click();
       URL.revokeObjectURL(url);
       setOpen(false);
@@ -54,7 +56,7 @@ export default function RetailExportModal() {
   return (
     <>
       <button
-        onClick={() => { setOpen(true); setError(""); setTotal(null); }}
+        onClick={() => { setOpen(true); setError(""); setTotal(null); setExportCount(null); }}
         className="border border-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
       >
         ↑ Bulk Upload
@@ -82,7 +84,15 @@ export default function RetailExportModal() {
               total === 0 ? (
                 <p className="text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">No orders found for this date.</p>
               ) : (
-                <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-xl px-3 py-2">{total} order{total !== 1 ? "s" : ""} will be exported.</p>
+                <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2 space-y-0.5">
+                  <p className="text-xs text-green-700">{total} order{total !== 1 ? "s" : ""} ready to export</p>
+                  {exportCount !== null && exportCount > 0 && (
+                    <p className="text-xs text-orange-600">Already exported {exportCount} time{exportCount !== 1 ? "s" : ""} — this will be download #{exportCount + 1}</p>
+                  )}
+                  {exportCount === 0 && (
+                    <p className="text-xs text-gray-400">Pehli baar export hoga</p>
+                  )}
+                </div>
               )
             )}
 
