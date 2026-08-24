@@ -152,8 +152,8 @@ export default async function DraftOrdersPage({
                           {statusMeta.label}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-500">
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-green-200 bg-green-50 text-green-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                           New
                         </span>
                       )}

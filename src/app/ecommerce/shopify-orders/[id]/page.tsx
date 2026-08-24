@@ -46,7 +46,7 @@ export default async function DraftOrderDetailPage({ params }: { params: Promise
               {statusMeta.label}
             </span>
           ) : (
-            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-gray-100 text-gray-500">New</span>
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-200">New</span>
           )}
           <ConfirmDraftButton id={order.id} />
         </div>
