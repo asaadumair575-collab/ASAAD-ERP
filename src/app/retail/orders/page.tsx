@@ -149,11 +149,11 @@ export default async function RetailPage({
                     </td>
                     <td className="py-3 px-5 text-right">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        o.status === "PAID" ? "bg-green-100 text-green-700" :
+                        (o.status === "PAID" || o.status === "DELIVERED") ? "bg-green-100 text-green-700" :
                         o.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" :
                         "bg-gray-100 text-gray-500"
                       }`}>
-                        {o.status === "PAID" ? "Delivered" : o.status === "PARTIAL" ? "Partial" : "Pending"}
+                        {(o.status === "PAID" || o.status === "DELIVERED") ? "Delivered" : o.status === "PARTIAL" ? "Partial" : "Pending"}
                       </span>
                     </td>
                   </tr>

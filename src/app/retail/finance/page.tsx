@@ -68,7 +68,8 @@ export default async function RetailFinancePage({
           className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
         >
           <option value="">All orders</option>
-          <option value="PAID">Paid</option>
+          <option value="PAID">Delivered (PAID)</option>
+          <option value="DELIVERED">Delivered (CPR)</option>
           <option value="PARTIAL">Partial</option>
           <option value="PENDING">Unpaid</option>
         </select>
@@ -175,11 +176,11 @@ export default async function RetailFinancePage({
                       </td>
                       <td className="py-3 px-4 text-right">
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                          o.status === "PAID" ? "bg-green-100 text-green-700" :
+                          (o.status === "PAID" || o.status === "DELIVERED") ? "bg-green-100 text-green-700" :
                           o.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" :
                           "bg-gray-100 text-gray-500"
                         }`}>
-                          {o.status === "PAID" ? "Delivered" : o.status === "PARTIAL" ? "Partial" : "Pending"}
+                          {(o.status === "PAID" || o.status === "DELIVERED") ? "Delivered" : o.status === "PARTIAL" ? "Partial" : "Pending"}
                         </span>
                       </td>
                     </tr>

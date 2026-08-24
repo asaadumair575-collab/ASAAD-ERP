@@ -2128,7 +2128,7 @@ export async function applyRetailCPR(rows: CPRRow[]): Promise<{ payments: number
       const courierCharge = Math.round((row.codAmount - row.netAmount) * 100) / 100;
       await prisma.retailOrder.update({
         where: { id: order.id },
-        data: { courierCharge, status: "DELIVERED" },
+        data: { courierCharge, status: "PAID" },
       });
       if (!existing && row.netAmount > 0) {
         await prisma.retailPayment.create({
