@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const STATUSES = [
   { value: "", label: "— Select Status —" },
@@ -20,6 +21,7 @@ const colors: Record<string, string> = {
 export default function DraftStatusSelect({ id, initial }: { id: number; initial: string | null }) {
   const [value, setValue] = useState(initial ?? "");
   const [saving, setSaving] = useState(false);
+  const router = useRouter();
 
   async function handle(newVal: string) {
     setValue(newVal);
