@@ -26,7 +26,7 @@ function calcWeight(items: { quantity: number }[]): number {
 
 export async function GET(req: NextRequest) {
   const me = await getSessionUser();
-  if (!me?.isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const sp = req.nextUrl.searchParams;
   const from = sp.get("from");

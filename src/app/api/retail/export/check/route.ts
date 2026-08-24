@@ -4,7 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   const me = await getSessionUser();
-  if (!me?.isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const date = req.nextUrl.searchParams.get("date");
   if (!date) return NextResponse.json({ error: "date required" }, { status: 400 });

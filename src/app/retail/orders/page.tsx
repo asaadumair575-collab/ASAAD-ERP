@@ -57,7 +57,7 @@ export default async function RetailPage({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <RetailImportModal />
-          {isAdmin && <RetailExportModal />}
+          <RetailExportModal />
           <Link
             href="/retail/orders/new"
             className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
