@@ -94,7 +94,9 @@ export default async function DraftOrdersPage({
               <tbody className="divide-y divide-gray-50">
                 {orders.map((o) => (
                   <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
-                    <td className="py-3 px-5 font-mono text-xs text-gray-400">{o.notes ?? `#${o.shopifyOrderId}`}</td>
+                    <td className="py-3 px-5 font-mono text-xs text-gray-400">
+                      {o.notes?.replace("Shopify Order ", "") ?? `#${o.shopifyOrderId}`}
+                    </td>
                     <td className="py-3 px-5">
                       <p className="font-medium">{o.customerName}</p>
                       {(o.phone || o.city) && (
