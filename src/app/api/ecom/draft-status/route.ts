@@ -7,12 +7,23 @@ export async function POST(req: NextRequest) {
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id, draftStatus } = await req.json();
-  await prisma.ecomOrder.update({
-    where: { id: Number(id) },
-    data: {
-      draftStatus: draftStatus || null,
-      ...(draftStatus === "CONFIRMED" ? { draft: false } : {}),
-    },
-  });
+
+  await prisma.$transaction([
+    prisma.ecomOrder.update({
+      where: { id: Number(id) },
+      data: {
+        draftStatus: draftStatus || null,
+        ...(draftStatus === "CONFIRMED" ? { draft: false } : {}),
+      },
+    }),
+    ...(draftStatus
+      ? [
+          prisma.ecomOrderStatusLog.create({
+            data: { orderId: Number(id), status: draftStatus },
+          }),
+        ]
+      : []),
+  ]);
+
   return NextResponse.json({ ok: true });
 }

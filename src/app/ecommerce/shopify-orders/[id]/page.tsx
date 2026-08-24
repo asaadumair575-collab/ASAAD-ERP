@@ -19,7 +19,7 @@ export default async function DraftOrderDetailPage({ params }: { params: Promise
   const { id } = await params;
   const order = await prisma.ecomOrder.findUnique({
     where: { id: parseInt(id, 10) },
-    include: { items: true },
+    include: { items: true, statusLogs: { orderBy: { createdAt: "asc" } } },
   });
   if (!order || !order.draft) notFound();
 
@@ -102,6 +102,32 @@ export default async function DraftOrderDetailPage({ params }: { params: Promise
         <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-3">Update Status</p>
         <DraftStatusSelect id={order.id} initial={order.draftStatus ?? null} />
       </div>
+
+      {/* Status Timeline */}
+      {order.statusLogs.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-4">Status History</p>
+          <ol className="relative border-l border-gray-200 space-y-4 ml-2">
+            {order.statusLogs.map((log) => {
+              const meta = STATUS_META[log.status];
+              const d = log.createdAt;
+              const dateStr = d.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
+              const timeStr = d.toLocaleTimeString("en-PK", { hour: "numeric", minute: "2-digit", hour12: true });
+              return (
+                <li key={log.id} className="ml-4">
+                  <span className="absolute -left-1.5 w-3 h-3 rounded-full border-2 border-white bg-gray-300" />
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${meta?.color ?? "bg-gray-100 text-gray-500"}`}>
+                      {meta?.label ?? log.status}
+                    </span>
+                    <span className="text-xs text-gray-400">{dateStr} · {timeStr}</span>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      )}
     </div>
   );
 }
