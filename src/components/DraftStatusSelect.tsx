@@ -30,6 +30,7 @@ export default function DraftStatusSelect({ id, initial }: { id: number; initial
       body: JSON.stringify({ id, draftStatus: newVal }),
     });
     setSaving(false);
+    if (newVal === "CONFIRMED") router.refresh();
   }
 
   const colorClass = value ? colors[value] ?? "bg-gray-50 border-gray-200 text-gray-700" : "bg-gray-50 border-gray-200 text-gray-400";

@@ -9,7 +9,10 @@ export async function POST(req: NextRequest) {
   const { id, draftStatus } = await req.json();
   await prisma.ecomOrder.update({
     where: { id: Number(id) },
-    data: { draftStatus: draftStatus || null },
+    data: {
+      draftStatus: draftStatus || null,
+      ...(draftStatus === "CONFIRMED" ? { draft: false } : {}),
+    },
   });
   return NextResponse.json({ ok: true });
 }
