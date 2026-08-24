@@ -84,7 +84,7 @@ export default async function EcomOrdersPage({
                 <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
                   <td className="py-3 px-5">
                     <Link href={`/ecommerce/orders/${o.id}`} className="font-medium hover:underline text-gray-700 font-mono">
-                      {o.shopifyOrderId ?? `E-${String(o.id).padStart(3, "0")}`}
+                      {o.notes?.replace("Shopify Order ", "") ?? `E-${String(o.id).padStart(3, "0")}`}
                     </Link>
                   </td>
                   <td className="py-3 px-5">
