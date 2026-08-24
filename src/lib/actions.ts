@@ -2174,7 +2174,7 @@ export async function previewBulkDispatch(rows: BulkDispatchRow[]): Promise<Bulk
     const numId = parseInt(row.slipNo.replace(/^R-0*/i, ""), 10);
     const order = isNaN(numId) ? null : await prisma.retailOrder.findUnique({
       where: { id: numId },
-      select: { id: true, customerName: true, trackingNumber: true },
+      select: { id: true, customerName: true, trackingNumber: true, dispatched: true },
     });
     if (!order) {
       result.push({ ...row, found: false, orderId: null, customerName: null, currentTracking: null, alreadySet: false });
@@ -2185,7 +2185,7 @@ export async function previewBulkDispatch(rows: BulkDispatchRow[]): Promise<Bulk
         orderId: order.id,
         customerName: order.customerName,
         currentTracking: order.trackingNumber ?? null,
-        alreadySet: !!order.trackingNumber && order.trackingNumber === row.trackingNumber,
+        alreadySet: !!order.trackingNumber || order.dispatched,
       });
     }
   }
