@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import DraftStatusSelect from "@/components/DraftStatusSelect";
+import DraftStatusModal from "@/components/DraftStatusModal";
 import DateRangeFilter from "@/components/DateRangeFilter";
 
 function fmt(n: number) {
@@ -119,7 +119,6 @@ export default async function DraftOrdersPage({
                 <th className="py-2.5 px-3">Items</th>
                 <th className="py-2.5 px-3 text-right">Total</th>
                 <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 pr-4 w-8"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -146,20 +145,7 @@ export default async function DraftOrdersPage({
                     </td>
                     <td className="py-2.5 px-3 text-right tabular-nums font-medium text-gray-900">Rs {fmt(o.totalAmount)}</td>
                     <td className="py-2.5 px-3">
-                      {statusMeta ? (
-                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border ${statusMeta.color}`}>
-                          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
-                          {statusMeta.label}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-green-200 bg-green-50 text-green-700">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                          New
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2.5 pr-4">
-                      <DraftStatusSelect id={o.id} initial={o.draftStatus ?? null} compact />
+                      <DraftStatusModal id={o.id} initial={o.draftStatus ?? null} />
                     </td>
                   </tr>
                 );

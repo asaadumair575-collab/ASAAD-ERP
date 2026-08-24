@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import DraftStatusSelect from "@/components/DraftStatusSelect";
+import DraftStatusModal from "@/components/DraftStatusModal";
 import ConfirmDraftButton from "@/components/ConfirmDraftButton";
 
 function fmt(n: number) {
@@ -98,9 +98,12 @@ export default async function DraftOrderDetailPage({ params }: { params: Promise
       </div>
 
       {/* Status */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-3">Update Status</p>
-        <DraftStatusSelect id={order.id} initial={order.draftStatus ?? null} />
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex items-center justify-between gap-4">
+        <div>
+          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Status</p>
+          <p className="text-sm text-gray-500 mt-0.5">Click to update</p>
+        </div>
+        <DraftStatusModal id={order.id} initial={order.draftStatus ?? null} />
       </div>
 
       {/* Status Timeline */}
