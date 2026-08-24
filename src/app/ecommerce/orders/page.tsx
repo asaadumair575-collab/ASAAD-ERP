@@ -35,7 +35,7 @@ export default async function EcomOrdersPage({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Ecommerce Orders</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Confirm Orders</h1>
           <p className="text-sm text-gray-500 mt-0.5">All ecommerce orders</p>
         </div>
         <div className="flex items-center gap-2">
