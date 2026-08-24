@@ -2152,6 +2152,64 @@ export async function applyRetailCPR(rows: CPRRow[]): Promise<{ payments: number
   return { payments, returned, notFound };
 }
 
+// ── Retail Bulk Dispatch (PostEx Order History CSV) ──────────────────────────
+
+export type BulkDispatchRow = {
+  slipNo: string;
+  trackingNumber: string;
+};
+
+export type BulkDispatchPreviewRow = BulkDispatchRow & {
+  found: boolean;
+  orderId: number | null;
+  customerName: string | null;
+  currentTracking: string | null;
+  alreadySet: boolean;
+};
+
+export async function previewBulkDispatch(rows: BulkDispatchRow[]): Promise<BulkDispatchPreviewRow[]> {
+  await requireAuth();
+  const result: BulkDispatchPreviewRow[] = [];
+  for (const row of rows) {
+    const numId = parseInt(row.slipNo.replace(/^R-0*/i, ""), 10);
+    const order = isNaN(numId) ? null : await prisma.retailOrder.findUnique({
+      where: { id: numId },
+      select: { id: true, customerName: true, trackingNumber: true },
+    });
+    if (!order) {
+      result.push({ ...row, found: false, orderId: null, customerName: null, currentTracking: null, alreadySet: false });
+    } else {
+      result.push({
+        ...row,
+        found: true,
+        orderId: order.id,
+        customerName: order.customerName,
+        currentTracking: order.trackingNumber ?? null,
+        alreadySet: !!order.trackingNumber && order.trackingNumber === row.trackingNumber,
+      });
+    }
+  }
+  return result;
+}
+
+export async function applyBulkDispatch(rows: BulkDispatchRow[]): Promise<{ updated: number; notFound: number }> {
+  await requireAuth();
+  let updated = 0, notFound = 0;
+  for (const row of rows) {
+    const numId = parseInt(row.slipNo.replace(/^R-0*/i, ""), 10);
+    if (isNaN(numId)) { notFound++; continue; }
+    const order = await prisma.retailOrder.findUnique({ where: { id: numId }, select: { id: true } });
+    if (!order) { notFound++; continue; }
+    await prisma.retailOrder.update({
+      where: { id: numId },
+      data: { trackingNumber: row.trackingNumber, trackingSetAt: new Date(), dispatched: true, dispatchedAt: new Date() },
+    });
+    updated++;
+  }
+  revalidatePath("/retail/orders");
+  return { updated, notFound };
+}
+
 export async function reportBug(formData: FormData) {
   const me = await requireAuth();
   const title = (formData.get("title") as string | null)?.trim();
