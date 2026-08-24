@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import EcomImportModal from "@/components/EcomImportModal";
+import EcomDispatchButton from "@/components/EcomDispatchButton";
 import DeleteAllEcomOrdersButton from "@/components/DeleteAllEcomOrdersButton";
 import DateRangeFilter from "@/components/DateRangeFilter";
 
@@ -76,7 +77,8 @@ export default async function EcomOrdersPage({
                 <th className="py-3 px-5">Date</th>
                 <th className="py-3 px-5">Items</th>
                 <th className="py-3 px-5 text-right">Amount</th>
-                <th className="py-3 px-5 text-right">Status</th>
+                <th className="py-3 px-5 text-center">Status</th>
+                <th className="py-3 px-5 text-center">Dispatch</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -94,7 +96,7 @@ export default async function EcomOrdersPage({
                   <td className="py-3 px-5 text-gray-500">{o.date.toISOString().slice(0, 10)}</td>
                   <td className="py-3 px-5 text-gray-500 text-xs">{o.items.map((i) => `${i.description} ×${i.quantity}`).join(", ")}</td>
                   <td className="py-3 px-5 text-right tabular-nums font-medium">Rs {fmt(o.totalAmount)}</td>
-                  <td className="py-3 px-5 text-right">
+                  <td className="py-3 px-5 text-center">
                     {o.returned ? (
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-600">Returned</span>
                     ) : o.status === "PAID" ? (
@@ -102,8 +104,11 @@ export default async function EcomOrdersPage({
                     ) : o.status === "PARTIAL" ? (
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Partial</span>
                     ) : (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Pending</span>
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Confirmed</span>
                     )}
+                  </td>
+                  <td className="py-3 px-5 text-center">
+                    <EcomDispatchButton id={o.id} trackingNumber={o.trackingNumber ?? null} />
                   </td>
                 </tr>
               ))}
