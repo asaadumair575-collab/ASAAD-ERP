@@ -77,35 +77,38 @@ function parseCPRText(texts: string[]): CPRRow[] {
   const parseNum = (s: string) => parseFloat(s.replace(/,/g, ""));
 
   for (let i = 0; i < texts.length; i++) {
-    if (!/^\d{14}$/.test(texts[i])) continue;
-    const tracking = texts[i];
+    const token = texts[i];
+    if (token !== "Delivered" && token !== "Return" && token !== "Returned") continue;
+    const status: "Delivered" | "Return" = token === "Delivered" ? "Delivered" : "Return";
 
-    // Find status token within next 20 tokens
-    let statusIdx = -1;
-    let status: "Return" | "Delivered" | null = null;
-    for (let j = i + 1; j < Math.min(i + 20, texts.length); j++) {
-      if (texts[j] === "Return" || texts[j] === "Delivered") {
-        status = texts[j] as "Return" | "Delivered";
-        statusIdx = j;
-        break;
-      }
-    }
-    if (!status || statusIdx < 0) continue;
-
-    // Collect decimal numbers after status — stop at first non-decimal
+    // Collect decimal numbers immediately after status (stop at first non-decimal)
     const nums: number[] = [];
-    for (let j = statusIdx + 1; j < Math.min(statusIdx + 12, texts.length); j++) {
+    let j = i + 1;
+    for (; j < Math.min(i + 12, texts.length); j++) {
       if (isDecimal(texts[j])) nums.push(parseNum(texts[j]));
       else break;
     }
 
-    // nums: [shipping, cod, upfront(0), reserve/0, net(delivered only)]
+    // Must have at least 2 numbers (shipping + cod) to be a real order row
+    if (nums.length < 2) continue;
+
+    // Find tracking number (14 digits) within next 25 tokens
+    let trackingNumber: string | null = null;
+    for (let k = j; k < Math.min(j + 25, texts.length); k++) {
+      if (/^\d{14}$/.test(texts[k])) {
+        trackingNumber = texts[k];
+        i = k;
+        break;
+      }
+    }
+    if (!trackingNumber) continue;
+
+    // nums: [shipping, cod, upfront(0), reserve(0), net]
     const shippingCharges = nums[0] ?? 0;
     const codAmount = nums[1] ?? 0;
-    const netAmount = status === "Delivered" ? (nums[nums.length - 1] ?? 0) : -shippingCharges;
+    const netAmount = nums[nums.length - 1] ?? 0;
 
-    rows.push({ trackingNumber: tracking, status, codAmount, shippingCharges, netAmount });
-    i = statusIdx;
+    rows.push({ trackingNumber, status, codAmount, shippingCharges, netAmount });
   }
 
   return rows;
