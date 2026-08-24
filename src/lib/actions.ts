@@ -1484,6 +1484,7 @@ export async function setRetailDispatched(orderId: number, dispatched: boolean) 
     data: {
       dispatched,
       dispatchedAt: dispatched ? new Date() : null,
+      ...(dispatched ? {} : { trackingNumber: null, trackingSetAt: null }),
     },
   });
   revalidatePath(`/retail/orders/${orderId}`);
