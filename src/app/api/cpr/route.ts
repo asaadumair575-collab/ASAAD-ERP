@@ -80,10 +80,10 @@ function parseCPRText(texts: string[]): CPRRow[] {
     if (!/^\d{14}$/.test(texts[i])) continue;
     const tracking = texts[i];
 
-    // Find status token within next 6 tokens
+    // Find status token within next 20 tokens
     let statusIdx = -1;
     let status: "Return" | "Delivered" | null = null;
-    for (let j = i + 1; j < Math.min(i + 7, texts.length); j++) {
+    for (let j = i + 1; j < Math.min(i + 20, texts.length); j++) {
       if (texts[j] === "Return" || texts[j] === "Delivered") {
         status = texts[j] as "Return" | "Delivered";
         statusIdx = j;
@@ -92,11 +92,11 @@ function parseCPRText(texts: string[]): CPRRow[] {
     }
     if (!status || statusIdx < 0) continue;
 
-    // Collect decimal numbers after status until SR number (integer, no decimal)
+    // Collect decimal numbers after status (skip non-decimals, stop at next 14-digit tracking)
     const nums: number[] = [];
-    for (let j = statusIdx + 1; j < Math.min(statusIdx + 8, texts.length); j++) {
+    for (let j = statusIdx + 1; j < Math.min(statusIdx + 15, texts.length); j++) {
+      if (/^\d{14}$/.test(texts[j])) break; // next tracking number
       if (isDecimal(texts[j])) nums.push(parseNum(texts[j]));
-      else break;
     }
 
     // nums: [shipping, cod, upfront(0), reserve/0, net(delivered only)]
