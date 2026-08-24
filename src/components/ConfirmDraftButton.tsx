@@ -22,9 +22,14 @@ export default function ConfirmDraftButton({ id }: { id: number }) {
     <button
       onClick={handle}
       disabled={loading}
-      className="text-xs font-medium px-3 py-1 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors disabled:opacity-50"
+      className="flex items-center gap-1.5 bg-black text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 whitespace-nowrap"
     >
-      {loading ? "…" : "Confirm"}
+      {loading ? (
+        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+      ) : (
+        <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4"><path d="M2.5 8.5l4 4 7-8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      )}
+      {loading ? "Moving…" : "Confirm"}
     </button>
   );
 }

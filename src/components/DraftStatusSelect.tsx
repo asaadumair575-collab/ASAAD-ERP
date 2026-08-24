@@ -4,19 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const STATUSES = [
-  { value: "", label: "— Select Status —" },
-  { value: "CONFIRMED", label: "✅ Confirmed" },
-  { value: "CALL_NOT_PICKED", label: "📵 Call Not Picked" },
-  { value: "NUMBER_OFF", label: "🔕 Number Off" },
-  { value: "CANCELLED", label: "❌ Cancel Order" },
+  { value: "CALL_NOT_PICKED", label: "📵 Call Not Picked", active: "bg-yellow-100 text-yellow-700 border-yellow-300", inactive: "text-gray-500 border-gray-200 hover:border-yellow-300 hover:text-yellow-600" },
+  { value: "NUMBER_OFF",      label: "🔕 Number Off",      active: "bg-orange-100 text-orange-700 border-orange-300", inactive: "text-gray-500 border-gray-200 hover:border-orange-300 hover:text-orange-600" },
+  { value: "CANCELLED",       label: "❌ Cancel",           active: "bg-red-100 text-red-600 border-red-300",          inactive: "text-gray-500 border-gray-200 hover:border-red-300 hover:text-red-600" },
+  { value: "CONFIRMED",       label: "✅ Confirm Order",    active: "bg-green-100 text-green-700 border-green-300",    inactive: "text-gray-500 border-gray-200 hover:border-green-300 hover:text-green-600" },
 ];
-
-const colors: Record<string, string> = {
-  CONFIRMED: "bg-green-50 border-green-200 text-green-700",
-  CALL_NOT_PICKED: "bg-yellow-50 border-yellow-200 text-yellow-700",
-  NUMBER_OFF: "bg-orange-50 border-orange-200 text-orange-700",
-  CANCELLED: "bg-red-50 border-red-200 text-red-700",
-};
 
 export default function DraftStatusSelect({ id, initial }: { id: number; initial: string | null }) {
   const [value, setValue] = useState(initial ?? "");
@@ -24,31 +16,34 @@ export default function DraftStatusSelect({ id, initial }: { id: number; initial
   const router = useRouter();
 
   async function handle(newVal: string) {
-    setValue(newVal);
+    const next = newVal === value ? "" : newVal;
+    setValue(next);
     setSaving(true);
     await fetch("/api/ecom/draft-status", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, draftStatus: newVal }),
+      body: JSON.stringify({ id, draftStatus: next }),
     });
     setSaving(false);
-    if (newVal === "CONFIRMED") router.refresh();
+    if (next === "CONFIRMED") router.refresh();
   }
 
-  const colorClass = value ? colors[value] ?? "bg-gray-50 border-gray-200 text-gray-700" : "bg-gray-50 border-gray-200 text-gray-400";
-
   return (
-    <div className="flex items-center gap-1.5">
-      <select
-        value={value}
-        onChange={(e) => handle(e.target.value)}
-        disabled={saving}
-        className={`text-xs font-medium px-2 py-1 rounded-lg border focus:outline-none focus:ring-2 focus:ring-black transition-colors ${colorClass}`}
-      >
-        {STATUSES.map((s) => (
-          <option key={s.value} value={s.value}>{s.label}</option>
-        ))}
-      </select>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs text-gray-400 font-medium">Status:</span>
+      {STATUSES.map((s) => {
+        const isActive = value === s.value;
+        return (
+          <button
+            key={s.value}
+            onClick={() => handle(s.value)}
+            disabled={saving}
+            className={`text-xs font-medium px-3 py-1 rounded-full border transition-all ${isActive ? s.active : s.inactive} disabled:opacity-50`}
+          >
+            {s.label}
+          </button>
+        );
+      })}
       {saving && <span className="text-xs text-gray-400">saving…</span>}
     </div>
   );
