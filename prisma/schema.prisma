@@ -338,6 +338,7 @@ model EcomOrder {
   trackingNumber  String?
   shopifyOrderId  String?
   draft           Boolean         @default(false)
+  draftStatus     String?
   createdAt       DateTime        @default(now())
   items         EcomOrderItem[]
   payments      EcomPayment[]

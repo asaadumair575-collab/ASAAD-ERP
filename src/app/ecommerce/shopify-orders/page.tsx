@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import ConfirmDraftButton from "@/components/ConfirmDraftButton";
+import DraftStatusSelect from "@/components/DraftStatusSelect";
 import DateRangeFilter from "@/components/DateRangeFilter";
 
 function fmt(n: number) {
@@ -91,27 +92,34 @@ export default async function DraftOrdersPage({
                   <th className="py-3 px-5 text-center">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody>
                 {orders.map((o) => (
-                  <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
-                    <td className="py-3 px-5 font-mono text-xs text-gray-400">
-                      {o.notes?.replace("Shopify Order ", "") ?? `#${o.shopifyOrderId}`}
-                    </td>
-                    <td className="py-3 px-5">
-                      <p className="font-medium">{o.customerName}</p>
-                      {(o.phone || o.city) && (
-                        <p className="text-xs text-gray-400">{[o.phone, o.city].filter(Boolean).join(" · ")}</p>
-                      )}
-                    </td>
-                    <td className="py-3 px-5 text-gray-500 text-xs">
-                      {o.items.map((i) => `${i.description} ×${i.quantity}`).join(", ")}
-                    </td>
-                    <td className="py-3 px-5 text-gray-400 text-xs whitespace-nowrap">{o.date.toISOString().slice(0, 10)}</td>
-                    <td className="py-3 px-5 text-right tabular-nums font-medium">Rs {fmt(o.totalAmount)}</td>
-                    <td className="py-3 px-5 text-center">
-                      <ConfirmDraftButton id={o.id} />
-                    </td>
-                  </tr>
+                  <>
+                    <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
+                      <td className="pt-3 pb-1 px-5 font-mono text-xs text-gray-400">
+                        {o.notes?.replace("Shopify Order ", "") ?? `#${o.shopifyOrderId}`}
+                      </td>
+                      <td className="pt-3 pb-1 px-5">
+                        <p className="font-medium">{o.customerName}</p>
+                        {(o.phone || o.city) && (
+                          <p className="text-xs text-gray-400">{[o.phone, o.city].filter(Boolean).join(" · ")}</p>
+                        )}
+                      </td>
+                      <td className="pt-3 pb-1 px-5 text-gray-500 text-xs">
+                        {o.items.map((i) => `${i.description} ×${i.quantity}`).join(", ")}
+                      </td>
+                      <td className="pt-3 pb-1 px-5 text-gray-400 text-xs whitespace-nowrap">{o.date.toISOString().slice(0, 10)}</td>
+                      <td className="pt-3 pb-1 px-5 text-right tabular-nums font-medium">Rs {fmt(o.totalAmount)}</td>
+                      <td className="pt-3 pb-1 px-5 text-center">
+                        <ConfirmDraftButton id={o.id} />
+                      </td>
+                    </tr>
+                    <tr key={`${o.id}-s`} className="border-b border-gray-100">
+                      <td colSpan={6} className="pb-3 px-5">
+                        <DraftStatusSelect id={o.id} initial={o.draftStatus ?? null} />
+                      </td>
+                    </tr>
+                  </>
                 ))}
               </tbody>
             </table>
