@@ -92,11 +92,11 @@ function parseCPRText(texts: string[]): CPRRow[] {
     }
     if (!status || statusIdx < 0) continue;
 
-    // Collect decimal numbers after status (skip non-decimals, stop at next 14-digit tracking)
+    // Collect decimal numbers after status — stop at first non-decimal
     const nums: number[] = [];
-    for (let j = statusIdx + 1; j < Math.min(statusIdx + 15, texts.length); j++) {
-      if (/^\d{14}$/.test(texts[j])) break; // next tracking number
+    for (let j = statusIdx + 1; j < Math.min(statusIdx + 12, texts.length); j++) {
       if (isDecimal(texts[j])) nums.push(parseNum(texts[j]));
+      else break;
     }
 
     // nums: [shipping, cod, upfront(0), reserve/0, net(delivered only)]

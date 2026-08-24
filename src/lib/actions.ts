@@ -2126,7 +2126,7 @@ export async function applyRetailCPR(rows: CPRRow[]): Promise<{ payments: number
     if (row.status === "Delivered") {
       const existing = await prisma.retailPayment.findFirst({ where: { orderId: order.id, note: "CPR settlement" } });
       if (existing) continue;
-      const courierCharge = row.codAmount - row.netAmount;
+      const courierCharge = row.shippingCharges;
       await prisma.retailOrder.update({
         where: { id: order.id },
         data: { courierCharge, status: "DELIVERED" },
