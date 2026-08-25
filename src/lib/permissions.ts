@@ -15,6 +15,7 @@ export const MODULES = [
   { key: "emp_commission", label: "My Commission",       href: "/emp-commission",  yesNo: true  },
   { key: "ecommerce",      label: "Ecommerce",           href: "/ecommerce",       yesNo: false },
   { key: "bug_reports",    label: "Bug Reports",         href: "/bug-reports",     yesNo: true  },
+  { key: "employee_call_verification", label: "Employee Call Verification", href: "/employee-call-verification", yesNo: true },
 ] as const;
 
 export const SUB_MODULES = [
@@ -111,6 +112,7 @@ export const EMPTY_PERMISSIONS: UserPermissions = {
   emp_commission: "none",
   ecommerce:      "none",
   bug_reports:    "none",
+  employee_call_verification: "none",
 };
 
 export const FULL_PERMISSIONS: UserPermissions = {
@@ -130,6 +132,7 @@ export const FULL_PERMISSIONS: UserPermissions = {
   emp_commission: "view",
   ecommerce:      "full",
   bug_reports:    "view",
+  employee_call_verification: "view",
 };
 
 export function parsePermissions(raw: unknown): UserPermissions {

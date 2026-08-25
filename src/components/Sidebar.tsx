@@ -59,6 +59,12 @@ const icons = {
         stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
+  phone: (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 shrink-0">
+      <path d="M4 3h3l1.5 4-2 1.5a9 9 0 0 0 5 5l1.5-2 4 1.5v3a1.5 1.5 0 0 1-1.6 1.5A14 14 0 0 1 4 6.6 1.5 1.5 0 0 1 4 3Z"
+        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
   leads: (
     <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 shrink-0">
       <path d="M3 5.5a2 2 0 0 1 2-2h6l4 4v8.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-10.5Z"
@@ -398,6 +404,16 @@ export default function Sidebar({
             onClick={closeMobile}
           >
             Users
+          </NavLink>
+        )}
+        {canView(permissions, "employee_call_verification", isAdmin) && (
+          <NavLink
+            href="/employee-call-verification"
+            active={pathname.startsWith("/employee-call-verification")}
+            icon={icons.phone}
+            onClick={closeMobile}
+          >
+            Employee Call Verification
           </NavLink>
         )}
         {canView(permissions, "complaints", isAdmin) && (
