@@ -45,7 +45,7 @@ export default function CallLogButton({
   callCount,
   simplified = false,
 }: {
-  lead: { id: number; customerName: string; phone: string; status: string; callNote: string; city?: string | null; address?: string | null; postexTrackingNumber?: string | null };
+  lead: { id: number; customerName: string; phone: string; status: string; callNote: string };
   me: { id: number; displayName: string | null; isAdmin?: boolean };
   callCount: number;
   simplified?: boolean;
@@ -212,12 +212,6 @@ export default function CallLogButton({
   const [quickVerify, setQuickVerify] = useState<null | "checking" | VerifyResult>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
-  // Retail Postex dispatch
-  const [dispatchOpen, setDispatchOpen] = useState(false);
-  const [dispatchAmount, setDispatchAmount] = useState("");
-  const [dispatchLoading, setDispatchLoading] = useState(false);
-  const [dispatchResult, setDispatchResult] = useState<{ tracking?: string; error?: string } | null>(null);
-
   function quickOrderDone() {
     setOrderId("");
     setQuickVerify(null);
@@ -263,20 +257,6 @@ export default function CallLogButton({
           >
             ✕
           </button>
-        )}
-        {simplified && lead.status === "ORDER_RECEIVED" && (
-          lead.postexTrackingNumber ? (
-            <span className="text-xs px-2 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 font-medium whitespace-nowrap" title={lead.postexTrackingNumber}>
-              📦 {lead.postexTrackingNumber}
-            </span>
-          ) : (
-            <button
-              onClick={() => { setDispatchOpen(true); setDispatchResult(null); setDispatchAmount(""); }}
-              className="text-xs px-2.5 py-1.5 rounded-lg bg-orange-500 text-white font-medium hover:bg-orange-600 transition-colors whitespace-nowrap"
-            >
-              🚚 Dispatch
-            </button>
-          )
         )}
       </div>
 
@@ -721,90 +701,6 @@ export default function CallLogButton({
             )}
 
             </div>{/* end locked wrapper */}
-          </div>
-        </div>
-      )}
-
-      {/* Retail Postex Dispatch Modal */}
-      {dispatchOpen && (
-        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/40" onClick={() => !dispatchLoading && setDispatchOpen(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900">Dispatch via Postex</h3>
-                <p className="text-xs text-gray-400 mt-0.5">{lead.customerName} · {lead.phone}</p>
-                {lead.city && <p className="text-xs text-gray-400">{lead.city}</p>}
-                {lead.address && <p className="text-xs text-gray-400 truncate max-w-[200px]">{lead.address}</p>}
-              </div>
-              {!dispatchLoading && (
-                <button onClick={() => setDispatchOpen(false)} className="text-gray-400 hover:text-gray-700 text-lg leading-none">✕</button>
-              )}
-            </div>
-
-            {!dispatchResult && (
-              <div>
-                <label className="text-xs font-semibold text-gray-700 block mb-1">COD Amount (Rs) <span className="text-red-500">*</span></label>
-                <input
-                  type="number"
-                  autoFocus
-                  value={dispatchAmount}
-                  onChange={(e) => setDispatchAmount(e.target.value)}
-                  placeholder="e.g. 1500"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-                />
-              </div>
-            )}
-
-            {dispatchResult?.tracking && (
-              <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-                <p className="text-sm font-semibold text-green-700">✓ Dispatched!</p>
-                <p className="text-xs text-green-600 mt-0.5">Tracking: <span className="font-mono font-semibold">{dispatchResult.tracking}</span></p>
-              </div>
-            )}
-
-            {dispatchResult?.error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <p className="text-sm font-semibold text-red-700">✗ Failed</p>
-                <p className="text-xs text-red-500 mt-0.5 break-words">{dispatchResult.error}</p>
-              </div>
-            )}
-
-            <div className="flex gap-2 justify-end">
-              {!dispatchResult ? (
-                <>
-                  <button onClick={() => setDispatchOpen(false)} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
-                    Cancel
-                  </button>
-                  <button
-                    disabled={dispatchLoading || !dispatchAmount.trim()}
-                    onClick={async () => {
-                      setDispatchLoading(true);
-                      try {
-                        const res = await fetch("/api/reorder/postex-dispatch", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ leadId: lead.id, amount: Number(dispatchAmount) }),
-                        });
-                        const data = await res.json();
-                        setDispatchResult(data.tracking ? { tracking: data.tracking } : { error: data.error ?? "Unknown error" });
-                        if (data.tracking) router.replace(window.location.pathname + window.location.search);
-                      } catch (e) {
-                        setDispatchResult({ error: String(e) });
-                      }
-                      setDispatchLoading(false);
-                    }}
-                    className="flex items-center gap-2 bg-orange-500 text-white text-sm font-semibold px-5 py-2 rounded-lg hover:bg-orange-600 disabled:opacity-40 transition-colors"
-                  >
-                    {dispatchLoading && <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                    {dispatchLoading ? "Booking…" : "Book on Postex"}
-                  </button>
-                </>
-              ) : (
-                <button onClick={() => setDispatchOpen(false)} className="bg-gray-800 text-white text-sm font-semibold px-5 py-2 rounded-lg hover:bg-black transition-colors">
-                  Done
-                </button>
-              )}
-            </div>
           </div>
         </div>
       )}
