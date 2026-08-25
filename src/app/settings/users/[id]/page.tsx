@@ -1,7 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { updateUser, changeUserPassword, deleteUser } from "@/lib/actions";
+import {
+  updateUser,
+  changeUserPassword,
+  deleteUser,
+  regenerateApiToken,
+  revokeApiToken,
+} from "@/lib/actions";
 import { MODULES, SUB_MODULES, parsePermissions } from "@/lib/permissions";
 import SubmitButton from "@/components/SubmitButton";
 import DeleteButton from "@/components/DeleteButton";
@@ -24,6 +30,8 @@ export default async function UserDetailPage({
   const updateBound = updateUser.bind(null, userId);
   const changePasswordBound = changeUserPassword.bind(null, userId);
   const deleteBound = deleteUser.bind(null, userId);
+  const regenerateTokenBound = regenerateApiToken.bind(null, userId);
+  const revokeTokenBound = revokeApiToken.bind(null, userId);
 
   const totalUsers = await prisma.user.count();
 
@@ -139,6 +147,51 @@ export default async function UserDetailPage({
           Update Password
         </SubmitButton>
       </form>
+
+      {/* Employee Call mobile app */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
+        <div>
+          <h2 className="text-sm font-semibold">Employee Call App</h2>
+          <p className="text-xs text-gray-500 mt-1">
+            Login token for the Employee Call Android app. Enter this token in the app
+            instead of a username/password &mdash; it&apos;s how call logs from this
+            employee&apos;s phone get attributed to their account.
+          </p>
+        </div>
+
+        {user.apiToken ? (
+          <>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">Current Token</label>
+              <input
+                type="text"
+                readOnly
+                value={user.apiToken}
+                onFocus={(e) => e.currentTarget.select()}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono bg-gray-50 focus:outline-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <form action={regenerateTokenBound}>
+                <SubmitButton pendingText="Regenerating..." className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                  Regenerate
+                </SubmitButton>
+              </form>
+              <form action={revokeTokenBound}>
+                <SubmitButton pendingText="Revoking..." className="border border-red-200 text-red-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-50 transition-colors">
+                  Revoke
+                </SubmitButton>
+              </form>
+            </div>
+          </>
+        ) : (
+          <form action={regenerateTokenBound}>
+            <SubmitButton pendingText="Generating..." className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors">
+              Generate Token
+            </SubmitButton>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

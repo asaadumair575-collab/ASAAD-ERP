@@ -84,4 +84,10 @@ export async function getSessionUser() {
   return prisma.user.findUnique({ where: { username } });
 }
 
+// Used by the Employee Call mobile app instead of a username/password login —
+// an admin generates one of these per employee from the Users settings page.
+export function generateApiToken() {
+  return randomBytes(24).toString("base64url");
+}
+
 export const SESSION_COOKIE_NAME = SESSION_COOKIE;

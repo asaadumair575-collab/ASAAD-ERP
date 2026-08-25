@@ -13,6 +13,7 @@ import {
   clearSessionCookie,
   getSessionUsername,
   getSessionUser,
+  generateApiToken,
 } from "@/lib/auth";
 
 function cityPrefix(city: string | null | undefined): string {
@@ -973,6 +974,21 @@ export async function changeUserPassword(id: number, formData: FormData) {
   const password = String(formData.get("password") ?? "");
   if (password.length < 6) throw new Error("Password must be at least 6 characters");
   await prisma.user.update({ where: { id }, data: { passwordHash: hashPassword(password) } });
+  revalidatePath(`/settings/users/${id}`);
+}
+
+// (Re)issues the token this user's Employee Call mobile app authenticates
+// with. Regenerating invalidates whatever token was issued before.
+export async function regenerateApiToken(id: number) {
+  await requireAdmin();
+  const apiToken = generateApiToken();
+  await prisma.user.update({ where: { id }, data: { apiToken } });
+  revalidatePath(`/settings/users/${id}`);
+}
+
+export async function revokeApiToken(id: number) {
+  await requireAdmin();
+  await prisma.user.update({ where: { id }, data: { apiToken: null } });
   revalidatePath(`/settings/users/${id}`);
 }
 
