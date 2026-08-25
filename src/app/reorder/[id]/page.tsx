@@ -8,6 +8,7 @@ import LeadDetail from "./LeadDetail";
 import BackfillAddressButton from "./BackfillAddressButton";
 import RestoreLeadButton from "./RestoreLeadButton";
 import AddLeadModal from "./AddLeadModal";
+import ActiveOnAppToggle from "./ActiveOnAppToggle";
 import { userLabel } from "@/lib/userLabel";
 
 const STATUS_LABELS: Record<string, { label: string; short: string; color: string; dot: string }> = {
@@ -338,6 +339,7 @@ export default async function ReorderCampaignPage({
                             {l.calledAt && <span className="text-gray-300"> · {new Date(l.calledAt).toLocaleDateString("en-PK", { day: "numeric", month: "short" })} {new Date(l.calledAt).toLocaleTimeString("en-PK", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Karachi" })}</span>}
                           </span>
                         )}
+                        {me.isAdmin && <ActiveOnAppToggle leadId={l.id} active={l.activeOnApp} />}
                       </div>
                     </td>
                     <td className="py-2.5 px-4 text-gray-400 text-sm hidden md:table-cell">{l.city || "—"}</td>

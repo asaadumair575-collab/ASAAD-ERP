@@ -7,9 +7,10 @@ function getBearerToken(req: NextRequest): string | null {
   return match ? match[1].trim() : null;
 }
 
-// Pending leads from active reorder campaigns — the same shared pool shown on
-// the web reorder pages. Any employee with a valid token can pick one up and
-// call it from the Employee Call app; nothing here is pre-assigned per user.
+// Only leads an admin has explicitly marked "Active on App" (see
+// toggleLeadActiveOnApp in actions.ts) show up here — a deliberate opt-in
+// list rather than every pending lead from every active campaign, so what's
+// on the phone stays exactly what was chosen for it.
 export async function GET(req: NextRequest) {
   const token = getBearerToken(req);
   if (!token) {
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
   }
 
   const leads = await prisma.reorderLead.findMany({
-    where: { status: "PENDING", campaign: { isActive: true } },
+    where: { status: "PENDING", activeOnApp: true, campaign: { isActive: true } },
     select: {
       id: true,
       customerName: true,

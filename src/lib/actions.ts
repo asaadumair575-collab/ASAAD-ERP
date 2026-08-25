@@ -2462,6 +2462,17 @@ export async function requestCallOnPhone(leadId: number): Promise<{ error: strin
   return { ok: true };
 }
 
+// Lets an admin pick exactly which lead(s) should show up in the Employee
+// Call app's lead list — a deliberate opt-in instead of dumping every
+// pending lead from every active campaign onto the phone.
+export async function toggleLeadActiveOnApp(leadId: number) {
+  await requireAuth();
+  const lead = await prisma.reorderLead.findUnique({ where: { id: leadId }, select: { activeOnApp: true } });
+  if (!lead) throw new Error("Lead not found");
+  await prisma.reorderLead.update({ where: { id: leadId }, data: { activeOnApp: !lead.activeOnApp } });
+  revalidatePath("/reorder");
+}
+
 export async function restoreAbortedLead(leadId: number) {
   const me = await requireAuth();
   if (!me.isAdmin) throw new Error("Unauthorized");
