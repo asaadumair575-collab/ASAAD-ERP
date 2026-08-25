@@ -12,7 +12,7 @@ export function proxy(request: NextRequest) {
   const next = () =>
     NextResponse.next({ request: { headers: requestHeaders } });
 
-  if (pathname.startsWith("/api/shopify/")) {
+  if (pathname.startsWith("/api/shopify/") || pathname.startsWith("/api/mobile/")) {
     return next();
   }
 

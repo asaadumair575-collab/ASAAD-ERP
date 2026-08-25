@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth";
 
 const orders = [
   { name: "Ahmed Raza", phone: "03001234567", city: "Lahore", items: [{ desc: "Cancon Pro 72", qty: 1, price: 998 }], total: 998 },
@@ -20,6 +21,9 @@ const orders = [
 ];
 
 export async function POST() {
+  const me = await getSessionUser();
+  if (!me?.isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const now = Date.now();
   const created = [];
   for (let i = 0; i < orders.length; i++) {

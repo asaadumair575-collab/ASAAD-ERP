@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/auth";
 
 export async function GET(req: Request) {
+  const me = await getSessionUser();
+  if (!me?.isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const { searchParams } = new URL(req.url);
   const tracking = searchParams.get("cn") ?? "25423830003057";
 
