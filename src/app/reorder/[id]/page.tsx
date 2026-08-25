@@ -4,7 +4,6 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import CallLogButton from "./CallLogButton";
 import NoteCell from "./NoteCell";
-import RetailLeadsTable from "./RetailLeadsTable";
 import LeadDetail from "./LeadDetail";
 import BackfillAddressButton from "./BackfillAddressButton";
 import RestoreLeadButton from "./RestoreLeadButton";
