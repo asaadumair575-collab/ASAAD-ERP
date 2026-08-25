@@ -4,7 +4,6 @@ import { getSessionUser } from "@/lib/auth";
 import EcomImportModal from "@/components/EcomImportModal";
 import DeleteAllEcomOrdersButton from "@/components/DeleteAllEcomOrdersButton";
 import DateRangeFilter from "@/components/DateRangeFilter";
-import EcomDispatchButton from "@/components/EcomDispatchButton";
 import MoveToDraftButton from "@/components/MoveToDraftButton";
 
 function fmt(n: number) {
@@ -82,71 +81,67 @@ export default async function EcomOrdersPage({
         </div>
       ) : (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                  <th className="py-3 px-5">#</th>
-                  <th className="py-3 px-5">Customer</th>
-                  <th className="py-3 px-5">Items</th>
-                  <th className="py-3 px-5">Date</th>
-                  <th className="py-3 px-5 text-right">Amount</th>
-                  <th className="py-3 px-5 text-center">Status</th>
-                  <th className="py-3 px-5 text-center">Dispatch</th>
-                  <th className="py-3 px-5"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {orders.map((o) => {
-                  const orderLabel = o.notes?.replace("Shopify Order ", "") ?? `E-${String(o.id).padStart(3, "0")}`;
-                  return (
-                    <tr key={o.id} className="hover:bg-gray-50/60 transition-colors">
-                      <td className="py-3 px-5 font-mono text-xs font-semibold text-gray-500">
-                        {orderLabel}
-                      </td>
-                      <td className="py-3 px-5">
-                        <p className="font-semibold text-gray-900">{o.customerName}</p>
-                        {(o.phone || o.city) && <p className="text-xs text-gray-400 mt-0.5">{[o.phone, o.city].filter(Boolean).join(" · ")}</p>}
-                      </td>
-                      <td className="py-3 px-5">
-                        <div className="flex flex-wrap gap-1">
-                          {o.items.map((i, idx) => (
-                            <span key={idx} className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-md">
-                              {i.description} ×{i.quantity}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="py-3 px-5 text-gray-400 text-xs whitespace-nowrap">{o.date.toISOString().slice(0, 10)}</td>
-                      <td className="py-3 px-5 text-right tabular-nums font-bold text-gray-900">Rs {fmt(o.totalAmount)}</td>
-                      <td className="py-3 px-5 text-center">
-                        {o.returned ? (
-                          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">Returned</span>
-                        ) : o.status === "PAID" ? (
-                          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">Delivered</span>
-                        ) : o.status === "PARTIAL" ? (
-                          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">Partial</span>
-                        ) : (
-                          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">Confirmed</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-5 text-center">
-                        <EcomDispatchButton id={o.id} trackingNumber={o.trackingNumber ?? null} />
-                      </td>
-                      <td className="py-3 px-5 text-right">
-                        <div className="flex items-center justify-end gap-3">
-                          <MoveToDraftButton id={o.id} />
-                          <Link href={`/ecommerce/orders/${o.id}`} className="text-xs text-blue-600 hover:underline font-medium">
-                            View →
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 text-xs text-gray-400 font-medium text-left">
+                <th className="py-2.5 px-4">Order</th>
+                <th className="py-2.5 px-3">Date</th>
+                <th className="py-2.5 px-3">Customer</th>
+                <th className="py-2.5 px-3">Items</th>
+                <th className="py-2.5 px-3 text-right">Total</th>
+                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 pr-4"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {orders.map((o) => {
+                const orderLabel = o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
+                return (
+                  <tr key={o.id} className="hover:bg-gray-50 transition-colors group">
+                    <td className="py-2.5 px-4 font-semibold text-gray-900 text-xs">{orderLabel}</td>
+                    <td className="py-2.5 px-3 text-gray-400 text-xs whitespace-nowrap">
+                      {o.date.toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <p className="text-gray-900 text-xs font-medium">{o.customerName}</p>
+                      {o.city && <p className="text-xs text-gray-400">{o.city}</p>}
+                    </td>
+                    <td className="py-2.5 px-3 text-gray-400 text-xs max-w-[200px] truncate">
+                      {o.items.map(i => `${i.description} ×${i.quantity}`).join(", ")}
+                    </td>
+                    <td className="py-2.5 px-3 text-right tabular-nums font-medium text-gray-900 text-xs">Rs {fmt(o.totalAmount)}</td>
+                    <td className="py-2.5 px-3">
+                      {o.returned ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-red-200 bg-red-50 text-red-600">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-400" />Returned
+                        </span>
+                      ) : o.status === "PAID" ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-green-200 bg-green-50 text-green-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />Delivered
+                        </span>
+                      ) : o.status === "PARTIAL" ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-yellow-200 bg-yellow-50 text-yellow-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />Partial
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-purple-200 bg-purple-50 text-purple-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />Confirmed
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-4">
+                      <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <MoveToDraftButton id={o.id} />
+                        <Link href={`/ecommerce/orders/${o.id}`} className="text-xs text-blue-600 hover:underline font-medium">
+                          View →
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
