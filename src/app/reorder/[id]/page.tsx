@@ -281,26 +281,6 @@ export default async function ReorderCampaignPage({
       </form>
 
       {/* Leads table */}
-      {true ? (
-        <RetailLeadsTable
-          leads={leads.map(l => ({
-            id: l.id,
-            customerName: l.customerName,
-            phone: l.phone,
-            city: l.city,
-            address: l.address,
-            status: l.status,
-            callNote: l.callNote,
-            postexTrackingNumber: l.postexTrackingNumber,
-            prevItem: l.prevItem,
-            calledAt: l.calledAt ? l.calledAt.toISOString() : null,
-            calledByName: l.calledBy ? userLabel(l.calledBy) : null,
-            callLogsCount: l._count.callLogs,
-          }))}
-          me={meSerial}
-          simplified={campaign.isRetailFollowup}
-        />
-      ) : (
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-x-auto isolate">
         {leads.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-12">No leads match the filter</p>
@@ -328,7 +308,7 @@ export default async function ReorderCampaignPage({
                   <tr key={l.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="py-2.5 px-4 text-gray-300 text-xs hidden sm:table-cell">{i + 1}</td>
                     <td className="py-2.5 px-4">
-                      {me?.isAdmin && l.callAborts.length > 0 && (
+                      {me.isAdmin && l.callAborts.length > 0 && (
                         <div className="mb-0.5">
                           <RestoreLeadButton leadId={l.id} count={l.callAborts.length} />
                         </div>
@@ -337,7 +317,7 @@ export default async function ReorderCampaignPage({
                         <LeadDetail
                           lead={{ customerName: l.customerName, phone: l.phone, email: l.email, address: l.address, city: l.city, prevItem: l.prevItem }}
                           leadId={l.id}
-                          isAdmin={!!me?.isAdmin}
+                          isAdmin={!!me.isAdmin}
                         />
                         <span className={`sm:hidden inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap ${st.color}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
@@ -355,31 +335,31 @@ export default async function ReorderCampaignPage({
                     <td className="py-2.5 px-4 text-gray-300 text-xs truncate max-w-[140px] hidden lg:table-cell">{l.prevItem || "—"}</td>
                     <td className="py-2.5 px-4 hidden sm:table-cell">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${st.color}`}>
-                        {st.label}
-                      </span>
-                      {l._count.callLogs > 1 && (
-                        <span className="text-[10px] font-semibold text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5">
-                          {l._count.callLogs}× tried
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${st.color}`}>
+                          {st.label}
                         </span>
-                      )}
-                      {l.followUpDate && l.status === "ORDER_PLACED" && (() => {
-                        const due = new Date(l.followUpDate);
-                        const today = new Date(); today.setHours(0,0,0,0);
-                        const isOverdue = due < today;
-                        const isToday   = due.toDateString() === today.toDateString();
-                        return (
-                          <p className={`text-[11px] mt-0.5 font-medium ${isOverdue ? "text-red-500" : isToday ? "text-amber-500" : "text-gray-400"}`}>
-                            {isOverdue ? "⚠️ " : isToday ? "📅 " : "🗓 "}
-                            Follow-up: {due.toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
-                          </p>
-                        );
-                      })()}
+                        {l._count.callLogs > 1 && (
+                          <span className="text-[10px] font-semibold text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5">
+                            {l._count.callLogs}× tried
+                          </span>
+                        )}
+                        {l.followUpDate && l.status === "ORDER_PLACED" && (() => {
+                          const due = new Date(l.followUpDate);
+                          const today = new Date(); today.setHours(0,0,0,0);
+                          const isOverdue = due < today;
+                          const isToday   = due.toDateString() === today.toDateString();
+                          return (
+                            <p className={`text-[11px] mt-0.5 font-medium ${isOverdue ? "text-red-500" : isToday ? "text-amber-500" : "text-gray-400"}`}>
+                              {isOverdue ? "⚠️ " : isToday ? "📅 " : "🗓 "}
+                              Follow-up: {due.toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
+                            </p>
+                          );
+                        })()}
                       </div>
                     </td>
                     <td className="py-2.5 px-4 hidden sm:table-cell"><NoteCell note={l.callNote ?? ""} /></td>
                     <td className="py-2.5 px-4 sticky right-0 bg-inherit">
-                      <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "", city: l.city, address: l.address, postexTrackingNumber: l.postexTrackingNumber }} me={meSerial} callCount={l._count.callLogs} simplified={false} />
+                      <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "" }} me={meSerial} callCount={l._count.callLogs} simplified={campaign.isRetailFollowup} />
                     </td>
                   </tr>
                 );
@@ -388,7 +368,6 @@ export default async function ReorderCampaignPage({
           </table>
         )}
       </div>
-      )}
     </div>
   );
 }
