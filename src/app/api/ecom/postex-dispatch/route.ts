@@ -40,6 +40,13 @@ async function createPostexBooking(order: {
   }
 
   const data = await res.json();
+  console.log("[Postex response]", JSON.stringify(data));
+
+  // Postex sometimes returns 200 with statusCode=false on error
+  if (data?.statusCode === false || data?.status === false) {
+    throw new Error(data?.message ?? `Postex rejected: ${JSON.stringify(data)}`);
+  }
+
   // Postex returns trackingNumber in data.dist.trackingNumber or data.trackingNumber
   const tracking =
     data?.dist?.trackingNumber ??

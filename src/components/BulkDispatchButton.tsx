@@ -98,7 +98,7 @@ export default function BulkDispatchButton({
                         <p className="text-xs text-green-600 font-medium">✓ {result.tracking}</p>
                       )}
                       {result?.error && (
-                        <p className="text-xs text-red-500 max-w-[160px] truncate" title={result.error}>✗ {result.error}</p>
+                        <p className="text-xs text-red-500 text-left max-w-[220px] break-words whitespace-pre-wrap">✗ {result.error}</p>
                       )}
                     </div>
                   </div>
