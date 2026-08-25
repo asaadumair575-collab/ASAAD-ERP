@@ -503,10 +503,11 @@ model ReorderLead {
   calledAt         DateTime?
   calledBy         User?             @relation("ReorderLeadCalledBy", fields: [calledById], references: [id])
   calledById       Int?
-  createdAt        DateTime             @default(now())
-  callLogs         ReorderCallLog[]
-  callAttempts     ReorderCallAttempt[]
-  callAborts       ReorderCallAbort[]
+  createdAt              DateTime             @default(now())
+  postexTrackingNumber   String?
+  callLogs               ReorderCallLog[]
+  callAttempts           ReorderCallAttempt[]
+  callAborts             ReorderCallAbort[]
 
   @@index([campaignId])
   @@index([campaignId, status])

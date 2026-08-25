@@ -359,7 +359,7 @@ export default async function ReorderCampaignPage({
                     </td>
                     <td className="py-2.5 px-4 hidden sm:table-cell"><NoteCell note={l.callNote ?? ""} /></td>
                     <td className="py-2.5 px-4 sticky right-0 bg-inherit">
-                      <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "" }} me={meSerial} callCount={l._count.callLogs} simplified={campaign.isRetailFollowup} />
+                      <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "", city: l.city, address: l.address, postexTrackingNumber: l.postexTrackingNumber }} me={meSerial} callCount={l._count.callLogs} simplified={campaign.isRetailFollowup} />
 
                     </td>
                   </tr>
