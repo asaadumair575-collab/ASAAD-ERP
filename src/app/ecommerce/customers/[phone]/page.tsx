@@ -117,12 +117,14 @@ export default async function EcomCustomerDetailPage({
                 <td className="py-2.5 px-5 text-right">
                   {o.returned ? (
                     <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-600">Returned</span>
+                  ) : o.draft ? (
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">New</span>
                   ) : o.status === "PAID" ? (
                     <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">Delivered</span>
                   ) : o.status === "PARTIAL" ? (
                     <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Partial</span>
                   ) : (
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Pending</span>
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Confirmed</span>
                   )}
                 </td>
               </tr>
