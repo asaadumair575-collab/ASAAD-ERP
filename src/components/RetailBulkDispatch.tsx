@@ -140,8 +140,8 @@ export default function RetailBulkDispatch({ orders }: { orders: Order[] }) {
                   <td className="py-3 px-5 text-gray-500 text-xs">{o.items.map(i => `${i.description} ×${i.quantity}`).join(", ")}</td>
                   <td className="py-3 px-5 text-right tabular-nums font-medium">Rs {fmt(o.totalAmount)}</td>
                   <td className="py-3 px-5 text-right">
-                    {o.trackingNumber ? (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700" title={o.trackingNumber}>📦 {o.trackingNumber}</span>
+                    {o.dispatched ? (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Dispatched</span>
                     ) : (
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-600">Pending</span>
                     )}
