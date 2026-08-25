@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import RetailExportModal from "@/components/RetailExportModal";
-import BulkDispatchDisabledButton from "@/components/BulkDispatchDisabledButton";
+import RetailBulkDispatch from "@/components/RetailBulkDispatch";
 import { userLabel } from "@/lib/userLabel";
 import { getSessionUser } from "@/lib/auth";
 
@@ -56,7 +56,7 @@ export default async function RetailPage({
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <BulkDispatchDisabledButton />
+          {/* placeholder for layout — actual dispatch is inline */}
           <RetailExportModal />
           <Link
             href="/retail/orders/new"
@@ -104,64 +104,22 @@ export default async function RetailPage({
           </Link>
         </div>
       ) : (
-        <div className="table-container">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
-                <th className="py-3 px-5">#</th>
-                <th className="py-3 px-5">Customer</th>
-                <th className="py-3 px-5">Date</th>
-                <th className="py-3 px-5">Items</th>
-                <th className="py-3 px-5 text-right">Total</th>
-                <th className="py-3 px-5 text-right">Dispatch</th>
-                <th className="py-3 px-5 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {orders.map((o) => {
-                return (
-                  <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
-                    <td className="py-3 px-5">
-                      <Link href={`/retail/orders/${o.id}`} className="font-medium hover:underline text-gray-700">
-                        R-{String(o.id).padStart(3, "0")}
-                      </Link>
-                    </td>
-                    <td className="py-3 px-5">
-                      <p className="font-medium">{o.customerName}</p>
-                      {(o.phone || o.city) && (
-                        <p className="text-xs text-gray-400">{[o.phone, o.city].filter(Boolean).join(" · ")}</p>
-                      )}
-                      {o.createdBy && (
-                        <p className="text-xs text-blue-400 mt-0.5">{userLabel(o.createdBy)}</p>
-                      )}
-                    </td>
-                    <td className="py-3 px-5 text-gray-500">{o.date.toISOString().slice(0, 10)}</td>
-                    <td className="py-3 px-5 text-gray-500 text-xs">
-                      {o.items.map((i) => `${i.description} ×${i.quantity}`).join(", ")}
-                    </td>
-                    <td className="py-3 px-5 text-right tabular-nums font-medium">Rs {fmt(o.totalAmount)}</td>
-                    <td className="py-3 px-5 text-right">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        o.dispatched ? "bg-blue-100 text-blue-700" : "bg-orange-100 text-orange-600"
-                      }`}>
-                        {o.dispatched ? "Dispatched" : "Pending"}
-                      </span>
-                    </td>
-                    <td className="py-3 px-5 text-right">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        (o.status === "PAID" || o.status === "DELIVERED") ? "bg-green-100 text-green-700" :
-                        o.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" :
-                        "bg-gray-100 text-gray-500"
-                      }`}>
-                        {(o.status === "PAID" || o.status === "DELIVERED") ? "Delivered" : o.status === "PARTIAL" ? "Partial" : "Pending"}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <RetailBulkDispatch
+          orders={orders.map(o => ({
+            id: o.id,
+            customerName: o.customerName,
+            phone: o.phone,
+            city: o.city,
+            address: o.address,
+            totalAmount: o.totalAmount,
+            dispatched: o.dispatched,
+            trackingNumber: o.trackingNumber,
+            date: o.date.toISOString().slice(0, 10),
+            status: o.status,
+            items: o.items.map(i => ({ description: i.description, quantity: i.quantity })),
+            createdByName: o.createdBy ? userLabel(o.createdBy) : null,
+          }))}
+        />
       )}
     </div>
   );
