@@ -167,7 +167,6 @@ export default async function UserDetailPage({
                 type="text"
                 readOnly
                 value={user.apiToken}
-                onFocus={(e) => e.currentTarget.select()}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono bg-gray-50 focus:outline-none"
               />
             </div>
