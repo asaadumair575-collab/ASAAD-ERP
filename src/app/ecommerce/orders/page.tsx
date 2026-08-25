@@ -98,7 +98,11 @@ export default async function EcomOrdersPage({
                 const orderLabel = o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
                 return (
                   <tr key={o.id} className="hover:bg-gray-50 transition-colors group">
-                    <td className="py-2.5 px-4 font-semibold text-gray-900 text-xs">{orderLabel}</td>
+                    <td className="py-2.5 px-4 font-semibold text-gray-900 text-xs">
+                      <Link href={`/ecommerce/orders/${o.id}`} className="hover:text-blue-600 hover:underline transition-colors">
+                        {orderLabel}
+                      </Link>
+                    </td>
                     <td className="py-2.5 px-3 text-gray-400 text-xs whitespace-nowrap">
                       {o.date.toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
                     </td>
