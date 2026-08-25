@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { autoDetectCallOutcome } from "@/lib/autoCallDetection";
 
 const VALID_CALL_TYPES = new Set(["INCOMING", "OUTGOING", "MISSED"]);
 
@@ -69,6 +70,12 @@ export async function POST(req: NextRequest) {
       synced: true,
     },
   });
+
+  try {
+    await autoDetectCallOutcome({ userId: user.id, phoneNumber, duration, callType });
+  } catch {
+    // Best-effort — the call log itself already synced above regardless.
+  }
 
   return NextResponse.json({ ok: true, id: log.id });
 }
