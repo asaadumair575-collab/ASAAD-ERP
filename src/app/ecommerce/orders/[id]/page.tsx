@@ -45,8 +45,11 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
         {order.phone && <p className="text-sm text-gray-500">{order.phone}</p>}
         {order.city && <p className="text-sm text-gray-500">{order.city}</p>}
         {order.address && <p className="text-sm text-gray-500">{order.address}</p>}
-        {order.shopifyOrderId && <p className="text-xs text-gray-400 font-mono bg-gray-50 rounded-lg px-3 py-1.5 mt-1">Shopify: {order.shopifyOrderId}</p>}
-        {order.trackingNumber && <p className="text-xs text-gray-400 font-mono bg-gray-50 rounded-lg px-3 py-1.5">Tracking: {order.trackingNumber}</p>}
+        {order.trackingNumber ? (
+          <p className="text-xs font-mono bg-blue-50 text-blue-700 rounded-lg px-3 py-1.5 mt-2">Postex Tracking: {order.trackingNumber}</p>
+        ) : (
+          <p className="text-xs font-mono bg-gray-50 text-gray-400 rounded-lg px-3 py-1.5 mt-2">Not Dispatched Yet</p>
+        )}
       </div>
 
       {/* Items */}
