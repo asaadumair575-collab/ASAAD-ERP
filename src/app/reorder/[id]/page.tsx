@@ -7,6 +7,7 @@ import NoteCell from "./NoteCell";
 import LeadDetail from "./LeadDetail";
 import BackfillAddressButton from "./BackfillAddressButton";
 import RestoreLeadButton from "./RestoreLeadButton";
+import AddLeadModal from "./AddLeadModal";
 import { userLabel } from "@/lib/userLabel";
 
 const STATUS_LABELS: Record<string, { label: string; short: string; color: string; dot: string }> = {
@@ -55,6 +56,12 @@ export default async function ReorderCampaignPage({
     },
   });
   if (!campaign) notFound();
+
+  const allCampaigns = await prisma.reorderCampaign.findMany({
+    where: { isActive: true },
+    select: { id: true, name: true },
+    orderBy: { createdAt: "desc" },
+  });
 
   const leads = campaign.leads.filter((l) => {
     // hide aborted leads from the employee who aborted (admin sees all)
@@ -121,6 +128,9 @@ export default async function ReorderCampaignPage({
           <div className="mt-2">
             <BackfillAddressButton campaignId={campaign.id} />
           </div>
+        </div>
+        <div className="shrink-0">
+          <AddLeadModal currentCampaignId={campaign.id} campaigns={allCampaigns} />
         </div>
       </div>
 
