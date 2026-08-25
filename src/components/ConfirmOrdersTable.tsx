@@ -54,7 +54,7 @@ export default function ConfirmOrdersTable({ orders }: { orders: Order[] }) {
           <span className="text-sm text-orange-700 font-medium">{selected.size} order{selected.size > 1 ? "s" : ""} selected</span>
           <div className="flex items-center gap-2">
             <button onClick={() => setSelected(new Set())} className="text-xs text-orange-400 hover:text-orange-700 transition-colors">Clear</button>
-            <BulkDispatchButton selectedIds={Array.from(selected)} />
+            <BulkDispatchButton selectedIds={Array.from(selected)} orders={orders} />
           </div>
         </div>
       )}
