@@ -4,6 +4,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import CallLogButton from "./CallLogButton";
 import NoteCell from "./NoteCell";
+import RetailLeadsTable from "./RetailLeadsTable";
 import LeadDetail from "./LeadDetail";
 import BackfillAddressButton from "./BackfillAddressButton";
 import RestoreLeadButton from "./RestoreLeadButton";
@@ -280,6 +281,25 @@ export default async function ReorderCampaignPage({
       </form>
 
       {/* Leads table */}
+      {campaign.isRetailFollowup ? (
+        <RetailLeadsTable
+          leads={leads.map(l => ({
+            id: l.id,
+            customerName: l.customerName,
+            phone: l.phone,
+            city: l.city,
+            address: l.address,
+            status: l.status,
+            callNote: l.callNote,
+            postexTrackingNumber: l.postexTrackingNumber,
+            prevItem: l.prevItem,
+            calledAt: l.calledAt ? l.calledAt.toISOString() : null,
+            calledByName: l.calledBy ? userLabel(l.calledBy) : null,
+            callLogsCount: l._count.callLogs,
+          }))}
+          me={meSerial}
+        />
+      ) : (
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-x-auto isolate">
         {leads.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-12">No leads match the filter</p>
@@ -318,7 +338,6 @@ export default async function ReorderCampaignPage({
                           leadId={l.id}
                           isAdmin={!!me.isAdmin}
                         />
-                        {/* Compact status shown only on mobile */}
                         <span className={`sm:hidden inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap ${st.color}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                           {st.short}
@@ -359,8 +378,7 @@ export default async function ReorderCampaignPage({
                     </td>
                     <td className="py-2.5 px-4 hidden sm:table-cell"><NoteCell note={l.callNote ?? ""} /></td>
                     <td className="py-2.5 px-4 sticky right-0 bg-inherit">
-                      <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "", city: l.city, address: l.address, postexTrackingNumber: l.postexTrackingNumber }} me={meSerial} callCount={l._count.callLogs} simplified={campaign.isRetailFollowup} />
-
+                      <CallLogButton lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "", city: l.city, address: l.address, postexTrackingNumber: l.postexTrackingNumber }} me={meSerial} callCount={l._count.callLogs} simplified={false} />
                     </td>
                   </tr>
                 );
@@ -369,6 +387,7 @@ export default async function ReorderCampaignPage({
           </table>
         )}
       </div>
+      )}
     </div>
   );
 }
