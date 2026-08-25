@@ -23,6 +23,7 @@ async function createPostexBooking(order: {
     },
     body: JSON.stringify({
       orderType: "Normal",
+      pickupAddressCode: "001",
       orderRefNumber: orderRef,
       cityName: order.city ?? "Karachi",
       customerName: order.customerName,
