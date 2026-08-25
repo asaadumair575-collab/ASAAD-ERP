@@ -2536,18 +2536,47 @@ export async function logReorderCall(
 
 export async function getLeadCallLogs(leadId: number) {
   await requireAuth();
-  return prisma.reorderCallLog.findMany({
-    where: { leadId },
-    orderBy: { calledAt: "asc" },
-    select: {
-      status: true,
-      callNote: true,
-      calledAt: true,
-      attemptedAt: true,
-      openCount: true,
-      calledBy: { select: { displayName: true, username: true, isAdmin: true } },
-    },
-  });
+  const [logs, lead] = await Promise.all([
+    prisma.reorderCallLog.findMany({
+      where: { leadId },
+      orderBy: { calledAt: "asc" },
+      select: {
+        status: true,
+        callNote: true,
+        calledAt: true,
+        attemptedAt: true,
+        openCount: true,
+        calledById: true,
+        calledBy: { select: { displayName: true, username: true, isAdmin: true } },
+      },
+    }),
+    prisma.reorderLead.findUnique({ where: { id: leadId }, select: { phone: true } }),
+  ]);
+
+  const target = lead ? normalizePhone(lead.phone) : null;
+
+  return Promise.all(
+    logs.map(async (log) => {
+      let phoneCall: { connected: boolean; duration: number; callType: string } | null = null;
+      if (target && log.calledById) {
+        const windowStart = new Date(log.calledAt.getTime() - 15 * 60 * 1000);
+        const windowEnd = new Date(log.calledAt.getTime() + 15 * 60 * 1000);
+        const candidates = await prisma.phoneCallLog.findMany({
+          where: { userId: log.calledById, calledAt: { gte: windowStart, lte: windowEnd } },
+          select: { phoneNumber: true, duration: true, callType: true },
+        });
+        const match = candidates.find((c) => normalizePhone(c.phoneNumber) === target);
+        if (match) {
+          phoneCall = {
+            connected: match.callType === "OUTGOING" && match.duration > 0,
+            duration: match.duration,
+            callType: match.callType,
+          };
+        }
+      }
+      return { ...log, phoneCall };
+    })
+  );
 }
 
 export async function searchReorderLeads(q: string) {

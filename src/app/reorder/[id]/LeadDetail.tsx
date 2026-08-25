@@ -20,6 +20,7 @@ type CallLog = {
   attemptedAt: Date | null;
   openCount: number;
   calledBy: { displayName: string | null; username: string; isAdmin?: boolean };
+  phoneCall: { connected: boolean; duration: number; callType: string } | null;
 };
 
 type Lead = {
@@ -93,7 +94,8 @@ export default function LeadDetail({ lead, leadId, isAdmin = false }: { lead: Le
                     const timeSuspicious = isNoAnswer && (diffSec === null || diffSec < 20);
 
                     const openSuspicious = log.openCount > 1;
-                    const suspicious = timeSuspicious || openSuspicious;
+                    const phoneMismatch = !!(log.phoneCall && isNoAnswer && log.phoneCall.connected && log.phoneCall.duration > 5);
+                    const suspicious = timeSuspicious || openSuspicious || phoneMismatch;
                     return (
                       <div key={i} className={`border rounded-xl p-3 ${suspicious ? "border-red-200 bg-red-50" : "border-gray-100"}`}>
                         {/* Call number + date/time */}
@@ -117,6 +119,22 @@ export default function LeadDetail({ lead, leadId, isAdmin = false }: { lead: Le
                             <p className="text-xs text-gray-600 leading-snug">{log.callNote}</p>
                           </div>
                         )}
+                        {/* Employee said vs. what the phone's own call log shows */}
+                        <div className="flex items-start gap-1.5 mb-1">
+                          <span className="text-[11px] text-gray-400 shrink-0 mt-px">📱 Phone:</span>
+                          {log.phoneCall ? (
+                            <span className={`text-xs font-medium ${phoneMismatch ? "text-red-600" : "text-gray-500"}`}>
+                              {log.phoneCall.connected
+                                ? `Connected · ${log.phoneCall.duration}s${phoneMismatch ? " — mismatch! employee logged Not Picked" : ""}`
+                                : log.phoneCall.callType === "MISSED"
+                                ? "Missed / not picked"
+                                : "Not connected (0s)"}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-300">No phone record found</span>
+                          )}
+                        </div>
+
                         {/* Attempt audit — admin only */}
                         {isAdmin && (diffSec !== null || isNoAnswer) && (
                           <div className="mt-1.5 space-y-1">
