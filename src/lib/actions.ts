@@ -2405,6 +2405,24 @@ export async function createReorderCampaign(
   return campaign.id;
 }
 
+export async function addSingleReorderLead(
+  campaignId: number,
+  lead: { customerName: string; phone: string; city?: string; address?: string; prevItem?: string }
+) {
+  await requireAuth();
+  await prisma.reorderLead.create({
+    data: {
+      campaignId,
+      customerName: lead.customerName.trim(),
+      phone: lead.phone.trim(),
+      city: lead.city?.trim() || null,
+      address: lead.address?.trim() || null,
+      prevItem: lead.prevItem?.trim() || null,
+    },
+  });
+  revalidatePath(`/reorder/${campaignId}`);
+}
+
 export async function recordCallAttempt(leadId: number) {
   const me = await requireAuth();
   await prisma.reorderCallAttempt.create({
