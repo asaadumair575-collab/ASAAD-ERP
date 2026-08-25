@@ -3,7 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import DraftStatusModal from "@/components/DraftStatusModal";
-import DateRangeFilter from "@/components/DateRangeFilter";
+import DateRangePicker from "@/components/DateRangePicker";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -32,12 +32,12 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 export default async function DraftOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ q?: string; from?: string; to?: string; status?: string }>;
 }) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
-  const { q, from, to } = await searchParams;
+  const { q, from, to, status } = await searchParams;
   const fromDate = from ? new Date(`${from}T00:00:00`) : undefined;
   const toDate   = to   ? new Date(`${to}T23:59:59.999`) : undefined;
 
@@ -45,6 +45,7 @@ export default async function DraftOrdersPage({
     where: {
       draft: true,
       ...(fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {}),
+      ...(status === "NEW" ? { draftStatus: null } : status ? { draftStatus: status } : {}),
       ...(q ? {
         OR: [
           { customerName: { contains: q, mode: "insensitive" } },
@@ -95,9 +96,17 @@ export default async function DraftOrdersPage({
       <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
         <input type="text" name="q" defaultValue={q ?? ""} placeholder="Search customer, phone, order #..."
           className="flex-1 min-w-[180px] bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white" />
-        <DateRangeFilter from={from} to={to} />
+        <DateRangePicker from={from} to={to} />
+        <select name="status" defaultValue={status ?? ""} className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black text-gray-600">
+          <option value="">All Status</option>
+          <option value="NEW">New</option>
+          <option value="CALL_NOT_PICKED">Call Not Picked</option>
+          <option value="NUMBER_OFF">Number Off</option>
+          <option value="CANCELLED">Cancelled</option>
+          <option value="CONFIRMED">Confirmed</option>
+        </select>
         <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">Filter</button>
-        {(q || from || to) && <Link href="/ecommerce/shopify-orders" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>}
+        {(q || from || to || status) && <Link href="/ecommerce/shopify-orders" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>}
       </form>
 
       {orders.length === 0 ? (
