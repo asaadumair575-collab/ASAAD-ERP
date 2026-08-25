@@ -5,6 +5,7 @@ import EcomImportModal from "@/components/EcomImportModal";
 import DeleteAllEcomOrdersButton from "@/components/DeleteAllEcomOrdersButton";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import EcomDispatchButton from "@/components/EcomDispatchButton";
+import MoveToDraftButton from "@/components/MoveToDraftButton";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -133,9 +134,12 @@ export default async function EcomOrdersPage({
                         <EcomDispatchButton id={o.id} trackingNumber={o.trackingNumber ?? null} />
                       </td>
                       <td className="py-3 px-5 text-right">
-                        <Link href={`/ecommerce/orders/${o.id}`} className="text-xs text-blue-600 hover:underline font-medium">
-                          View →
-                        </Link>
+                        <div className="flex items-center justify-end gap-3">
+                          <MoveToDraftButton id={o.id} />
+                          <Link href={`/ecommerce/orders/${o.id}`} className="text-xs text-blue-600 hover:underline font-medium">
+                            View →
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );
