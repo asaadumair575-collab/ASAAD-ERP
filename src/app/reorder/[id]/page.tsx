@@ -281,7 +281,7 @@ export default async function ReorderCampaignPage({
       </form>
 
       {/* Leads table */}
-      {campaign.isRetailFollowup ? (
+      {true ? (
         <RetailLeadsTable
           leads={leads.map(l => ({
             id: l.id,
@@ -298,6 +298,7 @@ export default async function ReorderCampaignPage({
             callLogsCount: l._count.callLogs,
           }))}
           me={meSerial}
+          simplified={campaign.isRetailFollowup}
         />
       ) : (
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-x-auto isolate">
@@ -327,7 +328,7 @@ export default async function ReorderCampaignPage({
                   <tr key={l.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="py-2.5 px-4 text-gray-300 text-xs hidden sm:table-cell">{i + 1}</td>
                     <td className="py-2.5 px-4">
-                      {me.isAdmin && l.callAborts.length > 0 && (
+                      {me?.isAdmin && l.callAborts.length > 0 && (
                         <div className="mb-0.5">
                           <RestoreLeadButton leadId={l.id} count={l.callAborts.length} />
                         </div>
@@ -336,7 +337,7 @@ export default async function ReorderCampaignPage({
                         <LeadDetail
                           lead={{ customerName: l.customerName, phone: l.phone, email: l.email, address: l.address, city: l.city, prevItem: l.prevItem }}
                           leadId={l.id}
-                          isAdmin={!!me.isAdmin}
+                          isAdmin={!!me?.isAdmin}
                         />
                         <span className={`sm:hidden inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap ${st.color}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />

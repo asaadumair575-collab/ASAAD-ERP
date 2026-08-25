@@ -35,7 +35,7 @@ function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
 }
 
-export default function RetailLeadsTable({ leads, me }: { leads: Lead[]; me: Me }) {
+export default function RetailLeadsTable({ leads, me, simplified = false }: { leads: Lead[]; me: Me; simplified?: boolean }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [amounts, setAmounts] = useState<Record<number, string>>({});
   const [showDispatch, setShowDispatch] = useState(false);
@@ -189,7 +189,7 @@ export default function RetailLeadsTable({ leads, me }: { leads: Lead[]; me: Me 
                         lead={{ id: l.id, customerName: l.customerName, phone: l.phone, status: l.status, callNote: l.callNote ?? "", city: l.city, address: l.address, postexTrackingNumber: l.postexTrackingNumber }}
                         me={me}
                         callCount={l.callLogsCount}
-                        simplified
+                        simplified={simplified}
                       />
                     </td>
                   </tr>
