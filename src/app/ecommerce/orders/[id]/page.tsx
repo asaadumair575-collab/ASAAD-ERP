@@ -15,22 +15,25 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
   });
   if (!order) notFound();
 
+  const orderLabel = order.notes?.replace("Shopify Order ", "") ?? `#${order.id}`;
+
   return (
     <div className="max-w-2xl space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <Link href="/ecommerce/orders" className="text-sm text-gray-400 hover:text-black">← Ecommerce Orders</Link>
-          <h1 className="text-2xl font-semibold tracking-tight mt-1">
-            {order.shopifyOrderId ?? `E-${String(order.id).padStart(3, "0")}`}
-          </h1>
-          <p className="text-sm text-gray-500 mt-0.5">{order.date.toISOString().slice(0, 10)}</p>
+          <Link href="/ecommerce/orders" className="text-sm text-gray-400 hover:text-black">← Confirm Orders</Link>
+          <h1 className="text-2xl font-semibold tracking-tight mt-1">{orderLabel}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{order.date.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</p>
         </div>
         <div className="flex items-center gap-2 mt-1">
-          <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${order.status === "PAID" ? "bg-green-100 text-green-700" : order.status === "PARTIAL" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-500"}`}>
-            {order.status === "PAID" ? "Delivered" : order.status === "PARTIAL" ? "Partial" : "Pending"}
-          </span>
-          {order.returned && (
-            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-red-100 text-red-600">Returned</span>
+          {order.returned ? (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-red-100 text-red-600 border border-red-200">Returned</span>
+          ) : order.status === "PAID" ? (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-100 text-green-700 border border-green-200">Delivered</span>
+          ) : order.status === "PARTIAL" ? (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200">Partial</span>
+          ) : (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">Confirmed</span>
           )}
         </div>
       </div>
