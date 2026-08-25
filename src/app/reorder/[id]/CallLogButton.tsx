@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { logReorderCall, markReorderOrderReceived, deleteReorderLead, checkRetailOrder, recordCallAttempt, recordCallAbort } from "@/lib/actions";
+import { logReorderCall, markReorderOrderReceived, deleteReorderLead, checkRetailOrder, recordCallAttempt, recordCallAbort, requestCallOnPhone } from "@/lib/actions";
 
 const OUTCOMES = [
   { value: "ORDER_PLACED",     label: "Interested",           color: "bg-violet-50 border-violet-400 text-violet-700 hover:bg-violet-100" },
@@ -76,7 +76,23 @@ export default function CallLogButton({
 
   const [pending, startTransition] = useTransition();
   const [cooldownError, setCooldownError] = useState<string | null>(null);
+  const [phoneCallState, setPhoneCallState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [phoneCallError, setPhoneCallError] = useState<string | null>(null);
   const router = useRouter();
+
+  function callOnPhone() {
+    setPhoneCallState("sending");
+    setPhoneCallError(null);
+    startTransition(async () => {
+      try {
+        await requestCallOnPhone(lead.id);
+        setPhoneCallState("sent");
+      } catch (e) {
+        setPhoneCallState("error");
+        setPhoneCallError(e instanceof Error ? e.message : "Call request fail ho gayi");
+      }
+    });
+  }
 
   // Auto-abort when employee switches tab after Show Number
   const showPhoneRef = useRef(showPhone);
@@ -363,6 +379,21 @@ export default function CallLogButton({
               >
                 👁 Show Number
               </button>
+            )}
+
+            <button
+              type="button"
+              onClick={callOnPhone}
+              disabled={phoneCallState === "sending"}
+              className="w-full bg-black text-white text-sm font-medium rounded-xl py-2.5 hover:bg-gray-800 transition-colors disabled:opacity-50"
+            >
+              {phoneCallState === "sending" ? "Phone pe bhej rahe hain…" : "📱 Call on My Phone"}
+            </button>
+            {phoneCallState === "sent" && (
+              <p className="text-[11px] text-center text-green-600">Phone pe call laga di gayi hai</p>
+            )}
+            {phoneCallState === "error" && phoneCallError && (
+              <p className="text-[11px] text-center text-red-500">{phoneCallError}</p>
             )}
 
             {/* Everything below phone button is locked until Show Number is clicked */}

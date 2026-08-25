@@ -157,6 +157,7 @@ model User {
   isAdmin              Boolean              @default(false)
   permissions          Json                 @default("{}")
   apiToken             String?              @unique
+  fcmToken             String?
   createdAt            DateTime             @default(now())
   empCommissionEntries EmpCommissionEntry[]
   empWithdrawals       EmpWithdrawal[]
