@@ -2422,21 +2422,26 @@ export async function recordCallAbort(leadId: number) {
 // Pushes a "dial this number" command to the current user's own phone (via
 // the Employee Call app), so clicking Call here on the web actually places
 // the call on their device instead of them having to dial it by hand.
-export async function requestCallOnPhone(leadId: number) {
+export async function requestCallOnPhone(leadId: number): Promise<{ error: string } | { ok: true }> {
   const me = await requireAuth();
   if (!me.fcmToken) {
-    throw new Error("Employee Call app is not connected on your phone yet — open the app and log in first.");
+    return { error: "Employee Call app is not connected on your phone yet — open the app and log in first." };
   }
   const lead = await prisma.reorderLead.findUnique({ where: { id: leadId } });
-  if (!lead) throw new Error("Lead not found");
+  if (!lead) return { error: "Lead not found" };
 
-  const { sendCallRequestPush } = await import("@/lib/firebaseAdmin");
-  await sendCallRequestPush({
-    fcmToken: me.fcmToken,
-    phoneNumber: lead.phone,
-    customerName: lead.customerName,
-  });
+  try {
+    const { sendCallRequestPush } = await import("@/lib/firebaseAdmin");
+    await sendCallRequestPush({
+      fcmToken: me.fcmToken,
+      phoneNumber: lead.phone,
+      customerName: lead.customerName,
+    });
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to send call request" };
+  }
   await recordCallAttempt(leadId);
+  return { ok: true };
 }
 
 export async function restoreAbortedLead(leadId: number) {

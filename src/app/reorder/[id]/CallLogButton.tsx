@@ -85,8 +85,13 @@ export default function CallLogButton({
     setPhoneCallError(null);
     startTransition(async () => {
       try {
-        await requestCallOnPhone(lead.id);
-        setPhoneCallState("sent");
+        const result = await requestCallOnPhone(lead.id);
+        if ("error" in result) {
+          setPhoneCallState("error");
+          setPhoneCallError(result.error);
+        } else {
+          setPhoneCallState("sent");
+        }
       } catch (e) {
         setPhoneCallState("error");
         setPhoneCallError(e instanceof Error ? e.message : "Call request fail ho gayi");
