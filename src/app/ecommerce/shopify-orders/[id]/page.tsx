@@ -103,7 +103,7 @@ export default async function DraftOrderDetailPage({ params }: { params: Promise
           <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Status</p>
           <p className="text-sm text-gray-500 mt-0.5">Click to update</p>
         </div>
-        <DraftStatusModal id={order.id} initial={order.draftStatus ?? null} />
+        <DraftStatusModal id={order.id} initial={order.draftStatus ?? null} logs={order.statusLogs} />
       </div>
 
       {/* Status Timeline */}

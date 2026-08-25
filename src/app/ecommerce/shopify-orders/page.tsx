@@ -54,7 +54,7 @@ export default async function DraftOrdersPage({
         ],
       } : {}),
     },
-    include: { items: true },
+    include: { items: true, statusLogs: { orderBy: { createdAt: "asc" } } },
     orderBy: { date: "desc" },
   });
 
@@ -145,7 +145,7 @@ export default async function DraftOrdersPage({
                     </td>
                     <td className="py-2.5 px-3 text-right tabular-nums font-medium text-gray-900">Rs {fmt(o.totalAmount)}</td>
                     <td className="py-2.5 px-3">
-                      <DraftStatusModal id={o.id} initial={o.draftStatus ?? null} />
+                      <DraftStatusModal id={o.id} initial={o.draftStatus ?? null} logs={o.statusLogs} />
                     </td>
                   </tr>
                 );

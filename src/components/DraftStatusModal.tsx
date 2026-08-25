@@ -17,12 +17,16 @@ const STATUS_META: Record<string, { label: string; dotColor: string; badgeColor:
   CONFIRMED:       { label: "Confirmed",        dotColor: "bg-green-500",   badgeColor: "bg-green-50 text-green-700 border-green-200" },
 };
 
+type StatusLog = { id: number; status: string; createdAt: Date };
+
 export default function DraftStatusModal({
   id,
   initial,
+  logs = [],
 }: {
   id: number;
   initial: string | null;
+  logs?: StatusLog[];
 }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -110,6 +114,32 @@ export default function DraftStatusModal({
             >
               {saving ? "Saving…" : selected ? `Set — ${STATUSES.find(s => s.value === selected)?.label}` : "Select a status"}
             </button>
+
+            {/* Timeline */}
+            {logs.length > 0 && (
+              <div className="pt-1 border-t border-gray-100">
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-3">History</p>
+                <ol className="relative border-l border-gray-200 space-y-3 ml-2">
+                  {logs.map((log) => {
+                    const meta = STATUS_META[log.status];
+                    const d = new Date(log.createdAt);
+                    const dateStr = d.toLocaleDateString("en-PK", { day: "numeric", month: "short" });
+                    const timeStr = d.toLocaleTimeString("en-PK", { hour: "numeric", minute: "2-digit", hour12: true });
+                    return (
+                      <li key={log.id} className="ml-4">
+                        <span className={`absolute -left-1.5 w-3 h-3 rounded-full border-2 border-white ${meta?.dotColor ?? "bg-gray-300"}`} />
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${meta?.badgeColor ?? "bg-gray-100 text-gray-500"}`}>
+                            {meta?.label ?? log.status}
+                          </span>
+                          <span className="text-xs text-gray-400">{dateStr} · {timeStr}</span>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+            )}
           </div>
         </div>
       )}
