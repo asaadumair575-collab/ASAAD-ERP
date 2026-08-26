@@ -2586,19 +2586,20 @@ export async function getLeadCallLogs(leadId: number) {
 
   return Promise.all(
     logs.map(async (log) => {
-      let phoneCall: { connected: boolean; duration: number; callType: string } | null = null;
+      let phoneCall: { connected: boolean; duration: number; ringDuration: number; callType: string } | null = null;
       if (target && log.calledById) {
         const windowStart = new Date(log.calledAt.getTime() - 15 * 60 * 1000);
         const windowEnd = new Date(log.calledAt.getTime() + 15 * 60 * 1000);
         const candidates = await prisma.phoneCallLog.findMany({
           where: { userId: log.calledById, calledAt: { gte: windowStart, lte: windowEnd } },
-          select: { phoneNumber: true, duration: true, callType: true },
+          select: { phoneNumber: true, duration: true, ringDuration: true, callType: true },
         });
         const match = candidates.find((c) => normalizePhone(c.phoneNumber) === target);
         if (match) {
           phoneCall = {
             connected: match.callType === "OUTGOING" && match.duration > 0,
             duration: match.duration,
+            ringDuration: match.ringDuration,
             callType: match.callType,
           };
         }

@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => null);
-  const { phoneNumber, contactName, duration, callType, calledAt } = body ?? {};
+  const { phoneNumber, contactName, duration, callType, calledAt, ringDuration } = body ?? {};
 
   if (
     typeof phoneNumber !== "string" ||
@@ -36,6 +36,8 @@ export async function POST(req: NextRequest) {
   ) {
     return NextResponse.json({ error: "Invalid call log payload" }, { status: 400 });
   }
+
+  const ringDurationValue = typeof ringDuration === "number" ? ringDuration : 0;
 
   if (!VALID_CALL_TYPES.has(callType)) {
     return NextResponse.json({ error: "Invalid callType" }, { status: 400 });
@@ -59,6 +61,7 @@ export async function POST(req: NextRequest) {
       phoneNumber,
       contactName: contactName || null,
       duration,
+      ringDuration: ringDurationValue,
       callType,
       calledAt: calledAtDate,
       synced: true,
@@ -66,6 +69,7 @@ export async function POST(req: NextRequest) {
     update: {
       contactName: contactName || null,
       duration,
+      ringDuration: ringDurationValue,
       callType,
       synced: true,
     },

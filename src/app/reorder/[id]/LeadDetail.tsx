@@ -20,8 +20,14 @@ type CallLog = {
   attemptedAt: Date | null;
   openCount: number;
   calledBy: { displayName: string | null; username: string; isAdmin?: boolean };
-  phoneCall: { connected: boolean; duration: number; callType: string } | null;
+  phoneCall: { connected: boolean; duration: number; ringDuration: number; callType: string } | null;
 };
+
+function formatSeconds(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
 
 type Lead = {
   customerName: string;
@@ -125,10 +131,10 @@ export default function LeadDetail({ lead, leadId, isAdmin = false }: { lead: Le
                           {log.phoneCall ? (
                             <span className={`text-xs font-medium ${phoneMismatch ? "text-red-600" : "text-gray-500"}`}>
                               {log.phoneCall.connected
-                                ? `Connected · ${log.phoneCall.duration}s${phoneMismatch ? " — mismatch! employee logged Not Picked" : ""}`
-                                : log.phoneCall.callType === "MISSED"
-                                ? "Missed / not picked"
-                                : "Not connected (0s)"}
+                                ? `✅ Picked · ${formatSeconds(log.phoneCall.duration)}${phoneMismatch ? " — mismatch! employee logged Not Picked" : ""}`
+                                : log.phoneCall.ringDuration > 0
+                                ? `📵 Not Picked · rang ${formatSeconds(log.phoneCall.ringDuration)}`
+                                : "📵 Not Picked"}
                             </span>
                           ) : (
                             <span className="text-xs text-gray-300">No phone record found</span>

@@ -109,7 +109,7 @@ export default async function EmployeeCallVerificationPage({
                 <th className="py-3 px-4 text-left">Employee</th>
                 <th className="py-3 px-4 text-left">Number / Contact</th>
                 <th className="py-3 px-4 text-left">Direction</th>
-                <th className="py-3 px-4 text-left">Status</th>
+                <th className="py-3 px-4 text-left">Call Status</th>
                 <th className="py-3 px-4 text-left">Duration</th>
                 <th className="py-3 px-4 text-left">Time</th>
               </tr>
@@ -129,10 +129,16 @@ export default async function EmployeeCallVerificationPage({
                     </td>
                     <td className="py-2.5 px-4">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${connected ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
-                        {connected ? "Connected" : "Not Connected"}
+                        {connected ? "✅ Picked" : "📵 Not Picked"}
                       </span>
                     </td>
-                    <td className="py-2.5 px-4 text-gray-600">{formatDuration(log.duration)}</td>
+                    <td className="py-2.5 px-4 text-gray-600">
+                      {connected
+                        ? formatDuration(log.duration)
+                        : log.ringDuration > 0
+                        ? <span className="text-gray-400">rang {formatDuration(log.ringDuration)}</span>
+                        : <span className="text-gray-300">—</span>}
+                    </td>
                     <td className="py-2.5 px-4 text-gray-400 text-xs">
                       {log.calledAt.toLocaleTimeString("en-PK", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Karachi" })}
                     </td>

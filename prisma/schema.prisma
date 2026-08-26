@@ -608,7 +608,8 @@ model PhoneCallLog {
   userId       Int
   phoneNumber  String
   contactName  String?
-  duration     Int      // seconds
+  duration     Int      // seconds — talk time, only set when the call connected
+  ringDuration Int      @default(0) // seconds — how long it rang before a non-connected call ended
   callType     String   // INCOMING | OUTGOING | MISSED
   calledAt     DateTime
   synced       Boolean  @default(true)
