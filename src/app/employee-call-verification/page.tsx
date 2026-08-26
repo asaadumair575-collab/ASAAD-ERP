@@ -121,7 +121,7 @@ export default async function EmployeeCallVerificationPage({
                 return (
                   <tr key={log.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="py-2.5 px-4 text-gray-700">{log.user.displayName || log.user.username}</td>
-                    <td className="py-2.5 px-4 text-gray-600">{log.contactName || log.phoneNumber}</td>
+                    <td className="py-2.5 px-4 text-gray-600 font-mono text-xs">{log.phoneNumber}</td>
                     <td className="py-2.5 px-4">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${dir.color}`}>
                         {dir.label}
