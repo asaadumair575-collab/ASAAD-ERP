@@ -134,7 +134,7 @@ export default function AssignTaskForm({
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"
           >
             <option value="">Manual (employee updates themselves)</option>
-            <option value="REORDER_CALLS">Reorder Calls — count today&apos;s call logs</option>
+            <option value="REORDER_CALLS">Leads Called — count today&apos;s reorder lead calls</option>
             <option value="RETAIL_ORDERS">Retail Orders — count today&apos;s orders booked</option>
           </select>
           {metric && (
