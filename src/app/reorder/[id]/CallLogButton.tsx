@@ -371,58 +371,57 @@ export default function CallLogButton({
               )}
             </div>
 
-            {/* Phone number — hidden until revealed */}
+            {/* Phone row */}
             {showPhone ? (
-              <div className="bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-center">
-                <p className="text-2xl font-bold font-mono tracking-widest text-gray-900 select-all">{lead.phone}</p>
+              <div className="flex items-center justify-between gap-3 bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5">
+                <p className="text-base font-bold font-mono tracking-wider text-gray-900 select-all">{lead.phone}</p>
+                <button
+                  type="button"
+                  onClick={callOnPhone}
+                  disabled={phoneCallState === "sending"}
+                  className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                >
+                  {phoneCallState === "sending" ? "…" : "📱 Call"}
+                </button>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={() => { setShowPhone(true); recordCallAttempt(lead.id).catch(() => {}); }}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-center text-sm font-medium text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl py-2.5 px-4 text-center text-sm font-medium text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
               >
                 👁 Show Number
               </button>
             )}
-
-            <button
-              type="button"
-              onClick={callOnPhone}
-              disabled={phoneCallState === "sending"}
-              className="w-full bg-black text-white text-sm font-medium rounded-xl py-2.5 hover:bg-gray-800 transition-colors disabled:opacity-50"
-            >
-              {phoneCallState === "sending" ? "Phone pe bhej rahe hain…" : "📱 Call on My Phone"}
-            </button>
             {phoneCallState === "sent" && (
-              <p className="text-[11px] text-center text-green-600">Phone pe call laga di gayi hai</p>
+              <p className="text-[11px] text-center text-green-600 -mt-2">✓ Call sent to your phone</p>
             )}
             {phoneCallState === "error" && phoneCallError && (
-              <p className="text-[11px] text-center text-red-500">{phoneCallError}</p>
+              <p className="text-[11px] text-center text-red-500 -mt-2">{phoneCallError}</p>
             )}
 
-            {/* Everything below phone button is locked until Show Number is clicked */}
+            {/* Everything below phone is locked until Show Number is clicked */}
             <div className={!showPhone ? "pointer-events-none opacity-40 select-none" : ""}>
 
-            {/* Step bar — for first call or when previous was no-answer (not in simplified mode) */}
+            {/* Step bar */}
             {!simplified && (callCount === 0 || lead.status === "NO_ANSWER") && (
               <div className="flex items-center gap-1">
-                <div className={`flex-1 h-1 rounded-full ${step === "delivery" ? "bg-black" : "bg-green-500"}`} />
-                <div className={`flex-1 h-1 rounded-full ${step === "feedback" ? "bg-black" : step === "outcome" ? "bg-green-500" : "bg-gray-200"}`} />
-                <div className={`flex-1 h-1 rounded-full ${step === "outcome"  ? "bg-black" : "bg-gray-200"}`} />
+                <div className={`flex-1 h-0.5 rounded-full ${step === "delivery" ? "bg-gray-800" : "bg-green-500"}`} />
+                <div className={`flex-1 h-0.5 rounded-full ${step === "feedback" ? "bg-gray-800" : step === "outcome" ? "bg-green-500" : "bg-gray-200"}`} />
+                <div className={`flex-1 h-0.5 rounded-full ${step === "outcome" ? "bg-gray-800" : "bg-gray-200"}`} />
               </div>
             )}
 
             {/* ── STEP 0: Delivery check ── */}
             {step === "delivery" && (
               <>
-                <div className="grid grid-cols-2 gap-2">
+                {/* No-answer quick actions */}
+                <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => saveNoAnswer("Call not picked")}
                     disabled={pending || !showPhone}
-                    title={!showPhone ? "Show number first" : undefined}
-                    className="border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="flex-1 text-xs font-semibold border border-yellow-200 bg-yellow-50 text-yellow-700 rounded-lg py-2 hover:bg-yellow-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     📵 Not Picked
                   </button>
@@ -430,40 +429,33 @@ export default function CallLogButton({
                     type="button"
                     onClick={() => saveNoAnswer("Number closed")}
                     disabled={pending || !showPhone}
-                    title={!showPhone ? "Show number first" : undefined}
-                    className="border border-red-200 bg-red-50 text-red-600 text-sm font-semibold rounded-xl py-2.5 hover:bg-red-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="flex-1 text-xs font-semibold border border-red-200 bg-red-50 text-red-600 rounded-lg py-2 hover:bg-red-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     🔴 Number Closed
                   </button>
                 </div>
-                {!showPhone && (
-                  <p className="text-[11px] text-center text-gray-400">
-                    👆 Show number first to enable call logging
-                  </p>
-                )}
+
                 {cooldownError && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2 text-center font-medium">
-                    ⏱ {cooldownError}
-                  </div>
+                  <p className="text-[11px] text-center text-red-500">⏱ {cooldownError}</p>
                 )}
 
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-px bg-gray-100" />
-                  <span className="text-xs text-gray-300">or if they answered</span>
+                  <span className="text-[11px] text-gray-300">or if they answered</span>
                   <div className="flex-1 h-px bg-gray-100" />
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold text-gray-700 mb-2">
-                    Was the previous order delivered to the customer? <span className="text-red-500">*</span>
+                  <p className="text-xs font-semibold text-gray-600 mb-2">
+                    Was the previous order delivered? <span className="text-red-400">*</span>
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => setMaalMila(true)}
-                      className={`border rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${
+                      className={`border rounded-lg px-3 py-2.5 text-xs font-semibold transition-colors ${
                         maalMila === true
-                          ? "bg-green-50 border-green-400 text-green-700 ring-2 ring-green-400 ring-offset-1"
+                          ? "bg-green-50 border-green-400 text-green-700 ring-1 ring-green-400"
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
@@ -472,19 +464,19 @@ export default function CallLogButton({
                     <button
                       type="button"
                       onClick={() => setMaalMila(false)}
-                      className={`border rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${
+                      className={`border rounded-lg px-3 py-2.5 text-xs font-semibold transition-colors ${
                         maalMila === false
-                          ? "bg-blue-50 border-blue-400 text-blue-700 ring-2 ring-blue-400 ring-offset-1"
+                          ? "bg-blue-50 border-blue-400 text-blue-700 ring-1 ring-blue-400"
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
-                      📦 Not Delivered Yet
+                      📦 Not Yet
                     </button>
                   </div>
                 </div>
 
                 <div className="flex gap-2 justify-end">
-                  <button onClick={tryClose} className="border border-gray-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50">
+                  <button onClick={tryClose} className="text-xs text-gray-400 hover:text-gray-700 px-3 py-2 rounded-lg">
                     Cancel
                   </button>
                   <button
@@ -493,7 +485,7 @@ export default function CallLogButton({
                       else if (maalMila === false) setStep("outcome");
                     }}
                     disabled={maalMila === null || !showPhone}
-                    className="bg-black text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
+                    className="bg-black text-white text-xs font-semibold px-5 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors"
                   >
                     Next →
                   </button>
