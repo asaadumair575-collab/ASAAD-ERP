@@ -382,16 +382,8 @@ export default function CallLogButton({
 
             {/* Phone row */}
             {showPhone ? (
-              <div className="flex items-center justify-between gap-3 bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5">
+              <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5">
                 <p className="text-base font-bold font-mono tracking-wider text-gray-900 select-all">{lead.phone}</p>
-                <button
-                  type="button"
-                  onClick={callOnPhone}
-                  disabled={phoneCallState === "sending"}
-                  className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
-                >
-                  {phoneCallState === "sending" ? "…" : "📱 Call"}
-                </button>
               </div>
             ) : (
               <button
@@ -401,12 +393,6 @@ export default function CallLogButton({
               >
                 👁 Show Number
               </button>
-            )}
-            {phoneCallState === "sent" && (
-              <p className="text-[11px] text-center text-green-600 -mt-2">✓ Call sent to your phone</p>
-            )}
-            {phoneCallState === "error" && phoneCallError && (
-              <p className="text-[11px] text-center text-red-500 -mt-2">{phoneCallError}</p>
             )}
 
             {/* Everything below phone is locked until Show Number is clicked */}
