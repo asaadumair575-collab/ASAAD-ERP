@@ -659,6 +659,7 @@ model EmployeeTask {
   targetValue Int
   unit        String    // e.g. "calls", "leads", "orders"
   progress    Int       @default(0)
+  metric      String?   // REORDER_CALLS | RETAIL_ORDERS | null = manual
   date        DateTime  // which day this task is for
   completedAt DateTime?
   createdAt   DateTime  @default(now())

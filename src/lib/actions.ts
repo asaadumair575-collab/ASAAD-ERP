@@ -3003,6 +3003,7 @@ export async function assignTask(data: {
   description?: string;
   targetValue: number;
   unit: string;
+  metric?: string;
   date: string;
 }) {
   const me = await requireAuth();
@@ -3016,6 +3017,7 @@ export async function assignTask(data: {
       description: data.description || null,
       targetValue: data.targetValue,
       unit: data.unit,
+      metric: data.metric || null,
       date: new Date(data.date),
     },
   });

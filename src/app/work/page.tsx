@@ -2,7 +2,26 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import ClockInButton from "./ClockInButton";
-import TaskCard from "./TaskCard";
+import TaskBox from "./TaskBox";
+
+async function getAutoProgress(metric: string, userId: number, date: Date): Promise<number> {
+  const dayStart = new Date(date);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+
+  if (metric === "REORDER_CALLS") {
+    return prisma.reorderCallLog.count({
+      where: { calledById: userId, calledAt: { gte: dayStart, lt: dayEnd } },
+    });
+  }
+  if (metric === "RETAIL_ORDERS") {
+    return prisma.retailOrder.count({
+      where: { createdByUserId: userId, createdAt: { gte: dayStart, lt: dayEnd } },
+    });
+  }
+  return 0;
+}
 
 export default async function WorkPage() {
   const session = await getSessionUser();
@@ -23,67 +42,75 @@ export default async function WorkPage() {
     }),
   ]);
 
+  // Resolve auto-progress for tasks with metrics
+  const tasksWithProgress = await Promise.all(
+    tasks.map(async (t) => {
+      const progress = t.metric
+        ? await getAutoProgress(t.metric, session.id, today)
+        : t.progress;
+      return { ...t, resolvedProgress: progress };
+    })
+  );
+
   const hasStarted = !!shift;
-  const completedCount = tasks.filter((t) => t.progress >= t.targetValue).length;
+  const completedCount = tasksWithProgress.filter((t) => t.resolvedProgress >= t.targetValue).length;
+
+  const startTime = shift?.startedAt
+    ? new Date(shift.startedAt).toLocaleTimeString("en-PK", {
+        hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Karachi",
+      })
+    : null;
 
   return (
-    <div className="max-w-lg mx-auto space-y-6 py-4">
+    <div className="max-w-2xl mx-auto space-y-6 py-2">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">My Work</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          {new Date().toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long" })}
-        </p>
-      </div>
-
-      {/* Clock-in card */}
-      <div className={`rounded-2xl border p-5 ${hasStarted ? "bg-green-50 border-green-200" : "bg-white border-gray-200 shadow-sm"}`}>
-        {hasStarted ? (
-          <div className="flex items-center gap-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-green-800">You&apos;re clocked in</p>
-              <p className="text-xs text-green-600 mt-0.5">
-                Started at {shift!.startedAt.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Karachi" })}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm font-semibold text-gray-800">Ready to start?</p>
-              <p className="text-xs text-gray-500 mt-0.5">Your start time will be recorded when you tap below.</p>
-            </div>
-            <ClockInButton />
-          </div>
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+            {new Date().toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long" })}
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight mt-0.5">My Work</h1>
+        </div>
+        {hasStarted && tasks.length > 0 && (
+          <p className="text-xs text-gray-400 pb-1">{completedCount}/{tasks.length} done</p>
         )}
       </div>
 
-      {/* Tasks */}
-      {hasStarted && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-700">Today&apos;s Tasks</h2>
-            {tasks.length > 0 && (
-              <span className="text-xs text-gray-400">{completedCount}/{tasks.length} done</span>
-            )}
+      {/* Clock-in card */}
+      {!hasStarted ? (
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="space-y-1">
+            <p className="text-base font-semibold text-gray-900">Ready to start your day?</p>
+            <p className="text-sm text-gray-400">Your start time will be recorded when you tap below.</p>
           </div>
-
-          {tasks.length === 0 ? (
-            <div className="border border-dashed border-gray-200 rounded-2xl p-10 text-center">
-              <p className="text-sm text-gray-400">No tasks assigned for today.</p>
-              <p className="text-xs text-gray-300 mt-1">Your manager will assign tasks shortly.</p>
-            </div>
-          ) : (
-            tasks.map((task) => (
-              <TaskCard key={task.id} task={task} />
-            ))
-          )}
+          <ClockInButton />
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-5 py-3.5">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-green-800">You&apos;re clocked in</p>
+            <p className="text-xs text-green-600 mt-0.5">Started at {startTime}</p>
+          </div>
         </div>
       )}
 
-      {!hasStarted && tasks.length > 0 && (
-        <p className="text-xs text-center text-gray-400">Clock in to see and work on your tasks.</p>
+      {/* Tasks grid */}
+      {hasStarted && (
+        <>
+          {tasks.length === 0 ? (
+            <div className="border border-dashed border-gray-200 rounded-2xl p-12 text-center space-y-1">
+              <p className="text-sm font-medium text-gray-400">No tasks for today</p>
+              <p className="text-xs text-gray-300">Your manager will assign tasks shortly.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {tasksWithProgress.map((task) => (
+                <TaskBox key={task.id} task={task} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
