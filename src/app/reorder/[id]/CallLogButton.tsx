@@ -371,6 +371,15 @@ export default function CallLogButton({
               )}
             </div>
 
+            {/* Step bar — shown outside locked area, right below header */}
+            {!simplified && (callCount === 0 || lead.status === "NO_ANSWER") && (
+              <div className="flex items-center gap-1">
+                <div className={`flex-1 h-0.5 rounded-full ${step === "delivery" ? "bg-gray-800" : "bg-green-500"}`} />
+                <div className={`flex-1 h-0.5 rounded-full ${step === "feedback" ? "bg-gray-800" : step === "outcome" ? "bg-green-500" : "bg-gray-200"}`} />
+                <div className={`flex-1 h-0.5 rounded-full ${step === "outcome" ? "bg-gray-800" : "bg-gray-200"}`} />
+              </div>
+            )}
+
             {/* Phone row */}
             {showPhone ? (
               <div className="flex items-center justify-between gap-3 bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5">
@@ -403,20 +412,11 @@ export default function CallLogButton({
             {/* Everything below phone is locked until Show Number is clicked */}
             <div className={!showPhone ? "pointer-events-none opacity-40 select-none" : ""}>
 
-            {/* Step bar */}
-            {!simplified && (callCount === 0 || lead.status === "NO_ANSWER") && (
-              <div className="flex items-center gap-1 mt-1">
-                <div className={`flex-1 h-0.5 rounded-full ${step === "delivery" ? "bg-gray-800" : "bg-green-500"}`} />
-                <div className={`flex-1 h-0.5 rounded-full ${step === "feedback" ? "bg-gray-800" : step === "outcome" ? "bg-green-500" : "bg-gray-200"}`} />
-                <div className={`flex-1 h-0.5 rounded-full ${step === "outcome" ? "bg-gray-800" : "bg-gray-200"}`} />
-              </div>
-            )}
-
             {/* ── STEP 0: Delivery check ── */}
             {step === "delivery" && (
               <>
                 {/* No-answer quick actions */}
-                <div className="grid grid-cols-2 gap-2 mt-1">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => saveNoAnswer("Call not picked")}
