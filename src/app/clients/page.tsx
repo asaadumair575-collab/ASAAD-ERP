@@ -4,6 +4,7 @@ import { averageMonthlyDzn, gradeForMonthlyDzn } from "@/lib/grade";
 import { deleteClient } from "@/lib/actions";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import DeleteButton from "@/components/DeleteButton";
+import HiddenPhone from "@/components/HiddenPhone";
 
 const PAGE_SIZE = 30;
 
@@ -223,7 +224,7 @@ export default async function ClientsPage({
                     </td>
                     <td className="py-3 px-5 text-gray-500">{c.businessName ?? "-"}</td>
                     <td className="py-3 px-5 text-gray-500">{c.city}</td>
-                    <td className="py-3 px-5 text-gray-500">{c.phone ?? "-"}</td>
+                    <td className="py-3 px-5">{c.phone ? <HiddenPhone phone={c.phone} /> : <span className="text-gray-300">—</span>}</td>
                     <td className="py-3 px-5 text-gray-500">{ledgerOrders.length}</td>
                     <td className="py-3 px-5 text-gray-700 font-medium tabular-nums">
                       {totalReceived.toLocaleString()}

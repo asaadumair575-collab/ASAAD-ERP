@@ -5,6 +5,7 @@ import DeleteButton from "@/components/DeleteButton";
 import { notFound } from "next/navigation";
 import { averageMonthlyDzn, gradeForMonthlyDzn } from "@/lib/grade";
 import QuickFixedRateToggle from "@/components/QuickFixedRateToggle";
+import HiddenPhone from "@/components/HiddenPhone";
 
 export default async function ClientDetailPage({
   params,
@@ -105,7 +106,7 @@ export default async function ClientDetailPage({
           )}
           <p className="text-sm text-gray-500 mt-1">{client.city}</p>
           <div className="text-sm text-gray-500 mt-2 space-y-0.5">
-            {client.phone && <p>{client.phone}</p>}
+            {client.phone && <HiddenPhone phone={client.phone} />}
             {client.address && <p>{client.address}</p>}
           </div>
           {client.notes && (
