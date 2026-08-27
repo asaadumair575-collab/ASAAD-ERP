@@ -1217,6 +1217,7 @@ export async function setLeadStatus(id: number, status: string) {
 }
 
 export async function markLeadContacted(id: number, reason?: string) {
+  const me = await requireAuth();
   const lead = await prisma.lead.findUnique({ where: { id } });
   if (!lead || lead.status !== "NEW") return;
 
@@ -1229,7 +1230,7 @@ export async function markLeadContacted(id: number, reason?: string) {
 
   await prisma.lead.update({
     where: { id },
-    data: { status: "CONTACTED", notes },
+    data: { status: "CONTACTED", notes, contactedById: me.id, contactedAt: new Date() },
   });
 
   revalidatePath("/leads");

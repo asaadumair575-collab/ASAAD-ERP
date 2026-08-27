@@ -165,6 +165,7 @@ model User {
   shifts               EmployeeShift[]
   tasksAssigned        EmployeeTask[]       @relation("TaskAssignee")
   tasksGiven           EmployeeTask[]       @relation("TaskAssigner")
+  leadsContacted       Lead[]               @relation("LeadContactedBy")
   retailOrders         RetailOrder[]
   bugReports           BugReport[]
   messagesSent         Message[]        @relation("MessagesSent")
@@ -313,15 +314,20 @@ model RetailPayment {
 }
 
 model Lead {
-  id         Int      @id @default(autoincrement())
-  shopNumber String
-  name       String?
-  city       String
-  phone      String?
-  status     String   @default("NEW")
-  notes      String?  @db.Text
-  createdAt  DateTime @default(now())
-  samples    Sample[]
+  id              Int       @id @default(autoincrement())
+  shopNumber      String
+  name            String?
+  city            String
+  phone           String?
+  status          String    @default("NEW")
+  notes           String?   @db.Text
+  contactedById   Int?
+  contactedBy     User?     @relation("LeadContactedBy", fields: [contactedById], references: [id])
+  contactedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  samples         Sample[]
+
+  @@index([contactedById, contactedAt])
 }
 
 model EcomOrder {
