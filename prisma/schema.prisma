@@ -162,6 +162,9 @@ model User {
   empCommissionEntries EmpCommissionEntry[]
   empWithdrawals       EmpWithdrawal[]
   empPerformances      EmpPerformance[]
+  shifts               EmployeeShift[]
+  tasksAssigned        EmployeeTask[]       @relation("TaskAssignee")
+  tasksGiven           EmployeeTask[]       @relation("TaskAssigner")
   retailOrders         RetailOrder[]
   bugReports           BugReport[]
   messagesSent         Message[]        @relation("MessagesSent")
@@ -630,6 +633,38 @@ model PushSubscription {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ── Employee Work System ───────────────────────────────────────────────────
+
+model EmployeeShift {
+  id        Int       @id @default(autoincrement())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  @@index([userId])
+  @@index([userId, startedAt])
+}
+
+model EmployeeTask {
+  id          Int       @id @default(autoincrement())
+  assignedTo  User      @relation("TaskAssignee", fields: [assignedToId], references: [id], onDelete: Cascade)
+  assignedToId Int
+  assignedBy  User      @relation("TaskAssigner", fields: [assignedById], references: [id])
+  assignedById Int
+  title       String
+  description String?
+  targetValue Int
+  unit        String    // e.g. "calls", "leads", "orders"
+  progress    Int       @default(0)
+  date        DateTime  // which day this task is for
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([assignedToId])
+  @@index([assignedToId, date])
 }
 
 // ── Calling Module ─────────────────────────────────────────────────────────

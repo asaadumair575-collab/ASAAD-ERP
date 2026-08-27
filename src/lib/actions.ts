@@ -2961,3 +2961,70 @@ export async function deleteComplaint(id: number) {
   revalidatePath("/complaints");
   redirect("/complaints");
 }
+
+// ── Employee Work System ───────────────────────────────────────────────────
+
+export async function clockIn() {
+  const me = await requireAuth();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const existing = await prisma.employeeShift.findFirst({
+    where: { userId: me.id, startedAt: { gte: today, lt: tomorrow } },
+  });
+  if (existing) return { alreadyStarted: true, shiftId: existing.id };
+
+  const shift = await prisma.employeeShift.create({ data: { userId: me.id } });
+  revalidatePath("/work");
+  return { shiftId: shift.id };
+}
+
+export async function updateTaskProgress(taskId: number, newProgress: number) {
+  const me = await requireAuth();
+  const task = await prisma.employeeTask.findFirst({ where: { id: taskId, assignedToId: me.id } });
+  if (!task) throw new Error("Task not found");
+
+  const capped = Math.min(newProgress, task.targetValue);
+  await prisma.employeeTask.update({
+    where: { id: taskId },
+    data: {
+      progress: capped,
+      completedAt: capped >= task.targetValue ? new Date() : null,
+    },
+  });
+  revalidatePath("/work");
+}
+
+export async function assignTask(data: {
+  assignedToId: number;
+  title: string;
+  description?: string;
+  targetValue: number;
+  unit: string;
+  date: string;
+}) {
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Unauthorized");
+
+  await prisma.employeeTask.create({
+    data: {
+      assignedToId: data.assignedToId,
+      assignedById: me.id,
+      title: data.title,
+      description: data.description || null,
+      targetValue: data.targetValue,
+      unit: data.unit,
+      date: new Date(data.date),
+    },
+  });
+  revalidatePath("/admin/tasks");
+}
+
+export async function deleteTask(taskId: number) {
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Unauthorized");
+  await prisma.employeeTask.delete({ where: { id: taskId } });
+  revalidatePath("/admin/tasks");
+}
