@@ -16,8 +16,8 @@ async function getAutoProgress(metric: string, userId: number, date: Date): Prom
     });
   }
   if (metric === "RETAIL_FOLLOWUP") {
-    return prisma.lead.count({
-      where: { contactedById: userId, contactedAt: { gte: dayStart, lt: dayEnd } },
+    return prisma.retailFollowupLog.count({
+      where: { calledById: userId, calledAt: { gte: dayStart, lt: dayEnd } },
     });
   }
   if (metric === "RETAIL_ORDERS") {
