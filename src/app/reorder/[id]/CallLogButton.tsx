@@ -416,22 +416,22 @@ export default function CallLogButton({
             {step === "delivery" && (
               <>
                 {/* No-answer quick actions */}
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => saveNoAnswer("Call not picked")}
                     disabled={pending || !showPhone}
-                    className="flex-1 text-xs font-semibold border border-yellow-200 bg-yellow-50 text-yellow-700 rounded-lg py-2 hover:bg-yellow-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="text-xs font-medium border border-gray-200 text-gray-500 rounded-lg py-2.5 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    📵 Not Picked
+                    Not Picked
                   </button>
                   <button
                     type="button"
                     onClick={() => saveNoAnswer("Number closed")}
                     disabled={pending || !showPhone}
-                    className="flex-1 text-xs font-semibold border border-red-200 bg-red-50 text-red-600 rounded-lg py-2 hover:bg-red-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="text-xs font-medium border border-gray-200 text-gray-500 rounded-lg py-2.5 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    🔴 Number Closed
+                    Number Closed
                   </button>
                 </div>
 
@@ -562,18 +562,18 @@ export default function CallLogButton({
                         onClick={() => saveNoAnswer("Call not picked")}
                         disabled={pending || !showPhone}
                         title={!showPhone ? "Show number first" : undefined}
-                        className="border border-yellow-200 bg-yellow-50 text-yellow-700 text-sm font-semibold rounded-xl py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="text-xs font-medium border border-gray-200 text-gray-500 rounded-lg py-2.5 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       >
-                        📵 Not Picked
+                        Not Picked
                       </button>
                       <button
                         type="button"
                         onClick={() => saveNoAnswer("Number closed")}
                         disabled={pending || !showPhone}
                         title={!showPhone ? "Show number first" : undefined}
-                        className="border border-red-200 bg-red-50 text-red-600 text-sm font-semibold rounded-xl py-2.5 hover:bg-red-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="text-xs font-medium border border-gray-200 text-gray-500 rounded-lg py-2.5 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       >
-                        🔴 Number Closed
+                        Number Closed
                       </button>
                     </div>
                     {!showPhone && (
