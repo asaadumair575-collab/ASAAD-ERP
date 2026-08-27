@@ -405,7 +405,7 @@ export default function CallLogButton({
 
             {/* Step bar */}
             {!simplified && (callCount === 0 || lead.status === "NO_ANSWER") && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 mt-1">
                 <div className={`flex-1 h-0.5 rounded-full ${step === "delivery" ? "bg-gray-800" : "bg-green-500"}`} />
                 <div className={`flex-1 h-0.5 rounded-full ${step === "feedback" ? "bg-gray-800" : step === "outcome" ? "bg-green-500" : "bg-gray-200"}`} />
                 <div className={`flex-1 h-0.5 rounded-full ${step === "outcome" ? "bg-gray-800" : "bg-gray-200"}`} />
@@ -416,22 +416,22 @@ export default function CallLogButton({
             {step === "delivery" && (
               <>
                 {/* No-answer quick actions */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 mt-1">
                   <button
                     type="button"
                     onClick={() => saveNoAnswer("Call not picked")}
                     disabled={pending || !showPhone}
-                    className="text-xs font-medium border border-gray-200 text-gray-500 rounded-lg py-2.5 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="text-xs font-semibold border border-yellow-200 bg-yellow-50 text-yellow-700 rounded-lg py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    Not Picked
+                    📵 Not Picked
                   </button>
                   <button
                     type="button"
                     onClick={() => saveNoAnswer("Number closed")}
                     disabled={pending || !showPhone}
-                    className="text-xs font-medium border border-gray-200 text-gray-500 rounded-lg py-2.5 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="text-xs font-semibold border border-red-200 bg-red-50 text-red-600 rounded-lg py-2.5 hover:bg-red-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    Number Closed
+                    🔴 Number Closed
                   </button>
                 </div>
 
@@ -556,24 +556,24 @@ export default function CallLogButton({
                 {/* No Answer quick buttons — simplified mode OR second call */}
                 {(simplified || callCount > 0) && (
                   <>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2 mt-1">
                       <button
                         type="button"
                         onClick={() => saveNoAnswer("Call not picked")}
                         disabled={pending || !showPhone}
                         title={!showPhone ? "Show number first" : undefined}
-                        className="text-xs font-medium border border-gray-200 text-gray-500 rounded-lg py-2.5 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="text-xs font-semibold border border-yellow-200 bg-yellow-50 text-yellow-700 rounded-lg py-2.5 hover:bg-yellow-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       >
-                        Not Picked
+                        📵 Not Picked
                       </button>
                       <button
                         type="button"
                         onClick={() => saveNoAnswer("Number closed")}
                         disabled={pending || !showPhone}
                         title={!showPhone ? "Show number first" : undefined}
-                        className="text-xs font-medium border border-gray-200 text-gray-500 rounded-lg py-2.5 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="text-xs font-semibold border border-red-200 bg-red-50 text-red-600 rounded-lg py-2.5 hover:bg-red-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       >
-                        Number Closed
+                        🔴 Number Closed
                       </button>
                     </div>
                     {!showPhone && (
