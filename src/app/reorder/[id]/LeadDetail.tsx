@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback } from "react";
 import { getLeadCallLogs } from "@/lib/actions";
 import { userLabel } from "@/lib/userLabel";
 
@@ -42,10 +42,12 @@ export default function LeadDetail({ lead, leadId, isAdmin = false }: { lead: Le
   const [open, setOpen] = useState(false);
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [phoneRevealed, setPhoneRevealed] = useState(false);
   const [, startTransition] = useTransition();
 
   function openPopup() {
     setOpen(true);
+    setPhoneRevealed(false);
     if (!loaded) {
       startTransition(async () => {
         const logs = await getLeadCallLogs(leadId);
@@ -80,7 +82,27 @@ export default function LeadDetail({ lead, leadId, isAdmin = false }: { lead: Le
             </div>
 
             <div className="space-y-2 text-sm">
-              <Row icon="📞" label="Phone" value={lead.phone} mono />
+              <div className="flex items-start gap-2">
+                <span className="text-base shrink-0">📞</span>
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-400">Phone</p>
+                  {phoneRevealed ? (
+                    <p className="font-mono text-xs text-gray-700 select-all">{lead.phone}</p>
+                  ) : (
+                    <button
+                      onClick={() => setPhoneRevealed(true)}
+                      className="text-xs text-gray-400 hover:text-gray-700 transition-colors flex items-center gap-1 mt-0.5"
+                    >
+                      <svg viewBox="0 0 16 16" fill="none" className="w-3 h-3 shrink-0">
+                        <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5Z" stroke="currentColor" strokeWidth="1.3"/>
+                        <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/>
+                        <path d="M2 2l12 12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                      </svg>
+                      Show number
+                    </button>
+                  )}
+                </div>
+              </div>
               {lead.email    && <Row icon="✉️"  label="Email"   value={lead.email} />}
               {lead.city     && <Row icon="📍" label="City"    value={lead.city} />}
               {lead.address  && <Row icon="🏠" label="Address" value={lead.address} />}
