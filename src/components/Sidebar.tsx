@@ -413,16 +413,6 @@ export default function Sidebar({
             Users
           </NavLink>
         )}
-        {canView(permissions, "employee_call_verification", isAdmin) && (
-          <NavLink
-            href="/employee-call-verification"
-            active={pathname.startsWith("/employee-call-verification")}
-            icon={icons.phone}
-            onClick={closeMobile}
-          >
-            Employee Call Verification
-          </NavLink>
-        )}
         {canView(permissions, "complaints", isAdmin) && (
           <NavLink
             href="/complaints"
