@@ -1,170 +1,219 @@
-import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import DateNav from "./DateNav";
+
+const DOMAIN = process.env.SHOPIFY_STORE_DOMAIN ?? "";
+const TOKEN = process.env.SHOPIFY_ADMIN_TOKEN ?? "";
+const API = `https://${DOMAIN}/admin/api/2024-01`;
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
 }
 
-export default async function ShopifyDashboardPage() {
+function pct(a: number, b: number) {
+  if (!b) return "0%";
+  return `${Math.round((a / b) * 100)}%`;
+}
+
+type ShopifyOrder = {
+  id: number;
+  total_price: string;
+  financial_status: string;
+  fulfillment_status: string | null;
+  cancel_reason: string | null;
+  shipping_address?: { city?: string };
+  billing_address?: { city?: string };
+  created_at: string;
+};
+
+async function fetchOrders(from: string, to: string): Promise<ShopifyOrder[]> {
+  const minDate = new Date(`${from}T00:00:00+05:00`).toISOString();
+  const maxDate = new Date(`${to}T23:59:59+05:00`).toISOString();
+
+  const all: ShopifyOrder[] = [];
+  let url: string | null =
+    `${API}/orders.json?status=any&created_at_min=${encodeURIComponent(minDate)}&created_at_max=${encodeURIComponent(maxDate)}&limit=250&fields=id,total_price,financial_status,fulfillment_status,cancel_reason,shipping_address,billing_address,created_at`;
+
+  while (url) {
+    const res = await fetch(url, {
+      headers: { "X-Shopify-Access-Token": TOKEN },
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) break;
+    const data = await res.json();
+    all.push(...(data.orders ?? []));
+
+    const link = res.headers.get("link") ?? "";
+    const next = link.match(/<([^>]+)>;\s*rel="next"/)?.[1] ?? null;
+    url = next;
+  }
+
+  return all;
+}
+
+export default async function ShopifyDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
-  const now = new Date();
-  const todayStart = new Date(now);
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date(todayStart);
-  todayEnd.setDate(todayEnd.getDate() + 1);
+  const { from: fromParam, to: toParam } = await searchParams;
 
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+  const from = fromParam ?? todayPK;
+  const to = toParam ?? todayPK;
 
-  const [
-    todayOrders,
-    monthOrders,
-    pendingReview,
-    confirmed,
-    recentOrders,
-  ] = await Promise.all([
-    // Today's new Shopify orders
-    prisma.ecomOrder.findMany({
-      where: { draft: true, date: { gte: todayStart, lt: todayEnd } },
-      select: { totalAmount: true, draftStatus: true },
-    }),
-    // This month's confirmed orders
-    prisma.ecomOrder.findMany({
-      where: { draft: false, returned: false, date: { gte: monthStart } },
-      select: { totalAmount: true },
-    }),
-    // Currently pending review (draft, not cancelled)
-    prisma.ecomOrder.count({
-      where: { draft: true, draftStatus: { not: "CANCELLED" } },
-    }),
-    // Confirmed today
-    prisma.ecomOrder.count({
-      where: { draft: false, date: { gte: todayStart, lt: todayEnd } },
-    }),
-    // Recent 10 orders
-    prisma.ecomOrder.findMany({
-      where: { draft: true },
-      orderBy: { date: "desc" },
-      take: 10,
-      select: { id: true, customerName: true, city: true, totalAmount: true, date: true, draftStatus: true },
-    }),
-  ]);
+  const orders = await fetchOrders(from, to);
 
-  const todayCount = todayOrders.length;
-  const todayRevenue = todayOrders.reduce((s, o) => s + o.totalAmount, 0);
-  const monthRevenue = monthOrders.reduce((s, o) => s + o.totalAmount, 0);
-  const monthCount = monthOrders.length;
+  // --- Metrics ---
+  const total = orders.length;
+  const revenue = orders.reduce((s, o) => s + parseFloat(o.total_price || "0"), 0);
+  const avgOrder = total ? revenue / total : 0;
 
-  const statusLabel: Record<string, string> = {
-    CALL_NOT_PICKED: "Not Picked",
-    NUMBER_OFF: "Number Off",
-    CANCELLED: "Cancelled",
-    CONFIRMED: "Confirmed",
-  };
-  const statusColor: Record<string, string> = {
-    CALL_NOT_PICKED: "bg-yellow-100 text-yellow-700",
-    NUMBER_OFF: "bg-red-100 text-red-600",
-    CANCELLED: "bg-gray-100 text-gray-400",
-    CONFIRMED: "bg-green-100 text-green-700",
-  };
+  const paid = orders.filter((o) => o.financial_status === "paid").length;
+  const cancelled = orders.filter((o) => o.cancel_reason).length;
+  const fulfilled = orders.filter((o) => o.fulfillment_status === "fulfilled").length;
+  const pending = orders.filter((o) => !o.cancel_reason && o.financial_status !== "paid").length;
 
-  const dateLabel = now.toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long" });
-  const monthLabel = now.toLocaleDateString("en-PK", { month: "long", year: "numeric" });
+  // --- City breakdown ---
+  const cityMap: Record<string, { orders: number; revenue: number }> = {};
+  for (const o of orders) {
+    const city = (o.shipping_address?.city ?? o.billing_address?.city ?? "Unknown").trim();
+    if (!cityMap[city]) cityMap[city] = { orders: 0, revenue: 0 };
+    cityMap[city].orders += 1;
+    cityMap[city].revenue += parseFloat(o.total_price || "0");
+  }
+  const cities = Object.entries(cityMap)
+    .sort((a, b) => b[1].revenue - a[1].revenue)
+    .slice(0, 8);
+
+  // --- Date label ---
+  const dateLabel =
+    from === to
+      ? new Date(`${from}T12:00:00`).toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+      : `${from} — ${to}`;
+
+  const noConfig = !DOMAIN || !TOKEN;
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-4xl space-y-6">
       {/* Header */}
       <div>
-        <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{dateLabel}</p>
-        <h1 className="text-2xl font-semibold tracking-tight mt-0.5">Shopify Dashboard</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Shopify Dashboard</h1>
+        <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
       </div>
 
-      {/* Today stat cards */}
-      <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Today</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard label="New Orders" value={todayCount} color="blue" />
-          <StatCard label="Revenue" value={`Rs ${fmt(todayRevenue)}`} color="green" />
-          <StatCard label="Confirmed" value={confirmed} color="emerald" />
-          <StatCard label="Pending Review" value={pendingReview} color="amber" />
+      {noConfig && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 text-sm text-red-700">
+          ⚠️ <strong>SHOPIFY_ADMIN_TOKEN</strong> ya <strong>SHOPIFY_STORE_DOMAIN</strong> Vercel mein set nahi — pehle woh karo.
+        </div>
+      )}
+
+      {/* Date picker */}
+      <DateNav from={from} to={to} />
+
+      {/* Stat cards — row 1 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <StatCard label="Total Orders" value={total} sub={`Rs ${fmt(revenue)} revenue`} color="black" />
+        <StatCard label="Avg Order Value" value={`Rs ${fmt(avgOrder)}`} color="blue" />
+        <StatCard label="Paid" value={paid} sub={pct(paid, total)} color="green" />
+        <StatCard label="Pending" value={pending} sub={pct(pending, total)} color="amber" />
+      </div>
+
+      {/* Stat cards — row 2 */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <StatCard label="Fulfilled" value={fulfilled} sub={pct(fulfilled, total)} color="emerald" />
+        <StatCard label="Cancelled" value={cancelled} sub={pct(cancelled, total)} color="red" />
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+          <p className="text-xs text-gray-400 font-medium">Total Revenue</p>
+          <p className="text-3xl font-bold text-gray-900 tabular-nums mt-2">Rs {fmt(revenue)}</p>
         </div>
       </div>
 
-      {/* This month */}
-      <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">{monthLabel}</p>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-            <p className="text-xs text-gray-400 mb-1">Orders Delivered</p>
-            <p className="text-3xl font-bold text-gray-900 tabular-nums">{monthCount}</p>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-            <p className="text-xs text-gray-400 mb-1">Revenue</p>
-            <p className="text-3xl font-bold text-gray-900 tabular-nums">Rs {fmt(monthRevenue)}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent incoming orders */}
-      <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Recent Shopify Orders</p>
+      {/* City breakdown */}
+      {cities.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-          {recentOrders.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-10">No orders yet</p>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left bg-gray-50 text-xs text-gray-400 uppercase tracking-wide">
-                  <th className="py-2.5 px-4">Customer</th>
-                  <th className="py-2.5 px-4 hidden sm:table-cell">City</th>
-                  <th className="py-2.5 px-4 text-right">Amount</th>
-                  <th className="py-2.5 px-4 text-right">Status</th>
+          <div className="px-5 py-3.5 border-b border-gray-100">
+            <p className="text-sm font-semibold text-gray-700">City-wise Breakdown</p>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left bg-gray-50 text-xs text-gray-400 uppercase tracking-wide">
+                <th className="py-2.5 px-5">City</th>
+                <th className="py-2.5 px-5 text-right">Orders</th>
+                <th className="py-2.5 px-5 text-right">Share</th>
+                <th className="py-2.5 px-5 text-right">Revenue</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {cities.map(([city, stats]) => (
+                <tr key={city}>
+                  <td className="py-3 px-5 font-medium text-gray-800">{city}</td>
+                  <td className="py-3 px-5 text-right tabular-nums text-gray-600">{stats.orders}</td>
+                  <td className="py-3 px-5 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-black rounded-full" style={{ width: pct(stats.orders, total) }} />
+                      </div>
+                      <span className="text-xs text-gray-400 tabular-nums w-8 text-right">{pct(stats.orders, total)}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-5 text-right tabular-nums font-semibold">Rs {fmt(stats.revenue)}</td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {recentOrders.map((o) => (
-                  <tr key={o.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-4 font-medium">
-                      {o.customerName}
-                      <span className="block text-xs text-gray-400 font-normal">
-                        {new Date(o.date).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-gray-500 hidden sm:table-cell">{o.city ?? "—"}</td>
-                    <td className="py-3 px-4 text-right tabular-nums font-medium">Rs {fmt(o.totalAmount)}</td>
-                    <td className="py-3 px-4 text-right">
-                      {o.draftStatus ? (
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor[o.draftStatus] ?? "bg-gray-100 text-gray-500"}`}>
-                          {statusLabel[o.draftStatus] ?? o.draftStatus}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">New</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-gray-200 bg-gray-50 font-semibold">
+                <td className="py-3 px-5">Total</td>
+                <td className="py-3 px-5 text-right tabular-nums">{total}</td>
+                <td className="py-3 px-5" />
+                <td className="py-3 px-5 text-right tabular-nums">Rs {fmt(revenue)}</td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
-      </div>
+      )}
+
+      {total === 0 && !noConfig && (
+        <div className="border border-dashed border-gray-200 rounded-2xl p-12 text-center">
+          <p className="text-sm text-gray-400">Is date range mein koi orders nahi aaye</p>
+        </div>
+      )}
     </div>
   );
 }
 
-function StatCard({ label, value, color }: { label: string; value: string | number; color: string }) {
+function StatCard({
+  label, value, sub, color,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  color: string;
+}) {
   const colors: Record<string, string> = {
-    blue: "bg-blue-50 border-blue-200 text-blue-800",
-    green: "bg-green-50 border-green-200 text-green-800",
-    emerald: "bg-emerald-50 border-emerald-200 text-emerald-800",
-    amber: "bg-amber-50 border-amber-200 text-amber-800",
+    black: "bg-gray-900 text-white border-gray-900",
+    blue: "bg-blue-50 border-blue-200 text-blue-900",
+    green: "bg-green-50 border-green-200 text-green-900",
+    amber: "bg-amber-50 border-amber-200 text-amber-900",
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900",
+    red: "bg-red-50 border-red-200 text-red-900",
+  };
+  const subColors: Record<string, string> = {
+    black: "text-gray-400",
+    blue: "text-blue-500",
+    green: "text-green-500",
+    amber: "text-amber-500",
+    emerald: "text-emerald-500",
+    red: "text-red-400",
   };
   return (
-    <div className={`border rounded-2xl p-4 shadow-sm ${colors[color]}`}>
-      <p className="text-xs font-medium opacity-70 mb-1">{label}</p>
-      <p className="text-2xl font-bold tabular-nums">{value}</p>
+    <div className={`border rounded-2xl p-5 shadow-sm ${colors[color]}`}>
+      <p className="text-xs font-medium opacity-60 mb-1">{label}</p>
+      <p className="text-3xl font-bold tabular-nums leading-none">{value}</p>
+      {sub && <p className={`text-xs mt-1.5 font-medium ${subColors[color]}`}>{sub}</p>}
     </div>
   );
 }
