@@ -319,9 +319,6 @@ export default function Sidebar({
           </>
         )}
 
-        {(canView(permissions, "leads", isAdmin) || canView(permissions, "dispatch", isAdmin)) && (
-          <SectionLabel>CRM</SectionLabel>
-        )}
 
         {canView(permissions, "leads", isAdmin) && (
           <>
