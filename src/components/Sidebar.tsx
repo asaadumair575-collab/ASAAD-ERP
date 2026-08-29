@@ -116,8 +116,9 @@ export default function Sidebar({
   const isOnEcommerce = pathname.startsWith("/ecommerce");
   const isOnEmployee = pathname.startsWith("/emp-commission") || pathname.startsWith("/performance");
   const isOnReorder = pathname.startsWith("/reorder");
+  const isOnComplaints = pathname.startsWith("/complaints");
 
-  type Section = "wholesale" | "retail" | "leads" | "ecommerce" | "employee" | "reorder" | null;
+  type Section = "wholesale" | "retail" | "leads" | "ecommerce" | "employee" | "reorder" | "complaints" | null;
   function sectionForPath(): Section {
     if (isOnWholesale) return "wholesale";
     if (isOnRetail) return "retail";
@@ -125,6 +126,7 @@ export default function Sidebar({
     if (isOnEcommerce) return "ecommerce";
     if (isOnEmployee) return "employee";
     if (isOnReorder) return "reorder";
+    if (isOnComplaints) return "complaints";
     return null;
   }
   const [openSection, setOpenSection] = useState<Section>(sectionForPath());
@@ -321,12 +323,6 @@ export default function Sidebar({
           </>
         )}
 
-        {canView(permissions, "complaints", isAdmin) && (
-          <NavLink href="/complaints" active={pathname.startsWith("/complaints")} icon={icons.sales} onClick={closeMobile}>
-            Complaints
-          </NavLink>
-        )}
-
         <button
           type="button"
           onClick={() => toggleSection("employee")}
@@ -381,6 +377,22 @@ export default function Sidebar({
                 {isAdmin && (
                   <NavLink href="/ecommerce/settings" active={pathname.startsWith("/ecommerce/settings")} compact onClick={closeMobile}>Settings</NavLink>
                 )}
+              </div>
+            )}
+          </>
+        )}
+
+        {canView(permissions, "complaints", isAdmin) && (
+          <>
+            <button type="button" onClick={() => toggleSection("complaints")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnComplaints ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}>
+              <span className="flex items-center gap-2.5">{icons.sales} Complaints</span>
+              <span className={`transition-transform text-gray-400 ${openSection === "complaints" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+            </button>
+            {openSection === "complaints" && (
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+                <NavLink href="/complaints" active={pathname === "/complaints"} compact onClick={closeMobile}>All Complaints</NavLink>
+                <NavLink href="/complaints/new" active={pathname === "/complaints/new"} compact onClick={closeMobile}>Launch Complaint</NavLink>
               </div>
             )}
           </>
