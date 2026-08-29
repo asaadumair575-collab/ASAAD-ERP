@@ -110,7 +110,7 @@ export default function Sidebar({
   permissions?: UserPermissions;
 }) {
   const pathname = usePathname();
-  const isOnWholesale = pathname.startsWith("/clients") || pathname.startsWith("/sales") || pathname.startsWith("/finance") || pathname.startsWith("/commission") || pathname.startsWith("/sales/orders") || pathname.startsWith("/dispatch") || pathname.startsWith("/complaints");
+  const isOnWholesale = pathname.startsWith("/clients") || pathname.startsWith("/sales") || pathname.startsWith("/finance") || pathname.startsWith("/commission") || pathname.startsWith("/sales/orders") || pathname.startsWith("/dispatch");
   const isOnRetail = pathname.startsWith("/retail");
   const isOnLeads = pathname.startsWith("/leads");
   const isOnEcommerce = pathname.startsWith("/ecommerce");
@@ -206,9 +206,6 @@ export default function Sidebar({
                 )}
                 {canView(permissions, "dispatch", isAdmin) && (
                   <NavLink href="/dispatch" active={isActive("/dispatch")} compact onClick={closeMobile}>Dispatch</NavLink>
-                )}
-                {canView(permissions, "complaints", isAdmin) && (
-                  <NavLink href="/complaints" active={pathname.startsWith("/complaints")} compact onClick={closeMobile}>Complaints</NavLink>
                 )}
               </div>
             )}
@@ -322,6 +319,12 @@ export default function Sidebar({
               </div>
             )}
           </>
+        )}
+
+        {canView(permissions, "complaints", isAdmin) && (
+          <NavLink href="/complaints" active={pathname.startsWith("/complaints")} icon={icons.sales} onClick={closeMobile}>
+            Complaints
+          </NavLink>
         )}
 
         <button
