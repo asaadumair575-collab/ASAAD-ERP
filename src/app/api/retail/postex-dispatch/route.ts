@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
   const order = await prisma.retailOrder.findUnique({
     where: { id: Number(orderId) },
-    select: { id: true, customerName: true, phone: true, city: true, address: true, totalAmount: true, trackingNumber: true, payments: { select: { amount: true } } },
+    select: { id: true, customerName: true, phone: true, city: true, address: true, totalAmount: true, trackingNumber: true, payments: { select: { amount: true } }, items: { select: { description: true, quantity: true } } },
   });
 
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
@@ -25,6 +25,9 @@ export async function POST(req: NextRequest) {
   const invoiceNumber = `R-${String(order.id).padStart(3, "0")}`;
   const advancePaid = order.payments.reduce((s, p) => s + p.amount, 0);
   const codAmount = Math.max(0, order.totalAmount - advancePaid);
+
+  const deliveryAddress = [order.address, order.city].filter(Boolean).join(", ") || order.city ?? "";
+  const orderDetail = order.items.map((i) => `${i.description} x${i.quantity}dz`).join(", ") || invoiceNumber;
 
   try {
     const res = await fetch(`${POSTEX_BASE}/order/v3/create-order`, {
@@ -37,11 +40,11 @@ export async function POST(req: NextRequest) {
         cityName: order.city ?? "Karachi",
         customerName: order.customerName,
         customerPhone: order.phone ?? "",
-        deliveryAddress: order.address ?? order.city ?? "",
+        deliveryAddress,
         invoicePayment: codAmount,
         invoiceNumber: invoiceNumber,
-        items: 1,
-        orderDetail: invoiceNumber,
+        items: order.items.length || 1,
+        orderDetail,
         transactionNotes: invoiceNumber,
       }),
     });
