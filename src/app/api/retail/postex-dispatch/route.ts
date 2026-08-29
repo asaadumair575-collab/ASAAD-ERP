@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const advancePaid = order.payments.reduce((s, p) => s + p.amount, 0);
   const codAmount = Math.max(0, order.totalAmount - advancePaid);
 
-  const deliveryAddress = [order.address, order.city].filter(Boolean).join(", ") || order.city ?? "";
+  const deliveryAddress = [order.address, order.city].filter(Boolean).join(", ") || (order.city ?? "");
   const orderDetail = order.items.map((i) => `${i.description} x${i.quantity}dz`).join(", ") || invoiceNumber;
 
   try {
