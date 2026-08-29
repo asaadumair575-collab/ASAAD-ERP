@@ -1344,13 +1344,13 @@ export async function createRetailOrder(_prev: string | null, formData: FormData
   let customerName = String(formData.get("customerName") ?? "").trim();
   let phone: string | null = String(formData.get("phone") ?? "").trim() || null;
   let city: string | null = String(formData.get("city") ?? "").trim() || null;
-  const address: string | null = String(formData.get("address") ?? "").trim() || null;
+  let address: string | null = String(formData.get("address") ?? "").trim() || null;
 
   let resolvedCustomerId: number | null = retailCustomerId;
 
   if (retailCustomerId) {
     const rc = await prisma.retailCustomer.findUnique({ where: { id: retailCustomerId } });
-    if (rc) { customerName = rc.name; phone = phone ?? rc.phone; city = city ?? rc.city; }
+    if (rc) { customerName = rc.name; phone = phone ?? rc.phone; city = city ?? rc.city; address = address ?? rc.address; }
   } else if (customerName) {
     // Auto-create customer from manual entry
     const autoCode = await generateRetailCustomerCode(city);

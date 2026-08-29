@@ -116,15 +116,19 @@ export default function RetailOrderForm({
         )}
 
         {selectedCustomer ? (
-          <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm">
-            <p className="font-medium">{selectedCustomer.name}</p>
-            {(selectedCustomer.phone || selectedCustomer.city) && (
-              <p className="text-gray-500 text-xs mt-0.5">
-                {[selectedCustomer.phone, selectedCustomer.city].filter(Boolean).join(" · ")}
-              </p>
-            )}
-            <input type="hidden" name="retailCustomerId" value={selectedCustomer.id} />
-            <input type="hidden" name="customerName" value={selectedCustomer.name} />
+          <div className="space-y-2">
+            <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm">
+              <p className="font-medium">{selectedCustomer.name}</p>
+              {(selectedCustomer.phone || selectedCustomer.city) && (
+                <p className="text-gray-500 text-xs mt-0.5">
+                  {[selectedCustomer.phone, selectedCustomer.city].filter(Boolean).join(" · ")}
+                </p>
+              )}
+              <input type="hidden" name="retailCustomerId" value={selectedCustomer.id} />
+              <input type="hidden" name="customerName" value={selectedCustomer.name} />
+            </div>
+            <input type="text" name="address" placeholder="Delivery address (street, area)..."
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white" />
           </div>
         ) : manualMode ? (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
