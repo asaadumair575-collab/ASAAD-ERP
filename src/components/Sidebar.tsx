@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import InstallPwaButton from "@/components/InstallPwaButton";
+import TbsLogo from "@/components/TbsLogo";
 import { canView, canViewSub, type UserPermissions, EMPTY_PERMISSIONS } from "@/lib/permissions";
 
 const icons = {
@@ -151,13 +152,10 @@ export default function Sidebar({
     <div className="flex flex-col h-full">
       <div className="h-14 flex items-center justify-between px-4 border-b border-gray-100 shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-7 h-7 rounded-lg bg-zinc-900 flex items-center justify-center shrink-0">
-            <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-white">
-              <path d="M3 10.5 10 4l7 6.5M5 9v6.5a.5.5 0 0 0 .5.5H8a.5.5 0 0 0 .5-.5V13a1.5 1.5 0 0 1 3 0v2.5a.5.5 0 0 0 .5.5h2.5a.5.5 0 0 0 .5-.5V9"
-                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+          <div className="shrink-0">
+            <TbsLogo size={30} />
           </div>
-          <span className="text-sm font-semibold tracking-tight text-gray-900 truncate">{businessName}</span>
+          <span className="text-sm font-bold tracking-tight text-[#16202E] truncate">{businessName}</span>
         </div>
         <button
           type="button"
@@ -180,7 +178,7 @@ export default function Sidebar({
               type="button"
               onClick={() => toggleSection("wholesale")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                isOnWholesale ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                isOnWholesale ? "bg-[#F4F8E4] text-[#16202E] font-semibold" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               }`}
             >
               <span className="flex items-center gap-2.5">{icons.clients} Wholesale</span>
@@ -220,7 +218,7 @@ export default function Sidebar({
               type="button"
               onClick={() => toggleSection("retail")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                isOnRetail ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                isOnRetail ? "bg-[#F4F8E4] text-[#16202E] font-semibold" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               }`}
             >
               <span className="flex items-center gap-2.5">{icons.retail} Retail Advance</span>
@@ -258,7 +256,7 @@ export default function Sidebar({
               type="button"
               onClick={() => toggleSection("reorder")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                isOnReorder ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                isOnReorder ? "bg-[#F4F8E4] text-[#16202E] font-semibold" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               }`}
             >
               <span className="flex items-center gap-2.5">
@@ -297,7 +295,7 @@ export default function Sidebar({
               type="button"
               onClick={() => toggleSection("leads")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                isOnLeads ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                isOnLeads ? "bg-[#F4F8E4] text-[#16202E] font-semibold" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               }`}
             >
               <span className="flex items-center gap-2.5">{icons.leads} Leads</span>
@@ -326,7 +324,7 @@ export default function Sidebar({
         <button
           type="button"
           onClick={() => toggleSection("employee")}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEmployee ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEmployee ? "bg-[#F4F8E4] text-[#16202E] font-semibold" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}
         >
           <span className="flex items-center gap-2.5">{icons.finance} Employee</span>
           <span className={`transition-transform text-gray-400 ${openSection === "employee" ? "rotate-90" : ""}`}>{icons.chevron}</span>
@@ -352,7 +350,7 @@ export default function Sidebar({
         {canView(permissions, "ecommerce", isAdmin) && (
           <>
             <button type="button" onClick={() => toggleSection("ecommerce")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEcommerce ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}>
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEcommerce ? "bg-[#F4F8E4] text-[#16202E] font-semibold" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}>
               <span className="flex items-center gap-2.5">{icons.retail} Retail COD</span>
               <span className={`transition-transform text-gray-400 ${openSection === "ecommerce" ? "rotate-90" : ""}`}>{icons.chevron}</span>
             </button>
@@ -386,7 +384,7 @@ export default function Sidebar({
         {canView(permissions, "complaints", isAdmin) && (
           <>
             <button type="button" onClick={() => toggleSection("complaints")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnComplaints ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}>
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnComplaints ? "bg-[#F4F8E4] text-[#16202E] font-semibold" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}>
               <span className="flex items-center gap-2.5">{icons.sales} Complaints</span>
               <span className={`transition-transform text-gray-400 ${openSection === "complaints" ? "rotate-90" : ""}`}>{icons.chevron}</span>
             </button>
@@ -506,7 +504,7 @@ function NavLink({
         compact ? "px-3 py-1.5" : "px-3 py-2"
       } ${
         active
-          ? "bg-zinc-900 text-white font-medium"
+          ? "bg-[#16202E] text-[#BFD732] font-semibold"
           : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
       }`}
     >

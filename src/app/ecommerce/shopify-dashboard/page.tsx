@@ -196,7 +196,7 @@ export default async function ShopifyDashboardPage({
                       <div className="flex items-center gap-3">
                         <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gray-900 rounded-full transition-all"
+                            className="h-full bg-[#16202E] rounded-full transition-all"
                             style={{ width: `${Math.round((stats.orders / topCityOrders) * 100)}%` }}
                           />
                         </div>
