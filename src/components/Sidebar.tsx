@@ -113,7 +113,7 @@ export default function Sidebar({
   const isOnWholesale = pathname.startsWith("/clients") || pathname.startsWith("/sales") || pathname.startsWith("/finance") || pathname.startsWith("/commission") || pathname.startsWith("/sales/orders") || pathname.startsWith("/dispatch");
   const isOnRetail = pathname.startsWith("/retail");
   const isOnLeads = pathname.startsWith("/leads");
-  const isOnEcommerce = pathname.startsWith("/ecommerce");
+  const isOnEcommerce = pathname.startsWith("/ecommerce") || pathname.startsWith("/ecommerce/shopify-dashboard");
   const isOnEmployee = pathname.startsWith("/emp-commission") || pathname.startsWith("/performance");
   const isOnReorder = pathname.startsWith("/reorder");
   const isOnComplaints = pathname.startsWith("/complaints");
@@ -358,6 +358,7 @@ export default function Sidebar({
             </button>
             {openSection === "ecommerce" && (
               <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+                <NavLink href="/ecommerce/shopify-dashboard" active={pathname.startsWith("/ecommerce/shopify-dashboard")} compact onClick={closeMobile}>Shopify Dashboard</NavLink>
                 <NavLink href="/ecommerce/shopify-orders" active={pathname.startsWith("/ecommerce/shopify-orders")} compact onClick={closeMobile}>Draft Orders</NavLink>
                 {canViewSub(permissions, "ecom_orders", isAdmin) && (
                   <NavLink href="/ecommerce/orders" active={pathname.startsWith("/ecommerce/orders")} compact onClick={closeMobile}>Confirm Orders</NavLink>
