@@ -235,9 +235,6 @@ export default function Sidebar({
                 {canViewSub(permissions, "retail_finance", isAdmin) && (
                   <NavLink href="/retail/finance" active={pathname.startsWith("/retail/finance")} compact onClick={closeMobile}>Finance</NavLink>
                 )}
-                {canViewSub(permissions, "retail_calculator", isAdmin) && (
-                  <NavLink href="/retail/calculator" active={pathname.startsWith("/retail/calculator")} compact onClick={closeMobile}>Rate Calculator</NavLink>
-                )}
                 {canViewSub(permissions, "retail_dispatch", isAdmin) && (
                   <NavLink href="/retail/dispatch" active={pathname.startsWith("/retail/dispatch")} compact onClick={closeMobile}>Dispatch</NavLink>
                 )}
