@@ -35,16 +35,16 @@ async function fetchOrders(from: string, to: string): Promise<ShopifyOrder[]> {
     `${API}/orders.json?status=any&created_at_min=${encodeURIComponent(minDate)}&created_at_max=${encodeURIComponent(maxDate)}&limit=250&fields=id,total_price,financial_status,fulfillment_status,cancel_reason,shipping_address,billing_address,created_at`;
 
   while (url) {
-    const res = await fetch(url, {
+    const res: Response = await fetch(url, {
       headers: { "X-Shopify-Access-Token": TOKEN },
       next: { revalidate: 60 },
     });
     if (!res.ok) break;
-    const data = await res.json();
+    const data: { orders?: ShopifyOrder[] } = await res.json();
     all.push(...(data.orders ?? []));
 
-    const link = res.headers.get("link") ?? "";
-    const next = link.match(/<([^>]+)>;\s*rel="next"/)?.[1] ?? null;
+    const link: string = res.headers.get("link") ?? "";
+    const next: string | null = link.match(/<([^>]+)>;\s*rel="next"/)?.[1] ?? null;
     url = next;
   }
 
