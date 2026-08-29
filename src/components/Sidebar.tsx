@@ -289,40 +289,6 @@ export default function Sidebar({
         )}
 
 
-        {canView(permissions, "ecommerce", isAdmin) && (
-          <>
-            <button type="button" onClick={() => toggleSection("ecommerce")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEcommerce ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}>
-              <span className="flex items-center gap-2.5">{icons.retail} Retail COD</span>
-              <span className={`transition-transform text-gray-400 ${openSection === "ecommerce" ? "rotate-90" : ""}`}>{icons.chevron}</span>
-            </button>
-            {openSection === "ecommerce" && (
-              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
-                <NavLink href="/ecommerce/shopify-orders" active={pathname.startsWith("/ecommerce/shopify-orders")} compact onClick={closeMobile}>Draft Orders</NavLink>
-                {canViewSub(permissions, "ecom_orders", isAdmin) && (
-                  <NavLink href="/ecommerce/orders" active={pathname.startsWith("/ecommerce/orders")} compact onClick={closeMobile}>Confirm Orders</NavLink>
-                )}
-                {canViewSub(permissions, "ecom_customers", isAdmin) && (
-                  <NavLink href="/ecommerce/customers" active={pathname.startsWith("/ecommerce/customers")} compact onClick={closeMobile}>Customers</NavLink>
-                )}
-                {canViewSub(permissions, "ecom_finance", isAdmin) && (
-                  <NavLink href="/ecommerce/finance" active={pathname.startsWith("/ecommerce/finance")} compact onClick={closeMobile}>Finance</NavLink>
-                )}
-                {canViewSub(permissions, "ecom_expenses", isAdmin) && (
-                  <NavLink href="/ecommerce/expenses" active={pathname.startsWith("/ecommerce/expenses")} compact onClick={closeMobile}>Expenses</NavLink>
-                )}
-                {isAdmin && (
-                  <NavLink href="/ecommerce/cpr" active={pathname.startsWith("/ecommerce/cpr")} compact onClick={closeMobile}>CPR Settlement</NavLink>
-                )}
-                {isAdmin && (
-                  <NavLink href="/ecommerce/settings" active={pathname.startsWith("/ecommerce/settings")} compact onClick={closeMobile}>Settings</NavLink>
-                )}
-              </div>
-            )}
-          </>
-        )}
-
-
         {canView(permissions, "leads", isAdmin) && (
           <>
             <button
@@ -379,6 +345,39 @@ export default function Sidebar({
               </NavLink>
             )}
           </div>
+        )}
+
+        {canView(permissions, "ecommerce", isAdmin) && (
+          <>
+            <button type="button" onClick={() => toggleSection("ecommerce")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEcommerce ? "bg-zinc-900/8 text-zinc-900 font-medium" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}>
+              <span className="flex items-center gap-2.5">{icons.retail} Retail COD</span>
+              <span className={`transition-transform text-gray-400 ${openSection === "ecommerce" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+            </button>
+            {openSection === "ecommerce" && (
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+                <NavLink href="/ecommerce/shopify-orders" active={pathname.startsWith("/ecommerce/shopify-orders")} compact onClick={closeMobile}>Draft Orders</NavLink>
+                {canViewSub(permissions, "ecom_orders", isAdmin) && (
+                  <NavLink href="/ecommerce/orders" active={pathname.startsWith("/ecommerce/orders")} compact onClick={closeMobile}>Confirm Orders</NavLink>
+                )}
+                {canViewSub(permissions, "ecom_customers", isAdmin) && (
+                  <NavLink href="/ecommerce/customers" active={pathname.startsWith("/ecommerce/customers")} compact onClick={closeMobile}>Customers</NavLink>
+                )}
+                {canViewSub(permissions, "ecom_finance", isAdmin) && (
+                  <NavLink href="/ecommerce/finance" active={pathname.startsWith("/ecommerce/finance")} compact onClick={closeMobile}>Finance</NavLink>
+                )}
+                {canViewSub(permissions, "ecom_expenses", isAdmin) && (
+                  <NavLink href="/ecommerce/expenses" active={pathname.startsWith("/ecommerce/expenses")} compact onClick={closeMobile}>Expenses</NavLink>
+                )}
+                {isAdmin && (
+                  <NavLink href="/ecommerce/cpr" active={pathname.startsWith("/ecommerce/cpr")} compact onClick={closeMobile}>CPR Settlement</NavLink>
+                )}
+                {isAdmin && (
+                  <NavLink href="/ecommerce/settings" active={pathname.startsWith("/ecommerce/settings")} compact onClick={closeMobile}>Settings</NavLink>
+                )}
+              </div>
+            )}
+          </>
         )}
 
         {isAdmin && <SectionLabel>Admin</SectionLabel>}
