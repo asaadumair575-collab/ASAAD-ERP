@@ -50,7 +50,7 @@ export default function DateNav({ from, to }: { from: string; to: string }) {
           onClick={() => applyPreset(p.days)}
           className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
             isActive(p.days)
-              ? "bg-black text-white"
+              ? "bg-[#16202E] text-[#BFD732] shadow-sm"
               : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
           }`}
         >
@@ -63,18 +63,18 @@ export default function DateNav({ from, to }: { from: string; to: string }) {
           type="date"
           value={customFrom}
           onChange={(e) => setCustomFrom(e.target.value)}
-          className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#BFD732]"
         />
         <span className="text-gray-400 text-sm">—</span>
         <input
           type="date"
           value={customTo}
           onChange={(e) => setCustomTo(e.target.value)}
-          className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#BFD732]"
         />
         <button
           onClick={() => go(customFrom, customTo)}
-          className="bg-black text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-800 transition-colors"
+          className="bg-[#16202E] text-[#BFD732] text-sm font-semibold px-4 py-2 rounded-xl hover:bg-[#232F42] transition-colors"
         >
           Go
         </button>

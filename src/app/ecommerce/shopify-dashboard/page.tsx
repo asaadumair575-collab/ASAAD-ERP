@@ -118,21 +118,19 @@ export default async function ShopifyDashboardPage({
 
   return (
     <div className="max-w-5xl space-y-6 pb-8">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+      {/* Header — brand hero */}
+      <div className="bg-[#16202E] rounded-2xl px-6 py-5 flex items-center justify-between gap-4 flex-wrap shadow-sm relative overflow-hidden">
+        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
         <div>
-          <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">Shopify Store</p>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Sales Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{dateLabel}</p>
+          <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Shopify · The Boundary Shop</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Sales Dashboard</h1>
+          <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
         </div>
-        {total > 0 && (
-          <div className="bg-gray-900 text-white rounded-2xl px-5 py-3 flex items-center gap-3">
-            <div>
-              <p className="text-xs text-gray-400 font-medium">Total Revenue</p>
-              <p className="text-2xl font-bold tabular-nums">Rs {fmt(revenue)}</p>
-            </div>
-          </div>
-        )}
+        <div className="text-right">
+          <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Total Revenue</p>
+          <p className="text-3xl font-bold tabular-nums text-[#BFD732]">Rs {fmt(revenue)}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{total} orders</p>
+        </div>
       </div>
 
       {error === "config" && (
@@ -153,19 +151,19 @@ export default async function ShopifyDashboardPage({
         <>
           {/* Row 1 — key numbers */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <BigStat label="Total Orders" value={String(total)} accent="slate" />
-            <BigStat label="Paid Orders" value={String(paid)} sub={pct(paid, total)} accent="green" />
-            <BigStat label="Avg Order Value" value={`Rs ${fmt(avgOrder)}`} accent="blue" />
-            <BigStat label="Conversion" value={`${conversionRate}%`} sub="paid / total" accent="violet" />
+            <BigStat label="Total Orders" value={String(total)} />
+            <BigStat label="Paid Orders" value={String(paid)} sub={pct(paid, total)} />
+            <BigStat label="Avg Order Value" value={`Rs ${fmt(avgOrder)}`} />
+            <BigStat label="Conversion" value={`${conversionRate}%`} sub="paid / total" />
           </div>
 
           {/* Row 2 — order status breakdown */}
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Order Status</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <StatusTile label="Fulfilled" count={fulfilled} total={total} color="bg-emerald-500" />
-              <StatusTile label="Unfulfilled" count={unfulfilled} total={total} color="bg-amber-400" />
-              <StatusTile label="Unpaid" count={unpaid} total={total} color="bg-blue-400" />
+              <StatusTile label="Fulfilled" count={fulfilled} total={total} color="bg-[#BFD732]" />
+              <StatusTile label="Unfulfilled" count={unfulfilled} total={total} color="bg-[#16202E]" />
+              <StatusTile label="Unpaid" count={unpaid} total={total} color="bg-gray-400" />
               <StatusTile label="Cancelled" count={cancelled} total={total} color="bg-red-400" />
             </div>
           </div>
@@ -196,7 +194,7 @@ export default async function ShopifyDashboardPage({
                       <div className="flex items-center gap-3">
                         <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-[#16202E] rounded-full transition-all"
+                            className="h-full bg-gradient-to-r from-[#16202E] to-[#BFD732] rounded-full transition-all"
                             style={{ width: `${Math.round((stats.orders / topCityOrders) * 100)}%` }}
                           />
                         </div>
@@ -228,24 +226,13 @@ export default async function ShopifyDashboardPage({
   );
 }
 
-function BigStat({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent: string }) {
-  const bg: Record<string, string> = {
-    slate: "bg-gray-900 text-white",
-    green: "bg-green-50 border border-green-200 text-green-900",
-    blue: "bg-blue-50 border border-blue-200 text-blue-900",
-    violet: "bg-violet-50 border border-violet-200 text-violet-900",
-  };
-  const subColor: Record<string, string> = {
-    slate: "text-gray-400",
-    green: "text-green-500",
-    blue: "text-blue-500",
-    violet: "text-violet-500",
-  };
+function BigStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className={`rounded-2xl p-5 shadow-sm ${bg[accent]}`}>
-      <p className="text-xs font-medium opacity-60 mb-2">{label}</p>
-      <p className="text-3xl font-bold tabular-nums leading-none">{value}</p>
-      {sub && <p className={`text-xs mt-1.5 font-semibold ${subColor[accent]}`}>{sub}</p>}
+    <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-1 bg-[#BFD732]" />
+      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">{label}</p>
+      <p className="text-3xl font-bold tabular-nums leading-none text-[#16202E]">{value}</p>
+      {sub && <p className="text-xs mt-1.5 font-semibold text-gray-400">{sub}</p>}
     </div>
   );
 }
