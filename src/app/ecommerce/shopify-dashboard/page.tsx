@@ -117,27 +117,52 @@ async function fetchPostexStats(from: string, to: string): Promise<CourierStats>
   );
   if (tokens.length === 0) return { ...stats, error: "config" };
 
+  const BASE = "https://api.postex.pk/services/integration/api/order";
+  // PostEx list endpoints vary by account/api version — try until one works.
+  const variants = [
+    `${BASE}/v1/get-all-order?orderStatusID=0&fromDate=${from}&toDate=${to}`,
+    `${BASE}/v1/get-all-order?fromDate=${from}&toDate=${to}`,
+    `${BASE}/v2/get-all-order?orderStatusID=0&fromDate=${from}&toDate=${to}`,
+    `${BASE}/v1/get-all-order?orderStatusID=all&fromDate=${from}&toDate=${to}`,
+    `${BASE}/v1/get-all-order?orderStatusID=0&startDate=${from}&endDate=${to}`,
+    `${BASE}/v3/get-all-order?orderStatusID=0&fromDate=${from}&toDate=${to}`,
+  ];
+
   let anyOk = false;
+  const failures: string[] = [];
   for (const token of tokens) {
-    try {
-      const res = await fetch(
-        `https://api.postex.pk/services/integration/api/order/v1/get-all-order?orderStatusID=0&fromDate=${from}&toDate=${to}`,
-        { headers: { token, "Content-Type": "application/json" }, cache: "no-store" }
-      );
-      if (!res.ok) continue;
-      const json = await res.json();
-      const list: Record<string, unknown>[] = Array.isArray(json?.dist) ? json.dist : [];
-      anyOk = true;
-      for (const o of list) {
-        const status = String(o.transactionStatus ?? o.orderStatus ?? o.status ?? "");
-        stats.total += 1;
-        stats[classifyStatus(status)] += 1;
+    for (const url of variants) {
+      try {
+        const res = await fetch(url, {
+          headers: { token, "Content-Type": "application/json" },
+          cache: "no-store",
+        });
+        if (!res.ok) {
+          failures.push(`${res.status}`);
+          continue;
+        }
+        const json = await res.json();
+        const list: Record<string, unknown>[] = Array.isArray(json?.dist)
+          ? json.dist
+          : Array.isArray(json)
+            ? json
+            : [];
+        anyOk = true;
+        for (const o of list) {
+          const status = String(o.transactionStatus ?? o.orderStatus ?? o.status ?? "");
+          stats.total += 1;
+          stats[classifyStatus(status)] += 1;
+        }
+        break; // this token worked — next token
+      } catch {
+        failures.push("network");
       }
-    } catch {
-      // try next token
     }
   }
-  if (!anyOk) return { ...stats, error: "api" };
+  if (!anyOk) {
+    const uniq = [...new Set(failures)].join(", ") || "unknown";
+    return { ...stats, error: `api:${uniq}` };
+  }
   return stats;
 }
 
@@ -333,9 +358,9 @@ export default async function ShopifyDashboardPage({
             <strong>Config missing:</strong> POSTEX_API_TOKEN / POSTEX_RETAIL_API_TOKEN is not set in Vercel.
           </div>
         )}
-        {courier.error === "api" && (
+        {courier.error?.startsWith("api") && (
           <div className="px-5 py-6 text-sm text-red-600 bg-red-50">
-            Could not fetch parcel data from PostEx. Check the API tokens.
+            Could not fetch parcel data from PostEx (HTTP {courier.error.replace("api:", "")}). Check the API tokens.
           </div>
         )}
 
