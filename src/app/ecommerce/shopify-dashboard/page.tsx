@@ -112,7 +112,7 @@ function classifyStatus(status: string): keyof Omit<CourierStats, "total" | "err
 
 const TRACK_API = "https://api.postex.pk/services/integration/api/order/v3/get-track-order";
 
-async function trackOne(cn: string, tokens: string[]): Promise<string | null> {
+async function trackOne(cn: string, tokens: string[], codes: Map<string, number>): Promise<string | null> {
   for (const token of tokens) {
     try {
       const res = await fetch(`${TRACK_API}/${cn}`, {
@@ -120,13 +120,18 @@ async function trackOne(cn: string, tokens: string[]): Promise<string | null> {
         cache: "no-store",
         signal: AbortSignal.timeout(8000),
       });
-      if (!res.ok) continue;
+      if (!res.ok) {
+        codes.set(String(res.status), (codes.get(String(res.status)) ?? 0) + 1);
+        continue;
+      }
       const json = await res.json();
       const d = (json?.dist ?? json) as Record<string, unknown>;
       const status = String(d?.transactionStatus ?? d?.orderStatus ?? d?.status ?? "");
       if (status) return status;
-    } catch {
-      // try next token
+      codes.set("empty", (codes.get("empty") ?? 0) + 1);
+    } catch (e) {
+      const label = e instanceof Error && e.name === "TimeoutError" ? "timeout" : "network";
+      codes.set(label, (codes.get(label) ?? 0) + 1);
     }
   }
   return null;
@@ -175,15 +180,16 @@ async function fetchPostexStats(from: string, to: string): Promise<CourierStats>
 
   // Fetch in parallel batches; stop before the serverless time budget runs out
   const deadline = Date.now() + 45_000;
+  const codes = new Map<string, number>();
   let anyOk = false;
   let skipped = 0;
-  for (let i = 0; i < jobs.length; i += 50) {
+  for (let i = 0; i < jobs.length; i += 15) {
     if (Date.now() > deadline) {
       skipped = jobs.length - i;
       break;
     }
-    const batch = jobs.slice(i, i + 50);
-    const statuses = await Promise.all(batch.map((j) => trackOne(j.cn, j.tokens)));
+    const batch = jobs.slice(i, i + 15);
+    const statuses = await Promise.all(batch.map((j) => trackOne(j.cn, j.tokens, codes)));
     for (const status of statuses) {
       if (status === null) continue;
       anyOk = true;
@@ -192,8 +198,10 @@ async function fetchPostexStats(from: string, to: string): Promise<CourierStats>
     }
   }
 
-  if (!anyOk && jobs.length > 0 && skipped < jobs.length) return { ...stats, error: "api:track" };
-  if (skipped > 0) stats.other += 0; // partial data — totals reflect what was fetched in time
+  if (!anyOk && jobs.length > 0 && skipped < jobs.length) {
+    const detail = [...codes.entries()].map(([k, v]) => `${k}×${v}`).join(", ") || "no responses";
+    return { ...stats, error: `api:${detail}` };
+  }
   return stats;
 }
 
