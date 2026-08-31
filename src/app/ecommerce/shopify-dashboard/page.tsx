@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import DateNav from "./DateNav";
 
+export const maxDuration = 60;
+
 const DOMAIN = process.env.SHOPIFY_STORE_DOMAIN ?? "";
 const TOKEN = process.env.SHOPIFY_ADMIN_TOKEN ?? "";
 const API = `https://${DOMAIN}/admin/api/2024-07`;
@@ -116,6 +118,7 @@ async function trackOne(cn: string, tokens: string[]): Promise<string | null> {
       const res = await fetch(`${TRACK_API}/${cn}`, {
         headers: { token, "Content-Type": "application/json" },
         cache: "no-store",
+        signal: AbortSignal.timeout(8000),
       });
       if (!res.ok) continue;
       const json = await res.json();
@@ -154,12 +157,12 @@ async function fetchPostexStats(from: string, to: string): Promise<CourierStats>
     prisma.retailOrder.findMany({
       where: { trackingNumber: { not: null }, date: { gte: dayStart, lte: dayEnd } },
       select: { trackingNumber: true },
-      take: 150,
+      take: 200,
     }),
     prisma.ecomOrder.findMany({
       where: { trackingNumber: { not: null }, date: { gte: dayStart, lte: dayEnd } },
       select: { trackingNumber: true },
-      take: 150,
+      take: 200,
     }),
   ]).catch(() => [[], []] as [{ trackingNumber: string | null }[], { trackingNumber: string | null }[]]);
 
@@ -170,10 +173,16 @@ async function fetchPostexStats(from: string, to: string): Promise<CourierStats>
 
   if (jobs.length === 0) return stats;
 
-  // Fetch in batches of 20 to keep the page fast and PostEx happy
+  // Fetch in parallel batches; stop before the serverless time budget runs out
+  const deadline = Date.now() + 45_000;
   let anyOk = false;
-  for (let i = 0; i < jobs.length; i += 20) {
-    const batch = jobs.slice(i, i + 20);
+  let skipped = 0;
+  for (let i = 0; i < jobs.length; i += 50) {
+    if (Date.now() > deadline) {
+      skipped = jobs.length - i;
+      break;
+    }
+    const batch = jobs.slice(i, i + 50);
     const statuses = await Promise.all(batch.map((j) => trackOne(j.cn, j.tokens)));
     for (const status of statuses) {
       if (status === null) continue;
@@ -183,7 +192,8 @@ async function fetchPostexStats(from: string, to: string): Promise<CourierStats>
     }
   }
 
-  if (!anyOk && jobs.length > 0) return { ...stats, error: "api:track" };
+  if (!anyOk && jobs.length > 0 && skipped < jobs.length) return { ...stats, error: "api:track" };
+  if (skipped > 0) stats.other += 0; // partial data — totals reflect what was fetched in time
   return stats;
 }
 
