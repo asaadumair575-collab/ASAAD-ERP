@@ -212,10 +212,6 @@ export default async function ShopifyDashboardPage({
   const avgOrder = total ? revenue / total : 0;
 
   const paid = orders.filter((o) => o.financial_status === "paid").length;
-  const unpaid = orders.filter((o) => o.financial_status === "pending").length;
-  const cancelled = orders.filter((o) => !!o.cancel_reason).length;
-  const fulfilled = orders.filter((o) => o.fulfillment_status === "fulfilled").length;
-  const unfulfilled = orders.filter((o) => !o.fulfillment_status && !o.cancel_reason).length;
   const conversionRate = pctNum(paid, total);
 
   // --- City breakdown ---
@@ -295,17 +291,6 @@ export default async function ShopifyDashboardPage({
             <BigStat label="Conversion" value={`${conversionRate}%`} sub="paid / total" />
           </div>
 
-          {/* Row 2 — order status breakdown */}
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Order Status</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <StatusTile label="Fulfilled" count={fulfilled} total={total} color="bg-[#BFD732]" />
-              <StatusTile label="Unfulfilled" count={unfulfilled} total={total} color="bg-[#16202E]" />
-              <StatusTile label="Unpaid" count={unpaid} total={total} color="bg-gray-400" />
-              <StatusTile label="Cancelled" count={cancelled} total={total} color="bg-red-400" />
-            </div>
-          </div>
-
           {/* Revenue strip */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <RevenueCard label="Gross Revenue" value={`Rs ${fmt(revenue)}`} />
@@ -371,7 +356,10 @@ export default async function ShopifyDashboardPage({
             </svg>
             <p className="text-sm font-semibold text-white">Courier — PostEx</p>
           </div>
-          <span className="text-xs text-gray-400">{courier.error ? "" : `${courier.total} parcels`}</span>
+          <div className="text-right">
+            <p className="text-xs font-semibold text-[#BFD732]">{dateLabel}</p>
+            {!courier.error && <p className="text-[11px] text-gray-400 mt-0.5">{courier.total} parcels</p>}
+          </div>
         </div>
 
         {courier.error === "config" && (
@@ -438,21 +426,6 @@ function BigStat({ label, value, sub }: { label: string; value: string; sub?: st
   );
 }
 
-function StatusTile({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
-  return (
-    <div>
-      <div className="flex items-center gap-2 mb-2">
-        <span className={`w-2 h-2 rounded-full ${color}`} />
-        <span className="text-xs text-gray-500 font-medium">{label}</span>
-      </div>
-      <p className="text-2xl font-bold text-gray-900 tabular-nums">{count}</p>
-      <div className="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
-        <div className={`h-full ${color} rounded-full`} style={{ width: pct(count, total) }} />
-      </div>
-      <p className="text-xs text-gray-400 mt-1 tabular-nums">{pct(count, total)}</p>
-    </div>
-  );
-}
 
 function CourierCard({ label, value, sub, dot, highlight }: { label: string; value: number; sub?: string; dot?: string; highlight?: boolean }) {
   return (
