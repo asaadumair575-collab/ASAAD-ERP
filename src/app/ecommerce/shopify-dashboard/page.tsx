@@ -81,6 +81,66 @@ async function fetchOrders(
   return { orders: [], error: `${full.status || "network"}` };
 }
 
+// ── PostEx courier stats ─────────────────────────────────
+type CourierStats = {
+  total: number;
+  delivered: number;
+  outForDelivery: number;
+  onTheWay: number;
+  returned: number;
+  booked: number;
+  attempted: number;
+  cancelled: number;
+  other: number;
+  error?: string;
+};
+
+function classifyStatus(status: string): keyof Omit<CourierStats, "total" | "error"> {
+  const s = status.toLowerCase();
+  if (/deliver/.test(s) && !/out for/.test(s)) return "delivered";
+  if (/out for delivery/.test(s)) return "outForDelivery";
+  if (/return|rto/.test(s)) return "returned";
+  if (/attempt/.test(s)) return "attempted";
+  if (/cancel/.test(s)) return "cancelled";
+  if (/transit|route|way|departed|arrived|picked|warehouse|hub/.test(s)) return "onTheWay";
+  if (/book|unbook|pending/.test(s)) return "booked";
+  return "other";
+}
+
+async function fetchPostexStats(from: string, to: string): Promise<CourierStats> {
+  const stats: CourierStats = {
+    total: 0, delivered: 0, outForDelivery: 0, onTheWay: 0,
+    returned: 0, booked: 0, attempted: 0, cancelled: 0, other: 0,
+  };
+  const tokens = [process.env.POSTEX_API_TOKEN, process.env.POSTEX_RETAIL_API_TOKEN].filter(
+    (t): t is string => !!t
+  );
+  if (tokens.length === 0) return { ...stats, error: "config" };
+
+  let anyOk = false;
+  for (const token of tokens) {
+    try {
+      const res = await fetch(
+        `https://api.postex.pk/services/integration/api/order/v1/get-all-order?orderStatusID=0&fromDate=${from}&toDate=${to}`,
+        { headers: { token, "Content-Type": "application/json" }, cache: "no-store" }
+      );
+      if (!res.ok) continue;
+      const json = await res.json();
+      const list: Record<string, unknown>[] = Array.isArray(json?.dist) ? json.dist : [];
+      anyOk = true;
+      for (const o of list) {
+        const status = String(o.transactionStatus ?? o.orderStatus ?? o.status ?? "");
+        stats.total += 1;
+        stats[classifyStatus(status)] += 1;
+      }
+    } catch {
+      // try next token
+    }
+  }
+  if (!anyOk) return { ...stats, error: "api" };
+  return stats;
+}
+
 export default async function ShopifyDashboardPage({
   searchParams,
 }: {
@@ -95,7 +155,10 @@ export default async function ShopifyDashboardPage({
   const from = fromParam ?? todayPK;
   const to = toParam ?? todayPK;
 
-  const { orders, error, limitedFields } = await fetchOrders(from, to);
+  const [{ orders, error, limitedFields }, courier] = await Promise.all([
+    fetchOrders(from, to),
+    fetchPostexStats(from, to),
+  ]);
 
   // --- Metrics ---
   const total = orders.length;
@@ -251,6 +314,69 @@ export default async function ShopifyDashboardPage({
           </div>
         )
       )}
+
+      {/* ── Courier (PostEx) ─────────────────────────── */}
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-[#16202E]">
+          <div className="flex items-center gap-2.5">
+            <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-[#BFD732]">
+              <path d="M2.5 6.5 10 2.5l7.5 4M2.5 6.5v7l7.5 4 7.5-4v-7M2.5 6.5 10 10.5l7.5-4M10 10.5V17.5"
+                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <p className="text-sm font-semibold text-white">Courier — PostEx</p>
+          </div>
+          <span className="text-xs text-gray-400">{courier.error ? "" : `${courier.total} parcels`}</span>
+        </div>
+
+        {courier.error === "config" && (
+          <div className="px-5 py-6 text-sm text-amber-700 bg-amber-50">
+            <strong>Config missing:</strong> POSTEX_API_TOKEN / POSTEX_RETAIL_API_TOKEN is not set in Vercel.
+          </div>
+        )}
+        {courier.error === "api" && (
+          <div className="px-5 py-6 text-sm text-red-600 bg-red-50">
+            Could not fetch parcel data from PostEx. Check the API tokens.
+          </div>
+        )}
+
+        {!courier.error && (
+          <div className="p-5 space-y-5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <CourierCard label="Total Parcels" value={courier.total} highlight />
+              <CourierCard label="Delivered" value={courier.delivered} sub={pct(courier.delivered, courier.total)} dot="bg-[#BFD732]" />
+              <CourierCard label="Out for Delivery" value={courier.outForDelivery} sub={pct(courier.outForDelivery, courier.total)} dot="bg-blue-400" />
+              <CourierCard label="On the Way" value={courier.onTheWay} sub={pct(courier.onTheWay, courier.total)} dot="bg-amber-400" />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <CourierCard label="Booked / Pending" value={courier.booked} sub={pct(courier.booked, courier.total)} dot="bg-gray-400" />
+              <CourierCard label="Attempted" value={courier.attempted} sub={pct(courier.attempted, courier.total)} dot="bg-orange-400" />
+              <CourierCard label="Returned" value={courier.returned} sub={pct(courier.returned, courier.total)} dot="bg-red-400" />
+              <CourierCard label="Cancelled" value={courier.cancelled + courier.other} sub={pct(courier.cancelled + courier.other, courier.total)} dot="bg-gray-300" />
+            </div>
+
+            {courier.total > 0 && (
+              <div>
+                <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100">
+                  <div className="bg-[#BFD732]" style={{ width: pct(courier.delivered, courier.total) }} />
+                  <div className="bg-blue-400" style={{ width: pct(courier.outForDelivery, courier.total) }} />
+                  <div className="bg-amber-400" style={{ width: pct(courier.onTheWay, courier.total) }} />
+                  <div className="bg-red-400" style={{ width: pct(courier.returned, courier.total) }} />
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5">
+                  <LegendDot color="bg-[#BFD732]" label="Delivered" />
+                  <LegendDot color="bg-blue-400" label="Out for Delivery" />
+                  <LegendDot color="bg-amber-400" label="On the Way" />
+                  <LegendDot color="bg-red-400" label="Returned" />
+                </div>
+              </div>
+            )}
+
+            {courier.total === 0 && (
+              <p className="text-sm text-gray-400 text-center py-4">No parcels booked in this date range</p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -279,6 +405,28 @@ function StatusTile({ label, count, total, color }: { label: string; count: numb
       </div>
       <p className="text-xs text-gray-400 mt-1 tabular-nums">{pct(count, total)}</p>
     </div>
+  );
+}
+
+function CourierCard({ label, value, sub, dot, highlight }: { label: string; value: number; sub?: string; dot?: string; highlight?: boolean }) {
+  return (
+    <div className={`rounded-xl p-4 border ${highlight ? "bg-[#16202E] border-[#16202E]" : "bg-gray-50/60 border-gray-100"}`}>
+      <div className="flex items-center gap-1.5 mb-1.5">
+        {dot && <span className={`w-2 h-2 rounded-full ${dot}`} />}
+        <p className={`text-[11px] font-semibold uppercase tracking-wider ${highlight ? "text-gray-400" : "text-gray-400"}`}>{label}</p>
+      </div>
+      <p className={`text-2xl font-bold tabular-nums leading-none ${highlight ? "text-[#BFD732]" : "text-[#16202E]"}`}>{value}</p>
+      {sub && <p className="text-xs mt-1 font-medium text-gray-400">{sub}</p>}
+    </div>
+  );
+}
+
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-gray-500">
+      <span className={`w-2 h-2 rounded-full ${color}`} />
+      {label}
+    </span>
   );
 }
 
