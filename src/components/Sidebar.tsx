@@ -356,7 +356,7 @@ export default function Sidebar({
             </button>
             {openSection === "ecommerce" && (
               <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
-                <NavLink href="/ecommerce/shopify-dashboard" active={pathname.startsWith("/ecommerce/shopify-dashboard")} compact onClick={closeMobile}>Shopify Dashboard</NavLink>
+                <NavLink href="/ecommerce/shopify-dashboard" active={pathname.startsWith("/ecommerce/shopify-dashboard")} compact onClick={closeMobile}>All Dashboard</NavLink>
                 <NavLink href="/ecommerce/shopify-orders" active={pathname.startsWith("/ecommerce/shopify-orders")} compact onClick={closeMobile}>Draft Orders</NavLink>
                 {canViewSub(permissions, "ecom_orders", isAdmin) && (
                   <NavLink href="/ecommerce/orders" active={pathname.startsWith("/ecommerce/orders")} compact onClick={closeMobile}>Confirm Orders</NavLink>

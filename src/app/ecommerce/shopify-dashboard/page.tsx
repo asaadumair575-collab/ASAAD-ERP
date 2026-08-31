@@ -153,23 +153,23 @@ export default async function ShopifyDashboardPage({
 
       {error === "config" && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-sm text-amber-800">
-          <strong>Config missing:</strong> SHOPIFY_ADMIN_TOKEN ya SHOPIFY_STORE_DOMAIN Vercel mein set nahi.
+          <strong>Config missing:</strong> SHOPIFY_ADMIN_TOKEN or SHOPIFY_STORE_DOMAIN is not set in Vercel.
         </div>
       )}
       {error === "403" && (
         <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 text-sm text-red-700 space-y-1">
-          <p><strong>403 — Access denied.</strong> Shopify app ko orders parhne ki permission nahi mili.</p>
-          <p>Shopify Admin → Settings → Apps and sales channels → Develop apps → apni app → <strong>Configure Admin API scopes</strong> → <code>read_orders</code> enable karo → Save → app <strong>Install/Reinstall</strong> karo → naya token copy kar ke Vercel mein <code>SHOPIFY_ADMIN_TOKEN</code> update karo → Redeploy.</p>
+          <p><strong>403 — Access denied.</strong> The Shopify app does not have permission to read orders.</p>
+          <p>Shopify Admin → Settings → Apps and sales channels → Develop apps → your app → <strong>Configure Admin API scopes</strong> → enable <code>read_orders</code> → Save → <strong>Install/Reinstall</strong> the app → copy the new token into <code>SHOPIFY_ADMIN_TOKEN</code> on Vercel → Redeploy.</p>
         </div>
       )}
       {error && error !== "config" && error !== "403" && (
         <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 text-sm text-red-700">
-          <strong>API Error {error}:</strong> Shopify se data nahi aya. Token ya domain check karo.
+          <strong>API Error {error}:</strong> Could not fetch data from Shopify. Check the token and store domain.
         </div>
       )}
       {limitedFields && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-sm text-amber-800">
-          <strong>Note:</strong> Customer address data ki permission nahi hai, is liye city-wise breakdown nahi dikh raha. Shopify app settings mein <strong>Protected customer data access</strong> request karo to city breakdown bhi aa jayega.
+          <strong>Note:</strong> Customer address data is not permitted, so the city-wise breakdown is hidden. Request <strong>Protected customer data access</strong> in your Shopify app settings to enable it.
         </div>
       )}
 
@@ -246,8 +246,8 @@ export default async function ShopifyDashboardPage({
         !error && (
           <div className="border border-dashed border-gray-200 rounded-2xl p-16 text-center">
             <p className="text-3xl mb-3">📦</p>
-            <p className="text-sm font-medium text-gray-500">Is date range mein koi orders nahi</p>
-            <p className="text-xs text-gray-400 mt-1">Date change kar ke dobara try karo</p>
+            <p className="text-sm font-medium text-gray-500">No orders in this date range</p>
+            <p className="text-xs text-gray-400 mt-1">Try a different date range</p>
           </div>
         )
       )}

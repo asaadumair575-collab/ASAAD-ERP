@@ -4,10 +4,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const PRESETS = [
-  { label: "Aaj", days: 0 },
-  { label: "Kal", days: 1 },
-  { label: "7 Din", days: 7 },
-  { label: "30 Din", days: 30 },
+  { label: "Today", days: 0 },
+  { label: "Yesterday", days: 1 },
+  { label: "7 Days", days: 7 },
+  { label: "30 Days", days: 30 },
 ];
 
 function toLocal(d: Date) {
