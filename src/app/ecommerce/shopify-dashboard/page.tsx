@@ -31,16 +31,12 @@ type ShopifyOrder = {
   created_at: string;
 };
 
-async function fetchOrders(from: string, to: string): Promise<{ orders: ShopifyOrder[]; error?: string }> {
-  if (!DOMAIN || !TOKEN) return { orders: [], error: "config" };
+const FULL_FIELDS = "id,total_price,financial_status,fulfillment_status,cancel_reason,shipping_address,billing_address,created_at";
+const SAFE_FIELDS = "id,total_price,financial_status,fulfillment_status,cancel_reason,created_at";
 
-  const minDate = new Date(`${from}T00:00:00+05:00`).toISOString();
-  const maxDate = new Date(`${to}T23:59:59+05:00`).toISOString();
-
+async function fetchPages(baseUrl: string): Promise<{ orders: ShopifyOrder[]; status: number }> {
   const all: ShopifyOrder[] = [];
-  let url: string | null =
-    `${API}/orders.json?status=any&created_at_min=${encodeURIComponent(minDate)}&created_at_max=${encodeURIComponent(maxDate)}&limit=250&fields=id,total_price,financial_status,fulfillment_status,cancel_reason,shipping_address,billing_address,created_at`;
-
+  let url: string | null = baseUrl;
   while (url) {
     let res: Response;
     try {
@@ -49,18 +45,40 @@ async function fetchOrders(from: string, to: string): Promise<{ orders: ShopifyO
         cache: "no-store",
       });
     } catch {
-      return { orders: all, error: "network" };
+      return { orders: all, status: 0 };
     }
-    if (!res.ok) return { orders: all, error: `${res.status}` };
+    if (!res.ok) return { orders: all, status: res.status };
     const data: { orders?: ShopifyOrder[] } = await res.json();
     all.push(...(data.orders ?? []));
-
     const link: string = res.headers.get("link") ?? "";
     const next: string | null = link.match(/<([^>]+)>;\s*rel="next"/)?.[1] ?? null;
     url = next;
   }
+  return { orders: all, status: 200 };
+}
 
-  return { orders: all };
+async function fetchOrders(
+  from: string,
+  to: string
+): Promise<{ orders: ShopifyOrder[]; error?: string; limitedFields?: boolean }> {
+  if (!DOMAIN || !TOKEN) return { orders: [], error: "config" };
+
+  const minDate = new Date(`${from}T00:00:00+05:00`).toISOString();
+  const maxDate = new Date(`${to}T23:59:59+05:00`).toISOString();
+  const query = `status=any&created_at_min=${encodeURIComponent(minDate)}&created_at_max=${encodeURIComponent(maxDate)}&limit=250`;
+
+  const full = await fetchPages(`${API}/orders.json?${query}&fields=${FULL_FIELDS}`);
+  if (full.status === 200) return { orders: full.orders };
+
+  // 403 usually means "protected customer data" (addresses) is not approved for
+  // this app — retry without address fields so the stats still work.
+  if (full.status === 403) {
+    const safe = await fetchPages(`${API}/orders.json?${query}&fields=${SAFE_FIELDS}`);
+    if (safe.status === 200) return { orders: safe.orders, limitedFields: true };
+    return { orders: [], error: `${safe.status || "network"}` };
+  }
+
+  return { orders: [], error: `${full.status || "network"}` };
 }
 
 export default async function ShopifyDashboardPage({
@@ -77,7 +95,7 @@ export default async function ShopifyDashboardPage({
   const from = fromParam ?? todayPK;
   const to = toParam ?? todayPK;
 
-  const { orders, error } = await fetchOrders(from, to);
+  const { orders, error, limitedFields } = await fetchOrders(from, to);
 
   // --- Metrics ---
   const total = orders.length;
@@ -138,9 +156,20 @@ export default async function ShopifyDashboardPage({
           <strong>Config missing:</strong> SHOPIFY_ADMIN_TOKEN ya SHOPIFY_STORE_DOMAIN Vercel mein set nahi.
         </div>
       )}
-      {error && error !== "config" && (
+      {error === "403" && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 text-sm text-red-700 space-y-1">
+          <p><strong>403 — Access denied.</strong> Shopify app ko orders parhne ki permission nahi mili.</p>
+          <p>Shopify Admin → Settings → Apps and sales channels → Develop apps → apni app → <strong>Configure Admin API scopes</strong> → <code>read_orders</code> enable karo → Save → app <strong>Install/Reinstall</strong> karo → naya token copy kar ke Vercel mein <code>SHOPIFY_ADMIN_TOKEN</code> update karo → Redeploy.</p>
+        </div>
+      )}
+      {error && error !== "config" && error !== "403" && (
         <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 text-sm text-red-700">
           <strong>API Error {error}:</strong> Shopify se data nahi aya. Token ya domain check karo.
+        </div>
+      )}
+      {limitedFields && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-sm text-amber-800">
+          <strong>Note:</strong> Customer address data ki permission nahi hai, is liye city-wise breakdown nahi dikh raha. Shopify app settings mein <strong>Protected customer data access</strong> request karo to city breakdown bhi aa jayega.
         </div>
       )}
 
