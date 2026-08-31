@@ -110,12 +110,15 @@ function classifyStatus(status: string): keyof Omit<CourierStats, "total" | "err
   return "other";
 }
 
-const TRACK_API = "https://api.postex.pk/services/integration/api/order/v3/get-track-order";
+const TRACK_BASE = "https://api.postex.pk/services/integration/api/order";
+const TRACK_VERSIONS = ["v3", "v2", "v1"];
 
 async function trackOne(cn: string, tokens: string[], codes: Map<string, number>): Promise<string | null> {
+  const clean = cn.trim();
   for (const token of tokens) {
+    for (const v of TRACK_VERSIONS) {
     try {
-      const res = await fetch(`${TRACK_API}/${cn}`, {
+      const res = await fetch(`${TRACK_BASE}/${v}/get-track-order/${encodeURIComponent(clean)}`, {
         headers: { token, "Content-Type": "application/json" },
         cache: "no-store",
         signal: AbortSignal.timeout(8000),
@@ -132,6 +135,7 @@ async function trackOne(cn: string, tokens: string[], codes: Map<string, number>
     } catch (e) {
       const label = e instanceof Error && e.name === "TimeoutError" ? "timeout" : "network";
       codes.set(label, (codes.get(label) ?? 0) + 1);
+    }
     }
   }
   return null;
@@ -200,7 +204,8 @@ async function fetchPostexStats(from: string, to: string): Promise<CourierStats>
 
   if (!anyOk && jobs.length > 0 && skipped < jobs.length) {
     const detail = [...codes.entries()].map(([k, v]) => `${k}×${v}`).join(", ") || "no responses";
-    return { ...stats, error: `api:${detail}` };
+    const sample = jobs.slice(0, 2).map((j) => j.cn).join(", ");
+    return { ...stats, error: `api:${detail} — sample CN: ${sample}` };
   }
   return stats;
 }
