@@ -107,62 +107,82 @@ function classifyStatus(status: string): keyof Omit<CourierStats, "total" | "err
   return "other";
 }
 
+const TRACK_API = "https://api.postex.pk/services/integration/api/order/v3/get-track-order";
+
+async function trackOne(cn: string, tokens: string[]): Promise<string | null> {
+  for (const token of tokens) {
+    try {
+      const res = await fetch(`${TRACK_API}/${cn}`, {
+        headers: { token, "Content-Type": "application/json" },
+        cache: "no-store",
+      });
+      if (!res.ok) continue;
+      const json = await res.json();
+      const d = (json?.dist ?? json) as Record<string, unknown>;
+      const status = String(d?.transactionStatus ?? d?.orderStatus ?? d?.status ?? "");
+      if (status) return status;
+    } catch {
+      // try next token
+    }
+  }
+  return null;
+}
+
 async function fetchPostexStats(from: string, to: string): Promise<CourierStats> {
   const stats: CourierStats = {
     total: 0, delivered: 0, outForDelivery: 0, onTheWay: 0,
     returned: 0, booked: 0, attempted: 0, cancelled: 0, other: 0,
   };
-  const tokens = [process.env.POSTEX_API_TOKEN, process.env.POSTEX_RETAIL_API_TOKEN].filter(
-    (t): t is string => !!t
-  );
-  if (tokens.length === 0) return { ...stats, error: "config" };
 
-  const BASE = "https://api.postex.pk/services/integration/api/order";
-  // PostEx list endpoints vary by account/api version — try until one works.
-  const variants = [
-    `${BASE}/v1/get-all-order?orderStatusID=0&fromDate=${from}&toDate=${to}`,
-    `${BASE}/v1/get-all-order?fromDate=${from}&toDate=${to}`,
-    `${BASE}/v2/get-all-order?orderStatusID=0&fromDate=${from}&toDate=${to}`,
-    `${BASE}/v1/get-all-order?orderStatusID=all&fromDate=${from}&toDate=${to}`,
-    `${BASE}/v1/get-all-order?orderStatusID=0&startDate=${from}&endDate=${to}`,
-    `${BASE}/v3/get-all-order?orderStatusID=0&fromDate=${from}&toDate=${to}`,
+  const retailToken = process.env.POSTEX_RETAIL_API_TOKEN ?? "";
+  const ecomToken = process.env.POSTEX_API_TOKEN ?? "";
+  let ecomKey = process.env.POSTEX_API_KEY ?? "";
+  if (!ecomKey) {
+    const setting = await prisma.appSetting.findUnique({ where: { key: "POSTEX_API_KEY" } }).catch(() => null);
+    ecomKey = setting?.value ?? "";
+  }
+  const retailTokens = [retailToken, ecomToken, ecomKey].filter(Boolean);
+  const ecomTokens = [ecomKey, ecomToken, retailToken].filter(Boolean);
+  if (retailTokens.length === 0) return { ...stats, error: "config" };
+
+  const dayStart = new Date(`${from}T00:00:00+05:00`);
+  const dayEnd = new Date(`${to}T23:59:59+05:00`);
+
+  // Parcels booked in the selected range, from our own DB (tracking numbers)
+  const [retailOrders, ecomOrders] = await Promise.all([
+    prisma.retailOrder.findMany({
+      where: { trackingNumber: { not: null }, date: { gte: dayStart, lte: dayEnd } },
+      select: { trackingNumber: true },
+      take: 150,
+    }),
+    prisma.ecomOrder.findMany({
+      where: { trackingNumber: { not: null }, date: { gte: dayStart, lte: dayEnd } },
+      select: { trackingNumber: true },
+      take: 150,
+    }),
+  ]).catch(() => [[], []] as [{ trackingNumber: string | null }[], { trackingNumber: string | null }[]]);
+
+  const jobs: { cn: string; tokens: string[] }[] = [
+    ...retailOrders.filter((o) => o.trackingNumber).map((o) => ({ cn: o.trackingNumber!, tokens: retailTokens })),
+    ...ecomOrders.filter((o) => o.trackingNumber).map((o) => ({ cn: o.trackingNumber!, tokens: ecomTokens })),
   ];
 
+  if (jobs.length === 0) return stats;
+
+  // Fetch in batches of 20 to keep the page fast and PostEx happy
   let anyOk = false;
-  const failures: string[] = [];
-  for (const token of tokens) {
-    for (const url of variants) {
-      try {
-        const res = await fetch(url, {
-          headers: { token, "Content-Type": "application/json" },
-          cache: "no-store",
-        });
-        if (!res.ok) {
-          failures.push(`${res.status}`);
-          continue;
-        }
-        const json = await res.json();
-        const list: Record<string, unknown>[] = Array.isArray(json?.dist)
-          ? json.dist
-          : Array.isArray(json)
-            ? json
-            : [];
-        anyOk = true;
-        for (const o of list) {
-          const status = String(o.transactionStatus ?? o.orderStatus ?? o.status ?? "");
-          stats.total += 1;
-          stats[classifyStatus(status)] += 1;
-        }
-        break; // this token worked — next token
-      } catch {
-        failures.push("network");
-      }
+  for (let i = 0; i < jobs.length; i += 20) {
+    const batch = jobs.slice(i, i + 20);
+    const statuses = await Promise.all(batch.map((j) => trackOne(j.cn, j.tokens)));
+    for (const status of statuses) {
+      if (status === null) continue;
+      anyOk = true;
+      stats.total += 1;
+      stats[classifyStatus(status)] += 1;
     }
   }
-  if (!anyOk) {
-    const uniq = [...new Set(failures)].join(", ") || "unknown";
-    return { ...stats, error: `api:${uniq}` };
-  }
+
+  if (!anyOk && jobs.length > 0) return { ...stats, error: "api:track" };
   return stats;
 }
 
