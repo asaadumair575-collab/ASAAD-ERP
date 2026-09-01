@@ -113,29 +113,62 @@ function classifyStatus(status: string): keyof Omit<CourierStats, "total" | "err
 const TRACK_BASE = "https://api.postex.pk/services/integration/api/order";
 const TRACK_VERSIONS = ["v3", "v2", "v1"];
 
+type Combo = { headers: Record<string, string>; version: string };
+let knownGoodCombo: Combo | null = null;
+
+function buildCombos(tokens: string[]): Combo[] {
+  const combos: Combo[] = [];
+  for (const token of tokens) {
+    const styles: Record<string, string>[] = [
+      { token, "Content-Type": "application/json" },
+      { Authorization: `Basic ${token}`, "Content-Type": "application/json" },
+    ];
+    for (const headers of styles) {
+      for (const version of TRACK_VERSIONS) {
+        combos.push({ headers, version });
+      }
+    }
+  }
+  return combos;
+}
+
+async function tryCombo(cn: string, combo: Combo, codes: Map<string, number>): Promise<string | null> {
+  try {
+    const res = await fetch(`${TRACK_BASE}/${combo.version}/get-track-order/${encodeURIComponent(cn)}`, {
+      headers: combo.headers,
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) {
+      codes.set(String(res.status), (codes.get(String(res.status)) ?? 0) + 1);
+      return null;
+    }
+    const json = await res.json();
+    const d = (json?.dist ?? json) as Record<string, unknown>;
+    const status = String(d?.transactionStatus ?? d?.orderStatus ?? d?.status ?? "");
+    if (status) return status;
+    codes.set("empty", (codes.get("empty") ?? 0) + 1);
+    return null;
+  } catch (e) {
+    const label = e instanceof Error && e.name === "TimeoutError" ? "timeout" : "network";
+    codes.set(label, (codes.get(label) ?? 0) + 1);
+    return null;
+  }
+}
+
 async function trackOne(cn: string, tokens: string[], codes: Map<string, number>): Promise<string | null> {
   const clean = cn.trim();
-  for (const token of tokens) {
-    for (const v of TRACK_VERSIONS) {
-    try {
-      const res = await fetch(`${TRACK_BASE}/${v}/get-track-order/${encodeURIComponent(clean)}`, {
-        headers: { token, "Content-Type": "application/json" },
-        cache: "no-store",
-        signal: AbortSignal.timeout(8000),
-      });
-      if (!res.ok) {
-        codes.set(String(res.status), (codes.get(String(res.status)) ?? 0) + 1);
-        continue;
-      }
-      const json = await res.json();
-      const d = (json?.dist ?? json) as Record<string, unknown>;
-      const status = String(d?.transactionStatus ?? d?.orderStatus ?? d?.status ?? "");
-      if (status) return status;
-      codes.set("empty", (codes.get("empty") ?? 0) + 1);
-    } catch (e) {
-      const label = e instanceof Error && e.name === "TimeoutError" ? "timeout" : "network";
-      codes.set(label, (codes.get(label) ?? 0) + 1);
-    }
+  // Fast path: reuse the combo that worked before
+  if (knownGoodCombo) {
+    const status = await tryCombo(clean, knownGoodCombo, codes);
+    if (status) return status;
+  }
+  for (const combo of buildCombos(tokens)) {
+    if (knownGoodCombo && combo.version === knownGoodCombo.version) continue;
+    const status = await tryCombo(clean, combo, codes);
+    if (status) {
+      knownGoodCombo = combo;
+      return status;
     }
   }
   return null;
