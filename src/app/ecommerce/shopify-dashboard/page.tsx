@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -224,10 +225,85 @@ export default async function ShopifyDashboardPage({
   const from = fromParam ?? todayPK;
   const to = toParam ?? todayPK;
 
-  const [{ orders, error, limitedFields }, courier] = await Promise.all([
-    fetchOrders(from, to),
-    fetchPostexStats(from, to),
-  ]);
+  // --- Date label ---
+  const dateLabel =
+    from === to
+      ? new Date(`${from}T12:00:00`).toLocaleDateString("en-PK", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })
+      : `${new Date(`${from}T12:00:00`).toLocaleDateString("en-PK", { day: "numeric", month: "short" })} — ${new Date(`${to}T12:00:00`).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}`;
+
+  // Kick off the slow fetch once; both the hero and the stats section await
+  // it inside their own Suspense boundaries so the page shell (header + date
+  // buttons) renders immediately and the data streams in behind skeletons.
+  const ordersPromise = fetchOrders(from, to);
+  const rangeKey = `${from}_${to}`;
+
+  return (
+    <div className="max-w-5xl space-y-6 pb-8">
+      {/* Header — brand hero */}
+      <div className="bg-[#16202E] rounded-2xl px-6 py-5 flex items-center justify-between gap-4 flex-wrap shadow-sm relative overflow-hidden">
+        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
+        <div>
+          <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Shopify · The Boundary Shop</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Sales Dashboard</h1>
+          <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Total Revenue</p>
+          {/* keyed so the fallback shows on every date change instead of the old number sticking around */}
+          <Suspense
+            key={`hero-${rangeKey}`}
+            fallback={
+              <>
+                <div className="h-8 w-32 bg-white/10 rounded-lg animate-pulse ml-auto mt-1" />
+                <div className="h-3 w-16 bg-white/10 rounded ml-auto mt-2 animate-pulse" />
+              </>
+            }
+          >
+            <HeroRevenue ordersPromise={ordersPromise} />
+          </Suspense>
+        </div>
+      </div>
+
+      {/* Date picker — always interactive, never blocked by data */}
+      <DateNav from={from} to={to} today={todayPK} />
+
+      <Suspense key={`shopify-${rangeKey}`} fallback={<StatsSkeleton />}>
+        <ShopifySection ordersPromise={ordersPromise} from={from} to={to} />
+      </Suspense>
+
+      <Suspense key={`courier-${rangeKey}`} fallback={<CourierSkeleton dateLabel={dateLabel} />}>
+        <CourierSection from={from} to={to} dateLabel={dateLabel} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function HeroRevenue({ ordersPromise }: { ordersPromise: ReturnType<typeof fetchOrders> }) {
+  const { orders } = await ordersPromise;
+  const revenue = orders.reduce((s, o) => s + parseFloat(o.total_price || "0"), 0);
+  return (
+    <>
+      <p className="text-3xl font-bold tabular-nums text-[#BFD732]">Rs {fmt(revenue)}</p>
+      <p className="text-xs text-gray-400 mt-0.5">{orders.length} orders</p>
+    </>
+  );
+}
+
+async function ShopifySection({
+  ordersPromise,
+  from,
+  to,
+}: {
+  ordersPromise: ReturnType<typeof fetchOrders>;
+  from: string;
+  to: string;
+}) {
+  const { orders, error, limitedFields } = await ordersPromise;
 
   // --- Metrics ---
   const total = orders.length;
@@ -251,34 +327,8 @@ export default async function ShopifyDashboardPage({
 
   const topCityOrders = cities[0]?.[1].orders ?? 0;
 
-  // --- Date label ---
-  const dateLabel =
-    from === to
-      ? new Date(`${from}T12:00:00`).toLocaleDateString("en-PK", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })
-      : `${new Date(`${from}T12:00:00`).toLocaleDateString("en-PK", { day: "numeric", month: "short" })} — ${new Date(`${to}T12:00:00`).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}`;
-
   return (
-    <div className="max-w-5xl space-y-6 pb-8">
-      {/* Header — brand hero */}
-      <div className="bg-[#16202E] rounded-2xl px-6 py-5 flex items-center justify-between gap-4 flex-wrap shadow-sm relative overflow-hidden">
-        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
-        <div>
-          <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Shopify · The Boundary Shop</p>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Sales Dashboard</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Total Revenue</p>
-          <p className="text-3xl font-bold tabular-nums text-[#BFD732]">Rs {fmt(revenue)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">{total} orders</p>
-        </div>
-      </div>
-
+    <>
       {error === "config" && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-sm text-amber-800">
           <strong>Config missing:</strong> SHOPIFY_ADMIN_TOKEN or SHOPIFY_STORE_DOMAIN is not set in Vercel.
@@ -300,9 +350,6 @@ export default async function ShopifyDashboardPage({
           <strong>Note:</strong> Customer address data is not permitted, so the city-wise breakdown is hidden. Request <strong>Protected customer data access</strong> in your Shopify app settings to enable it.
         </div>
       )}
-
-      {/* Date picker */}
-      <DateNav from={from} to={to} today={todayPK} />
 
       {total > 0 ? (
         <>
@@ -368,9 +415,15 @@ export default async function ShopifyDashboardPage({
           </div>
         )
       )}
+    </>
+  );
+}
 
-      {/* ── Courier (PostEx) ─────────────────────────── */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+async function CourierSection({ from, to, dateLabel }: { from: string; to: string; dateLabel: string }) {
+  const courier = await fetchPostexStats(from, to);
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-[#16202E]">
           <div className="flex items-center gap-2.5">
             <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-[#BFD732]">
@@ -433,6 +486,42 @@ export default async function ShopifyDashboardPage({
             )}
           </div>
         )}
+    </div>
+  );
+}
+
+function StatsSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-28 bg-gray-100 rounded-2xl" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-24 bg-gray-100 rounded-2xl" />
+        ))}
+      </div>
+      <div className="h-64 bg-gray-100 rounded-2xl" />
+    </div>
+  );
+}
+
+function CourierSkeleton({ dateLabel }: { dateLabel: string }) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-[#16202E]">
+        <p className="text-sm font-semibold text-white">Courier — PostEx</p>
+        <div className="text-right">
+          <p className="text-xs font-semibold text-[#BFD732]">{dateLabel}</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">checking parcels…</p>
+        </div>
+      </div>
+      <div className="p-5 grid grid-cols-2 sm:grid-cols-4 gap-3 animate-pulse">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="h-20 bg-gray-100 rounded-xl" />
+        ))}
       </div>
     </div>
   );
