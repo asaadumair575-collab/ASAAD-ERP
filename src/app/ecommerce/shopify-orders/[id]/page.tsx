@@ -23,7 +23,7 @@ export default async function DraftOrderDetailPage({ params }: { params: Promise
   });
   if (!order || !order.draft) notFound();
 
-  const label = order.notes?.replace("Shopify Order ", "") ?? `#${order.shopifyOrderId ?? order.id}`;
+  const label = order.notes?.replace("Shopify Order ", "") ?? `#${order.id}`;
   const statusMeta = order.draftStatus ? STATUS_META[order.draftStatus] : null;
   const subtotal = order.items.reduce((s, i) => s + i.rate * i.quantity, 0);
 

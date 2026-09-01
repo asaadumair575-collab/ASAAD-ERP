@@ -132,7 +132,7 @@ export default async function DraftOrdersPage({
             </thead>
             <tbody className="divide-y divide-gray-100">
               {orders.map((o) => {
-                const label = o.notes?.replace("Shopify Order ", "") ?? `#${o.shopifyOrderId}`;
+                const label = o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
                 const statusMeta = o.draftStatus ? STATUS_META[o.draftStatus] : null;
                 return (
                   <tr key={o.id} className="hover:bg-gray-50 transition-colors group">

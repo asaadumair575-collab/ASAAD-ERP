@@ -49,8 +49,10 @@ export async function POST(req: NextRequest) {
   const notes = body.notes ? String(body.notes).trim() : null;
   const orderRef = body.orderRef ? String(body.orderRef).trim() : null;
 
-  if (orderRef) {
-    const existing = await prisma.ecomOrder.findFirst({ where: { shopifyOrderId: orderRef } });
+  const externalRef = orderRef ? `web:${orderRef}` : null;
+
+  if (externalRef) {
+    const existing = await prisma.ecomOrder.findFirst({ where: { shopifyOrderId: externalRef } });
     if (existing) return NextResponse.json({ ok: true, orderId: existing.id, duplicate: true });
   }
 
@@ -66,7 +68,7 @@ export async function POST(req: NextRequest) {
       totalAmount,
       draft: true,
       status: "PENDING",
-      shopifyOrderId: orderRef,
+      shopifyOrderId: externalRef,
       items: {
         create: items
           .filter((i) => i.description)
