@@ -13,8 +13,15 @@ async function createPostexBooking(order: {
   address: string | null;
   totalAmount: number;
   notes: string | null;
+  payments: { amount: number }[];
+  items: { description: string; quantity: number }[];
 }) {
   const orderRef = order.notes?.replace("Shopify Order ", "") ?? `E-${order.id}`;
+  const advancePaid = order.payments.reduce((s, p) => s + p.amount, 0);
+  const codAmount = Math.max(0, order.totalAmount - advancePaid);
+  const deliveryAddress = order.address ?? order.city ?? "";
+  const orderDetail = order.items.map((i) => `${i.description} x${i.quantity}`).join(", ") || orderRef;
+
   const res = await fetch(`${POSTEX_BASE}/order/v3/create-order`, {
     method: "POST",
     headers: {
@@ -28,11 +35,11 @@ async function createPostexBooking(order: {
       cityName: order.city ?? "Karachi",
       customerName: order.customerName,
       customerPhone: order.phone ?? "",
-      deliveryAddress: order.address ?? order.city ?? "",
-      invoicePayment: order.totalAmount,
+      deliveryAddress,
+      invoicePayment: codAmount,
       invoiceNumber: orderRef,
-      items: 1,
-      orderDetail: orderRef,
+      items: order.items.length || 1,
+      orderDetail,
       transactionNotes: orderRef,
     }),
   });
@@ -71,7 +78,11 @@ export async function POST(req: NextRequest) {
 
   const orders = await prisma.ecomOrder.findMany({
     where: { id: { in: ids.map(Number) }, draft: false },
-    select: { id: true, customerName: true, phone: true, city: true, address: true, totalAmount: true, notes: true, trackingNumber: true },
+    select: {
+      id: true, customerName: true, phone: true, city: true, address: true, totalAmount: true, notes: true, trackingNumber: true,
+      payments: { select: { amount: true } },
+      items: { select: { description: true, quantity: true } },
+    },
   });
 
   const results: { id: number; tracking?: string; error?: string }[] = [];
