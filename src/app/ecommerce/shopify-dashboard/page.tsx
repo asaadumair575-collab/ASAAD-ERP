@@ -110,68 +110,53 @@ function classifyStatus(status: string): keyof Omit<CourierStats, "total" | "err
   return "other";
 }
 
-const TRACK_BASE = "https://api.postex.pk/services/integration/api/order";
-const TRACK_VERSIONS = ["v3", "v2", "v1"];
+const LIST_API = "https://api.postex.pk/services/integration/api/order/v1/get-all-order";
 
-type Combo = { headers: Record<string, string>; version: string };
-let knownGoodCombo: Combo | null = null;
+async function fetchAccountOrders(
+  token: string,
+  from: string,
+  to: string
+): Promise<{ statuses: string[]; ok: boolean; code: string }> {
+  // Correct params per PostEx API: orderStatusId (Integer), startDate, endDate; auth via `token` header
+  const tryUrls = [
+    `${LIST_API}?orderStatusId=0&startDate=${from}&endDate=${to}`,
+    // some accounts reject 0 = all; fall back to per-status merge below
+  ];
+  const headers = { token, "Content-Type": "application/json" };
 
-function buildCombos(tokens: string[]): Combo[] {
-  const combos: Combo[] = [];
-  for (const token of tokens) {
-    const styles: Record<string, string>[] = [
-      { token, "Content-Type": "application/json" },
-      { Authorization: `Basic ${token}`, "Content-Type": "application/json" },
-    ];
-    for (const headers of styles) {
-      for (const version of TRACK_VERSIONS) {
-        combos.push({ headers, version });
+  for (const url of tryUrls) {
+    try {
+      const res = await fetch(url, { headers, cache: "no-store", signal: AbortSignal.timeout(15000) });
+      if (res.ok) {
+        const json = await res.json();
+        const list: Record<string, unknown>[] = Array.isArray(json?.dist) ? json.dist : [];
+        return { statuses: list.map((o) => String(o.transactionStatus ?? o.orderStatus ?? o.status ?? "")), ok: true, code: "200" };
       }
+      if (res.status !== 400) return { statuses: [], ok: false, code: String(res.status) };
+    } catch {
+      return { statuses: [], ok: false, code: "network" };
     }
   }
-  return combos;
-}
 
-async function tryCombo(cn: string, combo: Combo, codes: Map<string, number>): Promise<string | null> {
-  try {
-    const res = await fetch(`${TRACK_BASE}/${combo.version}/get-track-order/${encodeURIComponent(cn)}`, {
-      headers: combo.headers,
-      cache: "no-store",
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) {
-      codes.set(String(res.status), (codes.get(String(res.status)) ?? 0) + 1);
-      return null;
-    }
-    const json = await res.json();
-    const d = (json?.dist ?? json) as Record<string, unknown>;
-    const status = String(d?.transactionStatus ?? d?.orderStatus ?? d?.status ?? "");
-    if (status) return status;
-    codes.set("empty", (codes.get("empty") ?? 0) + 1);
-    return null;
-  } catch (e) {
-    const label = e instanceof Error && e.name === "TimeoutError" ? "timeout" : "network";
-    codes.set(label, (codes.get(label) ?? 0) + 1);
-    return null;
-  }
-}
-
-async function trackOne(cn: string, tokens: string[], codes: Map<string, number>): Promise<string | null> {
-  const clean = cn.trim();
-  // Fast path: reuse the combo that worked before
-  if (knownGoodCombo) {
-    const status = await tryCombo(clean, knownGoodCombo, codes);
-    if (status) return status;
-  }
-  for (const combo of buildCombos(tokens)) {
-    if (knownGoodCombo && combo.version === knownGoodCombo.version) continue;
-    const status = await tryCombo(clean, combo, codes);
-    if (status) {
-      knownGoodCombo = combo;
-      return status;
+  // orderStatusId=0 rejected — merge per-status queries (PostEx status ids)
+  const all: string[] = [];
+  let anyOk = false;
+  let lastCode = "400";
+  for (const id of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+    try {
+      const res = await fetch(`${LIST_API}?orderStatusId=${id}&startDate=${from}&endDate=${to}`, {
+        headers, cache: "no-store", signal: AbortSignal.timeout(15000),
+      });
+      if (!res.ok) { lastCode = String(res.status); continue; }
+      anyOk = true;
+      const json = await res.json();
+      const list: Record<string, unknown>[] = Array.isArray(json?.dist) ? json.dist : [];
+      all.push(...list.map((o) => String(o.transactionStatus ?? o.orderStatus ?? o.status ?? "")));
+    } catch {
+      lastCode = "network";
     }
   }
-  return null;
+  return { statuses: all, ok: anyOk, code: anyOk ? "200" : lastCode };
 }
 
 async function fetchPostexStats(from: string, to: string): Promise<CourierStats> {
@@ -180,66 +165,28 @@ async function fetchPostexStats(from: string, to: string): Promise<CourierStats>
     returned: 0, booked: 0, attempted: 0, cancelled: 0, other: 0,
   };
 
-  const retailToken = process.env.POSTEX_RETAIL_API_TOKEN ?? "";
-  const ecomToken = process.env.POSTEX_API_TOKEN ?? "";
-  let ecomKey = process.env.POSTEX_API_KEY ?? "";
-  if (!ecomKey) {
+  const tokens: string[] = [];
+  if (process.env.POSTEX_API_TOKEN) tokens.push(process.env.POSTEX_API_TOKEN);
+  if (process.env.POSTEX_RETAIL_API_TOKEN) tokens.push(process.env.POSTEX_RETAIL_API_TOKEN);
+  if (!process.env.POSTEX_API_TOKEN) {
     const setting = await prisma.appSetting.findUnique({ where: { key: "POSTEX_API_KEY" } }).catch(() => null);
-    ecomKey = setting?.value ?? "";
+    if (setting?.value) tokens.push(setting.value);
   }
-  const retailTokens = [retailToken, ecomToken, ecomKey].filter(Boolean);
-  const ecomTokens = [ecomKey, ecomToken, retailToken].filter(Boolean);
-  if (retailTokens.length === 0) return { ...stats, error: "config" };
+  if (tokens.length === 0) return { ...stats, error: "config" };
 
-  const dayStart = new Date(`${from}T00:00:00+05:00`);
-  const dayEnd = new Date(`${to}T23:59:59+05:00`);
-
-  // Parcels booked in the selected range, from our own DB (tracking numbers)
-  const [retailOrders, ecomOrders] = await Promise.all([
-    prisma.retailOrder.findMany({
-      where: { trackingNumber: { not: null }, date: { gte: dayStart, lte: dayEnd } },
-      select: { trackingNumber: true },
-      take: 200,
-    }),
-    prisma.ecomOrder.findMany({
-      where: { trackingNumber: { not: null }, date: { gte: dayStart, lte: dayEnd } },
-      select: { trackingNumber: true },
-      take: 200,
-    }),
-  ]).catch(() => [[], []] as [{ trackingNumber: string | null }[], { trackingNumber: string | null }[]]);
-
-  const jobs: { cn: string; tokens: string[] }[] = [
-    ...retailOrders.filter((o) => o.trackingNumber).map((o) => ({ cn: o.trackingNumber!, tokens: retailTokens })),
-    ...ecomOrders.filter((o) => o.trackingNumber).map((o) => ({ cn: o.trackingNumber!, tokens: ecomTokens })),
-  ];
-
-  if (jobs.length === 0) return stats;
-
-  // Fetch in parallel batches; stop before the serverless time budget runs out
-  const deadline = Date.now() + 45_000;
-  const codes = new Map<string, number>();
   let anyOk = false;
-  let skipped = 0;
-  for (let i = 0; i < jobs.length; i += 15) {
-    if (Date.now() > deadline) {
-      skipped = jobs.length - i;
-      break;
-    }
-    const batch = jobs.slice(i, i + 15);
-    const statuses = await Promise.all(batch.map((j) => trackOne(j.cn, j.tokens, codes)));
-    for (const status of statuses) {
-      if (status === null) continue;
-      anyOk = true;
+  const codes: string[] = [];
+  const results = await Promise.all(tokens.map((t) => fetchAccountOrders(t, from, to)));
+  for (const r of results) {
+    if (!r.ok) { codes.push(r.code); continue; }
+    anyOk = true;
+    for (const status of r.statuses) {
       stats.total += 1;
       stats[classifyStatus(status)] += 1;
     }
   }
 
-  if (!anyOk && jobs.length > 0 && skipped < jobs.length) {
-    const detail = [...codes.entries()].map(([k, v]) => `${k}×${v}`).join(", ") || "no responses";
-    const sample = jobs.slice(0, 2).map((j) => j.cn).join(", ");
-    return { ...stats, error: `api:${detail} — sample CN: ${sample}` };
-  }
+  if (!anyOk) return { ...stats, error: `api:${[...new Set(codes)].join(", ") || "unknown"}` };
   return stats;
 }
 
