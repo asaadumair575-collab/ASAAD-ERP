@@ -1,0 +1,1 @@
+ALTER TABLE "EcomOrder" ADD COLUMN "confirmedAt" TIMESTAMP(3);

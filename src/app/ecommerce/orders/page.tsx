@@ -25,7 +25,7 @@ export default async function EcomOrdersPage({
       ...(q ? { OR: [{ customerName: { contains: q, mode: "insensitive" } }, { phone: { contains: q } }, { city: { contains: q, mode: "insensitive" } }] } : {}),
     },
     include: { items: true, payments: true },
-    orderBy: { date: "desc" },
+    orderBy: [{ confirmedAt: { sort: "desc", nulls: "last" } }, { date: "desc" }],
   });
 
   const dispatched   = orders.filter(o => o.trackingNumber);

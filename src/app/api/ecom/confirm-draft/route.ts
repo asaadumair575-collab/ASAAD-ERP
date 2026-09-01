@@ -7,6 +7,6 @@ export async function POST(req: NextRequest) {
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await req.json();
-  await prisma.ecomOrder.update({ where: { id: Number(id) }, data: { draft: false } });
+  await prisma.ecomOrder.update({ where: { id: Number(id) }, data: { draft: false, confirmedAt: new Date() } });
   return NextResponse.json({ ok: true });
 }

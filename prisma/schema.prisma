@@ -349,6 +349,7 @@ model EcomOrder {
   shopifyOrderId  String?
   draft           Boolean         @default(false)
   draftStatus     String?
+  confirmedAt     DateTime?
   createdAt       DateTime        @default(now())
   items         EcomOrderItem[]
   payments      EcomPayment[]

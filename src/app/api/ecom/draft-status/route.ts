@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       where: { id: Number(id) },
       data: {
         draftStatus: draftStatus || null,
-        ...(draftStatus === "CONFIRMED" ? { draft: false } : {}),
+        ...(draftStatus === "CONFIRMED" ? { draft: false, confirmedAt: new Date() } : {}),
       },
     }),
     ...(draftStatus
