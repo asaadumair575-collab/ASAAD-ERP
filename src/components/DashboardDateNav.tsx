@@ -17,7 +17,17 @@ function shiftDate(dateStr: string, days: number): string {
   return new Date(Date.UTC(y, m - 1, d - days)).toISOString().slice(0, 10);
 }
 
-export default function DateNav({ from, to, today }: { from: string; to: string; today: string }) {
+export default function DashboardDateNav({
+  from,
+  to,
+  today,
+  basePath,
+}: {
+  from: string;
+  to: string;
+  today: string;
+  basePath: string;
+}) {
   const router = useRouter();
   const [customFrom, setCustomFrom] = useState(from);
   const [customTo, setCustomTo] = useState(to);
@@ -30,7 +40,7 @@ export default function DateNav({ from, to, today }: { from: string; to: string;
     if (isPending) return;
     setPendingRange({ from: f, to: t });
     startTransition(() => {
-      router.push(`/ecommerce/shopify-dashboard?from=${f}&to=${t}`);
+      router.push(`${basePath}?from=${f}&to=${t}`);
     });
   }
 
