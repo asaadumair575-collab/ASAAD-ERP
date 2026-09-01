@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { sendPushToAll } from "@/lib/push";
 import * as XLSX from "xlsx";
@@ -65,6 +66,12 @@ const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_LOCKOUT_MS = 60 * 1000;
 const loginAttempts = new Map<string, { count: number; firstAttempt: number }>();
 
+// Per-IP daily cap — stops one IP from brute-forcing many usernames/passwords
+// even if each individual username stays under the per-username limiter.
+const LOGIN_IP_MAX_PER_DAY = 30;
+const LOGIN_IP_WINDOW_MS = 24 * 60 * 60 * 1000;
+const loginAttemptsByIp = new Map<string, { count: number; firstAttempt: number }>();
+
 function loginRateLimit(username: string): string | null {
   const entry = loginAttempts.get(username);
   const now = Date.now();
@@ -81,6 +88,20 @@ function loginRateLimit(username: string): string | null {
 
 function clearLoginAttempts(username: string) {
   loginAttempts.delete(username);
+}
+
+function loginIpRateLimit(ip: string): string | null {
+  const now = Date.now();
+  const entry = loginAttemptsByIp.get(ip);
+  if (entry && now - entry.firstAttempt < LOGIN_IP_WINDOW_MS) {
+    if (entry.count >= LOGIN_IP_MAX_PER_DAY) {
+      return "Too many login attempts from this network today. Try again later.";
+    }
+    entry.count += 1;
+  } else {
+    loginAttemptsByIp.set(ip, { count: 1, firstAttempt: now });
+  }
+  return null;
 }
 
 function normalizePhone(phone: string | null): string | null {
@@ -875,6 +896,14 @@ export async function deleteSample(id: number) {
 export async function loginAction(formData: FormData) {
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+
+  const h = await headers();
+  const ip = (h.get("x-forwarded-for")?.split(",")[0]?.trim()) || h.get("x-real-ip") || "unknown";
+
+  const ipError = loginIpRateLimit(ip);
+  if (ipError) {
+    redirect(`/login?error=${encodeURIComponent(ipError)}`);
+  }
 
   const rateLimitError = loginRateLimit(username);
   if (rateLimitError) {

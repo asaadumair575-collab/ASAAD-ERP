@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { publicApiRateLimit } from "@/lib/publicApiRateLimit";
+import { timingSafeEqualStr } from "@/lib/timingSafeEqual";
 
 // Public order intake for external storefronts (e.g. a custom website).
 // The caller authenticates with a shared secret via the X-Api-Key header.
@@ -27,9 +29,12 @@ export async function POST(req: NextRequest) {
   if (!key) {
     return NextResponse.json({ error: "Server not configured: ORDER_INTAKE_API_KEY missing" }, { status: 500 });
   }
-  if (req.headers.get("x-api-key") !== key) {
+  if (!timingSafeEqualStr(req.headers.get("x-api-key"), key)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const limited = publicApiRateLimit(req);
+  if (limited) return NextResponse.json({ error: limited }, { status: 429 });
 
   let body: Record<string, unknown>;
   try {
