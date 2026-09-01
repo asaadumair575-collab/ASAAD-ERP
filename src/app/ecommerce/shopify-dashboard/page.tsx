@@ -302,7 +302,7 @@ export default async function ShopifyDashboardPage({
       )}
 
       {/* Date picker */}
-      <DateNav from={from} to={to} />
+      <DateNav from={from} to={to} today={todayPK} />
 
       {total > 0 ? (
         <>
