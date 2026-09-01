@@ -210,6 +210,102 @@ async function fetchPostexStats(from: string, to: string): Promise<CourierStats>
   return stats;
 }
 
+// ── Chart helpers (server-rendered SVG) ──────────────────
+type Bucket = { label: string; revenue: number; orders: number };
+
+function buildBuckets(orders: ShopifyOrder[], from: string, to: string): Bucket[] {
+  const single = from === to;
+  const map = new Map<string, Bucket>();
+
+  if (single) {
+    for (let h = 0; h < 24; h += 2) {
+      const label = `${String(h).padStart(2, "0")}:00`;
+      map.set(label, { label, revenue: 0, orders: 0 });
+    }
+    for (const o of orders) {
+      const d = new Date(o.created_at);
+      const hourPK = Number(d.toLocaleString("en-GB", { hour: "2-digit", hour12: false, timeZone: "Asia/Karachi" }));
+      const slot = Math.floor(hourPK / 2) * 2;
+      const label = `${String(slot).padStart(2, "0")}:00`;
+      const b = map.get(label);
+      if (b) { b.revenue += parseFloat(o.total_price || "0"); b.orders += 1; }
+    }
+  } else {
+    const start = new Date(`${from}T12:00:00+05:00`);
+    const end = new Date(`${to}T12:00:00+05:00`);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = d.toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+      const label = d.toLocaleDateString("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" });
+      map.set(key, { label, revenue: 0, orders: 0 });
+    }
+    for (const o of orders) {
+      const key = new Date(o.created_at).toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+      const b = map.get(key);
+      if (b) { b.revenue += parseFloat(o.total_price || "0"); b.orders += 1; }
+    }
+  }
+  return [...map.values()];
+}
+
+function BarChart({
+  buckets, metric, color, valuePrefix = "",
+}: {
+  buckets: Bucket[];
+  metric: "revenue" | "orders";
+  color: string;
+  valuePrefix?: string;
+}) {
+  const W = 560, H = 180, padL = 8, padR = 8, padB = 22, padT = 18;
+  const values = buckets.map((b) => b[metric]);
+  const max = Math.max(...values, 1);
+  const n = buckets.length;
+  const innerW = W - padL - padR;
+  const gap = Math.min(6, Math.max(2, innerW / n / 4));
+  const barW = Math.max(3, innerW / n - gap);
+  const peakIdx = values.indexOf(Math.max(...values));
+
+  const labelEvery = Math.ceil(n / 8);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label={`${metric} chart`}>
+      {/* recessive gridlines */}
+      {[0.25, 0.5, 0.75, 1].map((f) => (
+        <line key={f} x1={padL} x2={W - padR} y1={padT + (H - padT - padB) * (1 - f)} y2={padT + (H - padT - padB) * (1 - f)} stroke="#eef0ea" strokeWidth="1" />
+      ))}
+      {buckets.map((b, i) => {
+        const v = b[metric];
+        const h = Math.round(((H - padT - padB) * v) / max);
+        const x = padL + (i * innerW) / n + gap / 2;
+        const y = H - padB - h;
+        const r = Math.min(4, barW / 2, h);
+        return (
+          <g key={i}>
+            <path
+              d={h > 0
+                ? `M${x},${H - padB} v${-(h - r)} q0,${-r} ${r},${-r} h${barW - 2 * r} q${r},0 ${r},${r} v${h - r} z`
+                : `M${x},${H - padB} h${barW} z`}
+              fill={i === peakIdx && v > 0 ? "#BFD732" : color}
+              opacity={v === 0 ? 0.15 : 1}
+            >
+              <title>{`${b.label}: ${valuePrefix}${v.toLocaleString("en-PK", { maximumFractionDigits: 0 })}`}</title>
+            </path>
+            {i === peakIdx && v > 0 && (
+              <text x={x + barW / 2} y={y - 5} textAnchor="middle" fontSize="10" fontWeight="700" fill="#16202E">
+                {valuePrefix}{v.toLocaleString("en-PK", { maximumFractionDigits: 0 })}
+              </text>
+            )}
+            {i % labelEvery === 0 && (
+              <text x={x + barW / 2} y={H - 7} textAnchor="middle" fontSize="9" fill="#9ca3af">
+                {b.label}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 export default async function ShopifyDashboardPage({
   searchParams,
 }: {
@@ -313,6 +409,30 @@ export default async function ShopifyDashboardPage({
             <BigStat label="Avg Order Value" value={`Rs ${fmt(avgOrder)}`} />
             <BigStat label="Conversion" value={`${conversionRate}%`} sub="paid / total" />
           </div>
+
+          {/* Trend charts */}
+          {(() => {
+            const buckets = buildBuckets(orders, from, to);
+            const single = from === to;
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-semibold text-gray-800">Revenue {single ? "by Hour" : "by Day"}</p>
+                    <span className="text-xs text-gray-400">Rs {fmt(revenue)} total</span>
+                  </div>
+                  <BarChart buckets={buckets} metric="revenue" color="#16202E" valuePrefix="Rs " />
+                </div>
+                <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-semibold text-gray-800">Orders {single ? "by Hour" : "by Day"}</p>
+                    <span className="text-xs text-gray-400">{total} total</span>
+                  </div>
+                  <BarChart buckets={buckets} metric="orders" color="#5a6b7c" />
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Revenue strip */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
