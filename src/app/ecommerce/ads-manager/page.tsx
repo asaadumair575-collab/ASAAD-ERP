@@ -61,18 +61,27 @@ export default async function AdsManagerPage({
       : `${new Date(`${from}T12:00:00`).toLocaleDateString("en-PK", { day: "numeric", month: "short" })} — ${new Date(`${to}T12:00:00`).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}`;
 
   return (
-    <div className="max-w-3xl space-y-6 pb-8">
-      <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm">
+    <div className="max-w-5xl space-y-6 pb-8">
+      <div className="bg-[#16202E] rounded-2xl px-6 py-5 flex items-center justify-between gap-4 flex-wrap relative overflow-hidden shadow-sm">
         <div className="absolute inset-y-0 left-0 w-1.5 bg-[#1877F2]" />
-        <div className="flex items-center gap-2.5 mb-1">
-          <svg viewBox="0 0 20 20" fill="none" className="w-3.5 h-3.5 text-[#8fb8f5]">
-            <path d="M3 10a7 7 0 1 1 14 0 7 7 0 0 1-14 0Z" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M10 6.5v4l2.5 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <p className="text-[11px] font-semibold text-[#8fb8f5] uppercase tracking-[0.18em]">Meta Ads · The Boundary Shop</p>
+        <div>
+          <div className="flex items-center gap-2.5 mb-1">
+            <svg viewBox="0 0 20 20" fill="none" className="w-3.5 h-3.5 text-[#8fb8f5]">
+              <path d="M3 10a7 7 0 1 1 14 0 7 7 0 0 1-14 0Z" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M10 6.5v4l2.5 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <p className="text-[11px] font-semibold text-[#8fb8f5] uppercase tracking-[0.18em]">Meta Ads · The Boundary Shop</p>
+          </div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Ads Manager</h1>
+          <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
         </div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Ads Manager</h1>
-        <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
+        <div className="flex items-center gap-2 bg-white/5 rounded-xl px-4 py-2.5">
+          <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-[#1877F2]">
+            <circle cx="10" cy="10" r="8.5" fill="#1877F2" />
+            <path d="M11.7 10.2h1.6l.25-1.7h-1.85V7.4c0-.5.13-.83.85-.83h.9V5.06c-.15-.02-.68-.06-1.3-.06-1.28 0-2.16.78-2.16 2.22v1.28H8.4v1.7h1.6V15h1.7v-4.8Z" fill="#fff" />
+          </svg>
+          <span className="text-xs text-gray-300 font-medium">Facebook + Instagram</span>
+        </div>
       </div>
 
       <DateRangeNav from={from} to={to} basePath="/ecommerce/ads-manager" />
@@ -121,12 +130,14 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
 
   return (
     <>
-      {/* Ad spend — the one number Meta reports accurately */}
-      <StatCard label="Ad Spend" value={`Rs ${fmt(meta.spend)}`} accent="bg-[#1877F2]" />
-
-      {/* Verified — from our own tagged orders */}
-      <Section dot="bg-emerald-500" title="Verified — from your website orders">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* Headline row — spend, verified revenue, ROAS side by side */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Verified — from your website orders</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <StatCard label="Ad Spend" value={`Rs ${fmt(meta.spend)}`} accent="bg-[#1877F2]" />
           <StatCard label="Revenue from Ads" value={`Rs ${fmt(revenue)}`} sub={`${adOrders.length} tagged orders`} accent="bg-[#BFD732]" />
           <StatCard
             label="ROAS"
@@ -136,35 +147,10 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
           />
         </div>
         <p className="text-xs text-gray-400 mt-2">
-          Counted only from orders tagged <code>source: &quot;meta_ads&quot;</code> by the storefront. Requires the
-          storefront to send that tag — see the note below if it&apos;s missing.
+          Revenue and ROAS are counted only from orders tagged <code>source: &quot;meta_ads&quot;</code> by the
+          storefront. Requires the storefront to send that tag — see the note below if it&apos;s missing.
         </p>
-      </Section>
-
-      {/* Meta-reported — confirmed unreliable for this account, kept only as a collapsed reference */}
-      {meta.reportedRevenue > 0 && (
-        <details className="bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3">
-          <summary className="text-xs font-semibold text-gray-500 cursor-pointer select-none">
-            Meta&apos;s own reported number (do not use — known to be inflated on this account)
-          </summary>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-1">Revenue (Meta-reported)</p>
-              <p className="text-lg font-bold tabular-nums text-gray-400 line-through decoration-red-300">Rs {fmt(meta.reportedRevenue)}</p>
-            </div>
-            <div>
-              <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-1">ROAS (Meta-reported)</p>
-              <p className="text-lg font-bold tabular-nums text-gray-400 line-through decoration-red-300">{meta.reportedRoas.toFixed(2)}x</p>
-            </div>
-          </div>
-          <p className="text-xs text-red-500 mt-2">
-            This number has been confirmed inaccurate — Meta reported Rs 280k for a period where actual recorded
-            sales were Rs 380. Meta&apos;s click/view attribution window over-counts conversions that weren&apos;t
-            really driven by ads. Do not use it for decisions; treat the &quot;Verified&quot; numbers above as the
-            source of truth.
-          </p>
-        </details>
-      )}
+      </div>
 
       {/* Daily trend */}
       {dailyPoints.length > 1 && (
@@ -174,13 +160,39 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
         </div>
       )}
 
-      {untaggedOrders > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-xs text-amber-800">
-          <strong>{untaggedOrders} of {totalOrders} orders</strong> in this range have no traffic source tag, so they
-          aren&apos;t counted in the &quot;Verified&quot; numbers above as ad or organic. The storefront needs to
-          send a <code>source</code> field (e.g. <code>meta_ads</code>) when creating each order.
-        </div>
-      )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+        {untaggedOrders > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-xs text-amber-800">
+            <strong>{untaggedOrders} of {totalOrders} orders</strong> in this range have no traffic source tag, so they
+            aren&apos;t counted above as ad or organic. The storefront needs to send a <code>source</code> field
+            (e.g. <code>meta_ads</code>) when creating each order.
+          </div>
+        )}
+
+        {/* Meta-reported — confirmed unreliable for this account, kept only as a collapsed reference */}
+        {meta.reportedRevenue > 0 && (
+          <details className="bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3">
+            <summary className="text-xs font-semibold text-gray-500 cursor-pointer select-none">
+              Meta&apos;s own reported number (do not use — known to be inflated on this account)
+            </summary>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-1">Revenue (Meta-reported)</p>
+                <p className="text-lg font-bold tabular-nums text-gray-400 line-through decoration-red-300">Rs {fmt(meta.reportedRevenue)}</p>
+              </div>
+              <div>
+                <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-1">ROAS (Meta-reported)</p>
+                <p className="text-lg font-bold tabular-nums text-gray-400 line-through decoration-red-300">{meta.reportedRoas.toFixed(2)}x</p>
+              </div>
+            </div>
+            <p className="text-xs text-red-500 mt-2">
+              Confirmed inaccurate — Meta reported Rs 280k for a period where actual recorded sales were Rs 380.
+              Meta&apos;s click/view attribution window over-counts conversions that weren&apos;t really driven by
+              ads. Treat &quot;Verified&quot; numbers above as the source of truth.
+            </p>
+          </details>
+        )}
+      </div>
 
       {meta.spend === 0 && revenue === 0 && meta.reportedRevenue === 0 && (
         <div className="border border-dashed border-gray-200 rounded-2xl p-12 text-center">
@@ -215,23 +227,11 @@ function StatCard({
   );
 }
 
-function Section({ dot, title, children }: { dot: string; title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="flex items-center gap-2 mb-2">
-        <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{title}</p>
-      </div>
-      {children}
-    </div>
-  );
-}
-
 function AdsSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="h-24 bg-gray-100 rounded-2xl" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="h-24 bg-gray-100 rounded-2xl" />
         <div className="h-24 bg-gray-100 rounded-2xl" />
         <div className="h-24 bg-gray-100 rounded-2xl" />
       </div>
