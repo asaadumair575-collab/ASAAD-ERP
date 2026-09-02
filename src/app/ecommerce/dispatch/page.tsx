@@ -1,7 +1,7 @@
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import DateRangeNav from "@/components/DateRangeNav";
+import DispatchReportTrigger from "@/components/DispatchReportTrigger";
 import PrintButton from "@/app/performance/report/PrintButton";
 
 export const maxDuration = 30;
@@ -70,7 +70,7 @@ export default async function EcomDispatchPage({
       </div>
 
       <div className="print:hidden">
-        <DateRangeNav from={from} to={to} basePath="/ecommerce/dispatch" />
+        <DispatchReportTrigger from={from} to={to} basePath="/ecommerce/dispatch" />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 print:hidden">
