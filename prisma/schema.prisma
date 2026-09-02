@@ -350,6 +350,7 @@ model EcomOrder {
   draft           Boolean         @default(false)
   draftStatus     String?
   confirmedAt     DateTime?
+  source          String?
   createdAt       DateTime        @default(now())
   items         EcomOrderItem[]
   payments      EcomPayment[]

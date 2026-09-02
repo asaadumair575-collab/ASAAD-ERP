@@ -17,8 +17,15 @@ import { timingSafeEqualStr } from "@/lib/timingSafeEqual";
 //   "notes": "optional",
 //   "totalAmount": 2500,
 //   "orderRef": "optional external order id (dedupes on retry)",
+//   "source": "meta_ads" | "google_ads" | "organic" | "direct" | ... (optional, free text),
 //   "items": [{ "description": "Product A", "quantity": 1, "rate": 2500 }]
 // }
+//
+// "source" is how the storefront attributes this order to a traffic source —
+// e.g. set it to "meta_ads" when the visitor's landing URL had a Meta click id
+// (fbclid) or utm_source=facebook/instagram. This powers ad-attributed
+// revenue/ROAS on the ERP's Ads Manager page, since Meta's own self-reported
+// conversion numbers over-count via broad attribution windows.
 //
 // Creates a draft EcomOrder (Retail COD -> Draft Orders) for manual confirmation.
 
@@ -53,6 +60,7 @@ export async function POST(req: NextRequest) {
   const address = body.address ? String(body.address).trim() : null;
   const notes = body.notes ? String(body.notes).trim() : null;
   const orderRef = body.orderRef ? String(body.orderRef).trim() : null;
+  const source = body.source ? String(body.source).trim().toLowerCase().slice(0, 50) : null;
 
   const externalRef = orderRef ? `web:${orderRef}` : null;
 
@@ -74,6 +82,7 @@ export async function POST(req: NextRequest) {
       draft: true,
       status: "PENDING",
       shopifyOrderId: externalRef,
+      source,
       items: {
         create: items
           .filter((i) => i.description)

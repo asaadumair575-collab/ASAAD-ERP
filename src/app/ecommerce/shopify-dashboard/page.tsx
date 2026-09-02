@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import DateNav from "./DateNav";
 import { fetchMetaStats } from "@/lib/metaAds";
+import { fetchWebOrders, isMetaAdOrder, type WebOrder } from "@/lib/webOrders";
 
 export const maxDuration = 60;
 
@@ -18,44 +19,6 @@ function pct(a: number, b: number) {
 function pctNum(a: number, b: number) {
   if (!b) return 0;
   return Math.round((a / b) * 100);
-}
-
-// Orders now come from the store's own website via /api/public/orders,
-// which lands them in EcomOrder directly — read straight from the DB.
-type WebOrder = {
-  id: number;
-  totalAmount: number;
-  city: string | null;
-  draft: boolean;
-  date: Date;
-  paid: number;
-};
-
-async function fetchWebOrders(from: string, to: string): Promise<{ orders: WebOrder[]; error?: string }> {
-  const dayStart = new Date(`${from}T00:00:00+05:00`);
-  const dayEnd = new Date(`${to}T23:59:59+05:00`);
-
-  try {
-    const rows = await prisma.ecomOrder.findMany({
-      where: { date: { gte: dayStart, lte: dayEnd } },
-      select: {
-        id: true, totalAmount: true, city: true, draft: true, date: true,
-        payments: { select: { amount: true } },
-      },
-    });
-    return {
-      orders: rows.map((r) => ({
-        id: r.id,
-        totalAmount: r.totalAmount,
-        city: r.city,
-        draft: r.draft,
-        date: r.date,
-        paid: r.payments.reduce((s, p) => s + p.amount, 0),
-      })),
-    };
-  } catch {
-    return { orders: [], error: "db" };
-  }
 }
 
 // ── PostEx courier stats ─────────────────────────────────
@@ -355,35 +318,44 @@ export default async function ShopifyDashboardPage({
         <BigStat label="Visitor → Order" value={`${pctNum(total, visitors)}%`} sub="conversion" />
       </div>
 
-      {/* Meta Ads */}
-      {!meta.error && (meta.spend > 0 || meta.purchaseValue > 0) && (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-[#1877F2]">
-                <circle cx="10" cy="10" r="8.5" fill="#1877F2" />
-                <path d="M11.7 10.2h1.6l.25-1.7h-1.85V7.4c0-.5.13-.83.85-.83h.9V5.06c-.15-.02-.68-.06-1.3-.06-1.28 0-2.16.78-2.16 2.22v1.28H8.4v1.7h1.6V15h1.7v-4.8Z" fill="#fff" />
-              </svg>
-              <p className="text-sm font-semibold text-gray-800">Meta Ads</p>
-            </div>
-            <span className="text-xs text-gray-400">Facebook + Instagram</span>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <MetaStat label="Ad Spend" value={`Rs ${fmt(meta.spend)}`} />
-            <MetaStat label="Revenue from Ads" value={`Rs ${fmt(meta.purchaseValue)}`} />
-            <MetaStat
-              label="ROAS"
-              value={meta.roas.toFixed(2) + "x"}
-              accent={meta.roas >= 2 ? "good" : meta.roas > 0 ? "warn" : undefined}
-            />
-          </div>
-        </div>
-      )}
-      {meta.error && meta.error !== "config" && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-xs text-amber-700">
-          Meta Ads data unavailable ({meta.error.replace("api:", "code ")}). Check META_ACCESS_TOKEN / META_AD_ACCOUNT_ID.
-        </div>
-      )}
+      {/* Meta Ads — spend from Meta, revenue/ROAS from orders tagged source=meta_ads (see Ads Manager) */}
+      {(() => {
+        const adOrders = orders.filter((o) => isMetaAdOrder(o.source));
+        const adRevenue = adOrders.reduce((s, o) => s + o.totalAmount, 0);
+        const roas = meta.spend > 0 ? adRevenue / meta.spend : 0;
+        return (
+          <>
+            {!meta.error && (meta.spend > 0 || adRevenue > 0) && (
+              <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-[#1877F2]">
+                      <circle cx="10" cy="10" r="8.5" fill="#1877F2" />
+                      <path d="M11.7 10.2h1.6l.25-1.7h-1.85V7.4c0-.5.13-.83.85-.83h.9V5.06c-.15-.02-.68-.06-1.3-.06-1.28 0-2.16.78-2.16 2.22v1.28H8.4v1.7h1.6V15h1.7v-4.8Z" fill="#fff" />
+                    </svg>
+                    <p className="text-sm font-semibold text-gray-800">Meta Ads</p>
+                  </div>
+                  <a href="/ecommerce/ads-manager" className="text-xs text-gray-400 hover:text-[#16202E] transition-colors">Full report →</a>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <MetaStat label="Ad Spend" value={`Rs ${fmt(meta.spend)}`} />
+                  <MetaStat label="Revenue from Ads" value={`Rs ${fmt(adRevenue)}`} />
+                  <MetaStat
+                    label="ROAS"
+                    value={roas.toFixed(2) + "x"}
+                    accent={roas >= 2 ? "good" : roas > 0 ? "warn" : undefined}
+                  />
+                </div>
+              </div>
+            )}
+            {meta.error && meta.error !== "config" && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-xs text-amber-700">
+                Meta ad spend unavailable ({meta.error.replace("api:", "code ")}). Check META_ACCESS_TOKEN / META_AD_ACCOUNT_ID.
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {total > 0 ? (
         <>

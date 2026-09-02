@@ -1,6 +1,7 @@
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { fetchMetaStats } from "@/lib/metaAds";
+import { fetchWebOrders, isMetaAdOrder } from "@/lib/webOrders";
 import DateRangeNav from "@/components/DateRangeNav";
 
 export const maxDuration = 30;
@@ -22,7 +23,12 @@ export default async function AdsManagerPage({
   const from = fromParam ?? todayPK;
   const to = toParam ?? todayPK;
 
-  const meta = await fetchMetaStats(from, to);
+  const [meta, { orders }] = await Promise.all([fetchMetaStats(from, to), fetchWebOrders(from, to)]);
+  const adOrders = orders.filter((o) => isMetaAdOrder(o.source));
+  const revenue = adOrders.reduce((s, o) => s + o.totalAmount, 0);
+  const roas = meta.spend > 0 ? revenue / meta.spend : 0;
+  const totalOrders = orders.length;
+  const untaggedOrders = orders.filter((o) => !o.source).length;
 
   const dateLabel =
     from === to
@@ -72,20 +78,34 @@ export default async function AdsManagerPage({
             <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-1 bg-[#BFD732]" />
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Revenue from Ads</p>
-              <p className="text-3xl font-bold tabular-nums text-[#16202E]">Rs {fmt(meta.purchaseValue)}</p>
+              <p className="text-3xl font-bold tabular-nums text-[#16202E]">Rs {fmt(revenue)}</p>
+              <p className="text-xs text-gray-400 mt-1">{adOrders.length} orders</p>
             </div>
             <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-              <div className={`absolute top-0 left-0 right-0 h-1 ${meta.roas >= 2 ? "bg-emerald-500" : meta.roas > 0 ? "bg-amber-400" : "bg-gray-200"}`} />
+              <div className={`absolute top-0 left-0 right-0 h-1 ${roas >= 2 ? "bg-emerald-500" : roas > 0 ? "bg-amber-400" : "bg-gray-200"}`} />
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">ROAS</p>
-              <p className={`text-3xl font-bold tabular-nums ${meta.roas >= 2 ? "text-emerald-600" : meta.roas > 0 ? "text-amber-600" : "text-[#16202E]"}`}>
-                {meta.roas.toFixed(2)}x
+              <p className={`text-3xl font-bold tabular-nums ${roas >= 2 ? "text-emerald-600" : roas > 0 ? "text-amber-600" : "text-[#16202E]"}`}>
+                {roas.toFixed(2)}x
               </p>
             </div>
           </div>
+          <p className="text-xs text-gray-400">
+            Ad spend is from Meta. Revenue and ROAS come only from website orders tagged as arriving via a Meta ad click
+            (<code>source: &quot;meta_ads&quot;</code> from the storefront) — not Meta&apos;s own attribution, and not
+            revenue from organic/direct traffic.
+          </p>
 
-          {meta.spend === 0 && meta.purchaseValue === 0 && (
+          {untaggedOrders > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-xs text-amber-800">
+              <strong>{untaggedOrders} of {totalOrders} orders</strong> in this range have no traffic source tag, so they
+              aren&apos;t counted here as ad or organic. The storefront needs to send a <code>source</code> field
+              (e.g. <code>meta_ads</code>) when creating each order — see the note below.
+            </div>
+          )}
+
+          {meta.spend === 0 && revenue === 0 && (
             <div className="border border-dashed border-gray-200 rounded-2xl p-12 text-center">
-              <p className="text-sm font-medium text-gray-500">No ad spend recorded in this date range</p>
+              <p className="text-sm font-medium text-gray-500">No ad spend or ad-attributed orders in this date range</p>
               <p className="text-xs text-gray-400 mt-1">Try a different date range, or check that campaigns were active</p>
             </div>
           )}
