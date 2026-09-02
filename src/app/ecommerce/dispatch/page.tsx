@@ -2,6 +2,7 @@ import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import DispatchDateControls from "@/components/DispatchDateControls";
+import AutoPrint from "@/components/AutoPrint";
 
 export const maxDuration = 30;
 
@@ -12,12 +13,12 @@ function fmt(n: number) {
 export default async function EcomDispatchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; print?: string }>;
 }) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
-  const { date: dateParam } = await searchParams;
+  const { date: dateParam, print } = await searchParams;
   const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
   const date = dateParam ?? todayPK;
 
@@ -54,6 +55,7 @@ export default async function EcomDispatchPage({
 
   return (
     <div className="max-w-5xl space-y-6 pb-8">
+      {print === "1" && <AutoPrint />}
       <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm print:hidden">
         <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
         <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
