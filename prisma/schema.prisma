@@ -685,3 +685,13 @@ model RetailExportLog {
 
   @@index([date])
 }
+
+model WebsiteVisit {
+  id        Int      @id @default(autoincrement())
+  visitorId String
+  path      String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([visitorId])
+}

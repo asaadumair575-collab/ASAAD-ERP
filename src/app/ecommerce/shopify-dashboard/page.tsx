@@ -5,10 +5,6 @@ import DateNav from "./DateNav";
 
 export const maxDuration = 60;
 
-const DOMAIN = process.env.SHOPIFY_STORE_DOMAIN ?? "";
-const TOKEN = process.env.SHOPIFY_ADMIN_TOKEN ?? "";
-const API = `https://${DOMAIN}/admin/api/2024-07`;
-
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
 }
@@ -23,65 +19,42 @@ function pctNum(a: number, b: number) {
   return Math.round((a / b) * 100);
 }
 
-type ShopifyOrder = {
+// Orders now come from the store's own website via /api/public/orders,
+// which lands them in EcomOrder directly — read straight from the DB.
+type WebOrder = {
   id: number;
-  total_price: string;
-  financial_status: string;
-  fulfillment_status: string | null;
-  cancel_reason: string | null;
-  shipping_address?: { city?: string };
-  billing_address?: { city?: string };
-  created_at: string;
+  totalAmount: number;
+  city: string | null;
+  draft: boolean;
+  date: Date;
+  paid: number;
 };
 
-const FULL_FIELDS = "id,total_price,financial_status,fulfillment_status,cancel_reason,shipping_address,billing_address,created_at";
-const SAFE_FIELDS = "id,total_price,financial_status,fulfillment_status,cancel_reason,created_at";
+async function fetchWebOrders(from: string, to: string): Promise<{ orders: WebOrder[]; error?: string }> {
+  const dayStart = new Date(`${from}T00:00:00+05:00`);
+  const dayEnd = new Date(`${to}T23:59:59+05:00`);
 
-async function fetchPages(baseUrl: string): Promise<{ orders: ShopifyOrder[]; status: number }> {
-  const all: ShopifyOrder[] = [];
-  let url: string | null = baseUrl;
-  while (url) {
-    let res: Response;
-    try {
-      res = await fetch(url, {
-        headers: { "X-Shopify-Access-Token": TOKEN },
-        cache: "no-store",
-      });
-    } catch {
-      return { orders: all, status: 0 };
-    }
-    if (!res.ok) return { orders: all, status: res.status };
-    const data: { orders?: ShopifyOrder[] } = await res.json();
-    all.push(...(data.orders ?? []));
-    const link: string = res.headers.get("link") ?? "";
-    const next: string | null = link.match(/<([^>]+)>;\s*rel="next"/)?.[1] ?? null;
-    url = next;
+  try {
+    const rows = await prisma.ecomOrder.findMany({
+      where: { date: { gte: dayStart, lte: dayEnd } },
+      select: {
+        id: true, totalAmount: true, city: true, draft: true, date: true,
+        payments: { select: { amount: true } },
+      },
+    });
+    return {
+      orders: rows.map((r) => ({
+        id: r.id,
+        totalAmount: r.totalAmount,
+        city: r.city,
+        draft: r.draft,
+        date: r.date,
+        paid: r.payments.reduce((s, p) => s + p.amount, 0),
+      })),
+    };
+  } catch {
+    return { orders: [], error: "db" };
   }
-  return { orders: all, status: 200 };
-}
-
-async function fetchOrders(
-  from: string,
-  to: string
-): Promise<{ orders: ShopifyOrder[]; error?: string; limitedFields?: boolean }> {
-  if (!DOMAIN || !TOKEN) return { orders: [], error: "config" };
-
-  const minDate = new Date(`${from}T00:00:00+05:00`).toISOString();
-  const maxDate = new Date(`${to}T23:59:59+05:00`).toISOString();
-  const query = `status=any&created_at_min=${encodeURIComponent(minDate)}&created_at_max=${encodeURIComponent(maxDate)}&limit=250`;
-
-  const full = await fetchPages(`${API}/orders.json?${query}&fields=${FULL_FIELDS}`);
-  if (full.status === 200) return { orders: full.orders };
-
-  // 403 usually means "protected customer data" (addresses) is not approved for
-  // this app — retry without address fields so the stats still work.
-  if (full.status === 403) {
-    const safe = await fetchPages(`${API}/orders.json?${query}&fields=${SAFE_FIELDS}`);
-    if (safe.status === 200) return { orders: safe.orders, limitedFields: true };
-    return { orders: [], error: `${safe.status || "network"}` };
-  }
-
-  return { orders: [], error: `${full.status || "network"}` };
 }
 
 // ── PostEx courier stats ─────────────────────────────────
@@ -193,7 +166,7 @@ async function fetchPostexStats(from: string, to: string): Promise<CourierStats>
 // ── Chart helpers (server-rendered SVG) ──────────────────
 type Bucket = { label: string; revenue: number; orders: number };
 
-function buildBuckets(orders: ShopifyOrder[], from: string, to: string): Bucket[] {
+function buildBuckets(orders: WebOrder[], from: string, to: string): Bucket[] {
   const single = from === to;
   const map = new Map<string, Bucket>();
 
@@ -203,12 +176,11 @@ function buildBuckets(orders: ShopifyOrder[], from: string, to: string): Bucket[
       map.set(label, { label, revenue: 0, orders: 0 });
     }
     for (const o of orders) {
-      const d = new Date(o.created_at);
-      const hourPK = Number(d.toLocaleString("en-GB", { hour: "2-digit", hour12: false, timeZone: "Asia/Karachi" }));
+      const hourPK = Number(o.date.toLocaleString("en-GB", { hour: "2-digit", hour12: false, timeZone: "Asia/Karachi" }));
       const slot = Math.floor(hourPK / 2) * 2;
       const label = `${String(slot).padStart(2, "0")}:00`;
       const b = map.get(label);
-      if (b) { b.revenue += parseFloat(o.total_price || "0"); b.orders += 1; }
+      if (b) { b.revenue += o.totalAmount; b.orders += 1; }
     }
   } else {
     const start = new Date(`${from}T12:00:00+05:00`);
@@ -219,9 +191,9 @@ function buildBuckets(orders: ShopifyOrder[], from: string, to: string): Bucket[
       map.set(key, { label, revenue: 0, orders: 0 });
     }
     for (const o of orders) {
-      const key = new Date(o.created_at).toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+      const key = o.date.toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
       const b = map.get(key);
-      if (b) { b.revenue += parseFloat(o.total_price || "0"); b.orders += 1; }
+      if (b) { b.revenue += o.totalAmount; b.orders += 1; }
     }
   }
   return [...map.values()];
@@ -300,26 +272,36 @@ export default async function ShopifyDashboardPage({
   const from = fromParam ?? todayPK;
   const to = toParam ?? todayPK;
 
-  const [{ orders, error, limitedFields }, courier] = await Promise.all([
-    fetchOrders(from, to),
+  const dayStart = new Date(`${from}T00:00:00+05:00`);
+  const dayEnd = new Date(`${to}T23:59:59+05:00`);
+
+  const [{ orders, error }, courier, visitRows] = await Promise.all([
+    fetchWebOrders(from, to),
     fetchPostexStats(from, to),
+    prisma.websiteVisit
+      .findMany({ where: { createdAt: { gte: dayStart, lte: dayEnd } }, select: { visitorId: true } })
+      .catch(() => []),
   ]);
+
+  const visitors = new Set(visitRows.map((v) => v.visitorId)).size;
+  const pageViews = visitRows.length;
 
   // --- Metrics ---
   const total = orders.length;
-  const revenue = orders.reduce((s, o) => s + parseFloat(o.total_price || "0"), 0);
+  const revenue = orders.reduce((s, o) => s + o.totalAmount, 0);
   const avgOrder = total ? revenue / total : 0;
 
-  const paid = orders.filter((o) => o.financial_status === "paid").length;
-  const conversionRate = pctNum(paid, total);
+  const confirmed = orders.filter((o) => !o.draft).length;
+  const conversionRate = pctNum(confirmed, total);
+  const paidRevenue = orders.reduce((s, o) => s + o.paid, 0);
 
   // --- City breakdown ---
   const cityMap: Record<string, { orders: number; revenue: number }> = {};
   for (const o of orders) {
-    const city = (o.shipping_address?.city ?? o.billing_address?.city ?? "Unknown").trim();
+    const city = (o.city ?? "Unknown").trim() || "Unknown";
     if (!cityMap[city]) cityMap[city] = { orders: 0, revenue: 0 };
     cityMap[city].orders += 1;
-    cityMap[city].revenue += parseFloat(o.total_price || "0");
+    cityMap[city].revenue += o.totalAmount;
   }
   const cities = Object.entries(cityMap)
     .sort((a, b) => b[1].orders - a[1].orders)
@@ -344,7 +326,7 @@ export default async function ShopifyDashboardPage({
       <div className="bg-[#16202E] rounded-2xl px-6 py-5 flex items-center justify-between gap-4 flex-wrap shadow-sm relative overflow-hidden">
         <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
         <div>
-          <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Shopify · The Boundary Shop</p>
+          <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
           <h1 className="text-2xl font-bold text-white tracking-tight">Sales Dashboard</h1>
           <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
         </div>
@@ -355,39 +337,30 @@ export default async function ShopifyDashboardPage({
         </div>
       </div>
 
-      {error === "config" && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-sm text-amber-800">
-          <strong>Config missing:</strong> SHOPIFY_ADMIN_TOKEN or SHOPIFY_STORE_DOMAIN is not set in Vercel.
-        </div>
-      )}
-      {error === "403" && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 text-sm text-red-700 space-y-1">
-          <p><strong>403 — Access denied.</strong> The Shopify app does not have permission to read orders.</p>
-          <p>Shopify Admin → Settings → Apps and sales channels → Develop apps → your app → <strong>Configure Admin API scopes</strong> → enable <code>read_orders</code> → Save → <strong>Install/Reinstall</strong> the app → copy the new token into <code>SHOPIFY_ADMIN_TOKEN</code> on Vercel → Redeploy.</p>
-        </div>
-      )}
-      {error && error !== "config" && error !== "403" && (
+      {error && (
         <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 text-sm text-red-700">
-          <strong>API Error {error}:</strong> Could not fetch data from Shopify. Check the token and store domain.
-        </div>
-      )}
-      {limitedFields && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-sm text-amber-800">
-          <strong>Note:</strong> Customer address data is not permitted, so the city-wise breakdown is hidden. Request <strong>Protected customer data access</strong> in your Shopify app settings to enable it.
+          Could not load orders from the database. Try refreshing the page.
         </div>
       )}
 
       {/* Date picker */}
       <DateNav from={from} to={to} />
 
+      {/* Traffic — always shown, even with zero orders */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <BigStat label="Website Visitors" value={String(visitors)} sub={pageViews !== visitors ? `${pageViews} page views` : undefined} />
+        <BigStat label="Total Orders" value={String(total)} />
+        <BigStat label="Visitor → Order" value={`${pctNum(total, visitors)}%`} sub="conversion" />
+      </div>
+
       {total > 0 ? (
         <>
           {/* Row 1 — key numbers */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <BigStat label="Total Orders" value={String(total)} />
-            <BigStat label="Paid Orders" value={String(paid)} sub={pct(paid, total)} />
+            <BigStat label="Confirmed Orders" value={String(confirmed)} sub={pct(confirmed, total)} />
             <BigStat label="Avg Order Value" value={`Rs ${fmt(avgOrder)}`} />
-            <BigStat label="Conversion" value={`${conversionRate}%`} sub="paid / total" />
+            <BigStat label="Confirmation Rate" value={`${conversionRate}%`} sub="confirmed / total" />
+            <BigStat label="Gross Revenue" value={`Rs ${fmt(revenue)}`} />
           </div>
 
           {/* Trend charts */}
@@ -415,9 +388,8 @@ export default async function ShopifyDashboardPage({
           })()}
 
           {/* Revenue strip */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <RevenueCard label="Gross Revenue" value={`Rs ${fmt(revenue)}`} />
-            <RevenueCard label="Paid Revenue" value={`Rs ${fmt(orders.filter(o => o.financial_status === "paid").reduce((s, o) => s + parseFloat(o.total_price || "0"), 0))}`} sub="from paid orders" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <RevenueCard label="Advance Received" value={`Rs ${fmt(paidRevenue)}`} sub="payments recorded" />
             <RevenueCard label="Orders per day" value={from === to ? String(total) : String(Math.round(total / (Math.max(1, Math.ceil((new Date(to).getTime() - new Date(from).getTime()) / 86400000) + 1))))} sub={from === to ? "today" : "avg daily"} />
           </div>
 
