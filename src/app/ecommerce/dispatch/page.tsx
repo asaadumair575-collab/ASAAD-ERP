@@ -124,12 +124,11 @@ export default async function EcomDispatchPage({
             <table className="w-full text-sm print:text-[10px] print:table-fixed">
               <colgroup className="hidden print:table-column-group">
                 <col className="print:w-[9%]" />
-                <col className="print:w-[18%]" />
-                <col className="print:w-[11%]" />
-                <col className="print:w-[26%]" />
-                <col className="print:w-[17%]" />
-                <col className="print:w-[11%]" />
-                <col className="print:w-[8%]" />
+                <col className="print:w-[19%]" />
+                <col className="print:w-[12%]" />
+                <col className="print:w-[29%]" />
+                <col className="print:w-[19%]" />
+                <col className="print:w-[12%]" />
               </colgroup>
               <thead>
                 <tr className="border-b border-gray-200 text-xs text-gray-500 font-medium text-left bg-gray-50 print:bg-white print:border-b-2 print:border-black print:text-black">
@@ -138,8 +137,7 @@ export default async function EcomDispatchPage({
                   <th className="py-2.5 px-3 print:px-1.5">City</th>
                   <th className="py-2.5 px-3 print:px-1.5">Items</th>
                   <th className="py-2.5 px-3 print:px-1.5">Tracking</th>
-                  <th className="py-2.5 px-3 text-right print:px-1.5">Amount</th>
-                  <th className="py-2.5 px-4 print:px-1.5">Status</th>
+                  <th className="py-2.5 px-4 text-right print:px-1.5">Amount</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 print:divide-gray-300">
@@ -155,22 +153,14 @@ export default async function EcomDispatchPage({
                       {o.items.length > 0 ? o.items.map((i) => `${i.description} x${i.quantity}`).join(", ") : "—"}
                     </td>
                     <td className="py-2.5 px-3 print:px-1.5 print:py-1 font-mono text-xs print:text-[9px] text-gray-600 print:truncate">{o.trackingNumber ?? "—"}</td>
-                    <td className="py-2.5 px-3 print:px-1.5 print:py-1 text-right font-semibold text-gray-900 tabular-nums">Rs {fmt(o.totalAmount)}</td>
-                    <td className="py-2.5 px-4 print:px-1.5 print:py-1">
-                      {o.returned ? (
-                        <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full print:bg-white print:border print:border-black print:px-1 print:text-[9px]">Returned</span>
-                      ) : (
-                        <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full print:bg-white print:border print:border-black">Dispatched</span>
-                      )}
-                    </td>
+                    <td className="py-2.5 px-4 print:px-1.5 print:py-1 text-right font-semibold text-gray-900 tabular-nums">Rs {fmt(o.totalAmount)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-gray-200 bg-gray-50 font-semibold print:bg-white print:border-black">
                   <td className="py-3 px-4" colSpan={5}>Total ({totalParcels} parcels)</td>
-                  <td className="py-3 px-3 text-right tabular-nums">Rs {fmt(totalValue)}</td>
-                  <td className="py-3 px-4" />
+                  <td className="py-3 px-4 text-right tabular-nums">Rs {fmt(totalValue)}</td>
                 </tr>
               </tfoot>
             </table>
