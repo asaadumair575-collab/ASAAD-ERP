@@ -358,7 +358,7 @@ export default function Sidebar({
               <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
                 <NavLink href="/ecommerce/shopify-dashboard" active={pathname.startsWith("/ecommerce/shopify-dashboard")} compact onClick={closeMobile}>All Dashboard</NavLink>
                 <NavLink href="/ecommerce/ads-manager" active={pathname.startsWith("/ecommerce/ads-manager")} compact onClick={closeMobile}>Ads Manager</NavLink>
-                <NavLink href="/ecommerce/dispatch" active={pathname.startsWith("/ecommerce/dispatch")} compact onClick={closeMobile}>Dispatch List</NavLink>
+                <NavLink href="/ecommerce/dispatch" active={pathname.startsWith("/ecommerce/dispatch")} compact onClick={closeMobile}>Operations</NavLink>
                 <NavLink href="/ecommerce/shopify-orders" active={pathname.startsWith("/ecommerce/shopify-orders")} compact onClick={closeMobile}>Draft Orders</NavLink>
                 {canViewSub(permissions, "ecom_orders", isAdmin) && (
                   <NavLink href="/ecommerce/orders" active={pathname.startsWith("/ecommerce/orders")} compact onClick={closeMobile}>Confirm Orders</NavLink>

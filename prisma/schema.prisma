@@ -179,6 +179,7 @@ model User {
   complaintMessages    ComplaintMessage[]
   draftOrders          DraftOrder[]
   phoneCallLogs        PhoneCallLog[]
+  weightVerifications  WeightVerification[]
 }
 
 model EmpCommissionEntry {
@@ -696,4 +697,16 @@ model WebsiteVisit {
 
   @@index([createdAt])
   @@index([visitorId])
+}
+
+model WeightVerification {
+  id             Int      @id @default(autoincrement())
+  trackingNumber String
+  photo          String   @db.Text
+  verifiedBy     User?    @relation(fields: [verifiedById], references: [id])
+  verifiedById   Int?
+  createdAt      DateTime @default(now())
+
+  @@index([trackingNumber])
+  @@index([createdAt])
 }
