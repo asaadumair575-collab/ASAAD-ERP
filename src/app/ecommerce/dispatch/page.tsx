@@ -12,18 +12,17 @@ function fmt(n: number) {
 export default async function EcomDispatchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ date?: string }>;
 }) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
-  const { from: fromParam, to: toParam } = await searchParams;
+  const { date: dateParam } = await searchParams;
   const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
-  const from = fromParam ?? todayPK;
-  const to = toParam ?? todayPK;
+  const date = dateParam ?? todayPK;
 
-  const dayStart = new Date(`${from}T00:00:00+05:00`);
-  const dayEnd = new Date(`${to}T23:59:59+05:00`);
+  const dayStart = new Date(`${date}T00:00:00+05:00`);
+  const dayEnd = new Date(`${date}T23:59:59+05:00`);
 
   const orders = await prisma.ecomOrder.findMany({
     where: { dispatchedAt: { gte: dayStart, lte: dayEnd } },
@@ -46,10 +45,12 @@ export default async function EcomDispatchPage({
   const totalValue = orders.reduce((s, o) => s + o.totalAmount, 0);
   const returned = orders.filter((o) => o.returned).length;
 
-  const dateLabel =
-    from === to
-      ? new Date(`${from}T12:00:00`).toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
-      : `${new Date(`${from}T12:00:00`).toLocaleDateString("en-PK", { day: "numeric", month: "short" })} — ${new Date(`${to}T12:00:00`).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}`;
+  const dateLabel = new Date(`${date}T12:00:00`).toLocaleDateString("en-PK", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <div className="max-w-5xl space-y-6 pb-8">
@@ -65,7 +66,7 @@ export default async function EcomDispatchPage({
         <p className="text-sm text-gray-600">{dateLabel}</p>
       </div>
 
-      <DispatchDateControls from={from} to={to} basePath="/ecommerce/dispatch" />
+      <DispatchDateControls date={date} basePath="/ecommerce/dispatch" />
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 print:hidden">
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
@@ -88,8 +89,8 @@ export default async function EcomDispatchPage({
       {orders.length === 0 ? (
         <div className="border border-dashed border-gray-200 rounded-2xl p-16 text-center print:hidden">
           <p className="text-3xl mb-3">📦</p>
-          <p className="text-sm font-medium text-gray-500">No parcels dispatched in this date range</p>
-          <p className="text-xs text-gray-400 mt-1">Try a different date range</p>
+          <p className="text-sm font-medium text-gray-500">No parcels dispatched on this date</p>
+          <p className="text-xs text-gray-400 mt-1">Try a different date</p>
         </div>
       ) : (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden print:border-black print:shadow-none">
