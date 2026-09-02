@@ -346,6 +346,7 @@ model EcomOrder {
   returnCost      Float           @default(0)
   address         String?
   trackingNumber  String?
+  dispatchedAt    DateTime?
   shopifyOrderId  String?
   draft           Boolean         @default(false)
   draftStatus     String?

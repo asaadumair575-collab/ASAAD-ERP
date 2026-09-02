@@ -9,7 +9,10 @@ export async function POST(req: NextRequest) {
   const { id, trackingNumber } = await req.json();
   await prisma.ecomOrder.update({
     where: { id: Number(id) },
-    data: { trackingNumber: trackingNumber || null },
+    data: {
+      trackingNumber: trackingNumber || null,
+      ...(trackingNumber ? { dispatchedAt: new Date() } : {}),
+    },
   });
   return NextResponse.json({ ok: true });
 }

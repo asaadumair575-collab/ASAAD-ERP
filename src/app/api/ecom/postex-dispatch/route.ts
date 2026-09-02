@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
       const tracking = await createPostexBooking(order);
       await prisma.ecomOrder.update({
         where: { id: order.id },
-        data: { trackingNumber: tracking },
+        data: { trackingNumber: tracking, dispatchedAt: new Date() },
       });
       results.push({ id: order.id, tracking });
     } catch (e: unknown) {
