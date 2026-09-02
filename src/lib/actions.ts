@@ -1857,8 +1857,15 @@ export async function saveAppSetting(key: string, formData: FormData) {
   revalidatePath("/ecommerce/settings");
 }
 
-export async function deleteAllEcomOrders() {
+// Danger zone: wipes ALL Retail COD (ecommerce) orders — draft, confirmed,
+// items, payments (all cascade from EcomOrder). Scoped to EcomOrder only —
+// never touches RetailOrder (Retail Advance) or any other module.
+export async function deleteAllEcomOrders(formData: FormData) {
   await requireAdmin();
+  const confirmation = String(formData.get("confirmation") ?? "");
+  if (confirmation !== "DELETE RETAIL COD") {
+    throw new Error('Type "DELETE RETAIL COD" exactly to confirm.');
+  }
   await prisma.$transaction([
     prisma.ecomOrderItem.deleteMany({}),
     prisma.ecomPayment.deleteMany({}),
@@ -1866,6 +1873,10 @@ export async function deleteAllEcomOrders() {
   ]);
   revalidatePath("/ecommerce/orders");
   revalidatePath("/ecommerce/finance");
+  revalidatePath("/ecommerce/shopify-dashboard");
+  revalidatePath("/ecommerce/shopify-orders");
+  revalidatePath("/ecommerce/expenses");
+  revalidatePath("/ecommerce/settings");
 }
 
 export async function deleteEcomExpense(id: number) {

@@ -44,7 +44,7 @@ export default async function EcomOrdersPage({
             <span className="bg-orange-100 text-orange-700 font-semibold px-3 py-1 rounded-full">{undispatched.length} to dispatch</span>
             <span className="bg-blue-100 text-blue-700 font-medium px-3 py-1 rounded-full">{dispatched.length} dispatched</span>
           </div>
-          {isAdmin && <DeleteAllEcomOrdersButton />}
+          {isAdmin && <DeleteAllEcomOrdersButton orderCount={await prisma.ecomOrder.count()} />}
           <EcomImportModal />
           <Link href="/ecommerce/orders/new" className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
             + New Order

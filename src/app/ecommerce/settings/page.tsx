@@ -1,8 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { saveAppSetting } from "@/lib/actions";
+import { getSessionUser } from "@/lib/auth";
+import DeleteAllEcomOrdersButton from "@/components/DeleteAllEcomOrdersButton";
 
 export default async function EcomSettingsPage() {
+  const me = await getSessionUser();
   const postexKey = await prisma.appSetting.findUnique({ where: { key: "POSTEX_API_KEY" } });
+  const ecomOrderCount = me?.isAdmin ? await prisma.ecomOrder.count() : 0;
 
   const savePostex = saveAppSetting.bind(null, "POSTEX_API_KEY");
 
@@ -34,6 +38,16 @@ export default async function EcomSettingsPage() {
           <p className="text-xs text-green-600">✓ Key saved · {postexKey.value.slice(0, 8)}...{postexKey.value.slice(-4)}</p>
         )}
       </div>
+
+      {me?.isAdmin && (
+        <div className="bg-white border border-red-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div>
+            <p className="text-sm font-semibold text-red-700">Danger Zone</p>
+            <p className="text-xs text-gray-400 mt-0.5">Irreversible actions scoped to Retail COD only</p>
+          </div>
+          <DeleteAllEcomOrdersButton orderCount={ecomOrderCount} />
+        </div>
+      )}
     </div>
   );
 }
