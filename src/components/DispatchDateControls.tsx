@@ -1,23 +1,18 @@
-"use client";
-
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-
 export default function DispatchDateControls({ date, basePath }: { date: string; basePath: string }) {
-  const router = useRouter();
-  const [selDate, setSelDate] = useState(date);
-
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex flex-wrap items-center gap-3 print:hidden">
+    <form
+      action={basePath}
+      method="GET"
+      className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex flex-wrap items-center gap-3 print:hidden"
+    >
       <input
         type="date"
-        value={selDate}
-        onChange={(e) => setSelDate(e.target.value)}
+        name="date"
+        defaultValue={date}
         className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#BFD732] focus:border-transparent"
       />
       <button
-        type="button"
-        onClick={() => router.push(`${basePath}?date=${selDate}`)}
+        type="submit"
         className="bg-white border border-[#16202E] text-[#16202E] text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2"
       >
         <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
@@ -26,6 +21,6 @@ export default function DispatchDateControls({ date, basePath }: { date: string;
         </svg>
         Generate Dispatch Report
       </button>
-    </div>
+    </form>
   );
 }
