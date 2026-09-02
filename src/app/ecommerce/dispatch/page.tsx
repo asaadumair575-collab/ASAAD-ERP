@@ -63,9 +63,33 @@ export default async function EcomDispatchPage({
         <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
       </div>
 
-      <div className="hidden print:block mb-2">
-        <p className="text-lg font-bold">The Boundary Shop — Dispatch List</p>
-        <p className="text-sm text-gray-600">{dateLabel}</p>
+      {/* Print-only letterhead + stat summary */}
+      <div className="hidden print:block">
+        <div className="flex items-end justify-between border-b-2 border-black pb-3 mb-4">
+          <div>
+            <p className="text-xl font-bold tracking-tight">The Boundary Shop</p>
+            <p className="text-sm text-gray-600 mt-0.5">Daily Dispatch List</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-semibold">{dateLabel}</p>
+            <p className="text-xs text-gray-500">Generated {new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi", dateStyle: "medium", timeStyle: "short" })}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          <div className="border border-black rounded-md px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Number of Parcels</p>
+            <p className="text-2xl font-bold tabular-nums">{totalParcels}</p>
+          </div>
+          <div className="border border-black rounded-md px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Total Value</p>
+            <p className="text-2xl font-bold tabular-nums">Rs {fmt(totalValue)}</p>
+          </div>
+          <div className="border border-black rounded-md px-4 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Returned</p>
+            <p className="text-2xl font-bold tabular-nums">{returned}</p>
+          </div>
+        </div>
       </div>
 
       <DispatchDateControls date={date} basePath="/ecommerce/dispatch" />
@@ -111,8 +135,8 @@ export default async function EcomDispatchPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 print:divide-black">
-                {orders.map((o) => (
-                  <tr key={o.id} className="hover:bg-gray-50 transition-colors">
+                {orders.map((o, i) => (
+                  <tr key={o.id} className={`hover:bg-gray-50 transition-colors ${i % 2 === 1 ? "print:bg-gray-50" : ""}`}>
                     <td className="py-2.5 px-4 font-semibold text-gray-900">#{o.id}</td>
                     <td className="py-2.5 px-3">
                       <p className="text-gray-800">{o.customerName}</p>
