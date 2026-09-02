@@ -69,41 +69,74 @@ export default async function AdsManagerPage({
 
       {!meta.error && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-[#1877F2]" />
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Ad Spend</p>
-              <p className="text-3xl font-bold tabular-nums text-[#16202E]">Rs {fmt(meta.spend)}</p>
-            </div>
-            <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-[#BFD732]" />
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Revenue from Ads</p>
-              <p className="text-3xl font-bold tabular-nums text-[#16202E]">Rs {fmt(revenue)}</p>
-              <p className="text-xs text-gray-400 mt-1">{adOrders.length} orders</p>
-            </div>
-            <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-              <div className={`absolute top-0 left-0 right-0 h-1 ${roas >= 2 ? "bg-emerald-500" : roas > 0 ? "bg-amber-400" : "bg-gray-200"}`} />
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">ROAS</p>
-              <p className={`text-3xl font-bold tabular-nums ${roas >= 2 ? "text-emerald-600" : roas > 0 ? "text-amber-600" : "text-[#16202E]"}`}>
-                {roas.toFixed(2)}x
-              </p>
-            </div>
+          {/* Ad spend — the one number Meta reports accurately */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-[#1877F2]" />
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Ad Spend</p>
+            <p className="text-3xl font-bold tabular-nums text-[#16202E]">Rs {fmt(meta.spend)}</p>
           </div>
-          <p className="text-xs text-gray-400">
-            Ad spend is from Meta. Revenue and ROAS come only from website orders tagged as arriving via a Meta ad click
-            (<code>source: &quot;meta_ads&quot;</code> from the storefront) — not Meta&apos;s own attribution, and not
-            revenue from organic/direct traffic.
-          </p>
+
+          {/* Verified — from our own tagged orders */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Verified — from your website orders</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-[#BFD732]" />
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Revenue from Ads</p>
+                <p className="text-3xl font-bold tabular-nums text-[#16202E]">Rs {fmt(revenue)}</p>
+                <p className="text-xs text-gray-400 mt-1">{adOrders.length} tagged orders</p>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                <div className={`absolute top-0 left-0 right-0 h-1 ${roas >= 2 ? "bg-emerald-500" : roas > 0 ? "bg-amber-400" : "bg-gray-200"}`} />
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">ROAS</p>
+                <p className={`text-3xl font-bold tabular-nums ${roas >= 2 ? "text-emerald-600" : roas > 0 ? "text-amber-600" : "text-[#16202E]"}`}>
+                  {roas.toFixed(2)}x
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              Counted only from orders tagged <code>source: &quot;meta_ads&quot;</code> by the storefront. Requires the
+              storefront to send that tag — see the note below if it&apos;s missing.
+            </p>
+          </div>
+
+          {/* Meta-reported — self-attributed, available for older dates too */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#1877F2]" />
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Meta-reported — estimated by Meta&apos;s own attribution</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-[#1877F2] opacity-40" />
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Revenue (Meta-reported)</p>
+                <p className="text-3xl font-bold tabular-nums text-gray-500">Rs {fmt(meta.reportedRevenue)}</p>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-[#1877F2] opacity-40" />
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">ROAS (Meta-reported)</p>
+                <p className="text-3xl font-bold tabular-nums text-gray-500">{meta.reportedRoas.toFixed(2)}x</p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              This is Meta&apos;s own conversion tracking (click/view attribution) — useful for dates before order
+              tagging existed, but can be inflated. This is the only number available for orders placed on Shopify
+              before the website switch.
+            </p>
+          </div>
 
           {untaggedOrders > 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-xs text-amber-800">
               <strong>{untaggedOrders} of {totalOrders} orders</strong> in this range have no traffic source tag, so they
-              aren&apos;t counted here as ad or organic. The storefront needs to send a <code>source</code> field
-              (e.g. <code>meta_ads</code>) when creating each order — see the note below.
+              aren&apos;t counted in the &quot;Verified&quot; numbers above as ad or organic. The storefront needs to
+              send a <code>source</code> field (e.g. <code>meta_ads</code>) when creating each order.
             </div>
           )}
 
-          {meta.spend === 0 && revenue === 0 && (
+          {meta.spend === 0 && revenue === 0 && meta.reportedRevenue === 0 && (
             <div className="border border-dashed border-gray-200 rounded-2xl p-12 text-center">
               <p className="text-sm font-medium text-gray-500">No ad spend or ad-attributed orders in this date range</p>
               <p className="text-xs text-gray-400 mt-1">Try a different date range, or check that campaigns were active</p>
