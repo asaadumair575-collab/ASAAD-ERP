@@ -53,20 +53,19 @@ export default async function EcomDispatchPage({
 
   return (
     <div className="max-w-5xl space-y-6 pb-8">
-      <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm flex items-center justify-between gap-4 flex-wrap print:hidden">
-        <div>
-          <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
-          <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Daily Dispatch List</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
-        </div>
-        <DispatchDateControls from={from} to={to} basePath="/ecommerce/dispatch" />
+      <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm print:hidden">
+        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
+        <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Daily Dispatch List</h1>
+        <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
       </div>
 
       <div className="hidden print:block mb-2">
         <p className="text-lg font-bold">The Boundary Shop — Dispatch List</p>
         <p className="text-sm text-gray-600">{dateLabel}</p>
       </div>
+
+      <DispatchDateControls from={from} to={to} basePath="/ecommerce/dispatch" />
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 print:hidden">
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
