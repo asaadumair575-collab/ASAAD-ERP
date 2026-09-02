@@ -103,30 +103,30 @@ export default async function AdsManagerPage({
             </p>
           </div>
 
-          {/* Meta-reported — self-attributed, available for older dates too */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#1877F2]" />
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Meta-reported — estimated by Meta&apos;s own attribution</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-[#1877F2] opacity-40" />
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Revenue (Meta-reported)</p>
-                <p className="text-3xl font-bold tabular-nums text-gray-500">Rs {fmt(meta.reportedRevenue)}</p>
+          {/* Meta-reported — confirmed unreliable for this account, kept only as a small reference */}
+          {meta.reportedRevenue > 0 && (
+            <details className="bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3">
+              <summary className="text-xs font-semibold text-gray-500 cursor-pointer select-none">
+                Meta&apos;s own reported number (do not use — known to be inflated on this account)
+              </summary>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-1">Revenue (Meta-reported)</p>
+                  <p className="text-lg font-bold tabular-nums text-gray-400 line-through decoration-red-300">Rs {fmt(meta.reportedRevenue)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-1">ROAS (Meta-reported)</p>
+                  <p className="text-lg font-bold tabular-nums text-gray-400 line-through decoration-red-300">{meta.reportedRoas.toFixed(2)}x</p>
+                </div>
               </div>
-              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-[#1877F2] opacity-40" />
-                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">ROAS (Meta-reported)</p>
-                <p className="text-3xl font-bold tabular-nums text-gray-500">{meta.reportedRoas.toFixed(2)}x</p>
-              </div>
-            </div>
-            <p className="text-xs text-gray-400 mt-2">
-              This is Meta&apos;s own conversion tracking (click/view attribution) — useful for dates before order
-              tagging existed, but can be inflated. This is the only number available for orders placed on Shopify
-              before the website switch.
-            </p>
-          </div>
+              <p className="text-xs text-red-500 mt-2">
+                This number has been confirmed inaccurate — Meta reported Rs 280k for a period where actual recorded
+                sales were Rs 380. Meta&apos;s click/view attribution window over-counts conversions that weren&apos;t
+                really driven by ads. Do not use it for decisions; treat the &quot;Verified&quot; numbers above as the
+                source of truth.
+              </p>
+            </details>
+          )}
 
           {untaggedOrders > 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-xs text-amber-800">

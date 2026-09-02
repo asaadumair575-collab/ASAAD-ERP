@@ -318,16 +318,16 @@ export default async function ShopifyDashboardPage({
         <BigStat label="Visitor → Order" value={`${pctNum(total, visitors)}%`} sub="conversion" />
       </div>
 
-      {/* Meta Ads — verified from tagged orders when available, else Meta's own reported number */}
+      {/* Meta Ads — only our own verified (order-tagged) revenue is shown here.
+          Meta's self-reported number is known to be inflated on this account
+          and is not used — see the Ads Manager page for the full breakdown. */}
       {(() => {
         const adOrders = orders.filter((o) => isMetaAdOrder(o.source));
-        const verifiedRevenue = adOrders.reduce((s, o) => s + o.totalAmount, 0);
-        const hasVerified = adOrders.length > 0;
-        const displayRevenue = hasVerified ? verifiedRevenue : meta.reportedRevenue;
-        const roas = meta.spend > 0 ? displayRevenue / meta.spend : 0;
+        const revenue = adOrders.reduce((s, o) => s + o.totalAmount, 0);
+        const roas = meta.spend > 0 ? revenue / meta.spend : 0;
         return (
           <>
-            {!meta.error && (meta.spend > 0 || displayRevenue > 0) && (
+            {!meta.error && (meta.spend > 0 || revenue > 0) && (
               <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -336,15 +336,13 @@ export default async function ShopifyDashboardPage({
                       <path d="M11.7 10.2h1.6l.25-1.7h-1.85V7.4c0-.5.13-.83.85-.83h.9V5.06c-.15-.02-.68-.06-1.3-.06-1.28 0-2.16.78-2.16 2.22v1.28H8.4v1.7h1.6V15h1.7v-4.8Z" fill="#fff" />
                     </svg>
                     <p className="text-sm font-semibold text-gray-800">Meta Ads</p>
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${hasVerified ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-500"}`}>
-                      {hasVerified ? "Verified" : "Meta-reported"}
-                    </span>
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600">Verified</span>
                   </div>
                   <a href="/ecommerce/ads-manager" className="text-xs text-gray-400 hover:text-[#16202E] transition-colors">Full report →</a>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <MetaStat label="Ad Spend" value={`Rs ${fmt(meta.spend)}`} />
-                  <MetaStat label="Revenue from Ads" value={`Rs ${fmt(displayRevenue)}`} />
+                  <MetaStat label="Revenue from Ads" value={`Rs ${fmt(revenue)}`} />
                   <MetaStat
                     label="ROAS"
                     value={roas.toFixed(2) + "x"}
