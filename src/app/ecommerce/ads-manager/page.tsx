@@ -99,6 +99,7 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
   const revenue = adOrders.reduce((s, o) => s + o.totalAmount, 0);
   const roas = meta.spend > 0 ? revenue / meta.spend : 0;
   const totalOrders = orders.length;
+  const totalWebsiteRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
   const untaggedOrders = orders.filter((o) => !o.source).length;
 
   const dailyPoints = from === to ? [] : buildDailyPoints(meta.daily, adOrders, from, to);
@@ -150,6 +151,24 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
           Revenue and ROAS are counted only from orders tagged <code>source: &quot;meta_ads&quot;</code> by the
           storefront. Requires the storefront to send that tag — see the note below if it&apos;s missing.
         </p>
+      </div>
+
+      {/* Total website sale — all orders in range, ad-tagged or not */}
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-5 py-4 flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#16202E]" />
+          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Website Sale (all orders)</p>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <p className="text-lg font-bold tabular-nums text-[#16202E]">Rs {fmt(totalWebsiteRevenue)}</p>
+            <p className="text-[11px] text-gray-400">{totalOrders} orders</p>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-bold tabular-nums text-[#16202E]">{adOrders.length}</p>
+            <p className="text-[11px] text-gray-400">from ads ({totalOrders ? Math.round((adOrders.length / totalOrders) * 100) : 0}%)</p>
+          </div>
+        </div>
       </div>
 
       {/* Daily trend */}
