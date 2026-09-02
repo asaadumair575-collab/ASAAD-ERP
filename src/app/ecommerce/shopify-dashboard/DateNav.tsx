@@ -35,28 +35,45 @@ export default function DateNav({ from, to }: { from: string; to: string }) {
   const todayStr = toLocal(new Date());
   const yesterdayStr = toLocal(new Date(Date.now() - 86400000));
 
-  function isActive(days: number) {
-    if (days === 0) return from === todayStr && to === todayStr;
-    if (days === 1) return from === yesterdayStr && to === yesterdayStr;
-    const start = toLocal(new Date(Date.now() - (days - 1) * 86400000));
-    return from === start && to === todayStr;
+  function activePresetDays(): number | "custom" {
+    for (const p of PRESETS) {
+      if (p.days === 0 && from === todayStr && to === todayStr) return 0;
+      if (p.days === 1 && from === yesterdayStr && to === yesterdayStr) return 1;
+      if (p.days > 1) {
+        const start = toLocal(new Date(Date.now() - (p.days - 1) * 86400000));
+        if (from === start && to === todayStr) return p.days;
+      }
+    }
+    return "custom";
   }
+
+  const active = activePresetDays();
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {PRESETS.map((p) => (
-        <button
-          key={p.days}
-          onClick={() => applyPreset(p.days)}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
-            isActive(p.days)
-              ? "bg-[#16202E] text-[#BFD732] shadow-sm"
-              : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-          }`}
-        >
-          {p.label}
-        </button>
-      ))}
+      <select
+        value={active}
+        onChange={(e) => {
+          if (e.target.value !== "custom") applyPreset(Number(e.target.value));
+        }}
+        className="bg-[#16202E] text-[#BFD732] text-sm font-semibold px-4 py-2.5 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-[#BFD732] cursor-pointer appearance-none bg-no-repeat bg-[right_0.75rem_center]"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5l5 5 5-5' stroke='%23BFD732' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+          paddingRight: "2.25rem",
+        }}
+      >
+        {PRESETS.map((p) => (
+          <option key={p.days} value={p.days} className="bg-white text-[#16202E]">
+            {p.label}
+          </option>
+        ))}
+        {active === "custom" && (
+          <option value="custom" className="bg-white text-[#16202E]">
+            Custom range
+          </option>
+        )}
+      </select>
 
       <div className="flex items-center gap-2 ml-auto">
         <input
