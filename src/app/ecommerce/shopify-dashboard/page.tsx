@@ -19,6 +19,54 @@ function pctNum(a: number, b: number) {
   return Math.round((a / b) * 100);
 }
 
+// ── Meta Ads (ROAS) ───────────────────────────────────────
+type MetaStats = {
+  spend: number;
+  purchaseValue: number;
+  roas: number;
+  error?: string;
+};
+
+async function fetchMetaStats(from: string, to: string): Promise<MetaStats> {
+  const token = process.env.META_ACCESS_TOKEN;
+  const accountId = process.env.META_AD_ACCOUNT_ID; // e.g. act_1363299608334913
+  const empty: MetaStats = { spend: 0, purchaseValue: 0, roas: 0 };
+  if (!token || !accountId) return { ...empty, error: "config" };
+
+  const fields = "spend,action_values,purchase_roas";
+  const url = `https://graph.facebook.com/v21.0/${accountId}/insights?time_range=${encodeURIComponent(
+    JSON.stringify({ since: from, until: to })
+  )}&fields=${fields}&access_token=${encodeURIComponent(token)}`;
+
+  try {
+    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(15000) });
+    if (!res.ok) {
+      const body = await res.text();
+      const status = String((JSON.parse(body || "{}")?.error?.code) ?? res.status);
+      return { ...empty, error: `api:${status}` };
+    }
+    const json = await res.json();
+    const row = json?.data?.[0];
+    if (!row) return empty; // no spend in this range
+
+    const spend = parseFloat(row.spend ?? "0") || 0;
+
+    let purchaseValue = 0;
+    const actionValues: { action_type: string; value: string }[] = row.action_values ?? [];
+    const purchaseAction = actionValues.find((a) => a.action_type === "purchase" || a.action_type === "omni_purchase");
+    if (purchaseAction) purchaseValue = parseFloat(purchaseAction.value) || 0;
+
+    let roas = spend > 0 ? purchaseValue / spend : 0;
+    const roasField: { action_type: string; value: string }[] = row.purchase_roas ?? [];
+    const purchaseRoas = roasField.find((r) => r.action_type === "purchase" || r.action_type === "omni_purchase");
+    if (purchaseRoas) roas = parseFloat(purchaseRoas.value) || roas;
+
+    return { spend, purchaseValue, roas };
+  } catch {
+    return { ...empty, error: "network" };
+  }
+}
+
 // Orders now come from the store's own website via /api/public/orders,
 // which lands them in EcomOrder directly — read straight from the DB.
 type WebOrder = {
@@ -275,12 +323,13 @@ export default async function ShopifyDashboardPage({
   const dayStart = new Date(`${from}T00:00:00+05:00`);
   const dayEnd = new Date(`${to}T23:59:59+05:00`);
 
-  const [{ orders, error }, courier, visitRows] = await Promise.all([
+  const [{ orders, error }, courier, visitRows, meta] = await Promise.all([
     fetchWebOrders(from, to),
     fetchPostexStats(from, to),
     prisma.websiteVisit
       .findMany({ where: { createdAt: { gte: dayStart, lte: dayEnd } }, select: { visitorId: true } })
       .catch(() => []),
+    fetchMetaStats(from, to),
   ]);
 
   const visitors = new Set(visitRows.map((v) => v.visitorId)).size;
@@ -352,6 +401,36 @@ export default async function ShopifyDashboardPage({
         <BigStat label="Total Orders" value={String(total)} />
         <BigStat label="Visitor → Order" value={`${pctNum(total, visitors)}%`} sub="conversion" />
       </div>
+
+      {/* Meta Ads */}
+      {!meta.error && (meta.spend > 0 || meta.purchaseValue > 0) && (
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-[#1877F2]">
+                <circle cx="10" cy="10" r="8.5" fill="#1877F2" />
+                <path d="M11.7 10.2h1.6l.25-1.7h-1.85V7.4c0-.5.13-.83.85-.83h.9V5.06c-.15-.02-.68-.06-1.3-.06-1.28 0-2.16.78-2.16 2.22v1.28H8.4v1.7h1.6V15h1.7v-4.8Z" fill="#fff" />
+              </svg>
+              <p className="text-sm font-semibold text-gray-800">Meta Ads</p>
+            </div>
+            <span className="text-xs text-gray-400">Facebook + Instagram</span>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <MetaStat label="Ad Spend" value={`Rs ${fmt(meta.spend)}`} />
+            <MetaStat label="Revenue from Ads" value={`Rs ${fmt(meta.purchaseValue)}`} />
+            <MetaStat
+              label="ROAS"
+              value={meta.roas.toFixed(2) + "x"}
+              accent={meta.roas >= 2 ? "good" : meta.roas > 0 ? "warn" : undefined}
+            />
+          </div>
+        </div>
+      )}
+      {meta.error && meta.error !== "config" && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-xs text-amber-700">
+          Meta Ads data unavailable ({meta.error.replace("api:", "code ")}). Check META_ACCESS_TOKEN / META_AD_ACCOUNT_ID.
+        </div>
+      )}
 
       {total > 0 ? (
         <>
@@ -541,6 +620,16 @@ function LegendDot({ color, label }: { color: string; label: string }) {
       <span className={`w-2 h-2 rounded-full ${color}`} />
       {label}
     </span>
+  );
+}
+
+function MetaStat({ label, value, accent }: { label: string; value: string; accent?: "good" | "warn" }) {
+  const color = accent === "good" ? "text-emerald-600" : accent === "warn" ? "text-amber-600" : "text-[#16202E]";
+  return (
+    <div className="bg-gray-50/60 border border-gray-100 rounded-xl p-4">
+      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{label}</p>
+      <p className={`text-2xl font-bold tabular-nums leading-none ${color}`}>{value}</p>
+    </div>
   );
 }
 
