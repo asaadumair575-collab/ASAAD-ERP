@@ -169,29 +169,27 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
           </div>
         )}
 
-        {/* Meta-reported — confirmed unreliable for this account, kept only as a collapsed reference */}
-        {meta.reportedRevenue > 0 && (
-          <details className="bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3">
-            <summary className="text-xs font-semibold text-gray-500 cursor-pointer select-none">
-              Meta&apos;s own reported number (do not use — known to be inflated on this account)
-            </summary>
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-1">Revenue (Meta-reported)</p>
-                <p className="text-lg font-bold tabular-nums text-gray-400 line-through decoration-red-300">Rs {fmt(meta.reportedRevenue)}</p>
-              </div>
-              <div>
-                <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-1">ROAS (Meta-reported)</p>
-                <p className="text-lg font-bold tabular-nums text-gray-400 line-through decoration-red-300">{meta.reportedRoas.toFixed(2)}x</p>
-              </div>
+        {/* Meta-reported — shown for comparison, but confirmed unreliable on this account */}
+        <details className="bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3">
+          <summary className="text-xs font-semibold text-gray-500 cursor-pointer select-none">
+            Meta&apos;s own reported number (do not use — known to be inflated on this account)
+          </summary>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-1">Revenue (Meta-reported)</p>
+              <p className="text-lg font-bold tabular-nums text-gray-400 line-through decoration-red-300">Rs {fmt(meta.reportedRevenue)}</p>
             </div>
-            <p className="text-xs text-red-500 mt-2">
-              Confirmed inaccurate — Meta reported Rs 280k for a period where actual recorded sales were Rs 380.
-              Meta&apos;s click/view attribution window over-counts conversions that weren&apos;t really driven by
-              ads. Treat &quot;Verified&quot; numbers above as the source of truth.
-            </p>
-          </details>
-        )}
+            <div>
+              <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-1">ROAS (Meta-reported)</p>
+              <p className="text-lg font-bold tabular-nums text-gray-400 line-through decoration-red-300">{meta.reportedRoas.toFixed(2)}x</p>
+            </div>
+          </div>
+          <p className="text-xs text-red-500 mt-2">
+            Confirmed inaccurate — Meta reported Rs 280k for a period where actual recorded sales were Rs 380.
+            Meta&apos;s click/view attribution window over-counts conversions that weren&apos;t really driven by
+            ads. Treat &quot;Verified&quot; numbers above as the source of truth.
+          </p>
+        </details>
       </div>
 
       {meta.spend === 0 && revenue === 0 && meta.reportedRevenue === 0 && (
