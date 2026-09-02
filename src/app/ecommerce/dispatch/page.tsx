@@ -1,8 +1,8 @@
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import DispatchReportTrigger from "@/components/DispatchReportTrigger";
-import PrintButton from "@/app/performance/report/PrintButton";
+import DateRangeNav from "@/components/DateRangeNav";
+import GenerateReportButton from "@/components/GenerateReportButton";
 
 export const maxDuration = 30;
 
@@ -61,7 +61,7 @@ export default async function EcomDispatchPage({
           <h1 className="text-2xl font-bold text-white tracking-tight">Daily Dispatch List</h1>
           <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
         </div>
-        <PrintButton />
+        <GenerateReportButton />
       </div>
 
       <div className="hidden print:block mb-2">
@@ -70,7 +70,7 @@ export default async function EcomDispatchPage({
       </div>
 
       <div className="print:hidden">
-        <DispatchReportTrigger from={from} to={to} basePath="/ecommerce/dispatch" />
+        <DateRangeNav from={from} to={to} basePath="/ecommerce/dispatch" />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 print:hidden">
