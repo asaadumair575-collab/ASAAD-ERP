@@ -181,8 +181,6 @@ export default function ScanDispatchModal() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
-    const ocrCanvas = preprocessForOcr(canvas);
-    const cropDataUrl = ocrCanvas.toDataURL("image/png");
 
     const fullCanvas = document.createElement("canvas");
     fullCanvas.width = video.videoWidth;
@@ -191,6 +189,15 @@ export default function ScanDispatchModal() {
     const fullDataUrl = fullCanvas.toDataURL("image/jpeg", 0.85);
 
     stopStream();
+    await processWeightImage(canvas, fullDataUrl);
+  }
+
+  // Shared by both the live camera capture and a gallery upload — crops a
+  // guide-box-sized region for OCR and stores the full photo either way.
+  async function processWeightImage(cropSourceCanvas: HTMLCanvasElement, fullDataUrl: string) {
+    const ocrCanvas = preprocessForOcr(cropSourceCanvas);
+    const cropDataUrl = ocrCanvas.toDataURL("image/png");
+
     setCapturedPhoto(fullDataUrl);
     setStage("confirm");
     setGrams("");
@@ -211,6 +218,36 @@ export default function ScanDispatchModal() {
     } finally {
       setOcrRunning(false);
     }
+  }
+
+  function handleGalleryUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    const img = new Image();
+    img.onload = async () => {
+      const boxWidthFrac = 0.7;
+      const boxHeightFrac = 0.22;
+      const sw = img.naturalWidth * boxWidthFrac;
+      const sh = img.naturalHeight * boxHeightFrac;
+      const sx = (img.naturalWidth - sw) / 2;
+      const sy = (img.naturalHeight - sh) / 2;
+
+      const cropCanvas = document.createElement("canvas");
+      cropCanvas.width = sw;
+      cropCanvas.height = sh;
+      cropCanvas.getContext("2d")?.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+
+      const fullCanvas = document.createElement("canvas");
+      fullCanvas.width = img.naturalWidth;
+      fullCanvas.height = img.naturalHeight;
+      fullCanvas.getContext("2d")?.drawImage(img, 0, 0);
+
+      stopStream();
+      await processWeightImage(cropCanvas, fullCanvas.toDataURL("image/jpeg", 0.85));
+    };
+    img.src = URL.createObjectURL(file);
   }
 
   async function saveDispatch() {
@@ -300,6 +337,10 @@ export default function ScanDispatchModal() {
                   className="w-16 h-16 rounded-full bg-white border-4 border-[#BFD732] active:scale-95 transition-transform"
                   aria-label="Capture"
                 />
+                <label className="text-xs font-medium text-white/70 underline decoration-dotted cursor-pointer active:text-white">
+                  Or upload a photo from gallery
+                  <input type="file" accept="image/*" className="hidden" onChange={handleGalleryUpload} />
+                </label>
               </div>
             </>
           )}
