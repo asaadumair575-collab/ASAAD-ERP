@@ -125,7 +125,7 @@ export default function ConfirmOrdersTable({ orders, weightByTracking = {} }: { 
                       </span>
                     ) : dispatched ? (
                       <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-blue-200 bg-blue-50 text-blue-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />Dispatched
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />Booked
                       </span>
                     ) : o.status === "PAID" ? (
                       <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-green-200 bg-green-50 text-green-700">
