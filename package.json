@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "postinstall": "prisma generate",
-    "build": "for i in 1 2 3 4 5; do prisma migrate deploy && break || sleep 10; done && next build",
+    "build": "sh scripts/build.sh",
     "start": "next start",
     "lint": "eslint"
   },
