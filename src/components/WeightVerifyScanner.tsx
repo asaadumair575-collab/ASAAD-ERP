@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import BarcodeScannerModal from "@/components/BarcodeScannerModal";
 
 type Recent = { trackingNumber: string; weight: number; time: string; photo: string; matched: boolean };
 
@@ -11,6 +12,7 @@ export default function WeightVerifyScanner() {
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [recent, setRecent] = useState<Recent[]>([]);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scanInputRef = useRef<HTMLInputElement>(null);
   const weightInputRef = useRef<HTMLInputElement>(null);
@@ -21,15 +23,25 @@ export default function WeightVerifyScanner() {
     if (stage === "scan") scanInputRef.current?.focus();
   }, [stage]);
 
+  function startPhotoCapture(cn: string) {
+    pendingCn.current = cn;
+    fileInputRef.current?.click();
+  }
+
   function onScanKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key !== "Enter") return;
     const cn = value.trim();
     if (!cn) return;
-    pendingCn.current = cn;
-    // Open the camera immediately — must be called synchronously in this
-    // trusted event handler for the browser to allow it without a click.
-    fileInputRef.current?.click();
+    // Must be called synchronously in this trusted event handler for the
+    // browser to allow opening the camera without a click.
+    startPhotoCapture(cn);
   }
+
+  const onBarcodeScanned = useCallback((text: string) => {
+    setCameraOpen(false);
+    setValue(text);
+    startPhotoCapture(text);
+  }, []);
 
   function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -84,21 +96,36 @@ export default function WeightVerifyScanner() {
 
   return (
     <div className="space-y-4">
+      <BarcodeScannerModal open={cameraOpen} onClose={() => setCameraOpen(false)} onScanned={onBarcodeScanned} />
+
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
         {stage !== "weight" ? (
           <>
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Scan Parcel</label>
-            <input
-              ref={scanInputRef}
-              type="text"
-              autoFocus
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={onScanKeyDown}
-              disabled={stage === "saving"}
-              placeholder="Scan or type tracking number, then press Enter"
-              className="mt-2 w-full border border-gray-200 rounded-xl px-4 py-3 text-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#BFD732] disabled:opacity-50"
-            />
+            <div className="mt-2 flex gap-2">
+              <input
+                ref={scanInputRef}
+                type="text"
+                autoFocus
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                onKeyDown={onScanKeyDown}
+                disabled={stage === "saving"}
+                placeholder="Scan barcode or type tracking number"
+                className="flex-1 min-w-0 border border-gray-200 rounded-xl px-4 py-3 text-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#BFD732] disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={() => setCameraOpen(true)}
+                disabled={stage === "saving"}
+                className="shrink-0 bg-[#16202E] text-[#BFD732] rounded-xl px-4 flex items-center justify-center disabled:opacity-50"
+                aria-label="Scan barcode with camera"
+              >
+                <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
+                  <path d="M3 6.5V4.5A1.5 1.5 0 0 1 4.5 3h2M13.5 3h2A1.5 1.5 0 0 1 17 4.5v2M17 13.5v2a1.5 1.5 0 0 1-1.5 1.5h-2M6.5 17h-2A1.5 1.5 0 0 1 3 15.5v-2M3 10h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
           </>
         ) : (
           <>
