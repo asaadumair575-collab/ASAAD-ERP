@@ -5,7 +5,6 @@ import EcomImportModal from "@/components/EcomImportModal";
 import DeleteAllEcomOrdersButton from "@/components/DeleteAllEcomOrdersButton";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import ConfirmOrdersTable from "@/components/ConfirmOrdersTable";
-import ScanAndWeighModal from "@/components/ScanAndWeighModal";
 import GenerateDispatchListButton from "@/components/GenerateDispatchListButton";
 
 export default async function EcomOrdersPage({
@@ -47,7 +46,12 @@ export default async function EcomOrdersPage({
             <span className="bg-blue-100 text-blue-700 font-medium px-3 py-1 rounded-full">{dispatched.length} dispatched</span>
           </div>
           {isAdmin && <DeleteAllEcomOrdersButton orderCount={await prisma.ecomOrder.count()} />}
-          <ScanAndWeighModal />
+          <Link href="/ecommerce/scanner" className="bg-[#16202E] text-[#BFD732] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#232F42] transition-colors flex items-center gap-1.5">
+            <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
+              <path d="M3 6.5V4.5A1.5 1.5 0 0 1 4.5 3h2M13.5 3h2A1.5 1.5 0 0 1 17 4.5v2M17 13.5v2a1.5 1.5 0 0 1-1.5 1.5h-2M6.5 17h-2A1.5 1.5 0 0 1 3 15.5v-2M3 10h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Parcel Scanner
+          </Link>
           <GenerateDispatchListButton />
           <Link href="/ecommerce/dispatch/airway-bills" className="text-sm text-gray-500 hover:text-[#16202E] px-2 underline decoration-dotted">
             Airway Bills
