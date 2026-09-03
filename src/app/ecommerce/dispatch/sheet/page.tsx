@@ -27,20 +27,35 @@ export default async function EcomDispatchPage({
   const dayStart = new Date(`${date}T00:00:00+05:00`);
   const dayEnd = new Date(`${date}T23:59:59+05:00`);
 
-  // Refuse to generate the list until every relevant order has actually been
-  // packed — otherwise a missed parcel could slip through the gate
-  // unnoticed. In date mode that's every order booked on Postex that day;
-  // in ids mode (checkbox selection) it's every order that was selected.
-  const pendingPack = selectedIds
-    ? await prisma.ecomOrder.findMany({
-        where: { id: { in: selectedIds }, packedAt: null },
-        select: { id: true, customerName: true, trackingNumber: true, notes: true },
-      })
-    : await prisma.ecomOrder.findMany({
-        where: { dispatchedAt: { gte: dayStart, lte: dayEnd }, packedAt: null },
-        select: { id: true, customerName: true, trackingNumber: true, notes: true },
-        orderBy: { dispatchedAt: "asc" },
-      });
+  // Refuse to generate the list until every order booked on Postex on the
+  // relevant day(s) has actually been packed — not just the ones ticked —
+  // otherwise a missed, unselected parcel could slip through the gate
+  // unnoticed. In ids mode the "relevant day(s)" are whichever dispatch
+  // dates the selected orders belong to.
+  let pendingPack: { id: number; customerName: string; trackingNumber: string | null; notes: string | null }[];
+  if (selectedIds) {
+    const selectedOrders = await prisma.ecomOrder.findMany({
+      where: { id: { in: selectedIds } },
+      select: { dispatchedAt: true },
+    });
+    const dayRanges = Array.from(
+      new Set(selectedOrders.filter((o) => o.dispatchedAt).map((o) => o.dispatchedAt!.toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" })))
+    ).map((d) => ({ gte: new Date(`${d}T00:00:00+05:00`), lte: new Date(`${d}T23:59:59+05:00`) }));
+
+    pendingPack = dayRanges.length
+      ? await prisma.ecomOrder.findMany({
+          where: { OR: dayRanges.map((r) => ({ dispatchedAt: r })), packedAt: null },
+          select: { id: true, customerName: true, trackingNumber: true, notes: true },
+          orderBy: { dispatchedAt: "asc" },
+        })
+      : [];
+  } else {
+    pendingPack = await prisma.ecomOrder.findMany({
+      where: { dispatchedAt: { gte: dayStart, lte: dayEnd }, packedAt: null },
+      select: { id: true, customerName: true, trackingNumber: true, notes: true },
+      orderBy: { dispatchedAt: "asc" },
+    });
+  }
 
   // Only parcels that have actually been through Scan & Weigh (packed) go on
   // the dispatch list — this is the gate-verification sheet, keyed off the
@@ -149,9 +164,7 @@ export default async function EcomDispatchPage({
             <div>
               <p className="text-sm font-semibold text-red-800">Dispatch List not ready — {pendingPack.length} parcel{pendingPack.length > 1 ? "s" : ""} not packed yet</p>
               <p className="text-xs text-red-600 mt-1">
-                {selectedIds
-                  ? "Every order you selected must be through Scan & Weigh before the gate-verification list can be generated. Missing:"
-                  : `Every order booked on Postex for ${dateLabel} must be through Scan & Weigh before the gate-verification list can be generated. Missing:`}
+                Every order booked on Postex for that day must be through Scan &amp; Weigh before the gate-verification list can be generated — even ones you didn&apos;t select. Missing:
               </p>
               <ul className="mt-3 space-y-1.5">
                 {pendingPack.map((o) => (
