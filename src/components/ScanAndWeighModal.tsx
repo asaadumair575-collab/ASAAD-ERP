@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 
 type Recent = { trackingNumber: string; grams: number; time: string; photo: string; matched: boolean };
-type Stage = "barcode" | "position" | "confirm" | "saving";
+type Stage = "barcode" | "verifying" | "position" | "confirm" | "saving";
 
 // Pulls the most plausible weight reading out of OCR text — digits and an
 // optional decimal point only (the crop already excludes model-name text).
@@ -24,6 +24,7 @@ export default function ScanAndWeighModal() {
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [recent, setRecent] = useState<Recent[]>([]);
+  const [verifiedCustomer, setVerifiedCustomer] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -55,7 +56,7 @@ export default function ScanAndWeighModal() {
           cancelled = true;
           pendingCn.current = text;
           stopStream();
-          startPositionStage();
+          verifyAndProceed(text);
         }
       )
       .then((controls) => {
@@ -69,6 +70,29 @@ export default function ScanAndWeighModal() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stopStream]);
+
+  const verifyAndProceed = useCallback(async (cn: string) => {
+    setError(null);
+    setStage("verifying");
+    try {
+      const res = await fetch(`/api/ecom/order-by-tracking?tracking=${encodeURIComponent(cn)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not verify order");
+      if (!data.found) {
+        setMessage({ type: "error", text: `Not found in system — ${cn}` });
+        setTimeout(() => setMessage(null), 2500);
+        startBarcodeStage();
+        return;
+      }
+      setVerifiedCustomer(data.order?.customerName ?? null);
+      startPositionStage();
+    } catch (e) {
+      setMessage({ type: "error", text: e instanceof Error ? e.message : "Could not verify order" });
+      setTimeout(() => setMessage(null), 2500);
+      startBarcodeStage();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const startPositionStage = useCallback(() => {
     setError(null);
@@ -205,6 +229,13 @@ export default function ScanAndWeighModal() {
           {/* Live camera — used for both barcode scan and scale positioning */}
           <video ref={videoRef} className={`absolute inset-0 w-full h-full object-cover ${stage === "confirm" || stage === "saving" ? "hidden" : ""}`} muted playsInline />
 
+          {stage === "verifying" && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60">
+              <div className="w-10 h-10 border-4 border-white/20 border-t-[#BFD732] rounded-full animate-spin" />
+              <p className="text-sm text-white font-medium">Checking {pendingCn.current} in system…</p>
+            </div>
+          )}
+
           {stage === "barcode" && (
             <>
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -261,7 +292,15 @@ export default function ScanAndWeighModal() {
 
           <div className="absolute top-0 inset-x-0 px-4 py-3.5 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent">
             <p className="text-sm font-semibold text-white">
-              {stage === "barcode" ? "Scan Tracking Barcode" : stage === "position" ? "Weigh Parcel" : "Confirm Weight"}
+              {stage === "barcode"
+                ? "Scan Tracking Barcode"
+                : stage === "verifying"
+                  ? "Verifying Order"
+                  : stage === "position"
+                    ? verifiedCustomer
+                      ? `Weigh Parcel — ${verifiedCustomer}`
+                      : "Weigh Parcel"
+                    : "Confirm Weight"}
             </p>
             <button type="button" onClick={close} className="text-white p-1.5 rounded-lg hover:bg-white/10" aria-label="Close">
               <svg viewBox="0 0 20 20" fill="none" className="w-6 h-6">
