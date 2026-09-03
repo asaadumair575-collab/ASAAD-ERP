@@ -1,7 +1,7 @@
 export default function GenerateDispatchListButton() {
   const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
   return (
-    <form action="/ecommerce/dispatch/sheet" method="GET" className="flex items-center gap-1.5">
+    <form action="/ecommerce/dispatch/sheet" method="GET" target="_blank" className="flex items-center gap-1.5">
       <input
         type="date"
         name="date"

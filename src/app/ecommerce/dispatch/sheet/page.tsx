@@ -25,8 +25,11 @@ export default async function EcomDispatchPage({
   const dayStart = new Date(`${date}T00:00:00+05:00`);
   const dayEnd = new Date(`${date}T23:59:59+05:00`);
 
+  // Only parcels that have actually been through Scan & Weigh (packed) go on
+  // the dispatch list — this is the gate-verification sheet, keyed off the
+  // day they were packed, not the day they were dispatched to the courier.
   const orders = await prisma.ecomOrder.findMany({
-    where: { dispatchedAt: { gte: dayStart, lte: dayEnd } },
+    where: { packedAt: { gte: dayStart, lte: dayEnd } },
     select: {
       id: true,
       customerName: true,
@@ -39,7 +42,7 @@ export default async function EcomDispatchPage({
       returned: true,
       items: { select: { description: true, quantity: true } },
     },
-    orderBy: { dispatchedAt: "desc" },
+    orderBy: { packedAt: "desc" },
   });
 
   // Weight is only known once a parcel has been through Scan & Weigh — join
@@ -144,7 +147,7 @@ export default async function EcomDispatchPage({
       {orders.length === 0 ? (
         <div className="border border-dashed border-gray-200 rounded-2xl p-16 text-center print:hidden">
           <p className="text-3xl mb-3">📦</p>
-          <p className="text-sm font-medium text-gray-500">No parcels dispatched on this date</p>
+          <p className="text-sm font-medium text-gray-500">No parcels packed on this date</p>
           <p className="text-xs text-gray-400 mt-1">Try a different date</p>
         </div>
       ) : (
