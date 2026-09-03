@@ -13,14 +13,16 @@ function fmt(n: number) {
 export default async function EcomDispatchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; print?: string }>;
+  searchParams: Promise<{ date?: string; print?: string; ids?: string }>;
 }) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
-  const { date: dateParam, print } = await searchParams;
+  const { date: dateParam, print, ids: idsParam } = await searchParams;
   const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
   const date = dateParam ?? todayPK;
+
+  const selectedIds = idsParam ? idsParam.split(",").map(Number).filter((n) => !Number.isNaN(n)) : null;
 
   const dayStart = new Date(`${date}T00:00:00+05:00`);
   const dayEnd = new Date(`${date}T23:59:59+05:00`);
@@ -28,8 +30,10 @@ export default async function EcomDispatchPage({
   // Only parcels that have actually been through Scan & Weigh (packed) go on
   // the dispatch list — this is the gate-verification sheet, keyed off the
   // day they were packed, not the day they were dispatched to the courier.
+  // A specific `ids` selection (from the Confirm Orders checkboxes) overrides
+  // the date filter and shows exactly those orders instead.
   const orders = await prisma.ecomOrder.findMany({
-    where: { packedAt: { gte: dayStart, lte: dayEnd } },
+    where: selectedIds ? { id: { in: selectedIds } } : { packedAt: { gte: dayStart, lte: dayEnd } },
     select: {
       id: true,
       customerName: true,

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import MoveToDraftButton from "./MoveToDraftButton";
 import BulkDispatchButton from "./BulkDispatchButton";
+import DispatchListSelectedButton from "./DispatchListSelectedButton";
 
 type Order = {
   id: number;
@@ -27,15 +28,14 @@ function fmt(n: number) {
 export default function ConfirmOrdersTable({ orders, weightByTracking = {} }: { orders: Order[]; weightByTracking?: Record<string, number> }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
 
-  const undispatched = orders.filter(o => !o.trackingNumber);
-  const allUndispatchedIds = undispatched.map(o => o.id);
-  const allChecked = allUndispatchedIds.length > 0 && allUndispatchedIds.every(id => selected.has(id));
+  const allIds = orders.map(o => o.id);
+  const allChecked = allIds.length > 0 && allIds.every(id => selected.has(id));
 
   function toggleAll() {
     if (allChecked) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(allUndispatchedIds));
+      setSelected(new Set(allIds));
     }
   }
 
@@ -55,6 +55,7 @@ export default function ConfirmOrdersTable({ orders, weightByTracking = {} }: { 
           <span className="text-sm text-orange-700 font-medium">{selected.size} order{selected.size > 1 ? "s" : ""} selected</span>
           <div className="flex items-center gap-2">
             <button onClick={() => setSelected(new Set())} className="text-xs text-orange-400 hover:text-orange-700 transition-colors">Clear</button>
+            <DispatchListSelectedButton selectedIds={Array.from(selected)} />
             <BulkDispatchButton selectedIds={Array.from(selected)} orders={orders} />
           </div>
         </div>
@@ -92,9 +93,8 @@ export default function ConfirmOrdersTable({ orders, weightByTracking = {} }: { 
                     <input
                       type="checkbox"
                       checked={isSelected}
-                      disabled={dispatched}
                       onChange={() => toggle(o.id)}
-                      className="rounded border-gray-300 disabled:opacity-30"
+                      className="rounded border-gray-300"
                     />
                   </td>
                   <td className="py-2.5 px-3 font-semibold text-gray-900 text-xs">
