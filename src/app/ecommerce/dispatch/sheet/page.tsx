@@ -27,11 +27,15 @@ export default async function EcomDispatchPage({
   const dayStart = new Date(`${date}T00:00:00+05:00`);
   const dayEnd = new Date(`${date}T23:59:59+05:00`);
 
-  // In date mode, refuse to generate the list until every order booked on
-  // Postex that day has actually been packed — otherwise a missed parcel
-  // could slip through the gate unnoticed.
+  // Refuse to generate the list until every relevant order has actually been
+  // packed — otherwise a missed parcel could slip through the gate
+  // unnoticed. In date mode that's every order booked on Postex that day;
+  // in ids mode (checkbox selection) it's every order that was selected.
   const pendingPack = selectedIds
-    ? []
+    ? await prisma.ecomOrder.findMany({
+        where: { id: { in: selectedIds }, packedAt: null },
+        select: { id: true, customerName: true, trackingNumber: true, notes: true },
+      })
     : await prisma.ecomOrder.findMany({
         where: { dispatchedAt: { gte: dayStart, lte: dayEnd }, packedAt: null },
         select: { id: true, customerName: true, trackingNumber: true, notes: true },
@@ -42,9 +46,9 @@ export default async function EcomDispatchPage({
   // the dispatch list — this is the gate-verification sheet, keyed off the
   // day they were packed, not the day they were dispatched to the courier.
   // A specific `ids` selection (from the Confirm Orders checkboxes) overrides
-  // the date filter and shows exactly those orders instead.
+  // the date filter and shows exactly those (packed) orders instead.
   const orders = await prisma.ecomOrder.findMany({
-    where: selectedIds ? { id: { in: selectedIds } } : { packedAt: { gte: dayStart, lte: dayEnd } },
+    where: selectedIds ? { id: { in: selectedIds }, packedAt: { not: null } } : { packedAt: { gte: dayStart, lte: dayEnd } },
     select: {
       id: true,
       customerName: true,
@@ -136,7 +140,7 @@ export default async function EcomDispatchPage({
 
       <DispatchDateControls date={date} basePath="/ecommerce/dispatch/sheet" />
 
-      {blocked && !selectedIds ? (
+      {blocked ? (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-6 print:hidden">
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0">
@@ -144,7 +148,11 @@ export default async function EcomDispatchPage({
             </div>
             <div>
               <p className="text-sm font-semibold text-red-800">Dispatch List not ready — {pendingPack.length} parcel{pendingPack.length > 1 ? "s" : ""} not packed yet</p>
-              <p className="text-xs text-red-600 mt-1">Every order booked on Postex for {dateLabel} must be through Scan &amp; Weigh before the gate-verification list can be generated. Missing:</p>
+              <p className="text-xs text-red-600 mt-1">
+                {selectedIds
+                  ? "Every order you selected must be through Scan & Weigh before the gate-verification list can be generated. Missing:"
+                  : `Every order booked on Postex for ${dateLabel} must be through Scan & Weigh before the gate-verification list can be generated. Missing:`}
+              </p>
               <ul className="mt-3 space-y-1.5">
                 {pendingPack.map((o) => (
                   <li key={o.id} className="text-xs text-red-700 bg-white border border-red-100 rounded-lg px-3 py-2 flex items-center justify-between">
