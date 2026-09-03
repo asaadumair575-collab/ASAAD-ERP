@@ -18,6 +18,39 @@ function extractWeight(text: string): string {
   return decimalMatch ?? matches[0] ?? "";
 }
 
+// Grayscale + contrast-stretch + upscale the cropped scale-display region —
+// digital scale LCDs are low-contrast and small, so this sharpens the digits
+// before OCR sees them, which is what was causing misreads.
+function preprocessForOcr(source: HTMLCanvasElement): HTMLCanvasElement {
+  const scale = 3;
+  const out = document.createElement("canvas");
+  out.width = source.width * scale;
+  out.height = source.height * scale;
+  const octx = out.getContext("2d")!;
+  octx.imageSmoothingEnabled = true;
+  octx.drawImage(source, 0, 0, out.width, out.height);
+
+  const imgData = octx.getImageData(0, 0, out.width, out.height);
+  const d = imgData.data;
+
+  // Grayscale + find min/max for contrast stretching.
+  let min = 255, max = 0;
+  const gray = new Uint8ClampedArray(d.length / 4);
+  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+    const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    gray[p] = g;
+    if (g < min) min = g;
+    if (g > max) max = g;
+  }
+  const range = Math.max(max - min, 1);
+  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+    const stretched = ((gray[p] - min) / range) * 255;
+    d[i] = d[i + 1] = d[i + 2] = stretched;
+  }
+  octx.putImageData(imgData, 0, 0);
+  return out;
+}
+
 // The QR on a PostEx airway bill may encode the tracking number directly, or
 // a URL/JSON blob containing it — pull out the longest digit run either way.
 function extractTrackingNumber(raw: string): string {
@@ -155,7 +188,8 @@ export default function ScanAndWeighModal() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
-    const cropDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+    const ocrCanvas = preprocessForOcr(canvas);
+    const cropDataUrl = ocrCanvas.toDataURL("image/png");
 
     // Also keep a full-frame photo for the saved record.
     const fullCanvas = document.createElement("canvas");
@@ -171,10 +205,14 @@ export default function ScanAndWeighModal() {
     setOcrRunning(true);
 
     try {
-      const { default: Tesseract } = await import("tesseract.js");
-      const { data } = await Tesseract.recognize(cropDataUrl, "eng", {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+      const { default: Tesseract, PSM } = await import("tesseract.js");
+      const worker = await Tesseract.createWorker("eng");
+      await worker.setParameters({
+        tessedit_char_whitelist: "0123456789.",
+        tessedit_pageseg_mode: PSM.SINGLE_LINE,
+      });
+      const { data } = await worker.recognize(cropDataUrl);
+      await worker.terminate();
       setGrams(extractWeight(data.text));
     } catch {
       // OCR failed — employee types it in instead
@@ -279,27 +317,56 @@ export default function ScanAndWeighModal() {
           )}
 
           {(stage === "confirm" || stage === "saving") && capturedPhoto && (
-            <div className="h-full overflow-y-auto">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={capturedPhoto} alt="Scale" className="w-full max-h-[45vh] object-cover" />
-              <div className="p-5 bg-gray-50 min-h-[40vh]">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  {pendingCn.current} — Weight (grams){ocrRunning && " · reading scale…"}
-                </label>
-                <input
-                  ref={weightInputRef}
-                  type="number"
-                  step="1"
-                  inputMode="numeric"
-                  value={grams}
-                  onChange={(e) => setGrams(e.target.value)}
-                  onKeyDown={onWeightKeyDown}
-                  disabled={ocrRunning || stage === "saving"}
-                  placeholder={ocrRunning ? "Reading weight from photo…" : "Confirm weight (g), then press Enter"}
-                  className="mt-2 w-full border border-[#BFD732] rounded-xl px-4 py-3 text-2xl font-bold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#BFD732] disabled:opacity-50 bg-white"
-                />
-                <p className="text-xs text-gray-400 mt-1.5">Auto-read from the scale photo — check it&apos;s correct, then press Enter.</p>
-                {stage === "saving" && <p className="text-xs text-gray-400 mt-2">Saving…</p>}
+            <div className="h-full overflow-y-auto bg-[#0B0F16]">
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={capturedPhoto} alt="Scale" className="w-full max-h-[42vh] object-cover" />
+                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#0B0F16] to-transparent" />
+              </div>
+              <div className="px-5 pt-1 pb-8 -mt-6 relative">
+                <div className="bg-white rounded-2xl shadow-xl p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Tracking Number</p>
+                      <p className="text-sm font-mono font-semibold text-[#16202E]">{pendingCn.current}</p>
+                    </div>
+                    {ocrRunning && (
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-gray-400">
+                        <span className="w-3.5 h-3.5 border-2 border-gray-200 border-t-[#16202E] rounded-full animate-spin" />
+                        reading scale
+                      </span>
+                    )}
+                  </div>
+
+                  <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Weight (grams)</label>
+                  <div className="relative mt-1.5">
+                    <input
+                      ref={weightInputRef}
+                      type="number"
+                      step="1"
+                      inputMode="numeric"
+                      value={grams}
+                      onChange={(e) => setGrams(e.target.value)}
+                      onKeyDown={onWeightKeyDown}
+                      disabled={ocrRunning || stage === "saving"}
+                      placeholder={ocrRunning ? "…" : "0"}
+                      className="w-full border-2 border-gray-100 focus:border-[#BFD732] rounded-2xl pl-4 pr-14 py-4 text-4xl font-bold tabular-nums text-[#16202E] focus:outline-none disabled:opacity-40 bg-gray-50 focus:bg-white transition-colors"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">g</span>
+                  </div>
+
+                  <p className="text-xs text-gray-400 mt-2.5 flex items-center gap-1.5">
+                    <svg viewBox="0 0 20 20" fill="none" className="w-3.5 h-3.5 shrink-0"><path d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" stroke="currentColor" strokeWidth="1.4"/><path d="M10 13v-4M10 7h.01" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
+                    Auto-read from the scale photo — confirm it&apos;s correct, then press Enter.
+                  </p>
+
+                  {stage === "saving" && (
+                    <div className="mt-4 flex items-center gap-2 text-sm font-medium text-[#16202E]">
+                      <span className="w-4 h-4 border-2 border-gray-200 border-t-[#16202E] rounded-full animate-spin" />
+                      Saving &amp; marking packed…
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -330,9 +397,12 @@ export default function ScanAndWeighModal() {
           )}
 
           {message && (
-            <div className="absolute top-14 inset-x-0 px-4 text-center">
-              <p className={`text-sm font-medium inline-block px-4 py-2 rounded-lg ${message.type === "ok" ? "bg-emerald-600 text-white" : "bg-red-600 text-white"}`}>
-                {message.type === "ok" ? "✓" : "✕"} {message.text}
+            <div className="absolute top-16 inset-x-0 px-4 text-center z-10">
+              <p className={`text-sm font-semibold inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl shadow-lg ${message.type === "ok" ? "bg-emerald-600 text-white" : "bg-red-600 text-white"}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${message.type === "ok" ? "bg-emerald-500" : "bg-red-500"}`}>
+                  {message.type === "ok" ? "✓" : "✕"}
+                </span>
+                {message.text}
               </p>
             </div>
           )}
