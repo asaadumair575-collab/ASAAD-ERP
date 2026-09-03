@@ -20,18 +20,24 @@ export default function ScanAndWeighModal() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <div className="relative bg-gray-50 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-[#16202E]">Scan &amp; Weigh</h2>
-              <button type="button" onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 p-1">
+        <div className="fixed inset-0 z-50 bg-gray-50">
+          <div className="h-full overflow-y-auto">
+            <div className="sticky top-0 z-10 bg-[#16202E] px-4 py-3.5 flex items-center justify-between shadow-sm">
+              <h2 className="text-base font-bold text-white">Scan &amp; Weigh</h2>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="text-[#BFD732] p-1.5 -mr-1.5 rounded-lg hover:bg-white/10"
+                aria-label="Close"
+              >
                 <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
-                  <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </button>
             </div>
-            <WeightVerifyScanner />
+            <div className="p-4 max-w-lg mx-auto">
+              <WeightVerifyScanner />
+            </div>
           </div>
         </div>
       )}
