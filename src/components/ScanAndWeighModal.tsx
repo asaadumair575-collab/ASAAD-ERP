@@ -221,8 +221,7 @@ export default function ScanAndWeighModal() {
     }
   }
 
-  async function onWeightKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key !== "Enter") return;
+  async function saveWeight() {
     const g = parseFloat(grams);
     if (!g || g <= 0 || !capturedPhoto) return;
 
@@ -344,10 +343,10 @@ export default function ScanAndWeighModal() {
                       ref={weightInputRef}
                       type="number"
                       step="1"
-                      inputMode="numeric"
+                      inputMode="decimal"
                       value={grams}
                       onChange={(e) => setGrams(e.target.value)}
-                      onKeyDown={onWeightKeyDown}
+                      onKeyDown={(e) => e.key === "Enter" && saveWeight()}
                       disabled={ocrRunning || stage === "saving"}
                       placeholder={ocrRunning ? "…" : "0"}
                       className="w-full border-2 border-gray-100 focus:border-[#BFD732] rounded-2xl pl-4 pr-14 py-4 text-4xl font-bold tabular-nums text-[#16202E] focus:outline-none disabled:opacity-40 bg-gray-50 focus:bg-white transition-colors"
@@ -357,15 +356,24 @@ export default function ScanAndWeighModal() {
 
                   <p className="text-xs text-gray-400 mt-2.5 flex items-center gap-1.5">
                     <svg viewBox="0 0 20 20" fill="none" className="w-3.5 h-3.5 shrink-0"><path d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" stroke="currentColor" strokeWidth="1.4"/><path d="M10 13v-4M10 7h.01" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
-                    Auto-read from the scale photo — confirm it&apos;s correct, then press Enter.
+                    Auto-read from the scale photo — confirm it&apos;s correct, then tap Save.
                   </p>
 
-                  {stage === "saving" && (
-                    <div className="mt-4 flex items-center gap-2 text-sm font-medium text-[#16202E]">
-                      <span className="w-4 h-4 border-2 border-gray-200 border-t-[#16202E] rounded-full animate-spin" />
-                      Saving &amp; marking packed…
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    onClick={saveWeight}
+                    disabled={ocrRunning || stage === "saving" || !parseFloat(grams || "0")}
+                    className="mt-4 w-full bg-[#16202E] text-[#BFD732] font-semibold text-base py-3.5 rounded-2xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                  >
+                    {stage === "saving" ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-[#BFD732]/30 border-t-[#BFD732] rounded-full animate-spin" />
+                        Saving &amp; marking packed…
+                      </>
+                    ) : (
+                      "Save Weight"
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
