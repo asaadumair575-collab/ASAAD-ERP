@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
 
   for (const order of orders) {
     if (order.trackingNumber) {
-      results.push({ id: order.id, tracking: order.trackingNumber }); // already dispatched
+      results.push({ id: order.id, error: `Already booked on Postex — ${order.trackingNumber}` });
       continue;
     }
     try {
