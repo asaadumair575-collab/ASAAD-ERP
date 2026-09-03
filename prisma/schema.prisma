@@ -348,6 +348,7 @@ model EcomOrder {
   address         String?
   trackingNumber  String?
   dispatchedAt    DateTime?
+  packedAt        DateTime?
   shopifyOrderId  String?
   draft           Boolean         @default(false)
   draftStatus     String?
@@ -703,6 +704,7 @@ model WeightVerification {
   id             Int      @id @default(autoincrement())
   trackingNumber String
   photo          String   @db.Text
+  weight         Float
   verifiedBy     User?    @relation(fields: [verifiedById], references: [id])
   verifiedById   Int?
   createdAt      DateTime @default(now())

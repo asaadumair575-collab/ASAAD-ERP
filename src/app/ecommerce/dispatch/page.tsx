@@ -48,8 +48,19 @@ export default async function OperationsPage() {
             </svg>
           }
           title="Weight Verification"
-          description="Scan a parcel's tracking number, then snap a quick photo on the scale"
+          description="Scan a parcel, snap a photo of it on the scale, and log its weight"
           badge="Employees"
+        />
+        <OpCard
+          href="/ecommerce/dispatch/final-list"
+          icon={
+            <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
+              <path d="M4 10h2.5l1.5-4 3 8 1.5-4H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+          }
+          title="Final Dispatch List"
+          description="Every weight-verified parcel with its weight and a grand total, for gate handover"
         />
       </div>
     </div>
