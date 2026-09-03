@@ -102,27 +102,27 @@ export default async function EcomCustomersPage({
         <p className="text-sm text-gray-500 mt-0.5">{customers.length} unique customers from all orders</p>
       </div>
 
-      <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
+      <form method="GET" className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
         <input
           type="text"
           name="q"
           defaultValue={q ?? ""}
           placeholder="Search name, phone, city..."
-          className="flex-1 min-w-[180px] bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          className="flex-1 min-w-[180px] w-full sm:w-auto bg-gray-50 border border-transparent rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black"
         />
         <select
           name="city"
           defaultValue={city ?? ""}
-          className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          className="bg-gray-50 border border-transparent rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black w-full sm:w-auto"
         >
           <option value="">All Cities</option>
           {cities.map((c) => (
             <option key={c.city} value={c.city!}>{c.city}</option>
           ))}
         </select>
-        <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">Filter</button>
+        <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2.5 sm:py-2 rounded-lg hover:bg-gray-800 transition-colors w-full sm:w-auto">Filter</button>
         {(q || city) && (
-          <Link href="/ecommerce/customers" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>
+          <Link href="/ecommerce/customers" className="text-sm text-gray-400 hover:text-black px-2 text-center sm:text-left">Clear</Link>
         )}
       </form>
 
@@ -131,7 +131,34 @@ export default async function EcomCustomersPage({
           <p className="text-gray-400 text-sm">No customers found.</p>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <>
+        {/* Mobile card list */}
+        <div className="sm:hidden space-y-2">
+          {customers.map((c) => {
+            const href = `/ecommerce/customers/${encodeURIComponent(c.phone ?? `name:${c.customerName}`)}`;
+            return (
+              <Link href={href} key={c.key} className="block bg-white border border-gray-200 rounded-xl shadow-sm p-3 active:bg-gray-50">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-medium text-sm text-gray-900">{c.customerName}</p>
+                  <p className="text-sm font-semibold tabular-nums text-gray-900">Rs {fmt(c.totalSpent)}</p>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                  {c.phone && <span>{c.phone}</span>}
+                  {c.city && <span>· {c.city}</span>}
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-xs text-gray-500">{c.orderCount} orders</span>
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">{c.deliveredCount} delivered</span>
+                  {c.returnedCount > 0 && (
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-600">{c.returnedCount} returned</span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 mt-1.5">Last order {c.lastOrderDate.toISOString().slice(0, 10)}</p>
+              </Link>
+            );
+          })}
+        </div>
+        <div className="hidden sm:block bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-medium uppercase tracking-wide">
@@ -179,6 +206,7 @@ export default async function EcomCustomersPage({
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

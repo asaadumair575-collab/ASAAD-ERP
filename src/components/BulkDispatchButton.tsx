@@ -59,9 +59,9 @@ export default function BulkDispatchButton({
       <button
         onClick={() => { setShowModal(true); setResults(null); }}
         disabled={!selectedIds.length}
-        className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 sm:py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
-        <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+        <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4 shrink-0">
           <path d="M2 8h9M8 5l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M13 3v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
@@ -70,15 +70,15 @@ export default function BulkDispatchButton({
 
       {/* Confirmation Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-lg overflow-hidden max-h-[92dvh] sm:max-h-none flex flex-col">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
               <div>
                 <h2 className="text-base font-semibold text-gray-900">Confirm Dispatch</h2>
                 <p className="text-xs text-gray-400 mt-0.5">{selectedOrders.length} order{selectedOrders.length > 1 ? "s" : ""} will be booked on Postex</p>
               </div>
-              <button onClick={() => { setShowModal(false); setResults(null); }} className="text-gray-400 hover:text-gray-700 text-lg leading-none">✕</button>
+              <button onClick={() => { setShowModal(false); setResults(null); }} className="text-gray-400 hover:text-gray-700 text-lg leading-none w-11 h-11 -mr-2 flex items-center justify-center shrink-0">✕</button>
             </div>
 
             {/* Order list */}
@@ -87,7 +87,7 @@ export default function BulkDispatchButton({
                 const label = o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
                 const result = results?.find(r => r.id === o.id);
                 return (
-                  <div key={o.id} className="px-6 py-3 flex items-center justify-between gap-3">
+                  <div key={o.id} className="px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-gray-800">{label} — {o.customerName}</p>
                       <p className="text-xs text-gray-400">{o.phone ?? "—"} · {o.city ?? "—"}</p>
@@ -107,7 +107,7 @@ export default function BulkDispatchButton({
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+            <div className="px-4 sm:px-6 py-4 border-t border-gray-100 bg-gray-50 shrink-0">
               {/* Summary totals */}
               <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
                 <span>Total COD to collect</span>
@@ -122,21 +122,21 @@ export default function BulkDispatchButton({
                 </div>
               )}
 
-              <div className="flex items-center gap-2 justify-end">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:justify-end">
                 {!results && (
-                  <button onClick={() => setShowModal(false)} className="text-sm text-gray-500 hover:text-gray-800 px-3 py-1.5 rounded-lg transition-colors">
+                  <button onClick={() => setShowModal(false)} className="order-2 sm:order-1 text-sm text-gray-500 hover:text-gray-800 px-3 py-2.5 sm:py-1.5 rounded-lg transition-colors">
                     Cancel
                   </button>
                 )}
                 {results ? (
-                  <button onClick={() => setShowModal(false)} className="text-sm font-semibold px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-black transition-colors">
+                  <button onClick={() => setShowModal(false)} className="text-sm font-semibold px-4 py-2.5 sm:py-2 rounded-lg bg-gray-800 text-white hover:bg-black transition-colors">
                     Done
                   </button>
                 ) : (
                   <button
                     onClick={dispatch}
                     disabled={loading}
-                    className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-60 transition-colors"
+                    className="order-1 sm:order-2 flex items-center justify-center gap-2 text-sm font-semibold px-4 py-2.5 sm:py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-60 transition-colors"
                   >
                     {loading && <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                     {loading ? `Booking ${selectedIds.length} order${selectedIds.length > 1 ? "s" : ""}…` : "Book on Postex"}

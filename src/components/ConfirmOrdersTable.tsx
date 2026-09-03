@@ -53,17 +53,90 @@ export default function ConfirmOrdersTable({ orders, weightByTracking = {} }: { 
     <div className="space-y-3">
       {/* Bulk action bar */}
       {selected.size > 0 && (
-        <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5 sm:sticky sm:top-0 z-10">
           <span className="text-sm text-orange-700 font-medium">{selected.size} order{selected.size > 1 ? "s" : ""} selected</span>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setSelected(new Set())} className="text-xs text-orange-400 hover:text-orange-700 transition-colors">Clear</button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button onClick={() => setSelected(new Set())} className="text-xs text-orange-400 hover:text-orange-700 transition-colors py-1.5">Clear</button>
             <DispatchListSelectedButton selectedIds={Array.from(selected)} />
             <BulkDispatchButton selectedIds={Array.from(selected)} orders={orders} />
           </div>
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+      {/* Mobile card list */}
+      <div className="sm:hidden space-y-2">
+        {orders.map((o) => {
+          const orderLabel = o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
+          const isSelected = selected.has(o.id);
+          const dispatched = !!o.trackingNumber;
+          return (
+            <div key={o.id} className={`bg-white border rounded-xl shadow-sm p-3 ${isSelected ? "border-orange-300 bg-orange-50/50" : "border-gray-200"}`}>
+              <div className="flex items-start gap-3">
+                <label className="flex items-center justify-center w-11 h-11 -m-2.5 -mt-1 shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggle(o.id)}
+                    className="w-5 h-5 rounded border-gray-300"
+                  />
+                </label>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <Link href={`/ecommerce/orders/${o.id}`} className="font-semibold text-gray-900 text-sm hover:text-blue-600">
+                      {orderLabel}
+                    </Link>
+                    <span className="text-xs text-gray-400 whitespace-nowrap">
+                      {(o.packedAt ?? o.dispatchedAt ?? o.confirmedAt ?? o.date).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-900 font-medium mt-1">{o.customerName}</p>
+                  {o.city && <p className="text-xs text-gray-400">{o.city}</p>}
+                  <p className="text-xs text-gray-400 mt-1 line-clamp-2">
+                    {o.items.map(i => `${i.description} ×${i.quantity}`).join(", ")}
+                  </p>
+                  <div className="flex items-center justify-between gap-2 mt-2">
+                    <span className="text-sm font-semibold text-gray-900 tabular-nums">Rs {fmt(o.totalAmount)}</span>
+                    {o.returned ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-red-200 bg-red-50 text-red-600">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-400" />Returned
+                      </span>
+                    ) : dispatched && o.packedAt ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        Packed{o.trackingNumber && weightByTracking[o.trackingNumber] != null ? ` · ${weightByTracking[o.trackingNumber].toFixed(2)} kg` : ""}
+                      </span>
+                    ) : dispatched ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-blue-200 bg-blue-50 text-blue-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />Booked
+                      </span>
+                    ) : o.status === "PAID" ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-green-200 bg-green-50 text-green-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />Delivered
+                      </span>
+                    ) : o.status === "PARTIAL" ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-yellow-200 bg-yellow-50 text-yellow-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />Partial
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-purple-200 bg-purple-50 text-purple-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />Confirmed
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-end gap-4 mt-2 pt-2 border-t border-gray-100">
+                    <MoveToDraftButton id={o.id} />
+                    <Link href={`/ecommerce/orders/${o.id}`} className="text-xs text-blue-600 hover:underline font-medium py-1">
+                      View →
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hidden sm:block bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-xs text-gray-400 font-medium text-left">

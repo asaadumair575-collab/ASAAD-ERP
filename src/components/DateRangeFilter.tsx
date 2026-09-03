@@ -36,13 +36,13 @@ export default function DateRangeFilter({ from, to }: { from?: string | null; to
   const activeMonth = months.find((m) => m.from === from && m.to === to);
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
       {/* Month quick-select */}
       <div className="relative">
         <button
           type="button"
           onClick={() => setShowMonths((v) => !v)}
-          className={`flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-lg border transition-colors ${
+          className={`flex items-center gap-1.5 text-sm font-medium px-3 py-2.5 sm:py-2 rounded-lg border transition-colors ${
             activeMonth
               ? "bg-black text-white border-black"
               : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
@@ -72,14 +72,14 @@ export default function DateRangeFilter({ from, to }: { from?: string | null; to
       </div>
 
       {/* Manual date range */}
-      <div className="flex items-center gap-1.5 bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-black">
+      <div className="flex items-center gap-1.5 bg-gray-50 border border-transparent rounded-lg px-3 py-2.5 sm:py-2 text-sm focus-within:ring-2 focus-within:ring-black flex-1 sm:flex-none min-w-0">
         <input
           ref={fromRef}
           type="date"
           name="from"
           defaultValue={from ?? ""}
           onChange={(e) => { if (e.target.value) toRef.current?.focus(); }}
-          className="bg-transparent outline-none text-sm w-[130px]"
+          className="bg-transparent outline-none text-base sm:text-sm w-[42%] sm:w-[130px]"
         />
         <span className="text-gray-300 select-none">→</span>
         <input
@@ -88,7 +88,7 @@ export default function DateRangeFilter({ from, to }: { from?: string | null; to
           name="to"
           defaultValue={to ?? ""}
           onChange={(e) => { if (e.target.value) e.target.form?.requestSubmit(); }}
-          className="bg-transparent outline-none text-sm w-[130px]"
+          className="bg-transparent outline-none text-base sm:text-sm w-[42%] sm:w-[130px]"
         />
       </div>
     </div>

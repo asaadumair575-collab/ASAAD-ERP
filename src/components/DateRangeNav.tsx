@@ -86,9 +86,9 @@ export default function DateRangeNav({ from, to, basePath }: { from: string; to:
   const invalidRange = customFrom > customTo;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex flex-wrap items-center gap-3">
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
       {/* Preset dropdown */}
-      <div className="relative">
+      <div className="relative w-full sm:w-auto">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#BFD732] pointer-events-none">
           <CalendarIcon />
         </div>
@@ -97,7 +97,7 @@ export default function DateRangeNav({ from, to, basePath }: { from: string; to:
           onChange={(e) => {
             if (e.target.value !== "custom") applyPreset(e.target.value);
           }}
-          className="bg-[#16202E] text-white text-sm font-semibold pl-9 pr-9 py-2.5 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-[#BFD732] cursor-pointer appearance-none"
+          className="bg-[#16202E] text-white text-sm font-semibold pl-9 pr-9 py-2.5 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-[#BFD732] cursor-pointer appearance-none w-full sm:w-auto"
         >
           {PRESETS.map((p) => (
             <option key={p.key} value={p.key} className="bg-white text-[#16202E]">
@@ -118,13 +118,13 @@ export default function DateRangeNav({ from, to, basePath }: { from: string; to:
       <div className="hidden sm:block w-px h-6 bg-gray-200" />
 
       {/* Custom range */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 w-full sm:w-auto">
         <input
           type="date"
           value={customFrom}
           max={customTo}
           onChange={(e) => setCustomFrom(e.target.value)}
-          className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#BFD732] focus:border-transparent"
+          className="border border-gray-200 rounded-xl px-3 py-2.5 sm:py-2 text-base sm:text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#BFD732] focus:border-transparent min-w-0 flex-1 sm:flex-none"
         />
         <span className="text-gray-300 text-sm select-none">→</span>
         <input
@@ -132,18 +132,18 @@ export default function DateRangeNav({ from, to, basePath }: { from: string; to:
           value={customTo}
           min={customFrom}
           onChange={(e) => setCustomTo(e.target.value)}
-          className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#BFD732] focus:border-transparent"
+          className="border border-gray-200 rounded-xl px-3 py-2.5 sm:py-2 text-base sm:text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#BFD732] focus:border-transparent min-w-0 flex-1 sm:flex-none"
         />
         <button
           onClick={() => go(customFrom, customTo)}
           disabled={invalidRange}
-          className="bg-[#16202E] text-[#BFD732] text-sm font-semibold px-4 py-2 rounded-xl hover:bg-[#232F42] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="bg-[#16202E] text-[#BFD732] text-sm font-semibold px-4 py-2.5 sm:py-2 rounded-xl hover:bg-[#232F42] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
         >
           Apply
         </button>
       </div>
 
-      <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-400">
+      <div className="sm:ml-auto flex items-center gap-1.5 text-xs text-gray-400">
         <CalendarIcon />
         <span>{hasCustomChanges ? "Unsaved changes" : rangeLabel(from, to)}</span>
       </div>

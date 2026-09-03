@@ -64,7 +64,7 @@ export default async function EcomCustomerDetailPage({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm text-center">
           <p className="text-xs text-gray-500 mb-1">Total Orders</p>
           <p className="text-xl font-semibold">{totalOrders}</p>
@@ -93,6 +93,7 @@ export default async function EcomCustomerDetailPage({
         <div className="px-5 py-3 border-b border-gray-100">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Order History</p>
         </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 text-xs text-gray-400 uppercase tracking-wide text-left">
@@ -131,6 +132,7 @@ export default async function EcomCustomerDetailPage({
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

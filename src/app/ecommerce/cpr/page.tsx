@@ -26,7 +26,26 @@ export default async function CprPage() {
           <div className="px-5 py-3 border-b border-gray-100">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">CPR History</p>
           </div>
-          <table className="w-full text-sm">
+          {/* Mobile card list */}
+          <div className="sm:hidden divide-y divide-gray-50">
+            {history.map((b) => (
+              <div key={b.id} className="px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">{b.appliedAt.toISOString().slice(0, 10)}</span>
+                  <span className="text-sm font-medium text-green-700 tabular-nums">Rs {fmt(b.totalSettled)}</span>
+                </div>
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <span className="text-xs text-gray-400">{b.fileCount} files</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">{b.payments} settled</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600">{b.returned} returned</span>
+                  {b.notFound > 0 && (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">{b.notFound} not found</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <table className="hidden sm:table w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-xs text-gray-400 uppercase tracking-wide text-left">
                 <th className="py-2 px-5">Date</th>

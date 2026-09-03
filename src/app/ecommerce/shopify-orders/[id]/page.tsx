@@ -69,6 +69,7 @@ export default async function DraftOrderDetailPage({ params }: { params: Promise
         <div className="px-5 py-3 border-b border-gray-100">
           <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Order Items</p>
         </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left bg-gray-50 text-xs text-gray-400 uppercase tracking-wide">
@@ -95,10 +96,11 @@ export default async function DraftOrderDetailPage({ params }: { params: Promise
             </tr>
           </tfoot>
         </table>
+        </div>
       </div>
 
       {/* Status */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex items-center justify-between gap-4">
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Status</p>
           <p className="text-sm text-gray-500 mt-0.5">Click to update</p>

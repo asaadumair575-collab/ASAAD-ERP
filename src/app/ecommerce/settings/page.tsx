@@ -22,15 +22,15 @@ export default async function EcomSettingsPage() {
           <p className="text-sm font-semibold text-gray-800">PostEx API Key</p>
           <p className="text-xs text-gray-400 mt-0.5">Used for auto-sync of order statuses (returns, delivery charges)</p>
         </div>
-        <form action={savePostex} className="flex gap-2">
+        <form action={savePostex} className="flex flex-col sm:flex-row gap-2">
           <input
             name="value"
             type="text"
             defaultValue={postexKey?.value ?? ""}
             placeholder="Paste PostEx API token here"
-            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-black"
+            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-black"
           />
-          <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+          <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2.5 sm:py-2 rounded-lg hover:bg-gray-800 transition-colors">
             Save
           </button>
         </form>

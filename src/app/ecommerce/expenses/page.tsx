@@ -58,10 +58,10 @@ export default async function EcomExpensesPage({
       </div>
 
       {/* Filters */}
-      <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
+      <form method="GET" className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
         <DateRangeFilter from={from} to={to} />
-        <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">Filter</button>
-        {(from || to) && <a href="/ecommerce/expenses" className="text-sm text-gray-400 hover:text-black px-2">Clear</a>}
+        <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2.5 sm:py-2 rounded-lg hover:bg-gray-800 transition-colors w-full sm:w-auto">Filter</button>
+        {(from || to) && <a href="/ecommerce/expenses" className="text-sm text-gray-400 hover:text-black px-2 text-center sm:text-left">Clear</a>}
       </form>
 
       {/* Add expense form */}
@@ -69,7 +69,7 @@ export default async function EcomExpensesPage({
 
       {/* Summary cards */}
       {expenses.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 shadow-sm">
             <p className="text-xs font-medium text-purple-600">Variable (Ads)</p>
             <p className="text-xl font-bold text-purple-700 mt-1">Rs {fmt(variableTotal)}</p>
@@ -105,7 +105,7 @@ export default async function EcomExpensesPage({
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold tabular-nums">Rs {fmt(e.amount)}</span>
                   <form action={deleteEcomExpense.bind(null, e.id)}>
-                    <button type="submit" className="text-xs text-red-400 hover:text-red-600 transition-colors">Delete</button>
+                    <button type="submit" className="text-xs text-red-400 hover:text-red-600 transition-colors py-1.5 px-1">Delete</button>
                   </form>
                 </div>
               </div>
@@ -139,7 +139,7 @@ export default async function EcomExpensesPage({
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-semibold tabular-nums">Rs {fmt(e.amount)}</span>
                         <form action={deleteEcomExpense.bind(null, e.id)}>
-                          <button type="submit" className="text-xs text-red-400 hover:text-red-600 transition-colors">Delete</button>
+                          <button type="submit" className="text-xs text-red-400 hover:text-red-600 transition-colors py-1.5 px-1">Delete</button>
                         </form>
                       </div>
                     </div>

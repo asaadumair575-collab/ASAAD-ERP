@@ -19,13 +19,13 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
           <Link href="/ecommerce/orders" className="text-sm text-gray-400 hover:text-black">← Confirm Orders</Link>
           <h1 className="text-2xl font-semibold tracking-tight mt-1">{orderLabel}</h1>
           <p className="text-sm text-gray-500 mt-0.5">{order.date.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</p>
         </div>
-        <div className="flex items-center gap-2 mt-1">
+        <div className="flex items-center gap-2 sm:mt-1">
           {order.returned ? (
             <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-red-100 text-red-600 border border-red-200">Returned</span>
           ) : order.status === "PAID" ? (
@@ -57,6 +57,7 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
         <div className="px-5 py-3 border-b border-gray-100">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Items</p>
         </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left bg-gray-50 text-xs text-gray-400 uppercase tracking-wide">
@@ -83,6 +84,7 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
             </tr>
           </tfoot>
         </table>
+        </div>
       </div>
 
     </div>

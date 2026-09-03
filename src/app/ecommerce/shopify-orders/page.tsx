@@ -73,7 +73,7 @@ export default async function DraftOrdersPage({
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm">
           <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Total Orders</p>
           <p className="text-3xl font-bold text-gray-900 mt-1">{orders.length}</p>
@@ -93,11 +93,11 @@ export default async function DraftOrdersPage({
       </div>
 
       {/* Filter */}
-      <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
+      <form method="GET" className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
         <input type="text" name="q" defaultValue={q ?? ""} placeholder="Search customer, phone, order #..."
-          className="flex-1 min-w-[180px] bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white" />
+          className="flex-1 min-w-[180px] w-full sm:w-auto bg-gray-50 border border-transparent rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black focus:bg-white" />
         <DateRangePicker from={from} to={to} />
-        <select name="status" defaultValue={status ?? ""} className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black text-gray-600">
+        <select name="status" defaultValue={status ?? ""} className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black text-gray-600 w-full sm:w-auto">
           <option value="">All Status</option>
           <option value="NEW">New</option>
           <option value="CALL_NOT_PICKED">Call Not Picked</option>
@@ -105,8 +105,8 @@ export default async function DraftOrdersPage({
           <option value="CANCELLED">Cancelled</option>
           <option value="CONFIRMED">Confirmed</option>
         </select>
-        <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">Filter</button>
-        {(q || from || to || status) && <Link href="/ecommerce/shopify-orders" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>}
+        <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2.5 sm:py-2 rounded-lg hover:bg-gray-800 transition-colors w-full sm:w-auto">Filter</button>
+        {(q || from || to || status) && <Link href="/ecommerce/shopify-orders" className="text-sm text-gray-400 hover:text-black px-2 text-center sm:text-left">Clear</Link>}
       </form>
 
       {orders.length === 0 ? (
@@ -115,7 +115,33 @@ export default async function DraftOrdersPage({
           <p className="text-sm text-gray-400 mt-1">New Shopify orders appear here automatically.</p>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <>
+        {/* Mobile card list */}
+        <div className="sm:hidden space-y-2">
+          {orders.map((o) => {
+            const label = o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
+            return (
+              <div key={o.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Link href={`/ecommerce/shopify-orders/${o.id}`} className="font-semibold text-gray-900 text-sm hover:text-blue-600">
+                    {label}
+                  </Link>
+                  <span className="text-xs text-gray-500 whitespace-nowrap">{timeAgo(o.date)}</span>
+                </div>
+                <p className="text-sm text-gray-900 font-medium mt-1">{o.customerName}</p>
+                {o.city && <p className="text-xs text-gray-400">{o.city}</p>}
+                <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                  {o.items.map((i) => `${i.description} ×${i.quantity}`).join(", ")}
+                </p>
+                <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-gray-100">
+                  <span className="text-sm font-semibold text-gray-900 tabular-nums">Rs {fmt(o.totalAmount)}</span>
+                  <DraftStatusModal id={o.id} initial={o.draftStatus ?? null} logs={o.statusLogs} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="hidden sm:block bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-xs text-gray-500 font-medium text-left">
@@ -162,6 +188,7 @@ export default async function DraftOrdersPage({
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

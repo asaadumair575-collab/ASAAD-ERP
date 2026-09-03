@@ -112,23 +112,23 @@ export default function EcomImportModal() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="shrink-0 border border-gray-200 bg-white text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+        className="shrink-0 border border-gray-200 bg-white text-gray-700 text-sm font-medium px-4 py-2.5 sm:py-2 rounded-lg hover:bg-gray-50 transition-colors"
       >
         Import CSV
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={handleClose} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:max-w-2xl h-[92dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
               <div>
                 <h2 className="text-lg font-semibold">Import Orders (PostEx CSV)</h2>
                 <p className="text-xs text-gray-400 mt-0.5">Upload PostEx order history CSV — duplicates are skipped automatically</p>
               </div>
-              <button onClick={handleClose} className="text-gray-400 hover:text-black text-xl leading-none">×</button>
+              <button onClick={handleClose} className="text-gray-400 hover:text-black text-2xl leading-none w-11 h-11 -mr-2 flex items-center justify-center shrink-0">×</button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-4">
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                 <label className="text-sm font-medium text-gray-700 mb-2 block">CSV File</label>
                 <input

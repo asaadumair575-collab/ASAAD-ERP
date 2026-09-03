@@ -338,7 +338,26 @@ function renderSheet({
           <p className="text-xs text-gray-400 mt-1">Try a different date</p>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden print:border-none print:shadow-none print:rounded-none">
+        <>
+        {/* Mobile card list (screen only) */}
+        <div className="sm:hidden print:hidden space-y-2">
+          {rows.map((o) => (
+            <div key={o.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold text-gray-900 text-sm">{o.orderLabel}</span>
+                <span className="text-sm font-semibold text-gray-900 tabular-nums">Rs {fmt(o.totalAmount)}</span>
+              </div>
+              <p className="text-sm text-gray-800 mt-1">{o.customerName}</p>
+              {o.phone && <p className="text-xs text-gray-400">{o.phone}{o.city ? ` · ${o.city}` : ""}</p>}
+              <p className="text-xs text-gray-500 mt-1">{o.items}</p>
+              <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-gray-100">
+                <span className="font-mono text-xs text-gray-600">{o.trackingNumber ?? "—"}</span>
+                {showWeight && <span className="text-xs tabular-nums text-gray-700">{o.weight != null ? `${o.weight.toFixed(2)} kg` : "—"}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="hidden sm:block bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden print:block print:border-none print:shadow-none print:rounded-none">
           <div className="overflow-x-auto print:overflow-visible">
             <table className="w-full text-sm print:text-[10px] print:table-fixed">
               <colgroup className="hidden print:table-column-group">
@@ -393,6 +412,7 @@ function renderSheet({
             </table>
           </div>
         </div>
+        </>
       )}
       </>
       )}

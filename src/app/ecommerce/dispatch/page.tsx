@@ -21,7 +21,7 @@ export default async function DispatchListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Dispatch</h1>
           <p className="text-sm text-gray-500 mt-0.5">
@@ -43,7 +43,50 @@ export default async function DispatchListPage() {
           </Link>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <>
+        {/* Mobile card list */}
+        <div className="sm:hidden space-y-2">
+          {sheets.map((s) => (
+            <div key={s.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-xs font-semibold text-[#16202E]">{dispatchSheetNumber(s.id)}</span>
+                <span className="text-xs text-gray-400">
+                  {s.date.toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", day: "numeric", month: "short", year: "numeric" })}
+                </span>
+              </div>
+              <div className="flex items-center gap-4 mt-2 text-sm text-gray-700">
+                <span>{s.totalParcels} parcels</span>
+                <span className="tabular-nums">Rs {fmt(s.totalValue)}</span>
+                <span className="tabular-nums">{s.totalWeight > 0 ? `${s.totalWeight.toFixed(2)} kg` : "—"}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 mt-2">
+                {s.dispatchedAt ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Dispatched{s.finalWeight != null ? ` · ${s.finalWeight.toFixed(2)} kg` : ""}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                    Pending
+                  </span>
+                )}
+                <Link
+                  href={`/ecommerce/dispatch/sheet?sheetId=${s.id}&print=1`}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-[#16202E] text-[#BFD732] hover:bg-[#232F42] transition-colors"
+                >
+                  Print
+                </Link>
+              </div>
+              <div className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-100">
+                {s.createdAt.toLocaleString("en-PK", { timeZone: "Asia/Karachi", dateStyle: "medium", timeStyle: "short" })}
+                {s.createdBy && <span className="block">{s.createdBy.displayName ?? s.createdBy.username}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden sm:block bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 text-xs text-gray-400 font-medium text-left">
@@ -97,6 +140,7 @@ export default async function DispatchListPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

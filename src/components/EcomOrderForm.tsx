@@ -26,7 +26,7 @@ export default function EcomOrderForm({ action }: { action: (formData: FormData)
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Order Details</p>
         <div>
           <label className="text-sm font-medium text-gray-700 mb-1 block">Order Date</label>
-          <input type="date" name="date" defaultValue={new Date().toISOString().slice(0, 10)} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+          <input type="date" name="date" defaultValue={new Date().toISOString().slice(0, 10)} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black" />
         </div>
       </div>
 
@@ -36,23 +36,23 @@ export default function EcomOrderForm({ action }: { action: (formData: FormData)
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">Name *</label>
-            <input name="customerName" required placeholder="Customer name" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+            <input name="customerName" required placeholder="Customer name" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black" />
           </div>
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">Phone</label>
-            <input name="phone" placeholder="0300-0000000" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+            <input name="phone" placeholder="0300-0000000" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black" />
           </div>
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">City</label>
-            <input name="city" placeholder="City" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+            <input name="city" placeholder="City" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black" />
           </div>
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">Tracking Number</label>
-            <input name="trackingNumber" placeholder="PostEx tracking number" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+            <input name="trackingNumber" placeholder="PostEx tracking number" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black" />
           </div>
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">Notes</label>
-            <input name="notes" placeholder="Optional notes" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+            <input name="notes" placeholder="Optional notes" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black" />
           </div>
         </div>
       </div>
@@ -65,31 +65,35 @@ export default function EcomOrderForm({ action }: { action: (formData: FormData)
         </div>
         <div className="divide-y divide-gray-50">
           {items.map((item, i) => (
-            <div key={i} className="px-5 py-4 grid grid-cols-12 gap-2 items-end">
-              <div className="col-span-4">
-                {i === 0 && <label className="text-xs text-gray-400 mb-1 block">Description</label>}
-                <input name="itemDescription" value={item.description} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, description: e.target.value } : it))} placeholder="Product name" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+            <div key={i} className="px-5 py-4 grid grid-cols-2 sm:grid-cols-12 gap-2 sm:items-end">
+              <div className="col-span-2 sm:col-span-4">
+                <label className="text-xs text-gray-400 mb-1 block sm:hidden">Description</label>
+                {i === 0 && <label className="text-xs text-gray-400 mb-1 hidden sm:block">Description</label>}
+                <input name="itemDescription" value={item.description} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, description: e.target.value } : it))} placeholder="Product name" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black" />
               </div>
-              <div className="col-span-2">
-                {i === 0 && <label className="text-xs text-gray-400 mb-1 block">Pack</label>}
-                <select name="itemPackSize" value={item.packSize} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, packSize: e.target.value } : it))} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+              <div className="sm:col-span-2">
+                <label className="text-xs text-gray-400 mb-1 block sm:hidden">Pack</label>
+                {i === 0 && <label className="text-xs text-gray-400 mb-1 hidden sm:block">Pack</label>}
+                <select name="itemPackSize" value={item.packSize} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, packSize: e.target.value } : it))} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black">
                   <option value="3">3</option>
                   <option value="6">6</option>
                   <option value="12">12</option>
                   <option value="24">24</option>
                 </select>
               </div>
-              <div className="col-span-2">
-                {i === 0 && <label className="text-xs text-gray-400 mb-1 block">Qty</label>}
-                <input name="itemQuantity" type="number" step="1" min="1" value={item.quantity} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, quantity: e.target.value } : it))} placeholder="1" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+              <div className="sm:col-span-2">
+                <label className="text-xs text-gray-400 mb-1 block sm:hidden">Qty</label>
+                {i === 0 && <label className="text-xs text-gray-400 mb-1 hidden sm:block">Qty</label>}
+                <input name="itemQuantity" type="number" step="1" min="1" value={item.quantity} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, quantity: e.target.value } : it))} placeholder="1" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black" />
               </div>
-              <div className="col-span-3">
-                {i === 0 && <label className="text-xs text-gray-400 mb-1 block">Rate (Rs)</label>}
-                <input name="itemRate" type="number" step="1" min="0" value={item.rate} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, rate: e.target.value } : it))} placeholder="0" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+              <div className="col-span-1 sm:col-span-3">
+                <label className="text-xs text-gray-400 mb-1 block sm:hidden">Rate (Rs)</label>
+                {i === 0 && <label className="text-xs text-gray-400 mb-1 hidden sm:block">Rate (Rs)</label>}
+                <input name="itemRate" type="number" step="1" min="0" value={item.rate} onChange={(e) => setItems(items.map((it, idx) => idx === i ? { ...it, rate: e.target.value } : it))} placeholder="0" className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black" />
               </div>
-              <div className="col-span-1 flex justify-end">
+              <div className="col-span-1 sm:col-span-1 flex items-end justify-end pb-1 sm:pb-0">
                 {items.length > 1 && (
-                  <button type="button" onClick={() => removeItem(i)} className="text-gray-300 hover:text-red-500 transition-colors text-lg leading-none">×</button>
+                  <button type="button" onClick={() => removeItem(i)} className="text-gray-300 hover:text-red-500 transition-colors text-lg leading-none w-8 h-8 flex items-center justify-center">×</button>
                 )}
               </div>
             </div>

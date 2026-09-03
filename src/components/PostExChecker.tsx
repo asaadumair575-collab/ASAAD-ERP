@@ -47,12 +47,12 @@ export default function PostExChecker({
     <div className="space-y-4">
       {/* Pending orders list */}
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-5 py-3 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{orders.length} Pending Orders (with tracking)</p>
           <button
             onClick={checkAll}
             disabled={loading || orders.length === 0}
-            className="bg-orange-500 text-white text-sm font-medium px-4 py-1.5 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
+            className="bg-orange-500 text-white text-sm font-medium px-4 py-2.5 sm:py-1.5 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 w-full sm:w-auto"
           >
             {loading ? "Checking..." : "Check All on PostEx"}
           </button>

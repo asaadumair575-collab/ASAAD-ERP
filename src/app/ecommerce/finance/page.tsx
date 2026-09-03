@@ -85,11 +85,11 @@ export default async function EcomFinancePage({
 
       <form
         method="GET"
-        className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5"
+        className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5"
       >
         <DateRangeFilter from={from} to={to} />
-        <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">Apply</button>
-        {(from || to) && <Link href="/ecommerce/finance" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>}
+        <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2.5 sm:py-2 rounded-lg hover:bg-gray-800 transition-colors w-full sm:w-auto">Apply</button>
+        {(from || to) && <Link href="/ecommerce/finance" className="text-sm text-gray-400 hover:text-black px-2 text-center sm:text-left">Clear</Link>}
       </form>
 
       {/* Net Profit hero */}
