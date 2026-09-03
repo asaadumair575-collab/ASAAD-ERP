@@ -3,8 +3,6 @@ export default function DispatchListSelectedButton({ selectedIds }: { selectedId
   return (
     <a
       href={href}
-      target="_blank"
-      rel="noopener noreferrer"
       className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg bg-white border border-[#16202E] text-[#16202E] hover:bg-gray-50 transition-colors"
     >
       <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
