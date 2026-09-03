@@ -27,6 +27,17 @@ export default async function EcomDispatchPage({
   const dayStart = new Date(`${date}T00:00:00+05:00`);
   const dayEnd = new Date(`${date}T23:59:59+05:00`);
 
+  // In date mode, refuse to generate the list until every order booked on
+  // Postex that day has actually been packed — otherwise a missed parcel
+  // could slip through the gate unnoticed.
+  const pendingPack = selectedIds
+    ? []
+    : await prisma.ecomOrder.findMany({
+        where: { dispatchedAt: { gte: dayStart, lte: dayEnd }, packedAt: null },
+        select: { id: true, customerName: true, trackingNumber: true, notes: true },
+        orderBy: { dispatchedAt: "asc" },
+      });
+
   // Only parcels that have actually been through Scan & Weigh (packed) go on
   // the dispatch list — this is the gate-verification sheet, keyed off the
   // day they were packed, not the day they were dispatched to the courier.
@@ -76,9 +87,11 @@ export default async function EcomDispatchPage({
     year: "numeric",
   });
 
+  const blocked = pendingPack.length > 0;
+
   return (
     <div className="max-w-5xl space-y-6 pb-8">
-      {print === "1" && <AutoPrint />}
+      {print === "1" && !blocked && <AutoPrint />}
       <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm print:hidden">
         <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
         <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
@@ -123,6 +136,28 @@ export default async function EcomDispatchPage({
 
       <DispatchDateControls date={date} basePath="/ecommerce/dispatch/sheet" />
 
+      {blocked && !selectedIds ? (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 print:hidden">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+              <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5 text-red-600"><path d="M10 6.5v4M10 13.5h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M8.6 3.3 1.9 15a1.5 1.5 0 0 0 1.3 2.25h13.6A1.5 1.5 0 0 0 18.1 15L11.4 3.3a1.5 1.5 0 0 0-2.8 0Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-red-800">Dispatch List not ready — {pendingPack.length} parcel{pendingPack.length > 1 ? "s" : ""} not packed yet</p>
+              <p className="text-xs text-red-600 mt-1">Every order booked on Postex for {dateLabel} must be through Scan &amp; Weigh before the gate-verification list can be generated. Missing:</p>
+              <ul className="mt-3 space-y-1.5">
+                {pendingPack.map((o) => (
+                  <li key={o.id} className="text-xs text-red-700 bg-white border border-red-100 rounded-lg px-3 py-2 flex items-center justify-between">
+                    <span className="font-medium">{o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`} — {o.customerName}</span>
+                    <span className="font-mono text-red-400">{o.trackingNumber ?? "—"}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      ) : (
+      <>
       <div className={`grid grid-cols-2 gap-3 print:hidden ${showWeight ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-[#16202E]" />
@@ -210,6 +245,8 @@ export default async function EcomDispatchPage({
             </table>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   );
