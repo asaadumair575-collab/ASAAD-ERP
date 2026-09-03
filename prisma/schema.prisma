@@ -358,10 +358,6 @@ model EcomOrder {
   items         EcomOrderItem[]
   payments      EcomPayment[]
   statusLogs    EcomOrderStatusLog[]
-
-  @@index([trackingNumber])
-  @@index([draft])
-  @@index([packedAt])
 }
 
 model EcomOrderStatusLog {
@@ -707,7 +703,7 @@ model WebsiteVisit {
 model WeightVerification {
   id             Int      @id @default(autoincrement())
   trackingNumber String
-  photo          String?  @db.Text
+  photo          String   @db.Text
   weight         Float
   verifiedBy     User?    @relation(fields: [verifiedById], references: [id])
   verifiedById   Int?
