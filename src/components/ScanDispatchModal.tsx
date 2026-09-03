@@ -135,6 +135,32 @@ export default function ScanDispatchModal() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function handleQrGalleryUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    try {
+      const reader = new BrowserMultiFormatReader(QR_HINTS);
+      const result = await reader.decodeFromImageUrl(url);
+      const sheetId = extractSheetId(result.getText().trim());
+      if (!sheetId) {
+        setMessage({ type: "error", text: "No dispatch sheet QR code found in that photo" });
+        setTimeout(() => setMessage(null), 2500);
+        return;
+      }
+      pendingSheetId.current = sheetId;
+      stopStream();
+      verifyAndProceed(sheetId);
+    } catch {
+      setMessage({ type: "error", text: "No QR code found in that photo" });
+      setTimeout(() => setMessage(null), 2500);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
   const startPositionStage = useCallback(() => {
     setError(null);
     setStage("position");
@@ -318,8 +344,12 @@ export default function ScanDispatchModal() {
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="w-64 h-64 max-w-[70%] aspect-square border-2 border-[#BFD732] rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
               </div>
-              <div className="absolute bottom-0 inset-x-0 px-4 py-5 text-center">
+              <div className="absolute bottom-0 inset-x-0 px-4 py-5 flex flex-col items-center gap-2 text-center">
                 <p className="text-sm text-white/80">Hold the dispatch sheet&apos;s QR code inside the frame</p>
+                <label className="text-xs font-medium text-white/70 underline decoration-dotted cursor-pointer active:text-white">
+                  Or upload a photo of the QR code
+                  <input type="file" accept="image/*" className="hidden" onChange={handleQrGalleryUpload} />
+                </label>
               </div>
             </>
           )}
