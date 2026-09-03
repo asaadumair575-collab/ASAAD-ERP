@@ -180,6 +180,7 @@ model User {
   draftOrders          DraftOrder[]
   phoneCallLogs        PhoneCallLog[]
   weightVerifications  WeightVerification[]
+  dispatchSheets       DispatchSheet[]
 }
 
 model EmpCommissionEntry {
@@ -711,4 +712,21 @@ model WeightVerification {
 
   @@index([trackingNumber])
   @@index([createdAt])
+}
+
+// A saved, printable-anytime snapshot of a day's gate-verification dispatch
+// list — generated once from a set of packed orders, then reprintable later
+// without needing to reselect anything.
+model DispatchSheet {
+  id           Int      @id @default(autoincrement())
+  date         DateTime
+  totalParcels Int
+  totalValue   Float
+  totalWeight  Float
+  snapshot     Json
+  createdBy    User?    @relation(fields: [createdById], references: [id])
+  createdById  Int?
+  createdAt    DateTime @default(now())
+
+  @@index([date])
 }

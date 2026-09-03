@@ -10,18 +10,60 @@ function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
 }
 
+type Row = {
+  id: number;
+  orderLabel: string;
+  customerName: string;
+  phone: string | null;
+  city: string | null;
+  items: string;
+  trackingNumber: string | null;
+  weight: number | null;
+  totalAmount: number;
+  returned: boolean;
+};
+
 export default async function EcomDispatchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; print?: string; ids?: string }>;
+  searchParams: Promise<{ date?: string; print?: string; ids?: string; sheetId?: string }>;
 }) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
-  const { date: dateParam, print, ids: idsParam } = await searchParams;
+  const { date: dateParam, print, ids: idsParam, sheetId: sheetIdParam } = await searchParams;
   const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
-  const date = dateParam ?? todayPK;
 
+  // Saved-sheet mode: a permanent, immutable snapshot generated earlier —
+  // reprintable anytime, unaffected by anything that's changed since.
+  if (sheetIdParam) {
+    const sheet = await prisma.dispatchSheet.findUnique({ where: { id: Number(sheetIdParam) } });
+    if (!sheet) {
+      return (
+        <div className="min-h-dvh bg-gray-50 flex items-center justify-center p-6">
+          <p className="text-sm text-gray-500">Dispatch sheet not found.</p>
+        </div>
+      );
+    }
+    const rows = sheet.snapshot as unknown as Row[];
+    const dateLabel = sheet.date.toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    const generatedLabel = sheet.createdAt.toLocaleString("en-PK", { timeZone: "Asia/Karachi", dateStyle: "medium", timeStyle: "short" });
+    return renderSheet({
+      print,
+      dateLabel,
+      generatedLabel,
+      rows,
+      totalParcels: sheet.totalParcels,
+      totalValue: sheet.totalValue,
+      totalWeight: sheet.totalWeight,
+      returned: rows.filter((r) => r.returned).length,
+      dateControls: null,
+      blocked: false,
+      pendingPack: [],
+    });
+  }
+
+  const date = dateParam ?? todayPK;
   const selectedIds = idsParam ? idsParam.split(",").map(Number).filter((n) => !Number.isNaN(n)) : null;
 
   const dayStart = new Date(`${date}T00:00:00+05:00`);
@@ -69,11 +111,10 @@ export default async function EcomDispatchPage({
       customerName: true,
       phone: true,
       city: true,
-      address: true,
       totalAmount: true,
       trackingNumber: true,
-      dispatchedAt: true,
       returned: true,
+      notes: true,
       items: { select: { description: true, quantity: true } },
     },
     orderBy: { packedAt: "desc" },
@@ -92,12 +133,23 @@ export default async function EcomDispatchPage({
   const weightByTracking = new Map<string, number>();
   for (const v of verifications) weightByTracking.set(v.trackingNumber, v.weight);
 
-  const totalParcels = orders.length;
-  const totalValue = orders.reduce((s, o) => s + o.totalAmount, 0);
-  const returned = orders.filter((o) => o.returned).length;
-  const weighedCount = orders.filter((o) => o.trackingNumber && weightByTracking.has(o.trackingNumber)).length;
-  const totalWeight = orders.reduce((s, o) => s + (o.trackingNumber ? weightByTracking.get(o.trackingNumber) ?? 0 : 0), 0);
-  const showWeight = weighedCount > 0;
+  const rows: Row[] = orders.map((o) => ({
+    id: o.id,
+    orderLabel: o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`,
+    customerName: o.customerName,
+    phone: o.phone,
+    city: o.city,
+    items: o.items.length ? o.items.map((i) => `${i.description} x${i.quantity}`).join(", ") : "—",
+    trackingNumber: o.trackingNumber,
+    weight: o.trackingNumber ? weightByTracking.get(o.trackingNumber) ?? null : null,
+    totalAmount: o.totalAmount,
+    returned: o.returned,
+  }));
+
+  const totalParcels = rows.length;
+  const totalValue = rows.reduce((s, o) => s + o.totalAmount, 0);
+  const returned = rows.filter((o) => o.returned).length;
+  const totalWeight = rows.reduce((s, o) => s + (o.weight ?? 0), 0);
 
   const dateLabel = new Date(`${date}T12:00:00`).toLocaleDateString("en-PK", {
     weekday: "long",
@@ -106,7 +158,48 @@ export default async function EcomDispatchPage({
     year: "numeric",
   });
 
-  const blocked = pendingPack.length > 0;
+  return renderSheet({
+    print,
+    dateLabel,
+    generatedLabel: new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi", dateStyle: "medium", timeStyle: "short" }),
+    rows,
+    totalParcels,
+    totalValue,
+    totalWeight,
+    returned,
+    dateControls: <DispatchDateControls date={date} basePath="/ecommerce/dispatch/sheet" />,
+    blocked: pendingPack.length > 0,
+    pendingPack,
+  });
+}
+
+function renderSheet({
+  print,
+  dateLabel,
+  generatedLabel,
+  rows,
+  totalParcels,
+  totalValue,
+  totalWeight,
+  returned,
+  dateControls,
+  blocked,
+  pendingPack,
+}: {
+  print?: string;
+  dateLabel: string;
+  generatedLabel: string;
+  rows: Row[];
+  totalParcels: number;
+  totalValue: number;
+  totalWeight: number;
+  returned: number;
+  dateControls: React.ReactNode;
+  blocked: boolean;
+  pendingPack: { id: number; customerName: string; trackingNumber: string | null; notes: string | null }[];
+}) {
+  const weighedCount = rows.filter((r) => r.weight != null).length;
+  const showWeight = weighedCount > 0;
 
   return (
     <div className="min-h-dvh bg-gray-50 print:bg-white print:min-h-0">
@@ -128,7 +221,7 @@ export default async function EcomDispatchPage({
           </div>
           <div className="text-right">
             <p className="text-sm font-semibold">{dateLabel}</p>
-            <p className="text-xs text-gray-500">Generated {new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi", dateStyle: "medium", timeStyle: "short" })}</p>
+            <p className="text-xs text-gray-500">Generated {generatedLabel}</p>
           </div>
         </div>
 
@@ -154,7 +247,7 @@ export default async function EcomDispatchPage({
         </div>
       </div>
 
-      <DispatchDateControls date={date} basePath="/ecommerce/dispatch/sheet" />
+      {dateControls}
 
       {blocked ? (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-6 print:hidden">
@@ -205,7 +298,7 @@ export default async function EcomDispatchPage({
         </div>
       </div>
 
-      {orders.length === 0 ? (
+      {rows.length === 0 ? (
         <div className="border border-dashed border-gray-200 rounded-2xl p-16 text-center print:hidden">
           <p className="text-3xl mb-3">📦</p>
           <p className="text-sm font-medium text-gray-500">No parcels packed on this date</p>
@@ -236,21 +329,21 @@ export default async function EcomDispatchPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 print:divide-gray-300">
-                {orders.map((o, i) => (
+                {rows.map((o, i) => (
                   <tr key={o.id} className={`hover:bg-gray-50 transition-colors ${i % 2 === 1 ? "print:bg-gray-50" : ""}`}>
-                    <td className="py-2.5 px-4 print:px-1.5 print:py-1 font-semibold text-gray-900">#{o.id}</td>
+                    <td className="py-2.5 px-4 print:px-1.5 print:py-1 font-semibold text-gray-900">{o.orderLabel}</td>
                     <td className="py-2.5 px-3 print:px-1.5 print:py-1">
                       <p className="text-gray-800 print:truncate">{o.customerName}</p>
                       {o.phone && <p className="text-xs text-gray-400 print:text-[9px] print:text-gray-600">{o.phone}</p>}
                     </td>
                     <td className="py-2.5 px-3 print:px-1.5 print:py-1 text-gray-600">{o.city ?? "—"}</td>
-                    <td className="py-2.5 px-3 print:px-1.5 print:py-1 text-gray-500 text-xs print:text-[9px] max-w-[220px] print:max-w-none truncate" title={o.items.map((i) => `${i.description} x${i.quantity}`).join(", ")}>
-                      {o.items.length > 0 ? o.items.map((i) => `${i.description} x${i.quantity}`).join(", ") : "—"}
+                    <td className="py-2.5 px-3 print:px-1.5 print:py-1 text-gray-500 text-xs print:text-[9px] max-w-[220px] print:max-w-none truncate" title={o.items}>
+                      {o.items}
                     </td>
                     <td className="py-2.5 px-3 print:px-1.5 print:py-1 font-mono text-xs print:text-[9px] text-gray-600 print:truncate">{o.trackingNumber ?? "—"}</td>
                     {showWeight && (
                       <td className="py-2.5 px-3 print:px-1.5 print:py-1 text-right tabular-nums text-gray-700">
-                        {o.trackingNumber && weightByTracking.has(o.trackingNumber) ? `${weightByTracking.get(o.trackingNumber)!.toFixed(2)} kg` : "—"}
+                        {o.weight != null ? `${o.weight.toFixed(2)} kg` : "—"}
                       </td>
                     )}
                     <td className="py-2.5 px-4 print:px-1.5 print:py-1 text-right font-semibold text-gray-900 tabular-nums">Rs {fmt(o.totalAmount)}</td>
