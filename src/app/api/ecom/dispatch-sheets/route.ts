@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { dispatchSheetNumber } from "@/lib/dispatchSheetNumber";
 
 type SnapshotRow = {
   id: number;
@@ -54,7 +55,10 @@ export async function POST(req: NextRequest) {
   const existing = await prisma.dispatchSheet.findUnique({ where: { date: dayStart } });
   if (existing) {
     return NextResponse.json(
-      { error: `A dispatch list for this date already exists (generated ${existing.createdAt.toLocaleString("en-PK", { timeZone: "Asia/Karachi", dateStyle: "medium", timeStyle: "short" })}) — view it on the Dispatch page instead.`, existingId: existing.id },
+      {
+        error: `A dispatch list for this date already exists — ${dispatchSheetNumber(existing.id)}, generated ${existing.createdAt.toLocaleString("en-PK", { timeZone: "Asia/Karachi", dateStyle: "medium", timeStyle: "short" })}. View it on the Dispatch page instead of generating again.`,
+        existingId: existing.id,
+      },
       { status: 409 }
     );
   }
@@ -87,15 +91,18 @@ export async function POST(req: NextRequest) {
   // another one.
   const alreadyUsed = await prisma.dispatchSheet.findMany({
     where: { orderIds: { hasSome: orders.map((o) => o.id) } },
-    select: { id: true, date: true, orderIds: true },
+    select: { id: true, orderIds: true },
   });
   if (alreadyUsed.length > 0) {
-    const usedIds = new Set(alreadyUsed.flatMap((s) => s.orderIds));
-    const conflicting = orders.filter((o) => usedIds.has(o.id));
+    const sheetByOrderId = new Map<number, number>();
+    for (const s of alreadyUsed) for (const oid of s.orderIds) if (!sheetByOrderId.has(oid)) sheetByOrderId.set(oid, s.id);
+    const conflicting = orders.filter((o) => sheetByOrderId.has(o.id));
     return NextResponse.json(
       {
-        error: `${conflicting.length} of these order(s) are already on another dispatch list — an order can only appear on one list.`,
-        conflicting: conflicting.map((o) => ({ id: o.id, customerName: o.customerName, trackingNumber: o.trackingNumber })),
+        error: `${conflicting.length} order(s) are already on another dispatch list: ${conflicting
+          .map((o) => `${o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`} → ${dispatchSheetNumber(sheetByOrderId.get(o.id)!)}`)
+          .join(", ")}. An order can only appear on one list.`,
+        conflicting: conflicting.map((o) => ({ id: o.id, customerName: o.customerName, trackingNumber: o.trackingNumber, sheetNumber: dispatchSheetNumber(sheetByOrderId.get(o.id)!) })),
       },
       { status: 409 }
     );
@@ -149,5 +156,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "A dispatch list for this date was just generated — view it on the Dispatch page instead." }, { status: 409 });
   }
 
-  return NextResponse.json({ ok: true, id: sheet.id });
+  return NextResponse.json({ ok: true, id: sheet.id, sheetNumber: dispatchSheetNumber(sheet.id) });
 }

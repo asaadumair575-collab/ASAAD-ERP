@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { dispatchSheetNumber } from "@/lib/dispatchSheetNumber";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -42,7 +43,8 @@ export default async function DispatchListPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 text-xs text-gray-400 font-medium text-left">
-                <th className="py-2.5 px-4">Date</th>
+                <th className="py-2.5 px-4">Sheet #</th>
+                <th className="py-2.5 px-3">Date</th>
                 <th className="py-2.5 px-3">Parcels</th>
                 <th className="py-2.5 px-3">Total Value</th>
                 <th className="py-2.5 px-3">Total Weight</th>
@@ -53,7 +55,8 @@ export default async function DispatchListPage() {
             <tbody className="divide-y divide-gray-100">
               {sheets.map((s) => (
                 <tr key={s.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="py-3 px-4 font-semibold text-gray-900">
+                  <td className="py-3 px-4 font-mono text-xs font-semibold text-[#16202E]">{dispatchSheetNumber(s.id)}</td>
+                  <td className="py-3 px-3 font-semibold text-gray-900">
                     {s.date.toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", day: "numeric", month: "short", year: "numeric" })}
                   </td>
                   <td className="py-3 px-3 tabular-nums text-gray-700">{s.totalParcels}</td>

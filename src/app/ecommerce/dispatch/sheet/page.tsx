@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import DispatchDateControls from "@/components/DispatchDateControls";
 import AutoPrint from "@/components/AutoPrint";
+import { dispatchSheetNumber } from "@/lib/dispatchSheetNumber";
 
 export const maxDuration = 30;
 
@@ -52,6 +53,7 @@ export default async function EcomDispatchPage({
       print,
       dateLabel,
       generatedLabel,
+      sheetNumber: dispatchSheetNumber(sheet.id),
       rows,
       totalParcels: sheet.totalParcels,
       totalValue: sheet.totalValue,
@@ -177,6 +179,7 @@ function renderSheet({
   print,
   dateLabel,
   generatedLabel,
+  sheetNumber,
   rows,
   totalParcels,
   totalValue,
@@ -189,6 +192,7 @@ function renderSheet({
   print?: string;
   dateLabel: string;
   generatedLabel: string;
+  sheetNumber?: string;
   rows: Row[];
   totalParcels: number;
   totalValue: number;
@@ -208,7 +212,7 @@ function renderSheet({
       <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm print:hidden">
         <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
         <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Dispatch List</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Dispatch List{sheetNumber ? ` — ${sheetNumber}` : ""}</h1>
         <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
       </div>
 
@@ -217,7 +221,7 @@ function renderSheet({
         <div className="flex items-end justify-between border-b-2 border-black pb-3 mb-4">
           <div>
             <p className="text-xl font-bold tracking-tight">The Boundary Shop</p>
-            <p className="text-sm text-gray-600 mt-0.5">Dispatch List{showWeight ? " — Gate Verification" : ""}</p>
+            <p className="text-sm text-gray-600 mt-0.5">Dispatch List{showWeight ? " — Gate Verification" : ""}{sheetNumber ? ` · ${sheetNumber}` : ""}</p>
           </div>
           <div className="text-right">
             <p className="text-sm font-semibold">{dateLabel}</p>
