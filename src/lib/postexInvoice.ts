@@ -54,24 +54,21 @@ async function tryFetch(url: string, token: string, init?: RequestInit): Promise
 // route originally used, in case the account/API version differs.
 export async function fetchAirwayBillPdf(trackingNumbers: string[], token: string): Promise<{ pdf?: Buffer; error?: string; detail?: string }> {
   const cnList = trackingNumbers.join(",");
-  const attempts: (() => Promise<{ pdf?: Buffer; error?: string; detail?: string }>)[] = [];
+  const attempts: { label: string; run: () => Promise<{ pdf?: Buffer; error?: string; detail?: string }> }[] = [];
 
   if (trackingNumbers.length === 1) {
-    attempts.push(() => tryFetch(`${BASE}/v1/get-invoice/${encodeURIComponent(trackingNumbers[0])}`, token));
+    attempts.push({ label: "GET path-param", run: () => tryFetch(`${BASE}/v1/get-invoice/${encodeURIComponent(trackingNumbers[0])}`, token) });
   }
-  attempts.push(() => tryFetch(`${BASE}/v1/get-invoice?trackingNumbers=${encodeURIComponent(cnList)}`, token));
-  attempts.push(() => tryFetch(`${BASE}/v1/get-invoice?trackingNumber=${encodeURIComponent(cnList)}`, token));
-  attempts.push(() =>
-    tryFetch(`${BASE}/v1/get-invoice`, token, { method: "POST", body: JSON.stringify({ trackingNumber: trackingNumbers }) })
-  );
+  attempts.push({ label: "GET ?trackingNumbers=", run: () => tryFetch(`${BASE}/v1/get-invoice?trackingNumbers=${encodeURIComponent(cnList)}`, token) });
+  attempts.push({ label: "GET ?trackingNumber=", run: () => tryFetch(`${BASE}/v1/get-invoice?trackingNumber=${encodeURIComponent(cnList)}`, token) });
 
-  let lastError: { error?: string; detail?: string } = {};
+  const results: string[] = [];
   for (const attempt of attempts) {
-    const result = await attempt();
+    const result = await attempt.run();
     if (result.pdf) return result;
-    lastError = result;
+    results.push(`${attempt.label} → ${result.error}: ${result.detail?.slice(0, 200)}`);
   }
-  return lastError;
+  return { error: "All get-invoice request shapes failed", detail: results.join(" | ") };
 }
 
 export async function getPostexTokens(): Promise<string[]> {
