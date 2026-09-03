@@ -109,7 +109,8 @@ export default async function EcomDispatchPage({
   const blocked = pendingPack.length > 0;
 
   return (
-    <div className="max-w-5xl space-y-6 pb-8">
+    <div className="min-h-dvh bg-gray-50 print:bg-white print:min-h-0">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 print:max-w-none print:p-0 space-y-6 pb-8">
       {print === "1" && !blocked && <AutoPrint />}
       <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm print:hidden">
         <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
@@ -269,6 +270,7 @@ export default async function EcomDispatchPage({
       )}
       </>
       )}
+    </div>
     </div>
   );
 }

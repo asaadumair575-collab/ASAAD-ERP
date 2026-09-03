@@ -44,7 +44,11 @@ export default async function RootLayout({
   const headerList = await headers();
   const pathname = headerList.get("x-pathname") ?? "";
   const isLoginPage = pathname === "/login";
-  const [profile, me] = isLoginPage
+  // The dispatch sheet opens in its own tab as a printable report — showing
+  // the full app shell (sidebar, header) around it there just looks odd, so
+  // it renders standalone like the login page does.
+  const isStandalonePage = isLoginPage || pathname === "/ecommerce/dispatch/sheet";
+  const [profile, me] = isStandalonePage
     ? [null, null]
     : await Promise.all([getBusinessProfile(), getSessionUser()]);
 
@@ -52,7 +56,7 @@ export default async function RootLayout({
     ? await prisma.message.count({ where: { receiverId: me.id, readAt: null } }).catch(() => 0)
     : 0;
 
-  if (isLoginPage) {
+  if (isStandalonePage) {
     return (
       <html
         lang="en"
