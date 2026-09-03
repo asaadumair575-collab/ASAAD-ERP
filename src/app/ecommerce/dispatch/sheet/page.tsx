@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import DispatchDateControls from "@/components/DispatchDateControls";
 import AutoPrint from "@/components/AutoPrint";
 import { dispatchSheetNumber } from "@/lib/dispatchSheetNumber";
+import QRCode from "qrcode";
 
 export const maxDuration = 30;
 
@@ -49,11 +50,15 @@ export default async function EcomDispatchPage({
     const rows = sheet.snapshot as unknown as Row[];
     const dateLabel = sheet.date.toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", weekday: "long", day: "numeric", month: "long", year: "numeric" });
     const generatedLabel = sheet.createdAt.toLocaleString("en-PK", { timeZone: "Asia/Karachi", dateStyle: "medium", timeStyle: "short" });
+    const qrDataUrl = await QRCode.toDataURL(`DIS:${sheet.id}`, { margin: 1, width: 240 });
     return renderSheet({
       print,
       dateLabel,
       generatedLabel,
       sheetNumber: dispatchSheetNumber(sheet.id),
+      qrDataUrl,
+      dispatchedAt: sheet.dispatchedAt,
+      finalWeight: sheet.finalWeight,
       rows,
       totalParcels: sheet.totalParcels,
       totalValue: sheet.totalValue,
@@ -180,6 +185,9 @@ function renderSheet({
   dateLabel,
   generatedLabel,
   sheetNumber,
+  qrDataUrl,
+  dispatchedAt,
+  finalWeight,
   rows,
   totalParcels,
   totalValue,
@@ -193,6 +201,9 @@ function renderSheet({
   dateLabel: string;
   generatedLabel: string;
   sheetNumber?: string;
+  qrDataUrl?: string;
+  dispatchedAt?: Date | null;
+  finalWeight?: number | null;
   rows: Row[];
   totalParcels: number;
   totalValue: number;
@@ -209,11 +220,23 @@ function renderSheet({
     <div className="min-h-dvh bg-gray-50 print:bg-white print:min-h-0">
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 print:max-w-none print:p-0 space-y-6 pb-8">
       {print === "1" && !blocked && <AutoPrint />}
-      <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm print:hidden">
-        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
-        <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Dispatch List{sheetNumber ? ` — ${sheetNumber}` : ""}</h1>
-        <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
+      <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm print:hidden flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
+          <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Dispatch List{sheetNumber ? ` — ${sheetNumber}` : ""}</h1>
+          <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
+          {dispatchedAt && (
+            <p className="text-xs text-emerald-400 font-medium mt-1.5">
+              ✓ Dispatched {dispatchedAt.toLocaleString("en-PK", { timeZone: "Asia/Karachi", dateStyle: "medium", timeStyle: "short" })}
+              {finalWeight != null ? ` · ${finalWeight.toFixed(2)} kg scanned` : ""}
+            </p>
+          )}
+        </div>
+        {qrDataUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={qrDataUrl} alt="Sheet QR" className="w-20 h-20 bg-white rounded-lg p-1.5 shrink-0" />
+        )}
       </div>
 
       {/* Print-only letterhead + stat summary */}
@@ -223,9 +246,15 @@ function renderSheet({
             <p className="text-xl font-bold tracking-tight">The Boundary Shop</p>
             <p className="text-sm text-gray-600 mt-0.5">Dispatch List{showWeight ? " — Gate Verification" : ""}{sheetNumber ? ` · ${sheetNumber}` : ""}</p>
           </div>
-          <div className="text-right">
-            <p className="text-sm font-semibold">{dateLabel}</p>
-            <p className="text-xs text-gray-500">Generated {generatedLabel}</p>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-sm font-semibold">{dateLabel}</p>
+              <p className="text-xs text-gray-500">Generated {generatedLabel}</p>
+            </div>
+            {qrDataUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={qrDataUrl} alt="Sheet QR" className="w-16 h-16" />
+            )}
           </div>
         </div>
 

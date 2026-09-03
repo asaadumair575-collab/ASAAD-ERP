@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { dispatchSheetNumber } from "@/lib/dispatchSheetNumber";
+import ScanDispatchModal from "@/components/ScanDispatchModal";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -20,11 +21,14 @@ export default async function DispatchListPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dispatch</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Saved dispatch sheets — generated from Confirm Orders, reprintable anytime.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Dispatch</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Saved dispatch sheets — generated from Confirm Orders, reprintable anytime.
+          </p>
+        </div>
+        <ScanDispatchModal />
       </div>
 
       {sheets.length === 0 ? (
@@ -48,6 +52,7 @@ export default async function DispatchListPage() {
                 <th className="py-2.5 px-3">Parcels</th>
                 <th className="py-2.5 px-3">Total Value</th>
                 <th className="py-2.5 px-3">Total Weight</th>
+                <th className="py-2.5 px-3">Status</th>
                 <th className="py-2.5 px-3">Generated</th>
                 <th className="py-2.5 pr-4"></th>
               </tr>
@@ -62,6 +67,19 @@ export default async function DispatchListPage() {
                   <td className="py-3 px-3 tabular-nums text-gray-700">{s.totalParcels}</td>
                   <td className="py-3 px-3 tabular-nums text-gray-700">Rs {fmt(s.totalValue)}</td>
                   <td className="py-3 px-3 tabular-nums text-gray-700">{s.totalWeight > 0 ? `${s.totalWeight.toFixed(2)} kg` : "—"}</td>
+                  <td className="py-3 px-3">
+                    {s.dispatchedAt ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        Dispatched{s.finalWeight != null ? ` · ${s.finalWeight.toFixed(2)} kg` : ""}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-500">
+                        <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+                        Pending
+                      </span>
+                    )}
+                  </td>
                   <td className="py-3 px-3 text-xs text-gray-400">
                     {s.createdAt.toLocaleString("en-PK", { timeZone: "Asia/Karachi", dateStyle: "medium", timeStyle: "short" })}
                     {s.createdBy && <span className="block">{s.createdBy.displayName ?? s.createdBy.username}</span>}

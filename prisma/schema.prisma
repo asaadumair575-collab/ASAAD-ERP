@@ -180,7 +180,8 @@ model User {
   draftOrders          DraftOrder[]
   phoneCallLogs        PhoneCallLog[]
   weightVerifications  WeightVerification[]
-  dispatchSheets       DispatchSheet[]
+  dispatchSheetsCreated    DispatchSheet[] @relation("DispatchSheetCreatedBy")
+  dispatchSheetsDispatched DispatchSheet[] @relation("DispatchSheetDispatchedBy")
 }
 
 model EmpCommissionEntry {
@@ -718,14 +719,21 @@ model WeightVerification {
 // list — generated once from a set of packed orders, then reprintable later
 // without needing to reselect anything.
 model DispatchSheet {
-  id           Int      @id @default(autoincrement())
-  date         DateTime @unique
-  orderIds     Int[]
-  totalParcels Int
-  totalValue   Float
-  totalWeight  Float
-  snapshot     Json
-  createdBy    User?    @relation(fields: [createdById], references: [id])
-  createdById  Int?
-  createdAt    DateTime @default(now())
+  id            Int       @id @default(autoincrement())
+  date          DateTime  @unique
+  orderIds      Int[]
+  totalParcels  Int
+  totalValue    Float
+  totalWeight   Float
+  snapshot      Json
+  createdBy     User?     @relation("DispatchSheetCreatedBy", fields: [createdById], references: [id])
+  createdById   Int?
+  createdAt     DateTime  @default(now())
+
+  // Gate verification: the whole sheet is QR-scanned and the combined
+  // parcel weight re-scanned at dispatch time, recorded here.
+  finalWeight   Float?
+  dispatchedAt  DateTime?
+  dispatchedBy  User?     @relation("DispatchSheetDispatchedBy", fields: [dispatchedById], references: [id])
+  dispatchedById Int?
 }
