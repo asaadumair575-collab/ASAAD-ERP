@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
+import { DecodeHintType, BarcodeFormat } from "@zxing/library";
 
 type Recent = { trackingNumber: string; grams: number; time: string; photo: string; matched: boolean };
 type Stage = "barcode" | "verifying" | "position" | "confirm" | "saving";
+
+const QR_HINTS = new Map([[DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.QR_CODE]]]);
 
 // Pulls the most plausible weight reading out of OCR text — digits and an
 // optional decimal point only (the crop already excludes model-name text).
@@ -13,6 +16,16 @@ function extractWeight(text: string): string {
   if (!matches) return "";
   const decimalMatch = matches.find((m) => m.includes("."));
   return decimalMatch ?? matches[0] ?? "";
+}
+
+// The QR on a PostEx airway bill may encode the tracking number directly, or
+// a URL/JSON blob containing it — pull out the longest digit run either way.
+function extractTrackingNumber(raw: string): string {
+  const text = raw.trim();
+  if (/^\d{8,}$/.test(text)) return text;
+  const digitRuns = text.match(/\d{8,}/g);
+  if (digitRuns) return digitRuns.sort((a, b) => b.length - a.length)[0];
+  return text;
 }
 
 export default function ScanAndWeighModal() {
@@ -42,7 +55,7 @@ export default function ScanAndWeighModal() {
   const startBarcodeStage = useCallback(() => {
     setError(null);
     setStage("barcode");
-    const reader = new BrowserMultiFormatReader();
+    const reader = new BrowserMultiFormatReader(QR_HINTS);
     let cancelled = false;
 
     reader
@@ -51,8 +64,9 @@ export default function ScanAndWeighModal() {
         videoRef.current!,
         (result) => {
           if (cancelled || !result) return;
-          const text = result.getText().trim();
-          if (!text) return;
+          const raw = result.getText().trim();
+          if (!raw) return;
+          const text = extractTrackingNumber(raw);
           cancelled = true;
           pendingCn.current = text;
           stopStream();
@@ -239,10 +253,10 @@ export default function ScanAndWeighModal() {
           {stage === "barcode" && (
             <>
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-[80%] max-w-sm aspect-[3/1] border-2 border-[#BFD732] rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
+                <div className="w-64 h-64 max-w-[70%] aspect-square border-2 border-[#BFD732] rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
               </div>
               <div className="absolute bottom-0 inset-x-0 px-4 py-5 text-center">
-                <p className="text-sm text-white/80">Hold the parcel&apos;s barcode inside the frame</p>
+                <p className="text-sm text-white/80">Hold the airway bill&apos;s QR code inside the frame</p>
               </div>
             </>
           )}
@@ -293,7 +307,7 @@ export default function ScanAndWeighModal() {
           <div className="absolute top-0 inset-x-0 px-4 py-3.5 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent">
             <p className="text-sm font-semibold text-white">
               {stage === "barcode"
-                ? "Scan Tracking Barcode"
+                ? "Scan QR Code"
                 : stage === "verifying"
                   ? "Verifying Order"
                   : stage === "position"
