@@ -16,6 +16,7 @@ type Order = {
   status: string;
   returned: boolean;
   trackingNumber: string | null;
+  packedAt: Date | null;
   items: { description: string; quantity: number }[];
 };
 
@@ -23,7 +24,7 @@ function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
 }
 
-export default function ConfirmOrdersTable({ orders }: { orders: Order[] }) {
+export default function ConfirmOrdersTable({ orders, weightByTracking = {} }: { orders: Order[]; weightByTracking?: Record<string, number> }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
 
   const undispatched = orders.filter(o => !o.trackingNumber);
@@ -116,6 +117,11 @@ export default function ConfirmOrdersTable({ orders }: { orders: Order[] }) {
                     {o.returned ? (
                       <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-red-200 bg-red-50 text-red-600">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-400" />Returned
+                      </span>
+                    ) : dispatched && o.packedAt ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        Packed{o.trackingNumber && weightByTracking[o.trackingNumber] != null ? ` · ${weightByTracking[o.trackingNumber].toFixed(2)} kg` : ""}
                       </span>
                     ) : dispatched ? (
                       <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-blue-200 bg-blue-50 text-blue-700">

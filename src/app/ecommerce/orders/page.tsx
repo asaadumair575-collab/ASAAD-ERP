@@ -33,6 +33,18 @@ export default async function EcomOrdersPage({
   const dispatched   = orders.filter(o => o.trackingNumber);
   const undispatched = orders.filter(o => !o.trackingNumber);
 
+  // Weight is only known once a parcel has been through Scan & Weigh.
+  const trackingNumbers = orders.map((o) => o.trackingNumber).filter((t): t is string => !!t);
+  const verifications = trackingNumbers.length
+    ? await prisma.weightVerification.findMany({
+        where: { trackingNumber: { in: trackingNumbers } },
+        orderBy: { createdAt: "asc" },
+        select: { trackingNumber: true, weight: true },
+      })
+    : [];
+  const weightByTracking: Record<string, number> = {};
+  for (const v of verifications) weightByTracking[v.trackingNumber] = v.weight;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -83,7 +95,7 @@ export default async function EcomOrdersPage({
           <p className="text-sm text-gray-400 mt-1">Confirm orders from Draft Orders to see them here.</p>
         </div>
       ) : (
-        <ConfirmOrdersTable orders={orders} />
+        <ConfirmOrdersTable orders={orders} weightByTracking={weightByTracking} />
       )}
     </div>
   );
