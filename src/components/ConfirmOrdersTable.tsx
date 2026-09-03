@@ -13,6 +13,8 @@ type Order = {
   city: string | null;
   notes: string | null;
   date: Date;
+  confirmedAt: Date | null;
+  dispatchedAt: Date | null;
   totalAmount: number;
   status: string;
   returned: boolean;
@@ -103,7 +105,7 @@ export default function ConfirmOrdersTable({ orders, weightByTracking = {} }: { 
                     </Link>
                   </td>
                   <td className="py-2.5 px-3 text-gray-400 text-xs whitespace-nowrap">
-                    {o.date.toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
+                    {(o.packedAt ?? o.dispatchedAt ?? o.confirmedAt ?? o.date).toLocaleDateString("en-PK", { day: "numeric", month: "short" })}
                   </td>
                   <td className="py-2.5 px-3">
                     <p className="text-gray-900 text-xs font-medium">{o.customerName}</p>
