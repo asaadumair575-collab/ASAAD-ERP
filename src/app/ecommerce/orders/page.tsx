@@ -1,12 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { getSessionUser } from "@/lib/auth";
-import EcomImportModal from "@/components/EcomImportModal";
-import DeleteAllEcomOrdersButton from "@/components/DeleteAllEcomOrdersButton";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import ConfirmOrdersTable from "@/components/ConfirmOrdersTable";
 import ScanAndWeighModal from "@/components/ScanAndWeighModal";
-import GenerateDispatchListButton from "@/components/GenerateDispatchListButton";
 
 export default async function EcomOrdersPage({
   searchParams,
@@ -14,8 +10,6 @@ export default async function EcomOrdersPage({
   searchParams: Promise<{ q?: string; from?: string; to?: string; status?: string }>;
 }) {
   const { q, from, to, status } = await searchParams;
-  const me = await getSessionUser();
-  const isAdmin = me?.isAdmin ?? false;
   const fromDate = from ? new Date(`${from}T00:00:00`) : undefined;
   const toDate   = to   ? new Date(`${to}T23:59:59.999`) : undefined;
 
@@ -58,16 +52,7 @@ export default async function EcomOrdersPage({
             <span className="bg-orange-100 text-orange-700 font-semibold px-3 py-1 rounded-full">{undispatched.length} to dispatch</span>
             <span className="bg-blue-100 text-blue-700 font-medium px-3 py-1 rounded-full">{dispatched.length} dispatched</span>
           </div>
-          {isAdmin && <DeleteAllEcomOrdersButton orderCount={await prisma.ecomOrder.count()} />}
           <ScanAndWeighModal />
-          <GenerateDispatchListButton />
-          <Link href="/ecommerce/dispatch/airway-bills" className="text-sm text-gray-500 hover:text-[#16202E] px-2 underline decoration-dotted">
-            Airway Bills
-          </Link>
-          <EcomImportModal />
-          <Link href="/ecommerce/orders/new" className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-            + New Order
-          </Link>
         </div>
       </div>
 
