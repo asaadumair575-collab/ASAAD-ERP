@@ -1,16 +1,28 @@
 import { prisma } from "@/lib/prisma";
 
-// PostEx's documented label/invoice endpoint takes comma-separated tracking
-// numbers and returns a base64 PDF. Response key naming has varied by
-// account in this codebase's experience, so try the common variants and
-// surface the raw response on failure.
-export async function fetchAirwayBillPdf(trackingNumbers: string[], token: string): Promise<{ pdf?: Buffer; error?: string; detail?: string }> {
-  const cnList = trackingNumbers.join(",");
-  const url = `https://api.postex.pk/services/integration/api/order/v1/get-invoice?trackingNumbers=${encodeURIComponent(cnList)}`;
+const BASE = "https://api.postex.pk/services/integration/api/order";
 
+function extractPdfBase64(json: Record<string, unknown>): string | null {
+  const dist = (json.dist ?? json) as Record<string, unknown>;
+  const base64 =
+    (dist.invoice as string) ??
+    (dist.pdf as string) ??
+    (dist.invoiceFile as string) ??
+    (dist.file as string) ??
+    (json.invoice as string) ??
+    (json.pdf as string);
+  return typeof base64 === "string" && base64 ? base64 : null;
+}
+
+async function tryFetch(url: string, token: string, init?: RequestInit): Promise<{ pdf?: Buffer; error?: string; detail?: string }> {
   let res: Response;
   try {
-    res = await fetch(url, { headers: { token, "Content-Type": "application/json" }, cache: "no-store", signal: AbortSignal.timeout(30000) });
+    res = await fetch(url, {
+      headers: { token, "Content-Type": "application/json" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(30000),
+      ...init,
+    });
   } catch (e) {
     return { error: "network", detail: e instanceof Error ? e.message : String(e) };
   }
@@ -25,24 +37,41 @@ export async function fetchAirwayBillPdf(trackingNumbers: string[], token: strin
     return { error: "Unexpected response (not JSON)", detail: text.slice(0, 500) };
   }
 
-  const dist = (json.dist ?? json) as Record<string, unknown>;
-  const base64 =
-    (dist.invoice as string) ??
-    (dist.pdf as string) ??
-    (dist.invoiceFile as string) ??
-    (dist.file as string) ??
-    (json.invoice as string) ??
-    (json.pdf as string);
-
-  if (!base64 || typeof base64 !== "string") {
-    return { error: "PDF not found in response", detail: JSON.stringify(json).slice(0, 500) };
-  }
+  const base64 = extractPdfBase64(json);
+  if (!base64) return { error: "PDF not found in response", detail: JSON.stringify(json).slice(0, 500) };
 
   try {
     return { pdf: Buffer.from(base64, "base64") };
   } catch (e) {
     return { error: "Could not decode PDF", detail: e instanceof Error ? e.message : String(e) };
   }
+}
+
+// PostEx's label/invoice endpoint's exact URL shape isn't confirmed for this
+// account — other PostEx endpoints in this codebase (get-track-order,
+// payment-status) take the tracking number as a path param rather than a
+// query string, so that's tried first, then the query-string variants this
+// route originally used, in case the account/API version differs.
+export async function fetchAirwayBillPdf(trackingNumbers: string[], token: string): Promise<{ pdf?: Buffer; error?: string; detail?: string }> {
+  const cnList = trackingNumbers.join(",");
+  const attempts: (() => Promise<{ pdf?: Buffer; error?: string; detail?: string }>)[] = [];
+
+  if (trackingNumbers.length === 1) {
+    attempts.push(() => tryFetch(`${BASE}/v1/get-invoice/${encodeURIComponent(trackingNumbers[0])}`, token));
+  }
+  attempts.push(() => tryFetch(`${BASE}/v1/get-invoice?trackingNumbers=${encodeURIComponent(cnList)}`, token));
+  attempts.push(() => tryFetch(`${BASE}/v1/get-invoice?trackingNumber=${encodeURIComponent(cnList)}`, token));
+  attempts.push(() =>
+    tryFetch(`${BASE}/v1/get-invoice`, token, { method: "POST", body: JSON.stringify({ trackingNumber: trackingNumbers }) })
+  );
+
+  let lastError: { error?: string; detail?: string } = {};
+  for (const attempt of attempts) {
+    const result = await attempt();
+    if (result.pdf) return result;
+    lastError = result;
+  }
+  return lastError;
 }
 
 export async function getPostexTokens(): Promise<string[]> {
