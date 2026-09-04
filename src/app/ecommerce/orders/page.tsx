@@ -24,9 +24,6 @@ export default async function EcomOrdersPage({
     orderBy: [{ confirmedAt: { sort: "desc", nulls: "last" } }, { date: "desc" }],
   });
 
-  const dispatched   = orders.filter(o => o.trackingNumber);
-  const undispatched = orders.filter(o => !o.trackingNumber);
-
   // Weight is only known once a parcel has been through Scan & Weigh.
   const trackingNumbers = orders.map((o) => o.trackingNumber).filter((t): t is string => !!t);
   const verifications = trackingNumbers.length
@@ -48,10 +45,6 @@ export default async function EcomOrdersPage({
           <p className="text-sm text-gray-500 mt-0.5">Confirmed Shopify orders — dispatch and track.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="bg-orange-100 text-orange-700 font-semibold px-3 py-1 rounded-full">{undispatched.length} to dispatch</span>
-            <span className="bg-blue-100 text-blue-700 font-medium px-3 py-1 rounded-full">{dispatched.length} dispatched</span>
-          </div>
           <ScanAndWeighModal />
         </div>
       </div>
