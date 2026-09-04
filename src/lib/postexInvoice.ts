@@ -2,73 +2,31 @@ import { prisma } from "@/lib/prisma";
 
 const BASE = "https://api.postex.pk/services/integration/api/order";
 
-function extractPdfBase64(json: Record<string, unknown>): string | null {
-  const dist = (json.dist ?? json) as Record<string, unknown>;
-  const base64 =
-    (dist.invoice as string) ??
-    (dist.pdf as string) ??
-    (dist.invoiceFile as string) ??
-    (dist.file as string) ??
-    (json.invoice as string) ??
-    (json.pdf as string);
-  return typeof base64 === "string" && base64 ? base64 : null;
-}
+// Per PostEx's official Merchant API Integration Guide (v4.1.9, section
+// 3.10 "Airway Bill API"): GET .../v1/get-invoice?trackingNumbers=CN1,CN2
+// — the response body IS the PDF file directly (not JSON containing a
+// base64 string), capped at 10 tracking numbers per call.
+export async function fetchAirwayBillPdf(trackingNumbers: string[], token: string): Promise<{ pdf?: Buffer; error?: string; detail?: string }> {
+  const cnList = trackingNumbers.join(",");
+  const url = `${BASE}/v1/get-invoice?trackingNumbers=${encodeURIComponent(cnList)}`;
 
-async function tryFetch(url: string, token: string, init?: RequestInit): Promise<{ pdf?: Buffer; error?: string; detail?: string }> {
   let res: Response;
   try {
-    res = await fetch(url, {
-      headers: { token, "Content-Type": "application/json" },
-      cache: "no-store",
-      signal: AbortSignal.timeout(30000),
-      ...init,
-    });
+    res = await fetch(url, { headers: { token }, cache: "no-store", signal: AbortSignal.timeout(30000) });
   } catch (e) {
     return { error: "network", detail: e instanceof Error ? e.message : String(e) };
   }
 
-  const text = await res.text();
+  const contentType = res.headers.get("content-type") ?? "";
+  const buf = Buffer.from(await res.arrayBuffer());
+
+  if (res.ok && (contentType.includes("pdf") || buf.subarray(0, 5).toString("latin1") === "%PDF-")) {
+    return { pdf: buf };
+  }
+
+  const text = buf.toString("utf-8");
   if (!res.ok) return { error: `HTTP ${res.status}`, detail: text.slice(0, 500) };
-
-  let json: Record<string, unknown>;
-  try {
-    json = JSON.parse(text);
-  } catch {
-    return { error: "Unexpected response (not JSON)", detail: text.slice(0, 500) };
-  }
-
-  const base64 = extractPdfBase64(json);
-  if (!base64) return { error: "PDF not found in response", detail: JSON.stringify(json).slice(0, 500) };
-
-  try {
-    return { pdf: Buffer.from(base64, "base64") };
-  } catch (e) {
-    return { error: "Could not decode PDF", detail: e instanceof Error ? e.message : String(e) };
-  }
-}
-
-// PostEx's label/invoice endpoint's exact URL shape isn't confirmed for this
-// account — other PostEx endpoints in this codebase (get-track-order,
-// payment-status) take the tracking number as a path param rather than a
-// query string, so that's tried first, then the query-string variants this
-// route originally used, in case the account/API version differs.
-export async function fetchAirwayBillPdf(trackingNumbers: string[], token: string): Promise<{ pdf?: Buffer; error?: string; detail?: string }> {
-  const cnList = trackingNumbers.join(",");
-  const attempts: { label: string; run: () => Promise<{ pdf?: Buffer; error?: string; detail?: string }> }[] = [];
-
-  if (trackingNumbers.length === 1) {
-    attempts.push({ label: "GET path-param", run: () => tryFetch(`${BASE}/v1/get-invoice/${encodeURIComponent(trackingNumbers[0])}`, token) });
-  }
-  attempts.push({ label: "GET ?trackingNumbers=", run: () => tryFetch(`${BASE}/v1/get-invoice?trackingNumbers=${encodeURIComponent(cnList)}`, token) });
-  attempts.push({ label: "GET ?trackingNumber=", run: () => tryFetch(`${BASE}/v1/get-invoice?trackingNumber=${encodeURIComponent(cnList)}`, token) });
-
-  const results: string[] = [];
-  for (const attempt of attempts) {
-    const result = await attempt.run();
-    if (result.pdf) return result;
-    results.push(`${attempt.label} → ${result.error}: ${result.detail?.slice(0, 200)}`);
-  }
-  return { error: "All get-invoice request shapes failed", detail: results.join(" | ") };
+  return { error: "Response wasn't a PDF", detail: text.slice(0, 500) };
 }
 
 export async function getPostexTokens(): Promise<string[]> {
