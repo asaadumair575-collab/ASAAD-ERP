@@ -288,7 +288,7 @@ export default function ScanDispatchModal() {
       const res = await fetch(`/api/ecom/dispatch-sheets/${sheetId}/dispatch`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ weight: g / 1000 }),
+        body: JSON.stringify({ weight: g / 1000, photo: capturedPhoto }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save");

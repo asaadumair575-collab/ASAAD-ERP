@@ -734,6 +734,7 @@ model DispatchSheet {
   // Gate verification: the whole sheet is QR-scanned and the combined
   // parcel weight re-scanned at dispatch time, recorded here.
   finalWeight   Float?
+  photo         String?   @db.Text
   dispatchedAt  DateTime?
   dispatchedBy  User?     @relation("DispatchSheetDispatchedBy", fields: [dispatchedById], references: [id])
   dispatchedById Int?

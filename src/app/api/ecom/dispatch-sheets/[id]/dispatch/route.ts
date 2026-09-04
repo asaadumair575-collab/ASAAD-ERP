@@ -20,13 +20,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     );
   }
 
-  const { weight } = await req.json();
+  const { weight, photo } = await req.json();
   const w = Number(weight);
   if (!w || w <= 0) return NextResponse.json({ error: "weight must be a positive number" }, { status: 400 });
 
   const updated = await prisma.dispatchSheet.update({
     where: { id: sheet.id },
-    data: { finalWeight: w, dispatchedAt: new Date(), dispatchedById: me.id },
+    data: {
+      finalWeight: w,
+      dispatchedAt: new Date(),
+      dispatchedById: me.id,
+      photo: typeof photo === "string" && photo.startsWith("data:image/") ? photo : undefined,
+    },
   });
 
   const diff = w - sheet.totalWeight;

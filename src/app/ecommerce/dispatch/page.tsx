@@ -49,7 +49,7 @@ export default async function DispatchListPage() {
           {sheets.map((s) => (
             <div key={s.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-3">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-xs font-semibold text-[#16202E]">{dispatchSheetNumber(s.id)}</span>
+                <Link href={`/ecommerce/dispatch/${s.id}`} className="font-mono text-xs font-semibold text-[#16202E] hover:underline">{dispatchSheetNumber(s.id)}</Link>
                 <span className="text-xs text-gray-400">
                   {s.date.toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", day: "numeric", month: "short", year: "numeric" })}
                 </span>
@@ -103,7 +103,9 @@ export default async function DispatchListPage() {
             <tbody className="divide-y divide-gray-100">
               {sheets.map((s) => (
                 <tr key={s.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="py-3 px-4 font-mono text-xs font-semibold text-[#16202E]">{dispatchSheetNumber(s.id)}</td>
+                  <td className="py-3 px-4 font-mono text-xs font-semibold text-[#16202E]">
+                    <Link href={`/ecommerce/dispatch/${s.id}`} className="hover:underline">{dispatchSheetNumber(s.id)}</Link>
+                  </td>
                   <td className="py-3 px-3 font-semibold text-gray-900">
                     {s.date.toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", day: "numeric", month: "short", year: "numeric" })}
                   </td>
