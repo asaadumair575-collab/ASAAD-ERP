@@ -48,23 +48,6 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
         {order.trackingNumber ? (
           <div className="flex flex-wrap items-center gap-2 mt-2">
             <p className="text-xs font-mono bg-blue-50 text-blue-700 rounded-lg px-3 py-1.5">Postex Tracking: {order.trackingNumber}</p>
-            <a
-              href={`/api/ecom/orders/${order.id}/label`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#16202E] text-[#BFD732] hover:bg-[#232F42] transition-colors"
-            >
-              <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5"><path d="M8 2v8m0 0 3-3M8 10 5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M2.5 11v1.5A1.5 1.5 0 0 0 4 14h8a1.5 1.5 0 0 0 1.5-1.5V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              Download Label
-            </a>
-            <a
-              href="https://merchant.postex.pk/main/airway-bills"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-gray-400 hover:text-gray-700 underline decoration-dotted"
-            >
-              Open in Postex Dashboard
-            </a>
           </div>
         ) : (
           <p className="text-xs font-mono bg-gray-50 text-gray-400 rounded-lg px-3 py-1.5 mt-2">Not Dispatched Yet</p>
