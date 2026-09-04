@@ -236,12 +236,7 @@ export default function ConfirmOrdersTable({
                   </td>
                   <td className="py-2.5 pr-4 text-right">
                     {sheetByOrderId[o.id] && (
-                      <Link
-                        href={`/ecommerce/dispatch/${sheetByOrderId[o.id].id}`}
-                        className="text-xs font-mono font-semibold text-gray-500 hover:text-[#16202E] hover:underline"
-                      >
-                        {sheetByOrderId[o.id].number}
-                      </Link>
+                      <span className="text-xs font-medium text-gray-400">Dispatch list generated</span>
                     )}
                   </td>
                 </tr>
