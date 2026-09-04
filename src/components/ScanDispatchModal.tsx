@@ -9,45 +9,10 @@ type Stage = "scan" | "verifying" | "position" | "confirm" | "saving";
 
 const QR_HINTS = new Map([[DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.QR_CODE]]]);
 
-function extractWeight(text: string): string {
-  const matches = text.match(/\d+\.\d{1,2}|\d{1,5}/g);
-  if (!matches) return "";
-  const decimalMatch = matches.find((m) => m.includes("."));
-  return decimalMatch ?? matches[0] ?? "";
-}
-
 function extractSheetId(raw: string): number | null {
   const text = raw.trim();
   const m = text.match(/DIS:(\d+)/i) ?? text.match(/^(\d+)$/);
   return m ? Number(m[1]) : null;
-}
-
-function preprocessForOcr(source: HTMLCanvasElement): HTMLCanvasElement {
-  const scale = 3;
-  const out = document.createElement("canvas");
-  out.width = source.width * scale;
-  out.height = source.height * scale;
-  const octx = out.getContext("2d")!;
-  octx.imageSmoothingEnabled = true;
-  octx.drawImage(source, 0, 0, out.width, out.height);
-
-  const imgData = octx.getImageData(0, 0, out.width, out.height);
-  const d = imgData.data;
-  let min = 255, max = 0;
-  const gray = new Uint8ClampedArray(d.length / 4);
-  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-    const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-    gray[p] = g;
-    if (g < min) min = g;
-    if (g > max) max = g;
-  }
-  const range = Math.max(max - min, 1);
-  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-    const stretched = ((gray[p] - min) / range) * 255;
-    d[i] = d[i + 1] = d[i + 2] = stretched;
-  }
-  octx.putImageData(imgData, 0, 0);
-  return out;
 }
 
 export default function ScanDispatchModal() {
@@ -55,7 +20,6 @@ export default function ScanDispatchModal() {
   const [stage, setStage] = useState<Stage>("scan");
   const [error, setError] = useState<string | null>(null);
   const [grams, setGrams] = useState("");
-  const [ocrRunning, setOcrRunning] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [verifiedSheet, setVerifiedSheet] = useState<{ sheetNumber: string; totalParcels: number; totalWeight: number } | null>(null);
@@ -190,23 +154,9 @@ export default function ScanDispatchModal() {
     if (stage === "confirm") weightInputRef.current?.select();
   }, [stage]);
 
-  async function capturePhoto() {
+  function capturePhoto() {
     const video = videoRef.current;
     if (!video || video.videoWidth === 0) return;
-
-    const boxWidthFrac = 0.7;
-    const boxHeightFrac = 0.22;
-    const sw = video.videoWidth * boxWidthFrac;
-    const sh = video.videoHeight * boxHeightFrac;
-    const sx = (video.videoWidth - sw) / 2;
-    const sy = (video.videoHeight - sh) / 2;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = sw;
-    canvas.height = sh;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
 
     const fullCanvas = document.createElement("canvas");
     fullCanvas.width = video.videoWidth;
@@ -215,35 +165,9 @@ export default function ScanDispatchModal() {
     const fullDataUrl = fullCanvas.toDataURL("image/jpeg", 0.85);
 
     stopStream();
-    await processWeightImage(canvas, fullDataUrl);
-  }
-
-  // Shared by both the live camera capture and a gallery upload — crops a
-  // guide-box-sized region for OCR and stores the full photo either way.
-  async function processWeightImage(cropSourceCanvas: HTMLCanvasElement, fullDataUrl: string) {
-    const ocrCanvas = preprocessForOcr(cropSourceCanvas);
-    const cropDataUrl = ocrCanvas.toDataURL("image/png");
-
     setCapturedPhoto(fullDataUrl);
     setStage("confirm");
     setGrams("");
-    setOcrRunning(true);
-
-    try {
-      const { default: Tesseract, PSM } = await import("tesseract.js");
-      const worker = await Tesseract.createWorker("eng");
-      await worker.setParameters({
-        tessedit_char_whitelist: "0123456789.",
-        tessedit_pageseg_mode: PSM.SINGLE_LINE,
-      });
-      const { data } = await worker.recognize(cropDataUrl);
-      await worker.terminate();
-      setGrams(extractWeight(data.text));
-    } catch {
-      // OCR failed — employee types it in instead
-    } finally {
-      setOcrRunning(false);
-    }
   }
 
   function handleGalleryUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -252,26 +176,16 @@ export default function ScanDispatchModal() {
     if (!file) return;
 
     const img = new Image();
-    img.onload = async () => {
-      const boxWidthFrac = 0.7;
-      const boxHeightFrac = 0.22;
-      const sw = img.naturalWidth * boxWidthFrac;
-      const sh = img.naturalHeight * boxHeightFrac;
-      const sx = (img.naturalWidth - sw) / 2;
-      const sy = (img.naturalHeight - sh) / 2;
-
-      const cropCanvas = document.createElement("canvas");
-      cropCanvas.width = sw;
-      cropCanvas.height = sh;
-      cropCanvas.getContext("2d")?.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-
+    img.onload = () => {
       const fullCanvas = document.createElement("canvas");
       fullCanvas.width = img.naturalWidth;
       fullCanvas.height = img.naturalHeight;
       fullCanvas.getContext("2d")?.drawImage(img, 0, 0);
 
       stopStream();
-      await processWeightImage(cropCanvas, fullCanvas.toDataURL("image/jpeg", 0.85));
+      setCapturedPhoto(fullCanvas.toDataURL("image/jpeg", 0.85));
+      setStage("confirm");
+      setGrams("");
     };
     img.src = URL.createObjectURL(file);
   }
@@ -394,12 +308,6 @@ export default function ScanDispatchModal() {
                         <p className="text-xs text-gray-400 mt-0.5">Expected ~{verifiedSheet.totalWeight.toFixed(2)} kg</p>
                       )}
                     </div>
-                    {ocrRunning && (
-                      <span className="flex items-center gap-1.5 text-xs font-medium text-gray-400">
-                        <span className="w-3.5 h-3.5 border-2 border-gray-200 border-t-[#16202E] rounded-full animate-spin" />
-                        reading scale
-                      </span>
-                    )}
                   </div>
 
                   <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Combined Weight (grams)</label>
@@ -412,22 +320,23 @@ export default function ScanDispatchModal() {
                       value={grams}
                       onChange={(e) => setGrams(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && saveDispatch()}
-                      disabled={ocrRunning || stage === "saving"}
-                      placeholder={ocrRunning ? "…" : "0"}
+                      disabled={stage === "saving"}
+                      placeholder="0"
                       className="w-full border-2 border-gray-100 focus:border-[#BFD732] rounded-2xl pl-4 pr-14 py-4 text-4xl font-bold tabular-nums text-[#16202E] focus:outline-none disabled:opacity-40 bg-gray-50 focus:bg-white transition-colors"
+                      autoFocus
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">g</span>
                   </div>
 
                   <p className="text-xs text-gray-400 mt-2.5 flex items-center gap-1.5">
                     <svg viewBox="0 0 20 20" fill="none" className="w-3.5 h-3.5 shrink-0"><path d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" stroke="currentColor" strokeWidth="1.4"/><path d="M10 13v-4M10 7h.01" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
-                    Auto-read from the scale photo — confirm it&apos;s correct, then tap Dispatch.
+                    Type the weight shown on the scale, then tap Dispatch.
                   </p>
 
                   <button
                     type="button"
                     onClick={saveDispatch}
-                    disabled={ocrRunning || stage === "saving" || !parseFloat(grams || "0")}
+                    disabled={stage === "saving" || !parseFloat(grams || "0")}
                     className="mt-4 w-full bg-[#16202E] text-[#BFD732] font-semibold text-base py-3.5 rounded-2xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                   >
                     {stage === "saving" ? (
