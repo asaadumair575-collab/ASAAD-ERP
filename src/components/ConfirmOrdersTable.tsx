@@ -28,8 +28,17 @@ function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
 }
 
-export default function ConfirmOrdersTable({ orders, weightByTracking = {} }: { orders: Order[]; weightByTracking?: Record<string, number> }) {
+export default function ConfirmOrdersTable({
+  orders,
+  weightByTracking = {},
+  dispatchedOrderIds = [],
+}: {
+  orders: Order[];
+  weightByTracking?: Record<string, number>;
+  dispatchedOrderIds?: number[];
+}) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const dispatchedSet = new Set(dispatchedOrderIds);
 
   const allIds = orders.map(o => o.id);
   const allChecked = allIds.length > 0 && allIds.every(id => selected.has(id));
@@ -103,6 +112,11 @@ export default function ConfirmOrdersTable({ orders, weightByTracking = {} }: { 
                     {o.returned ? (
                       <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-red-200 bg-red-50 text-red-600">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-400" />Returned
+                      </span>
+                    ) : dispatchedSet.has(o.id) ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-teal-200 bg-teal-50 text-teal-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                        Dispatched{o.trackingNumber && weightByTracking[o.trackingNumber] != null ? ` · ${weightByTracking[o.trackingNumber].toFixed(2)} kg` : ""}
                       </span>
                     ) : dispatched && o.packedAt ? (
                       <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">
@@ -190,6 +204,11 @@ export default function ConfirmOrdersTable({ orders, weightByTracking = {} }: { 
                     {o.returned ? (
                       <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-red-200 bg-red-50 text-red-600">
                         <span className="w-1.5 h-1.5 rounded-full bg-red-400" />Returned
+                      </span>
+                    ) : dispatchedSet.has(o.id) ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-teal-200 bg-teal-50 text-teal-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                        Dispatched{o.trackingNumber && weightByTracking[o.trackingNumber] != null ? ` · ${weightByTracking[o.trackingNumber].toFixed(2)} kg` : ""}
                       </span>
                     ) : dispatched && o.packedAt ? (
                       <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700">

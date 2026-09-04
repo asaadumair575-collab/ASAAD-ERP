@@ -15,10 +15,9 @@ export default async function EcomOrdersPage({
 
   // "Dispatched" means the order's parcel has actually left through the
   // Scan & Dispatch gate — i.e. it's on a DispatchSheet that's been
-  // dispatched — not just packed and waiting.
-  const dispatchedSheets = status === "PACKED" || status === "DISPATCHED"
-    ? await prisma.dispatchSheet.findMany({ where: { dispatchedAt: { not: null } }, select: { orderIds: true } })
-    : [];
+  // dispatched — not just packed and waiting. Needed both for the filter
+  // and to show the right badge per row.
+  const dispatchedSheets = await prisma.dispatchSheet.findMany({ where: { dispatchedAt: { not: null } }, select: { orderIds: true } });
   const dispatchedOrderIds = dispatchedSheets.flatMap((s) => s.orderIds);
 
   const statusWhere =
@@ -88,7 +87,7 @@ export default async function EcomOrdersPage({
           <p className="text-sm text-gray-400 mt-1">Confirm orders from Draft Orders to see them here.</p>
         </div>
       ) : (
-        <ConfirmOrdersTable orders={orders} weightByTracking={weightByTracking} />
+        <ConfirmOrdersTable orders={orders} weightByTracking={weightByTracking} dispatchedOrderIds={dispatchedOrderIds} />
       )}
     </div>
   );
