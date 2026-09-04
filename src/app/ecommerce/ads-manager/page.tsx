@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { fetchMetaStats } from "@/lib/metaAds";
+import { fetchMetaStats, fetchActiveCreatives } from "@/lib/metaAds";
 import { fetchWebOrders, isMetaAdOrder, type WebOrder } from "@/lib/webOrders";
 import DateRangeNav from "@/components/DateRangeNav";
 import AdsManagerCharts, { type AdsDailyPoint } from "@/components/AdsManagerCharts";
@@ -94,7 +94,11 @@ export default async function AdsManagerPage({
 }
 
 async function AdsContent({ from, to }: { from: string; to: string }) {
-  const [meta, { orders }] = await Promise.all([fetchMetaStats(from, to), fetchWebOrders(from, to)]);
+  const [meta, { orders }, creativesResult] = await Promise.all([
+    fetchMetaStats(from, to),
+    fetchWebOrders(from, to),
+    fetchActiveCreatives(from, to),
+  ]);
   const adOrders = orders.filter((o) => isMetaAdOrder(o.source));
   const revenue = adOrders.reduce((s, o) => s + o.totalAmount, 0);
   const roas = meta.spend > 0 ? revenue / meta.spend : 0;
@@ -178,6 +182,53 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
           <AdsManagerCharts data={dailyPoints} />
         </div>
       )}
+
+      {/* Active creatives — what's running right now and what each is spending */}
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-gray-800">Active Ad Creatives</p>
+            <p className="text-xs text-gray-400 mt-0.5">Currently running, spend shown for the selected range</p>
+          </div>
+          {creativesResult.creatives.length > 0 && (
+            <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">{creativesResult.creatives.length} active</span>
+          )}
+        </div>
+
+        {creativesResult.error === "config" ? (
+          <p className="px-5 py-6 text-sm text-gray-400">Meta Ads not configured — see note above.</p>
+        ) : creativesResult.error ? (
+          <div className="px-5 py-4 text-sm text-red-600">
+            Could not load active creatives ({creativesResult.error}).
+            {creativesResult.detail && <span className="block text-xs text-red-500 mt-1">{creativesResult.detail}</span>}
+          </div>
+        ) : creativesResult.creatives.length === 0 ? (
+          <p className="px-5 py-6 text-sm text-gray-400">No ads are currently active on this account.</p>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {creativesResult.creatives.map((c) => (
+              <div key={c.id} className="px-5 py-3 flex items-center gap-3">
+                {c.thumbnailUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.thumbnailUrl} alt="" className="w-12 h-12 rounded-lg object-cover border border-gray-100 shrink-0" />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-gray-100 shrink-0" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900 truncate">{c.name}</p>
+                  <p className="text-xs text-gray-400 truncate">{c.campaignName} · {c.adsetName}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-semibold tabular-nums text-[#16202E]">Rs {fmt(c.spend)}</p>
+                  <p className="text-[11px] text-gray-400">
+                    {c.dailyBudget != null ? `Rs ${fmt(c.dailyBudget)}/day` : c.lifetimeBudget != null ? `Rs ${fmt(c.lifetimeBudget)} lifetime` : "no budget set"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
         {untaggedOrders > 0 && (

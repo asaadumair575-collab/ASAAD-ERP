@@ -76,3 +76,93 @@ export async function fetchMetaStats(from: string, to: string): Promise<MetaStat
     return { ...empty, error: "network", detail: e instanceof Error ? e.message : String(e) };
   }
 }
+
+export type MetaCreative = {
+  id: string;
+  name: string;
+  campaignName: string;
+  adsetName: string;
+  dailyBudget: number | null;
+  lifetimeBudget: number | null;
+  thumbnailUrl: string | null;
+  spend: number;
+};
+
+export type MetaCreativesResult = {
+  creatives: MetaCreative[];
+  error?: string;
+  detail?: string;
+};
+
+// Which creatives are currently active and what each is spending — one call
+// for the active ads themselves (name, budget, thumbnail), one for spend
+// per ad over the selected range, joined by ad id.
+export async function fetchActiveCreatives(from: string, to: string): Promise<MetaCreativesResult> {
+  const token = process.env.META_ACCESS_TOKEN;
+  const accountId = process.env.META_AD_ACCOUNT_ID;
+  if (!token || !accountId) return { creatives: [], error: "config" };
+
+  const adsFields = "id,name,adset{name,daily_budget,lifetime_budget},campaign{name},creative{thumbnail_url}";
+  const adsUrl = `https://graph.facebook.com/v21.0/${accountId}/ads?effective_status=${encodeURIComponent(
+    JSON.stringify(["ACTIVE"])
+  )}&fields=${adsFields}&limit=200&access_token=${encodeURIComponent(token)}`;
+
+  const insightsFields = "ad_id,spend";
+  const insightsUrl = `https://graph.facebook.com/v21.0/${accountId}/insights?level=ad&time_range=${encodeURIComponent(
+    JSON.stringify({ since: from, until: to })
+  )}&fields=${insightsFields}&limit=500&access_token=${encodeURIComponent(token)}`;
+
+  try {
+    const [adsRes, insightsRes] = await Promise.all([
+      fetch(adsUrl, { cache: "no-store", signal: AbortSignal.timeout(15000) }),
+      fetch(insightsUrl, { cache: "no-store", signal: AbortSignal.timeout(15000) }),
+    ]);
+
+    const adsBody = await adsRes.text();
+    if (!adsRes.ok) {
+      let message = `HTTP ${adsRes.status}`;
+      try {
+        message = JSON.parse(adsBody)?.error?.message ?? message;
+      } catch {}
+      return { creatives: [], error: `api:${adsRes.status}`, detail: message };
+    }
+
+    const spendByAdId = new Map<string, number>();
+    if (insightsRes.ok) {
+      const insightsJson = JSON.parse(await insightsRes.text());
+      for (const row of (insightsJson?.data ?? []) as Record<string, unknown>[]) {
+        const adId = String(row.ad_id ?? "");
+        if (adId) spendByAdId.set(adId, parseFloat(String(row.spend ?? "0")) || 0);
+      }
+    }
+
+    const adsJson = JSON.parse(adsBody);
+    const rows: Record<string, unknown>[] = adsJson?.data ?? [];
+
+    const creatives: MetaCreative[] = rows.map((row) => {
+      const adset = (row.adset ?? {}) as Record<string, unknown>;
+      const campaign = (row.campaign ?? {}) as Record<string, unknown>;
+      const creative = (row.creative ?? {}) as Record<string, unknown>;
+      const id = String(row.id ?? "");
+      // Budgets come back in the account currency's minor unit (cents).
+      const dailyBudget = adset.daily_budget != null ? Number(adset.daily_budget) / 100 : null;
+      const lifetimeBudget = adset.lifetime_budget != null ? Number(adset.lifetime_budget) / 100 : null;
+
+      return {
+        id,
+        name: String(row.name ?? "Unnamed ad"),
+        campaignName: String(campaign.name ?? "—"),
+        adsetName: String(adset.name ?? "—"),
+        dailyBudget,
+        lifetimeBudget,
+        thumbnailUrl: (creative.thumbnail_url as string) ?? null,
+        spend: spendByAdId.get(id) ?? 0,
+      };
+    });
+
+    creatives.sort((a, b) => b.spend - a.spend);
+    return { creatives };
+  } catch (e) {
+    return { creatives: [], error: "network", detail: e instanceof Error ? e.message : String(e) };
+  }
+}
