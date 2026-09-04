@@ -13,11 +13,19 @@ export type WebOrder = {
 };
 
 // Sources the storefront tags as coming from a Meta (Facebook/Instagram) ad —
-// see the "source" field docs in /api/public/orders/route.ts.
-const META_AD_SOURCES = new Set(["meta_ads", "facebook_ads", "instagram_ads", "fb_ads", "ig_ads"]);
+// see the "source" field docs in /api/public/orders/route.ts. Matched
+// loosely (not an exact-string set) because the storefront's actual value
+// has drifted from the documented "meta_ads"/"facebook_ads" convention in
+// practice — e.g. plain "facebook", "fb", "instagram", "ig", "paid_social" —
+// and an exact-match check was silently zeroing out ad-attributed revenue
+// for every order that didn't hit one of exactly 5 strings.
+const META_AD_KEYWORDS = ["meta", "facebook", "fb_", "fb-", "instagram", "ig_", "ig-", "paid_social", "paidsocial"];
 
 export function isMetaAdOrder(source: string | null): boolean {
-  return !!source && META_AD_SOURCES.has(source.toLowerCase());
+  if (!source) return false;
+  const s = source.toLowerCase();
+  if (s === "fb" || s === "ig") return true;
+  return META_AD_KEYWORDS.some((kw) => s.includes(kw));
 }
 
 export async function fetchWebOrders(from: string, to: string): Promise<{ orders: WebOrder[]; error?: string }> {
