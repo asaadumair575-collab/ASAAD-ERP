@@ -358,9 +358,14 @@ export default function Sidebar({
               <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
                 <NavLink href="/ecommerce/shopify-dashboard" active={pathname.startsWith("/ecommerce/shopify-dashboard")} compact onClick={closeMobile}>All Dashboard</NavLink>
                 <NavLink href="/ecommerce/ads-manager" active={pathname.startsWith("/ecommerce/ads-manager")} compact onClick={closeMobile}>Ads Manager</NavLink>
-                <NavLink href="/ecommerce/shopify-orders" active={pathname.startsWith("/ecommerce/shopify-orders")} compact onClick={closeMobile}>Draft Orders</NavLink>
+                <NavLink href="/ecommerce/shopify-orders" active={pathname.startsWith("/ecommerce/shopify-orders")} compact onClick={closeMobile}>
+                  <span className="inline-flex items-center gap-1.5">
+                    <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5 shrink-0 opacity-70"><path d="M2 4.5h12M2 8h12M2 11.5h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
+                    Draft Orders
+                  </span>
+                </NavLink>
                 {canViewSub(permissions, "ecom_orders", isAdmin) && (
-                  <NavLink href="/ecommerce/orders" active={pathname.startsWith("/ecommerce/orders")} compact onClick={closeMobile}>Confirm Orders</NavLink>
+                  <NavLink href="/ecommerce/orders" active={pathname.startsWith("/ecommerce/orders")} compact onClick={closeMobile}>Orders</NavLink>
                 )}
                 {canViewSub(permissions, "ecom_orders", isAdmin) && (
                   <NavLink href="/ecommerce/dispatch" active={pathname.startsWith("/ecommerce/dispatch")} compact onClick={closeMobile}>Dispatch</NavLink>

@@ -55,7 +55,7 @@ export default async function EcomOrdersPage({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Confirm Orders</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Orders</h1>
           <p className="text-sm text-gray-500 mt-0.5">Confirmed Shopify orders — dispatch and track.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">

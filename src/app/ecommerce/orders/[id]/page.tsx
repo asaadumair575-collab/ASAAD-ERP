@@ -21,7 +21,7 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
     <div className="max-w-2xl space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
-          <Link href="/ecommerce/orders" className="text-sm text-gray-400 hover:text-black">← Confirm Orders</Link>
+          <Link href="/ecommerce/orders" className="text-sm text-gray-400 hover:text-black">← Orders</Link>
           <h1 className="text-2xl font-semibold tracking-tight mt-1">{orderLabel}</h1>
           <p className="text-sm text-gray-500 mt-0.5">{order.date.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</p>
         </div>

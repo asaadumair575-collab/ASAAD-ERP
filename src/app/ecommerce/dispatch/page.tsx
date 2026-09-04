@@ -25,7 +25,7 @@ export default async function DispatchListPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Dispatch</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Saved dispatch sheets — generated from Confirm Orders, reprintable anytime.
+            Saved dispatch sheets — generated from Orders, reprintable anytime.
           </p>
         </div>
         <ScanDispatchModal />
@@ -37,9 +37,9 @@ export default async function DispatchListPage() {
             <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7 text-gray-400"><rect x="2" y="7" width="20" height="15" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M16 7V5a2 2 0 0 0-4 0v2M8 7V5a2 2 0 0 0-4 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M8 12h8M8 16h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
           </div>
           <p className="text-base font-semibold text-gray-700">No dispatch sheets yet</p>
-          <p className="text-sm text-gray-400 mt-1">Select packed orders on Confirm Orders and generate one.</p>
+          <p className="text-sm text-gray-400 mt-1">Select packed orders on Orders and generate one.</p>
           <Link href="/ecommerce/orders" className="inline-block mt-4 text-sm font-medium text-[#16202E] underline decoration-dotted">
-            Go to Confirm Orders →
+            Go to Orders →
           </Link>
         </div>
       ) : (

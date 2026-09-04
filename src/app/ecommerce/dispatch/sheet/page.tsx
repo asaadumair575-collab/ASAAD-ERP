@@ -109,7 +109,7 @@ export default async function EcomDispatchPage({
   // Only parcels that have actually been through Scan & Weigh (packed) go on
   // the dispatch list — this is the gate-verification sheet, keyed off the
   // day they were packed, not the day they were dispatched to the courier.
-  // A specific `ids` selection (from the Confirm Orders checkboxes) overrides
+  // A specific `ids` selection (from the Orders checkboxes) overrides
   // the date filter and shows exactly those (packed) orders instead.
   const orders = await prisma.ecomOrder.findMany({
     where: selectedIds ? { id: { in: selectedIds }, packedAt: { not: null } } : { packedAt: { gte: dayStart, lte: dayEnd } },
