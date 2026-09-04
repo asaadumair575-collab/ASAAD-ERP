@@ -3,6 +3,7 @@ import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import ConfirmOrdersTable from "@/components/ConfirmOrdersTable";
 import ScanAndWeighModal from "@/components/ScanAndWeighModal";
+import { dispatchSheetNumber } from "@/lib/dispatchSheetNumber";
 
 export default async function EcomOrdersPage({
   searchParams,
@@ -17,8 +18,15 @@ export default async function EcomOrdersPage({
   // Scan & Dispatch gate — i.e. it's on a DispatchSheet that's been
   // dispatched — not just packed and waiting. Needed both for the filter
   // and to show the right badge per row.
-  const dispatchedSheets = await prisma.dispatchSheet.findMany({ where: { dispatchedAt: { not: null } }, select: { orderIds: true } });
-  const dispatchedOrderIds = dispatchedSheets.flatMap((s) => s.orderIds);
+  const allSheets = await prisma.dispatchSheet.findMany({ select: { id: true, orderIds: true, dispatchedAt: true } });
+  const dispatchedOrderIds = allSheets.filter((s) => s.dispatchedAt).flatMap((s) => s.orderIds);
+
+  // Which dispatch sheet (if any) each order has been included in, whether
+  // that sheet has actually been dispatched yet or not.
+  const sheetByOrderId: Record<number, { id: number; number: string }> = {};
+  for (const s of allSheets) {
+    for (const orderId of s.orderIds) sheetByOrderId[orderId] = { id: s.id, number: dispatchSheetNumber(s.id) };
+  }
 
   const statusWhere =
     status === "CONFIRMED" ? { trackingNumber: null } :
@@ -87,7 +95,7 @@ export default async function EcomOrdersPage({
           <p className="text-sm text-gray-400 mt-1">Confirm orders from Draft Orders to see them here.</p>
         </div>
       ) : (
-        <ConfirmOrdersTable orders={orders} weightByTracking={weightByTracking} dispatchedOrderIds={dispatchedOrderIds} />
+        <ConfirmOrdersTable orders={orders} weightByTracking={weightByTracking} dispatchedOrderIds={dispatchedOrderIds} sheetByOrderId={sheetByOrderId} />
       )}
     </div>
   );

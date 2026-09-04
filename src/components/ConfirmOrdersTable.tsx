@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import MoveToDraftButton from "./MoveToDraftButton";
 import BulkDispatchButton from "./BulkDispatchButton";
 import DispatchListSelectedButton from "./DispatchListSelectedButton";
 import PrintLabelsButton from "./PrintLabelsButton";
@@ -32,10 +31,12 @@ export default function ConfirmOrdersTable({
   orders,
   weightByTracking = {},
   dispatchedOrderIds = [],
+  sheetByOrderId = {},
 }: {
   orders: Order[];
   weightByTracking?: Record<string, number>;
   dispatchedOrderIds?: number[];
+  sheetByOrderId?: Record<number, { id: number; number: string }>;
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const dispatchedSet = new Set(dispatchedOrderIds);
@@ -166,7 +167,7 @@ export default function ConfirmOrdersTable({
               <th className="py-2.5 px-3">Items</th>
               <th className="py-2.5 px-3 text-right">Total</th>
               <th className="py-2.5 px-3">Status</th>
-              <th className="py-2.5 pr-4"></th>
+              <th className="py-2.5 pr-4 text-right">Dispatch List</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -233,13 +234,15 @@ export default function ConfirmOrdersTable({
                       </span>
                     )}
                   </td>
-                  <td className="py-2.5 pr-4">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <MoveToDraftButton id={o.id} />
-                      <Link href={`/ecommerce/orders/${o.id}`} className="text-xs text-blue-600 hover:underline font-medium">
-                        View →
+                  <td className="py-2.5 pr-4 text-right">
+                    {sheetByOrderId[o.id] && (
+                      <Link
+                        href={`/ecommerce/dispatch/${sheetByOrderId[o.id].id}`}
+                        className="text-xs font-mono font-semibold text-gray-500 hover:text-[#16202E] hover:underline"
+                      >
+                        {sheetByOrderId[o.id].number}
                       </Link>
-                    </div>
+                    )}
                   </td>
                 </tr>
               );

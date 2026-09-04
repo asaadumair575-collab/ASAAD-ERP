@@ -103,12 +103,10 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
     fetchActiveCreatives(from, to),
   ]);
   const adOrders = orders.filter((o) => isMetaAdOrder(o.source));
-  const revenue = adOrders.reduce((s, o) => s + o.totalAmount, 0);
-  const roas = meta.spend > 0 ? revenue / meta.spend : 0;
   const totalOrders = orders.length;
   const totalWebsiteRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
   const untaggedOrders = orders.filter((o) => !o.source).length;
-  const costPerOrder = adOrders.length > 0 ? meta.spend / adOrders.length : 0;
+  const costPerOrder = meta.reportedPurchases > 0 ? meta.spend / meta.reportedPurchases : 0;
   const activeBudget = creativesResult.creatives.reduce((s, c) => s + (c.dailyBudget ?? 0), 0);
 
   const dailyPoints = buildDailyPoints(meta.daily, adOrders, from, to);
@@ -140,25 +138,25 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
 
   return (
     <>
-      {/* Headline row — spend, verified revenue, ROAS side by side */}
+      {/* Headline row — everything here comes straight from Meta's own numbers */}
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Verified — from your website orders</p>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#1877F2]" />
+          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">From Meta (spend, sales, ROAS as reported by Meta)</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <StatCard label="Ad Spend" value={`Rs ${fmt(meta.spend)}`} accent="bg-[#1877F2]" />
-          <StatCard label="Revenue from Ads" value={`Rs ${fmt(revenue)}`} sub={`${adOrders.length} tagged orders`} accent="bg-[#BFD732]" />
+          <StatCard label="Sales (Meta-reported)" value={`Rs ${fmt(meta.reportedRevenue)}`} sub={meta.reportedPurchases > 0 ? `${fmt(meta.reportedPurchases)} purchases` : undefined} accent="bg-[#BFD732]" />
           <StatCard
             label="ROAS"
-            value={`${roas.toFixed(2)}x`}
-            accent={roas >= 2 ? "bg-emerald-500" : roas > 0 ? "bg-amber-400" : "bg-gray-200"}
-            valueClass={roas >= 2 ? "text-emerald-600" : roas > 0 ? "text-amber-600" : "text-[#16202E]"}
+            value={`${meta.reportedRoas.toFixed(2)}x`}
+            accent={meta.reportedRoas >= 2 ? "bg-emerald-500" : meta.reportedRoas > 0 ? "bg-amber-400" : "bg-gray-200"}
+            valueClass={meta.reportedRoas >= 2 ? "text-emerald-600" : meta.reportedRoas > 0 ? "text-amber-600" : "text-[#16202E]"}
           />
         </div>
         <p className="text-xs text-gray-400 mt-2">
-          Revenue and ROAS are counted only from orders tagged <code>source: &quot;meta_ads&quot;</code> by the
-          storefront. Requires the storefront to send that tag — see the note below if it&apos;s missing.
+          Meta&apos;s own attributed sales — uses Meta&apos;s click/view attribution window, which can over-count
+          conversions that weren&apos;t really driven by ads. Cross-check against Website Sale below.
         </p>
       </div>
 
@@ -166,8 +164,8 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <StatCard
           label="Cost Per Order"
-          value={adOrders.length > 0 ? `Rs ${fmt(costPerOrder)}` : "—"}
-          sub={adOrders.length > 0 ? `Rs ${fmt(meta.spend)} ÷ ${adOrders.length} order${adOrders.length === 1 ? "" : "s"}` : "No ad-attributed orders yet"}
+          value={meta.reportedPurchases > 0 ? `Rs ${fmt(costPerOrder)}` : "—"}
+          sub={meta.reportedPurchases > 0 ? `Rs ${fmt(meta.spend)} ÷ ${fmt(meta.reportedPurchases)} purchase${meta.reportedPurchases === 1 ? "" : "s"}` : "No Meta-reported purchases yet"}
           accent="bg-orange-400"
         />
         <StatCard
@@ -249,39 +247,15 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
-        {untaggedOrders > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-xs text-amber-800">
-            <strong>{untaggedOrders} of {totalOrders} orders</strong> in this range have no traffic source tag, so they
-            aren&apos;t counted above as ad or organic. The storefront needs to send a <code>source</code> field
-            (e.g. <code>meta_ads</code>) when creating each order.
-          </div>
-        )}
-
-        {/* Meta-reported — shown for comparison, but confirmed unreliable on this account */}
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3">
-          <p className="text-xs font-semibold text-gray-500">
-            Meta&apos;s own reported sales (unreliable on this account — see below)
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-1">Revenue (Meta-reported)</p>
-              <p className="text-lg font-bold tabular-nums text-gray-400 line-through decoration-red-300">Rs {fmt(meta.reportedRevenue)}</p>
-            </div>
-            <div>
-              <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-1">ROAS (Meta-reported)</p>
-              <p className="text-lg font-bold tabular-nums text-gray-400 line-through decoration-red-300">{meta.reportedRoas.toFixed(2)}x</p>
-            </div>
-          </div>
-          <p className="text-xs text-red-500 mt-2">
-            Confirmed inaccurate — Meta reported Rs 280k for a period where actual recorded sales were Rs 380.
-            Meta&apos;s click/view attribution window over-counts conversions that weren&apos;t really driven by
-            ads. Treat &quot;Verified&quot; numbers above as the source of truth.
-          </p>
+      {untaggedOrders > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-xs text-amber-800">
+          <strong>{untaggedOrders} of {totalOrders} website orders</strong> have no traffic source tag, so they can&apos;t
+          be split into ad-driven vs organic. The storefront needs to send a <code>source</code> field
+          (e.g. <code>meta_ads</code>) when creating each order for that breakdown to work.
         </div>
-      </div>
+      )}
 
-      {meta.spend === 0 && revenue === 0 && meta.reportedRevenue === 0 && (
+      {meta.spend === 0 && meta.reportedRevenue === 0 && (
         <div className="border border-dashed border-gray-200 rounded-2xl p-12 text-center">
           <p className="text-sm font-medium text-gray-500">No ad spend or ad-attributed orders in this date range</p>
           <p className="text-xs text-gray-400 mt-1">Try a different date range, or check that campaigns were active</p>

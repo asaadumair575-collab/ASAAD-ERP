@@ -9,12 +9,14 @@ export type MetaDailyStat = {
   spend: number;
   reportedRevenue: number;
   reportedRoas: number;
+  reportedPurchases: number;
 };
 
 export type MetaStats = {
   spend: number;
   reportedRevenue: number;
   reportedRoas: number;
+  reportedPurchases: number;
   daily: MetaDailyStat[];
   error?: string;
   detail?: string;
@@ -33,7 +35,12 @@ function rowToDaily(row: Record<string, unknown>): MetaDailyStat {
   const purchaseRoas = roasField.find((r) => r.action_type === "purchase" || r.action_type === "omni_purchase");
   if (purchaseRoas) reportedRoas = parseFloat(purchaseRoas.value) || reportedRoas;
 
-  return { date: String(row.date_start ?? ""), spend, reportedRevenue, reportedRoas };
+  let reportedPurchases = 0;
+  const actions = (row.actions ?? []) as { action_type: string; value: string }[];
+  const purchaseCount = actions.find((a) => a.action_type === "purchase" || a.action_type === "omni_purchase");
+  if (purchaseCount) reportedPurchases = parseFloat(purchaseCount.value) || 0;
+
+  return { date: String(row.date_start ?? ""), spend, reportedRevenue, reportedRoas, reportedPurchases };
 }
 
 // Fetches spend/attribution broken down per day (time_increment=1) so the
@@ -41,10 +48,10 @@ function rowToDaily(row: Record<string, unknown>): MetaDailyStat {
 export async function fetchMetaStats(from: string, to: string): Promise<MetaStats> {
   const token = process.env.META_ACCESS_TOKEN;
   const accountId = process.env.META_AD_ACCOUNT_ID; // e.g. act_1363299608334913
-  const empty: MetaStats = { spend: 0, reportedRevenue: 0, reportedRoas: 0, daily: [] };
+  const empty: MetaStats = { spend: 0, reportedRevenue: 0, reportedRoas: 0, reportedPurchases: 0, daily: [] };
   if (!token || !accountId) return { ...empty, error: "config" };
 
-  const fields = "spend,action_values,purchase_roas";
+  const fields = "spend,action_values,purchase_roas,actions";
   let url: string | null = `https://graph.facebook.com/v21.0/${accountId}/insights?time_range=${encodeURIComponent(
     JSON.stringify({ since: from, until: to })
   )}&time_increment=1&fields=${fields}&limit=500&access_token=${encodeURIComponent(token)}`;
@@ -79,8 +86,9 @@ export async function fetchMetaStats(from: string, to: string): Promise<MetaStat
     const spend = daily.reduce((s, d) => s + d.spend, 0);
     const reportedRevenue = daily.reduce((s, d) => s + d.reportedRevenue, 0);
     const reportedRoas = spend > 0 ? reportedRevenue / spend : 0;
+    const reportedPurchases = daily.reduce((s, d) => s + d.reportedPurchases, 0);
 
-    return { spend, reportedRevenue, reportedRoas, daily };
+    return { spend, reportedRevenue, reportedRoas, reportedPurchases, daily };
   } catch (e) {
     return { ...empty, error: "network", detail: e instanceof Error ? e.message : String(e) };
   }
