@@ -5,6 +5,7 @@ import Link from "next/link";
 import MoveToDraftButton from "./MoveToDraftButton";
 import BulkDispatchButton from "./BulkDispatchButton";
 import DispatchListSelectedButton from "./DispatchListSelectedButton";
+import PrintLabelsButton from "./PrintLabelsButton";
 
 type Order = {
   id: number;
@@ -58,6 +59,9 @@ export default function ConfirmOrdersTable({ orders, weightByTracking = {} }: { 
           <div className="flex items-center gap-2 flex-wrap">
             <button onClick={() => setSelected(new Set())} className="text-xs text-orange-400 hover:text-orange-700 transition-colors py-1.5">Clear</button>
             <DispatchListSelectedButton selectedIds={Array.from(selected)} />
+            {orders.some((o) => selected.has(o.id) && o.trackingNumber) && (
+              <PrintLabelsButton selectedIds={orders.filter((o) => selected.has(o.id) && o.trackingNumber).map((o) => o.id)} />
+            )}
             <BulkDispatchButton selectedIds={Array.from(selected)} orders={orders} />
           </div>
         </div>
