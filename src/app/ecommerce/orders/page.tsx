@@ -13,11 +13,26 @@ export default async function EcomOrdersPage({
   const fromDate = from ? new Date(`${from}T00:00:00`) : undefined;
   const toDate   = to   ? new Date(`${to}T23:59:59.999`) : undefined;
 
+  // "Dispatched" means the order's parcel has actually left through the
+  // Scan & Dispatch gate — i.e. it's on a DispatchSheet that's been
+  // dispatched — not just packed and waiting.
+  const dispatchedSheets = status === "PACKED" || status === "DISPATCHED"
+    ? await prisma.dispatchSheet.findMany({ where: { dispatchedAt: { not: null } }, select: { orderIds: true } })
+    : [];
+  const dispatchedOrderIds = dispatchedSheets.flatMap((s) => s.orderIds);
+
+  const statusWhere =
+    status === "CONFIRMED" ? { trackingNumber: null } :
+    status === "BOOKED" ? { trackingNumber: { not: null }, packedAt: null } :
+    status === "PACKED" ? { packedAt: { not: null }, id: { notIn: dispatchedOrderIds } } :
+    status === "DISPATCHED" ? { id: { in: dispatchedOrderIds.length ? dispatchedOrderIds : [-1] } } :
+    {};
+
   const orders = await prisma.ecomOrder.findMany({
     where: {
       draft: false,
       ...(fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {}),
-      ...(status === "RETURNED" ? { returned: true } : status ? { status } : {}),
+      ...statusWhere,
       ...(q ? { OR: [{ customerName: { contains: q, mode: "insensitive" } }, { phone: { contains: q } }, { city: { contains: q, mode: "insensitive" } }] } : {}),
     },
     include: { items: true, payments: true },
@@ -55,10 +70,10 @@ export default async function EcomOrdersPage({
         <DateRangeFilter from={from} to={to} />
         <select name="status" defaultValue={status ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black w-full sm:w-auto">
           <option value="">All orders</option>
-          <option value="PENDING">Pending</option>
-          <option value="PARTIAL">Partial</option>
-          <option value="PAID">Delivered</option>
-          <option value="RETURNED">Returned</option>
+          <option value="CONFIRMED">Confirmed</option>
+          <option value="BOOKED">Booked</option>
+          <option value="PACKED">Packed</option>
+          <option value="DISPATCHED">Dispatched</option>
         </select>
         <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2.5 sm:py-2 rounded-lg hover:bg-gray-800 transition-colors w-full sm:w-auto">Filter</button>
         {(status || q || from || to) && <Link href="/ecommerce/orders" className="text-sm text-gray-400 hover:text-black px-2 text-center sm:text-left">Clear</Link>}
