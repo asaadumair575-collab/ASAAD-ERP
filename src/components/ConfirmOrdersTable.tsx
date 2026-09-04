@@ -127,11 +127,6 @@ export default function ConfirmOrdersTable({ orders, weightByTracking = {} }: { 
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center justify-end mt-2 pt-2 border-t border-gray-100">
-                    <Link href={`/ecommerce/orders/${o.id}`} className="text-xs text-blue-600 hover:underline font-medium py-1">
-                      View →
-                    </Link>
-                  </div>
                 </div>
               </div>
             </div>
