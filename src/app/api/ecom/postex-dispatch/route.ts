@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { fetchAirwayBillPdfWithFallback } from "@/lib/postexInvoice";
 
 const POSTEX_BASE = "https://api.postex.pk/services/integration/api";
 const POSTEX_TOKEN = process.env.POSTEX_API_TOKEN ?? "";
@@ -98,6 +99,15 @@ export async function POST(req: NextRequest) {
         where: { id: order.id },
         data: { trackingNumber: tracking, dispatchedAt: new Date() },
       });
+
+      // Save the shipping label into our own system now, like the tracking
+      // number, instead of fetching it from Postex again every time it's
+      // opened. Best-effort — a failure here shouldn't undo the booking.
+      const label = await fetchAirwayBillPdfWithFallback([tracking]);
+      if (label.pdf) {
+        await prisma.ecomOrder.update({ where: { id: order.id }, data: { label: new Uint8Array(label.pdf) } });
+      }
+
       results.push({ id: order.id, tracking });
     } catch (e: unknown) {
       results.push({ id: order.id, error: e instanceof Error ? e.message : String(e) });

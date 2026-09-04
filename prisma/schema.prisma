@@ -349,6 +349,7 @@ model EcomOrder {
   returnCost      Float           @default(0)
   address         String?
   trackingNumber  String?
+  label           Bytes?
   dispatchedAt    DateTime?
   packedAt        DateTime?
   shopifyOrderId  String?
