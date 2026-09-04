@@ -45,25 +45,34 @@ export async function fetchMetaStats(from: string, to: string): Promise<MetaStat
   if (!token || !accountId) return { ...empty, error: "config" };
 
   const fields = "spend,action_values,purchase_roas";
-  const url = `https://graph.facebook.com/v21.0/${accountId}/insights?time_range=${encodeURIComponent(
+  let url: string | null = `https://graph.facebook.com/v21.0/${accountId}/insights?time_range=${encodeURIComponent(
     JSON.stringify({ since: from, until: to })
-  )}&time_increment=1&fields=${fields}&access_token=${encodeURIComponent(token)}`;
+  )}&time_increment=1&fields=${fields}&limit=500&access_token=${encodeURIComponent(token)}`;
 
   try {
-    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(15000) });
-    const body = await res.text();
-    if (!res.ok) {
-      let message = `HTTP ${res.status}`;
-      try {
-        const parsed = JSON.parse(body);
-        message = parsed?.error?.message ?? message;
-      } catch {
-        // body wasn't JSON
+    // The Graph API paginates insights rows (default page size is small —
+    // as low as 25) and this endpoint never followed `paging.next`, so any
+    // date range spanning more than a couple dozen days silently dropped
+    // rows and understated total spend. Follow every page until exhausted.
+    const rows: Record<string, unknown>[] = [];
+    while (url) {
+      const res: Response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(15000) });
+      const body = await res.text();
+      if (!res.ok) {
+        let message = `HTTP ${res.status}`;
+        try {
+          const parsed = JSON.parse(body);
+          message = parsed?.error?.message ?? message;
+        } catch {
+          // body wasn't JSON
+        }
+        return { ...empty, error: `api:${res.status}`, detail: message };
       }
-      return { ...empty, error: `api:${res.status}`, detail: message };
+      const json = JSON.parse(body);
+      rows.push(...((json?.data ?? []) as Record<string, unknown>[]));
+      url = json?.paging?.next ?? null;
     }
-    const json = JSON.parse(body);
-    const rows: Record<string, unknown>[] = json?.data ?? [];
+
     if (rows.length === 0) return empty; // no spend in this range
 
     const daily = rows.map(rowToDaily).sort((a, b) => a.date.localeCompare(b.date));
