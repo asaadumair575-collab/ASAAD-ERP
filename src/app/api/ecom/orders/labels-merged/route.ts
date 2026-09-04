@@ -6,15 +6,13 @@ import { PDFDocument } from "pdf-lib";
 
 export const maxDuration = 60;
 
-const A4_WIDTH = 595.28;
-const A4_HEIGHT = 841.89;
-const LABELS_PER_PAGE = 3;
-const SLOT_HEIGHT = A4_HEIGHT / LABELS_PER_PAGE;
+// Postex's own get-invoice API already lays multiple tracking numbers out
+// 3-per-A4-page when you pass more than one — so this just batches the
+// selected orders' tracking numbers into groups of 10 (Postex's documented
+// max per call) and stitches the resulting PDFs' pages together, rather
+// than trying to reconstruct that layout ourselves.
+const POSTEX_MAX_PER_CALL = 10;
 
-// Combines each selected order's saved Postex label onto A4 sheets, 3 labels
-// per page stacked vertically — matching how Postex's own bulk label print
-// lays them out, so multiple parcels can be printed on one sheet instead of
-// one page per parcel.
 export async function GET(req: NextRequest) {
   const me = await getSessionUser();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,56 +23,42 @@ export async function GET(req: NextRequest) {
 
   const orders = await prisma.ecomOrder.findMany({
     where: { id: { in: ids } },
-    select: { id: true, trackingNumber: true, label: true },
+    select: { id: true, trackingNumber: true },
   });
+  const byId = new Map(orders.map((o) => [o.id, o]));
+
+  // Preserve the order the caller selected the orders in.
+  const trackingNumbers = ids
+    .map((id) => byId.get(id)?.trackingNumber)
+    .filter((t): t is string => !!t);
+
+  if (trackingNumbers.length === 0) {
+    return NextResponse.json({ error: "None of the selected orders have been booked on Postex yet" }, { status: 400 });
+  }
+
+  const chunks: string[][] = [];
+  for (let i = 0; i < trackingNumbers.length; i += POSTEX_MAX_PER_CALL) {
+    chunks.push(trackingNumbers.slice(i, i + POSTEX_MAX_PER_CALL));
+  }
 
   const merged = await PDFDocument.create();
-  const missing: number[] = [];
-  const embeddedPages: Awaited<ReturnType<typeof merged.embedPdf>>[number][] = [];
+  let anySucceeded = false;
+  let lastError: string | undefined;
 
-  // Preserve the order the caller selected, not the DB query order.
-  const byId = new Map(orders.map((o) => [o.id, o]));
-  for (const id of ids) {
-    const order = byId.get(id);
-    if (!order?.trackingNumber) {
-      missing.push(id);
+  for (const chunk of chunks) {
+    const result = await fetchAirwayBillPdfWithFallback(chunk);
+    if (!result.pdf) {
+      lastError = result.error;
       continue;
     }
-
-    let bytes: Uint8Array | Buffer | null = order.label;
-    if (!bytes) {
-      const result = await fetchAirwayBillPdfWithFallback([order.trackingNumber]);
-      if (!result.pdf) {
-        missing.push(id);
-        continue;
-      }
-      bytes = result.pdf;
-      await prisma.ecomOrder.update({ where: { id: order.id }, data: { label: new Uint8Array(result.pdf) } }).catch(() => {});
-    }
-
-    try {
-      const [page] = await merged.embedPdf(bytes, [0]);
-      embeddedPages.push(page);
-    } catch {
-      missing.push(id);
-    }
+    anySucceeded = true;
+    const chunkDoc = await PDFDocument.load(result.pdf);
+    const pages = await merged.copyPages(chunkDoc, chunkDoc.getPageIndices());
+    pages.forEach((p) => merged.addPage(p));
   }
 
-  if (embeddedPages.length === 0) {
-    return NextResponse.json({ error: "No labels available for the selected orders", missing }, { status: 400 });
-  }
-
-  for (let i = 0; i < embeddedPages.length; i += LABELS_PER_PAGE) {
-    const sheet = merged.addPage([A4_WIDTH, A4_HEIGHT]);
-    const slice = embeddedPages.slice(i, i + LABELS_PER_PAGE);
-    slice.forEach((embedded, slot) => {
-      const scale = Math.min(A4_WIDTH / embedded.width, SLOT_HEIGHT / embedded.height);
-      const w = embedded.width * scale;
-      const h = embedded.height * scale;
-      const x = (A4_WIDTH - w) / 2;
-      const y = A4_HEIGHT - (slot + 1) * SLOT_HEIGHT + (SLOT_HEIGHT - h) / 2;
-      sheet.drawPage(embedded, { x, y, width: w, height: h });
-    });
+  if (!anySucceeded) {
+    return NextResponse.json({ error: lastError ?? "Could not fetch labels" }, { status: 502 });
   }
 
   const pdfBytes = await merged.save();
@@ -82,7 +66,7 @@ export async function GET(req: NextRequest) {
   return new NextResponse(new Uint8Array(pdfBytes), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="labels-${ids.length}-parcels.pdf"`,
+      "Content-Disposition": `attachment; filename="labels-${trackingNumbers.length}-parcels.pdf"`,
     },
   });
 }
