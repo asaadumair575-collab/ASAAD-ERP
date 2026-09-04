@@ -21,6 +21,7 @@ export type AdsDailyPoint = {
   revenue: number;
   roas: number;
   orders: number;
+  costPerOrder: number;
 };
 
 function fmt(n: number) {
@@ -73,9 +74,32 @@ function RoasTooltip({
   );
 }
 
+function CostPerOrderTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { payload: AdsDailyPoint }[];
+  label?: string;
+}) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-lg text-sm space-y-1">
+      <p className="font-medium text-gray-700 mb-1">{label}</p>
+      <p className="text-[#16202E]">
+        <span className="font-semibold">Rs {fmt(d.costPerOrder)}</span> per order
+      </p>
+      <p className="text-xs text-gray-400">Rs {fmt(d.spend)} spend / {d.orders} order{d.orders === 1 ? "" : "s"}</p>
+    </div>
+  );
+}
+
 const TABS = [
   { key: "performance", label: "Spend vs Revenue" },
   { key: "roas", label: "ROAS Trend" },
+  { key: "cpo", label: "Cost Per Order" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -110,7 +134,7 @@ export default function AdsManagerCharts({ data }: { data: AdsDailyPoint[] }) {
         ))}
       </div>
 
-      {tab === "performance" ? (
+      {tab === "performance" && (
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 8 }} barSize={16} barGap={2}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
@@ -128,7 +152,9 @@ export default function AdsManagerCharts({ data }: { data: AdsDailyPoint[] }) {
             <Bar dataKey="revenue" name="Revenue" fill="#BFD732" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      ) : (
+      )}
+
+      {tab === "roas" && (
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
@@ -154,6 +180,32 @@ export default function AdsManagerCharts({ data }: { data: AdsDailyPoint[] }) {
                 const color = payload.roas >= 2 ? "#10b981" : payload.roas > 0 ? "#f59e0b" : "#a1a1aa";
                 return <circle key={`dot-${index}`} cx={cx} cy={cy} r={3.5} fill={color} />;
               }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      )}
+
+      {tab === "cpo" && (
+        <ResponsiveContainer width="100%" height={260}>
+          <LineChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+            <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#71717a" }} axisLine={false} tickLine={false} />
+            <YAxis
+              tickFormatter={(v) => "Rs " + fmt(v)}
+              tick={{ fontSize: 10, fill: "#71717a" }}
+              axisLine={false}
+              tickLine={false}
+              width={64}
+            />
+            <Tooltip content={<CostPerOrderTooltip />} cursor={{ stroke: "#e4e4e7" }} />
+            <Line
+              type="monotone"
+              dataKey="costPerOrder"
+              name="Cost Per Order"
+              stroke="#f97316"
+              strokeWidth={2}
+              dot={{ r: 3.5, fill: "#f97316" }}
+              connectNulls
             />
           </LineChart>
         </ResponsiveContainer>

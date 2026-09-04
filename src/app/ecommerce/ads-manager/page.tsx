@@ -26,7 +26,7 @@ function buildDailyPoints(
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const key = d.toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
     const label = d.toLocaleDateString("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" });
-    map.set(key, { date: label, spend: 0, revenue: 0, roas: 0, orders: 0 });
+    map.set(key, { date: label, spend: 0, revenue: 0, roas: 0, orders: 0, costPerOrder: 0 });
   }
   for (const m of dailySpend) {
     const b = map.get(m.date);
@@ -37,7 +37,10 @@ function buildDailyPoints(
     const b = map.get(key);
     if (b) { b.revenue += o.totalAmount; b.orders += 1; }
   }
-  for (const b of map.values()) b.roas = b.spend > 0 ? b.revenue / b.spend : 0;
+  for (const b of map.values()) {
+    b.roas = b.spend > 0 ? b.revenue / b.spend : 0;
+    b.costPerOrder = b.orders > 0 ? b.spend / b.orders : 0;
+  }
   return [...map.values()];
 }
 
@@ -105,8 +108,10 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
   const totalOrders = orders.length;
   const totalWebsiteRevenue = orders.reduce((s, o) => s + o.totalAmount, 0);
   const untaggedOrders = orders.filter((o) => !o.source).length;
+  const costPerOrder = adOrders.length > 0 ? meta.spend / adOrders.length : 0;
+  const activeBudget = creativesResult.creatives.reduce((s, c) => s + (c.dailyBudget ?? 0), 0);
 
-  const dailyPoints = from === to ? [] : buildDailyPoints(meta.daily, adOrders, from, to);
+  const dailyPoints = buildDailyPoints(meta.daily, adOrders, from, to);
 
   if (meta.error === "config") {
     return (
@@ -157,6 +162,22 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
         </p>
       </div>
 
+      {/* Cost per order + how much is currently allocated to run */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <StatCard
+          label="Cost Per Order"
+          value={adOrders.length > 0 ? `Rs ${fmt(costPerOrder)}` : "—"}
+          sub={adOrders.length > 0 ? `Rs ${fmt(meta.spend)} ÷ ${adOrders.length} order${adOrders.length === 1 ? "" : "s"}` : "No ad-attributed orders yet"}
+          accent="bg-orange-400"
+        />
+        <StatCard
+          label="Current Budget"
+          value={activeBudget > 0 ? `Rs ${fmt(activeBudget)}/day` : "—"}
+          sub={`Across ${creativesResult.creatives.length} active ad${creativesResult.creatives.length === 1 ? "" : "s"}`}
+          accent="bg-[#16202E]"
+        />
+      </div>
+
       {/* Total website sale — all orders in range, ad-tagged or not */}
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-5 py-4 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2.5">
@@ -175,13 +196,11 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
         </div>
       </div>
 
-      {/* Daily trend */}
-      {dailyPoints.length > 1 && (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-          <p className="text-sm font-semibold text-gray-800 mb-4">Daily Performance</p>
-          <AdsManagerCharts data={dailyPoints} />
-        </div>
-      )}
+      {/* Daily trend — always shown, even for a single day or zero spend */}
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
+        <p className="text-sm font-semibold text-gray-800 mb-4">Daily Performance</p>
+        <AdsManagerCharts data={dailyPoints} />
+      </div>
 
       {/* Active creatives — what's running right now and what each is spending */}
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
@@ -240,10 +259,10 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
         )}
 
         {/* Meta-reported — shown for comparison, but confirmed unreliable on this account */}
-        <details className="bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3">
-          <summary className="text-xs font-semibold text-gray-500 cursor-pointer select-none">
-            Meta&apos;s own reported number (do not use — known to be inflated on this account)
-          </summary>
+        <div className="bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3">
+          <p className="text-xs font-semibold text-gray-500">
+            Meta&apos;s own reported sales (unreliable on this account — see below)
+          </p>
           <div className="mt-3 grid grid-cols-2 gap-3">
             <div>
               <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-1">Revenue (Meta-reported)</p>
@@ -259,7 +278,7 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
             Meta&apos;s click/view attribution window over-counts conversions that weren&apos;t really driven by
             ads. Treat &quot;Verified&quot; numbers above as the source of truth.
           </p>
-        </details>
+        </div>
       </div>
 
       {meta.spend === 0 && revenue === 0 && meta.reportedRevenue === 0 && (
