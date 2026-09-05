@@ -21,6 +21,14 @@ const TASK_TYPES = [
     needsTarget: true,
     defaultTarget: 50,
   },
+  {
+    metric: "LEAD_CALLS",
+    title: "B2B Calls",
+    unit: "calls",
+    description: "Calls made today on B2B leads (shop cold-calling), against a daily target you set.",
+    needsTarget: true,
+    defaultTarget: 50,
+  },
 ];
 
 export default function AssignTaskModal({

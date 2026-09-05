@@ -27,6 +27,12 @@ async function getLiveTaskStats(metric: string | null, assignedToId: number, tar
     });
     return { remaining: Math.max(targetValue - doneToday, 0), doneToday, remainingLabel: `Left of ${targetValue}` };
   }
+  if (metric === "LEAD_CALLS") {
+    const doneToday = await prisma.lead.count({
+      where: { contactedById: assignedToId, contactedAt: { gte: dayStart, lt: dayEnd } },
+    });
+    return { remaining: Math.max(targetValue - doneToday, 0), doneToday, remainingLabel: `Left of ${targetValue}` };
+  }
   return { remaining: 0, doneToday: 0, remainingLabel: "Remaining" };
 }
 
@@ -50,7 +56,7 @@ function TaskCard({
         </div>
         {deleteAction && (
           <div className="flex items-center gap-3 shrink-0">
-            {task.metric === "REORDER_CALLS" && <EditTaskTargetButton taskId={task.id} currentTarget={task.targetValue} />}
+            {(task.metric === "REORDER_CALLS" || task.metric === "LEAD_CALLS") && <EditTaskTargetButton taskId={task.id} currentTarget={task.targetValue} />}
             <DeleteButton action={deleteAction} message="Remove this task?" />
           </div>
         )}
