@@ -248,19 +248,6 @@ export default async function PerformancePage({
 
   const totalCalls = callLogs.length;
   const totalOrders = orders.length;
-  const convRate = totalCalls > 0 ? Math.round((totalOrders / totalCalls) * 100) : null;
-
-  // Target for the selected date
-  const target = await prisma.performanceTarget.findFirst({
-    where: { effectiveFrom: { lte: dayEnd } },
-    orderBy: { effectiveFrom: "desc" },
-  });
-  const targetCalls = target?.calls ?? 0;
-  const targetOrders = target?.newOrders ?? 0;
-  const callsPct = targetCalls > 0 ? Math.min(100, Math.round((totalCalls / targetCalls) * 100)) : null;
-  const ordersPct = targetOrders > 0 ? Math.min(100, Math.round((totalOrders / targetOrders) * 100)) : null;
-  const callsBehind = targetCalls > 0 ? Math.max(0, targetCalls - totalCalls) : 0;
-  const ordersBehind = targetOrders > 0 ? Math.max(0, targetOrders - totalOrders) : 0;
 
   // Group by PK hour
   const callsByHour = new Map<number, typeof callLogs>();
@@ -365,10 +352,10 @@ export default async function PerformancePage({
               Get Report
             </Link>
             <Link
-              href="/performance/targets"
+              href="/work?tab=tasks"
               className="border border-gray-200 text-gray-600 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
             >
-              Set Targets
+              Assign Tasks
             </Link>
           </div>
         )}
@@ -394,112 +381,6 @@ export default async function PerformancePage({
         </div>
       )}
 
-      {!filterUserId && (
-      <>
-      {/* Stat cards */}
-      <div className="grid grid-cols-3 gap-3">
-        {/* Calls card */}
-        <div className={`bg-white border-2 rounded-2xl p-5 shadow-sm ${
-          callsPct === null ? "border-gray-200" :
-          callsPct >= 100 ? "border-green-300" :
-          callsPct >= 60 ? "border-amber-300" : "border-red-300"
-        }`}>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1 font-semibold">Calls Made</p>
-          <div className="flex items-end gap-1.5">
-            <p className="text-3xl font-bold text-blue-600 tabular-nums leading-none">{totalCalls}</p>
-            {targetCalls > 0 && (
-              <p className="text-xs text-gray-400 mb-0.5">/ {targetCalls}</p>
-            )}
-          </div>
-          {callsPct !== null && (
-            <>
-              <div className="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${callsPct >= 100 ? "bg-green-500" : callsPct >= 60 ? "bg-amber-500" : "bg-red-400"}`}
-                  style={{ width: `${callsPct}%` }}
-                />
-              </div>
-              <p className={`text-[11px] mt-1.5 font-medium ${callsPct >= 100 ? "text-green-600" : callsPct >= 60 ? "text-amber-600" : "text-red-500"}`}>
-                {callsPct >= 100
-                  ? `✓ Target met`
-                  : `${callsPct}% · ${callsBehind} more needed`}
-              </p>
-            </>
-          )}
-          {callsPct === null && (
-            <p className="text-[10px] text-gray-400 mt-2">{dateLabel}</p>
-          )}
-        </div>
-
-        {/* Orders card */}
-        <div className={`bg-white border-2 rounded-2xl p-5 shadow-sm ${
-          ordersPct === null ? "border-gray-200" :
-          ordersPct >= 100 ? "border-green-300" :
-          ordersPct >= 60 ? "border-amber-300" : "border-red-300"
-        }`}>
-          <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1 font-semibold">Orders Taken</p>
-          <div className="flex items-end gap-1.5">
-            <p className="text-3xl font-bold text-purple-600 tabular-nums leading-none">{totalOrders}</p>
-            {targetOrders > 0 && (
-              <p className="text-xs text-gray-400 mb-0.5">/ {targetOrders}</p>
-            )}
-          </div>
-          {ordersPct !== null && (
-            <>
-              <div className="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${ordersPct >= 100 ? "bg-green-500" : ordersPct >= 60 ? "bg-amber-500" : "bg-red-400"}`}
-                  style={{ width: `${ordersPct}%` }}
-                />
-              </div>
-              <p className={`text-[11px] mt-1.5 font-medium ${ordersPct >= 100 ? "text-green-600" : ordersPct >= 60 ? "text-amber-600" : "text-red-500"}`}>
-                {ordersPct >= 100
-                  ? `✓ Target met`
-                  : `${ordersPct}% · ${ordersBehind} more needed`}
-              </p>
-            </>
-          )}
-          {ordersPct === null && (
-            <p className="text-[10px] text-gray-400 mt-2">{dateLabel}</p>
-          )}
-        </div>
-
-        {/* Conversion card */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-          <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1 font-semibold">Conversion</p>
-          <p className="text-3xl font-bold text-green-600 tabular-nums leading-none">
-            {convRate !== null ? `${convRate}%` : "—"}
-          </p>
-          <p className="text-[10px] text-gray-400 mt-2">
-            {totalCalls > 0 ? `${totalOrders} of ${totalCalls} calls` : "No calls yet"}
-          </p>
-        </div>
-      </div>
-
-      {/* Overall target banner */}
-      {(callsPct !== null || ordersPct !== null) && (callsBehind > 0 || ordersBehind > 0) && (
-        <div className={`rounded-xl px-4 py-3 border text-sm flex items-center gap-3 ${
-          (callsPct ?? 100) >= 100 && (ordersPct ?? 100) >= 100
-            ? "bg-green-50 border-green-200 text-green-800"
-            : ((callsPct ?? 100) < 60 || (ordersPct ?? 100) < 60)
-            ? "bg-red-50 border-red-200 text-red-800"
-            : "bg-amber-50 border-amber-200 text-amber-800"
-        }`}>
-          <span className="text-base">
-            {(callsPct ?? 100) >= 100 && (ordersPct ?? 100) >= 100 ? "✅" :
-             ((callsPct ?? 100) < 60 || (ordersPct ?? 100) < 60) ? "🔴" : "⏳"}
-          </span>
-          <span>
-            {callsBehind > 0 && ordersBehind > 0
-              ? `${callsBehind} more calls and ${ordersBehind} more orders needed to hit today's target`
-              : callsBehind > 0
-              ? `${callsBehind} more calls needed to hit today's target`
-              : `${ordersBehind} more orders needed to hit today's target`}
-          </span>
-        </div>
-      )}
-      </>
-      )}
 
       {/* Bar chart */}
       {chartData.length > 0 && (
