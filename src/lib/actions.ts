@@ -3006,3 +3006,22 @@ export async function deleteComplaint(id: number) {
   revalidatePath("/complaints");
   redirect("/complaints");
 }
+
+// ── Employee Work ───────────────────────────────────────────────────────────
+
+export async function clockIn() {
+  const me = await requireAuth();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const existing = await prisma.employeeShift.findFirst({
+    where: { userId: me.id, startedAt: { gte: today, lt: tomorrow } },
+  });
+  if (existing) return { alreadyStarted: true, shiftId: existing.id };
+
+  const shift = await prisma.employeeShift.create({ data: { userId: me.id } });
+  revalidatePath("/work");
+  return { shiftId: shift.id };
+}
