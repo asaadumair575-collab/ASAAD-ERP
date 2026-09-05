@@ -7,16 +7,28 @@ import ClockInButton from "./ClockInButton";
 export default async function WorkPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; tab?: string }>;
 }) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
-  const { date } = await searchParams;
+  const { date, tab } = await searchParams;
+  const activeTab = tab === "tasks" ? "tasks" : "clockin";
   const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
   const dayStr = date ?? todayPK;
   const dayStart = new Date(`${dayStr}T00:00:00+05:00`);
   const dayEnd = new Date(`${dayStr}T23:59:59+05:00`);
+
+  const Tabs = (
+    <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+      <Link href="/work" className={`px-5 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === "clockin" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+        Clock In Time
+      </Link>
+      <Link href="/work?tab=tasks" className={`px-5 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === "tasks" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+        Tasks
+      </Link>
+    </div>
+  );
 
   if (me.isAdmin) {
     const shifts = await prisma.employeeShift.findMany({
@@ -34,7 +46,11 @@ export default async function WorkPage({
           <p className="text-sm text-gray-400 mt-0.5">Daily start times</p>
         </div>
 
+        {Tabs}
+
+        {activeTab === "clockin" && (<>
         <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
+          <input type="hidden" name="tab" value="clockin" />
           <input
             type="date"
             name="date"
@@ -71,6 +87,13 @@ export default async function WorkPage({
             </div>
           )}
         </div>
+        </>)}
+
+        {activeTab === "tasks" && (
+          <div className="border border-dashed border-gray-200 rounded-2xl p-12 text-center space-y-1">
+            <p className="text-sm font-medium text-gray-400">Tasks — coming soon</p>
+          </div>
+        )}
       </div>
     );
   }
@@ -94,21 +117,32 @@ export default async function WorkPage({
         </p>
       </div>
 
-      {!hasStarted ? (
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
-          <div className="space-y-1">
-            <p className="text-base font-semibold text-gray-900">Ready to start your day?</p>
-            <p className="text-sm text-gray-400">Your start time will be recorded when you tap below.</p>
+      {Tabs}
+
+      {activeTab === "clockin" && (
+        !hasStarted ? (
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-gray-900">Ready to start your day?</p>
+              <p className="text-sm text-gray-400">Your start time will be recorded when you tap below.</p>
+            </div>
+            <ClockInButton />
           </div>
-          <ClockInButton />
-        </div>
-      ) : (
-        <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-5 py-3.5">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
-          <div>
-            <p className="text-sm font-semibold text-green-800">You&apos;re clocked in</p>
-            <p className="text-xs text-green-600 mt-0.5">Started at {startTime}</p>
+        ) : (
+          <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-5 py-3.5">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-green-800">You&apos;re clocked in</p>
+              <p className="text-xs text-green-600 mt-0.5">Started at {startTime}</p>
+            </div>
           </div>
+        )
+      )}
+
+      {activeTab === "tasks" && (
+        <div className="border border-dashed border-gray-200 rounded-2xl p-12 text-center space-y-1">
+          <p className="text-sm font-medium text-gray-400">No tasks yet</p>
+          <p className="text-xs text-gray-300">Your manager will assign tasks shortly.</p>
         </div>
       )}
     </div>
