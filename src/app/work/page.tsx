@@ -3,6 +3,61 @@ import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import ClockInButton from "./ClockInButton";
+import AssignTaskModal from "./AssignTaskModal";
+import DeleteButton from "@/components/DeleteButton";
+import LiveRefresh from "./LiveRefresh";
+import { deleteTask } from "@/lib/actions";
+
+async function getLiveTaskStats(metric: string | null) {
+  const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+  const dayStart = new Date(`${todayPK}T00:00:00+05:00`);
+  const dayEnd = new Date(`${todayPK}T23:59:59+05:00`);
+
+  if (metric === "CONFIRM_ORDERS") {
+    const [remaining, doneToday] = await Promise.all([
+      prisma.ecomOrder.count({ where: { draft: true } }),
+      prisma.ecomOrder.count({ where: { confirmedAt: { gte: dayStart, lt: dayEnd } } }),
+    ]);
+    return { remaining, doneToday };
+  }
+  return { remaining: 0, doneToday: 0 };
+}
+
+function TaskCard({
+  task,
+  stats,
+  deleteAction,
+}: {
+  task: { id: number; title: string; description: string | null; unit: string; assignedTo?: { displayName: string | null; username: string } };
+  stats: { remaining: number; doneToday: number };
+  deleteAction?: () => Promise<void>;
+}) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-gray-900">{task.title}</p>
+          {task.assignedTo && (
+            <p className="text-xs text-gray-400 mt-0.5">{task.assignedTo.displayName ?? task.assignedTo.username}</p>
+          )}
+          {task.description && <p className="text-xs text-gray-400 mt-1">{task.description}</p>}
+        </div>
+        {deleteAction && <DeleteButton action={deleteAction} message="Remove this task?" />}
+      </div>
+      <div className="flex items-center gap-6 pt-1">
+        <div>
+          <p className="text-2xl font-bold text-[#16202E] tabular-nums">{stats.remaining}</p>
+          <p className="text-xs text-gray-400">Remaining {task.unit}</p>
+        </div>
+        <div className="w-px h-8 bg-gray-100" />
+        <div>
+          <p className="text-2xl font-bold text-green-600 tabular-nums">{stats.doneToday}</p>
+          <p className="text-xs text-gray-400">Done today</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default async function WorkPage({
   searchParams,
@@ -31,11 +86,28 @@ export default async function WorkPage({
   );
 
   if (me.isAdmin) {
-    const shifts = await prisma.employeeShift.findMany({
-      where: { startedAt: { gte: dayStart, lte: dayEnd } },
-      include: { user: { select: { displayName: true, username: true } } },
-      orderBy: { startedAt: "asc" },
-    });
+    const [shifts, employees, tasks] = await Promise.all([
+      prisma.employeeShift.findMany({
+        where: { startedAt: { gte: dayStart, lte: dayEnd } },
+        include: { user: { select: { displayName: true, username: true } } },
+        orderBy: { startedAt: "asc" },
+      }),
+      prisma.user.findMany({
+        where: { isAdmin: false },
+        orderBy: { displayName: "asc" },
+        select: { id: true, displayName: true, username: true },
+      }),
+      activeTab === "tasks"
+        ? prisma.employeeTask.findMany({
+            include: { assignedTo: { select: { displayName: true, username: true } } },
+            orderBy: { createdAt: "desc" },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const tasksWithStats = await Promise.all(
+      tasks.map(async (t) => ({ task: t, stats: await getLiveTaskStats(t.metric) }))
+    );
 
     return (
       <div className="max-w-5xl space-y-6">
@@ -90,21 +162,44 @@ export default async function WorkPage({
         </>)}
 
         {activeTab === "tasks" && (
-          <div className="border border-dashed border-gray-200 rounded-2xl p-12 text-center space-y-1">
-            <p className="text-sm font-medium text-gray-400">Tasks — coming soon</p>
+          <div className="space-y-4">
+            <LiveRefresh />
+            <div className="flex justify-end">
+              <AssignTaskModal employees={employees} />
+            </div>
+            {tasksWithStats.length === 0 ? (
+              <div className="border border-dashed border-gray-200 rounded-2xl p-12 text-center space-y-1">
+                <p className="text-sm font-medium text-gray-400">No tasks assigned yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {tasksWithStats.map(({ task, stats }) => (
+                  <TaskCard key={task.id} task={task} stats={stats} deleteAction={deleteTask.bind(null, task.id)} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
     );
   }
 
-  const shift = await prisma.employeeShift.findFirst({
-    where: { userId: me.id, startedAt: { gte: dayStart, lte: dayEnd } },
-  });
+  const [shift, myTasks] = await Promise.all([
+    prisma.employeeShift.findFirst({
+      where: { userId: me.id, startedAt: { gte: dayStart, lte: dayEnd } },
+    }),
+    activeTab === "tasks"
+      ? prisma.employeeTask.findMany({ where: { assignedToId: me.id }, orderBy: { createdAt: "desc" } })
+      : Promise.resolve([]),
+  ]);
   const hasStarted = !!shift;
   const startTime = shift?.startedAt
     ? shift.startedAt.toLocaleTimeString("en-PK", { timeZone: "Asia/Karachi", hour: "2-digit", minute: "2-digit", hour12: true })
     : null;
+
+  const myTasksWithStats = await Promise.all(
+    myTasks.map(async (t) => ({ task: t, stats: await getLiveTaskStats(t.metric) }))
+  );
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -140,9 +235,20 @@ export default async function WorkPage({
       )}
 
       {activeTab === "tasks" && (
-        <div className="border border-dashed border-gray-200 rounded-2xl p-12 text-center space-y-1">
-          <p className="text-sm font-medium text-gray-400">No tasks yet</p>
-          <p className="text-xs text-gray-300">Your manager will assign tasks shortly.</p>
+        <div className="space-y-4">
+          <LiveRefresh />
+          {myTasksWithStats.length === 0 ? (
+            <div className="border border-dashed border-gray-200 rounded-2xl p-12 text-center space-y-1">
+              <p className="text-sm font-medium text-gray-400">No tasks yet</p>
+              <p className="text-xs text-gray-300">Your manager will assign tasks shortly.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {myTasksWithStats.map(({ task, stats }) => (
+                <TaskCard key={task.id} task={task} stats={stats} />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

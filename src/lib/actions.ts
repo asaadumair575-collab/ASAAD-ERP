@@ -3025,3 +3025,39 @@ export async function clockIn() {
   revalidatePath("/work");
   return { shiftId: shift.id };
 }
+
+// A persistent assignment, not a per-day one — for a live metric like
+// CONFIRM_ORDERS there's nothing to "reset" daily; progress/target are
+// computed live from the source table every time the Tasks tab renders,
+// so new orders show up the moment they arrive, no re-assignment needed.
+export async function assignTask(data: {
+  assignedToId: number;
+  title: string;
+  description?: string;
+  unit: string;
+  metric: string;
+}) {
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Unauthorized");
+
+  await prisma.employeeTask.create({
+    data: {
+      assignedToId: data.assignedToId,
+      assignedById: me.id,
+      title: data.title,
+      description: data.description || null,
+      targetValue: 0,
+      unit: data.unit,
+      metric: data.metric,
+      date: new Date(),
+    },
+  });
+  revalidatePath("/work");
+}
+
+export async function deleteTask(taskId: number) {
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Unauthorized");
+  await prisma.employeeTask.delete({ where: { id: taskId } });
+  revalidatePath("/work");
+}
