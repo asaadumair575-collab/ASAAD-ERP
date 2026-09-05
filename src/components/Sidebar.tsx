@@ -133,6 +133,8 @@ export default function Sidebar({
   const [openSection, setOpenSection] = useState<Section>(sectionForPath());
   const isOnAnalytics = pathname.startsWith("/ecommerce/ads-manager") || pathname.startsWith("/ecommerce/postex-analytics");
   const [analyticsOpen, setAnalyticsOpen] = useState(isOnAnalytics);
+  const isOnEcomOrders = pathname.startsWith("/ecommerce/shopify-orders") || pathname.startsWith("/ecommerce/orders") || pathname.startsWith("/ecommerce/all-orders") || pathname.startsWith("/ecommerce/dispatch");
+  const [ecomOrdersOpen, setEcomOrdersOpen] = useState(isOnEcomOrders);
 
   useEffect(() => {
     setOpenSection(sectionForPath());
@@ -373,20 +375,32 @@ export default function Sidebar({
                     <NavLink href="/ecommerce/postex-analytics" active={pathname.startsWith("/ecommerce/postex-analytics")} compact onClick={closeMobile}>Postex Analytics</NavLink>
                   </div>
                 )}
-                <NavLink href="/ecommerce/shopify-orders" active={pathname.startsWith("/ecommerce/shopify-orders")} compact onClick={closeMobile}>
-                  <span className="inline-flex items-center gap-1.5">
-                    <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5 shrink-0 opacity-70"><path d="M2 4.5h12M2 8h12M2 11.5h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
-                    Draft Orders
-                  </span>
-                </NavLink>
-                {canViewSub(permissions, "ecom_orders", isAdmin) && (
-                  <NavLink href="/ecommerce/orders" active={pathname.startsWith("/ecommerce/orders")} compact onClick={closeMobile}>Orders</NavLink>
-                )}
-                {canViewSub(permissions, "ecom_orders", isAdmin) && (
-                  <NavLink href="/ecommerce/all-orders" active={pathname.startsWith("/ecommerce/all-orders")} compact onClick={closeMobile}>All Orders</NavLink>
-                )}
-                {canViewSub(permissions, "ecom_orders", isAdmin) && (
-                  <NavLink href="/ecommerce/dispatch" active={pathname.startsWith("/ecommerce/dispatch")} compact onClick={closeMobile}>Dispatch</NavLink>
+                <button
+                  type="button"
+                  onClick={() => setEcomOrdersOpen((v) => !v)}
+                  className={`w-full flex items-center justify-between pl-1 pr-2.5 py-1.5 rounded-lg text-sm transition-colors ${isOnEcomOrders ? "text-white font-semibold" : "text-gray-400 hover:text-gray-200"}`}
+                >
+                  <span>Orders</span>
+                  <span className={`transition-transform text-gray-500 ${ecomOrdersOpen ? "rotate-90" : ""}`}>{icons.chevron}</span>
+                </button>
+                {ecomOrdersOpen && (
+                  <div className="ml-3 pl-3 border-l border-white/10 space-y-0.5">
+                    <NavLink href="/ecommerce/shopify-orders" active={pathname.startsWith("/ecommerce/shopify-orders")} compact onClick={closeMobile}>
+                      <span className="inline-flex items-center gap-1.5">
+                        <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5 shrink-0 opacity-70"><path d="M2 4.5h12M2 8h12M2 11.5h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
+                        Draft Orders
+                      </span>
+                    </NavLink>
+                    {canViewSub(permissions, "ecom_orders", isAdmin) && (
+                      <NavLink href="/ecommerce/orders" active={pathname.startsWith("/ecommerce/orders")} compact onClick={closeMobile}>Orders</NavLink>
+                    )}
+                    {canViewSub(permissions, "ecom_orders", isAdmin) && (
+                      <NavLink href="/ecommerce/all-orders" active={pathname.startsWith("/ecommerce/all-orders")} compact onClick={closeMobile}>All Orders</NavLink>
+                    )}
+                    {canViewSub(permissions, "ecom_orders", isAdmin) && (
+                      <NavLink href="/ecommerce/dispatch" active={pathname.startsWith("/ecommerce/dispatch")} compact onClick={closeMobile}>Dispatch</NavLink>
+                    )}
+                  </div>
                 )}
                 {canViewSub(permissions, "ecom_customers", isAdmin) && (
                   <NavLink href="/ecommerce/customers" active={pathname.startsWith("/ecommerce/customers")} compact onClick={closeMobile}>Customers</NavLink>
