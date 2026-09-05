@@ -335,7 +335,7 @@ export default async function PerformancePage({
   const dateLabel = dateLabelForStr(selectedDateStr, todayStr);
 
   return (
-    <div className="space-y-5 max-w-2xl">
+    <div className="space-y-5 max-w-5xl">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Performance</h1>
