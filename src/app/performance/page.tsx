@@ -205,11 +205,14 @@ export default async function PerformancePage({
     : [];
 
   // The employee's actual assigned tasks (from My Work) — these replace the
-  // old hardcoded calls/orders target system whenever a single employee is
-  // in view, so Performance always reflects whatever's really assigned.
-  const myTasks = filterUserId
-    ? await prisma.employeeTask.findMany({ where: { assignedToId: filterUserId }, orderBy: { createdAt: "desc" } })
-    : [];
+  // old hardcoded calls/orders target system. Filtered to one employee when
+  // one is picked; otherwise (admin, "All Employees") every task assigned to
+  // anyone, so nothing given out on My Work goes missing from here.
+  const myTasks = await prisma.employeeTask.findMany({
+    where: filterUserId ? { assignedToId: filterUserId } : {},
+    include: { assignedTo: { select: { displayName: true, username: true } } },
+    orderBy: { createdAt: "desc" },
+  });
   const myTasksWithStats = await Promise.all(
     myTasks.map(async (t) => ({ task: t, stats: await getLiveTaskStats(t.metric, t.assignedToId, t.targetValue, dayStart, dayEnd) }))
   );
@@ -375,23 +378,23 @@ export default async function PerformancePage({
         <PerformanceFilter users={users} isAdmin={isAdmin} />
       </Suspense>
 
-      {/* Assigned tasks — replaces the old fixed calls/orders target system
-          whenever we're looking at one specific employee, so this always
-          reflects whatever's actually assigned on My Work. */}
-      {filterUserId ? (
-        myTasksWithStats.length === 0 ? (
-          <div className="border border-dashed border-gray-200 rounded-2xl p-10 text-center">
-            <p className="text-sm font-medium text-gray-400">No tasks assigned</p>
-            <p className="text-xs text-gray-300 mt-1">Assign tasks from My Work to see progress here.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {myTasksWithStats.map(({ task, stats }) => (
-              <TaskStatCard key={task.id} task={task} stats={stats} />
-            ))}
-          </div>
-        )
+      {/* Assigned tasks — replaces the old fixed calls/orders target system.
+          Always shown, whether one employee is picked or "All Employees",
+          so nothing given out on My Work goes missing here. */}
+      {myTasksWithStats.length === 0 ? (
+        <div className="border border-dashed border-gray-200 rounded-2xl p-10 text-center">
+          <p className="text-sm font-medium text-gray-400">No tasks assigned</p>
+          <p className="text-xs text-gray-300 mt-1">Assign tasks from My Work to see progress here.</p>
+        </div>
       ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {myTasksWithStats.map(({ task, stats }) => (
+            <TaskStatCard key={task.id} task={task} stats={stats} />
+          ))}
+        </div>
+      )}
+
+      {!filterUserId && (
       <>
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-3">
