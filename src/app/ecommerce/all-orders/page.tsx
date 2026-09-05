@@ -22,18 +22,19 @@ export default async function AllOrdersPage({
   searchParams: Promise<{ q?: string; from?: string; to?: string }>;
 }) {
   const { q, from, to } = await searchParams;
-  const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
-  const fromDate = from ? new Date(`${from}T00:00:00+05:00`) : new Date(`${todayPK}T00:00:00+05:00`);
-  const toDate = to ? new Date(`${to}T23:59:59+05:00`) : new Date(`${todayPK}T23:59:59+05:00`);
+  const fromDate = from ? new Date(`${from}T00:00:00+05:00`) : undefined;
+  const toDate = to ? new Date(`${to}T23:59:59+05:00`) : undefined;
 
   // Keyed strictly off `date` — the timestamp the order actually arrived
   // from the website, set once at creation and never touched again by
   // confirmation, booking, packing, or dispatch. Every other order list in
   // the app shows the last status-update date instead, so this is the only
   // page that answers "who ordered on this specific day?" reliably.
+  // No status filter of any kind — draft, confirmed, packed, dispatched,
+  // returned all show up as long as the arrival date matches.
   const orders = await prisma.ecomOrder.findMany({
     where: {
-      date: { gte: fromDate, lte: toDate },
+      ...(fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {}),
       ...(q ? { OR: [{ customerName: { contains: q, mode: "insensitive" } }, { phone: { contains: q } }, { city: { contains: q, mode: "insensitive" } }] } : {}),
     },
     include: { items: true },
@@ -53,7 +54,7 @@ export default async function AllOrdersPage({
 
       <form method="GET" className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
         <input type="text" name="q" defaultValue={q ?? ""} placeholder="Search customer, phone, city..." className="flex-1 min-w-[180px] w-full sm:w-auto bg-gray-50 border border-transparent rounded-lg px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-        <DateRangeFilter from={from ?? todayPK} to={to ?? todayPK} />
+        <DateRangeFilter from={from} to={to} />
         <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2.5 sm:py-2 rounded-lg hover:bg-gray-800 transition-colors w-full sm:w-auto">Filter</button>
         {(q || from || to) && <Link href="/ecommerce/all-orders" className="text-sm text-gray-400 hover:text-black px-2 text-center sm:text-left">Clear</Link>}
       </form>
