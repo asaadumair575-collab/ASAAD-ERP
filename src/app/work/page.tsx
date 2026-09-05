@@ -66,6 +66,21 @@ function TaskCard({
           <p className="text-xs text-gray-400">Done today</p>
         </div>
       </div>
+      {(() => {
+        const total = stats.doneToday + stats.remaining;
+        const pct = total > 0 ? Math.min(100, Math.round((stats.doneToday / total) * 100)) : 0;
+        return (
+          <div className="space-y-1">
+            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${pct >= 100 ? "bg-green-500" : "bg-[#16202E]"}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <p className="text-[11px] text-gray-400 text-right">{pct}%</p>
+          </div>
+        );
+      })()}
     </div>
   );
 }
