@@ -26,7 +26,7 @@ export default async function WorkPage({
     });
 
     return (
-      <div className="max-w-2xl space-y-6">
+      <div className="max-w-5xl space-y-6">
         <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm">
           <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
           <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Employee</p>
@@ -84,7 +84,7 @@ export default async function WorkPage({
     : null;
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-5xl space-y-6">
       <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm">
         <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
         <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Employee</p>
