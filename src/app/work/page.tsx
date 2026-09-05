@@ -40,13 +40,12 @@ function TaskCard({
           {task.assignedTo && (
             <p className="text-xs text-gray-400 mt-0.5">{task.assignedTo.displayName ?? task.assignedTo.username}</p>
           )}
-          {task.description && <p className="text-xs text-gray-400 mt-1">{task.description}</p>}
         </div>
         {deleteAction && <DeleteButton action={deleteAction} message="Remove this task?" />}
       </div>
       <div className="flex items-center gap-6 pt-1">
         <div>
-          <p className="text-2xl font-bold text-[#16202E] tabular-nums">{stats.remaining}</p>
+          <p className={`text-2xl font-bold tabular-nums ${stats.remaining > 0 ? "text-red-600" : "text-[#16202E]"}`}>{stats.remaining}</p>
           <p className="text-xs text-gray-400">Remaining {task.unit}</p>
         </div>
         <div className="w-px h-8 bg-gray-100" />
