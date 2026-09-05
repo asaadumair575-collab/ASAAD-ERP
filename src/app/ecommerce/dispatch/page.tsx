@@ -4,16 +4,26 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { dispatchSheetNumber } from "@/lib/dispatchSheetNumber";
 import ScanDispatchModal from "@/components/ScanDispatchModal";
+import DateRangeFilter from "@/components/DateRangeFilter";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
 }
 
-export default async function DispatchListPage() {
+export default async function DispatchListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
+  const { from, to } = await searchParams;
+  const fromDate = from ? new Date(`${from}T00:00:00+05:00`) : undefined;
+  const toDate = to ? new Date(`${to}T23:59:59+05:00`) : undefined;
+
   const sheets = await prisma.dispatchSheet.findMany({
+    where: fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {},
     include: { createdBy: { select: { displayName: true, username: true } } },
     orderBy: { createdAt: "desc" },
     take: 100,
@@ -31,16 +41,24 @@ export default async function DispatchListPage() {
         <ScanDispatchModal />
       </div>
 
+      <form method="GET" className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
+        <DateRangeFilter from={from} to={to} />
+        <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2.5 sm:py-2 rounded-lg hover:bg-gray-800 transition-colors w-full sm:w-auto">Filter</button>
+        {(from || to) && <Link href="/ecommerce/dispatch" className="text-sm text-gray-400 hover:text-black px-2 text-center sm:text-left">Clear</Link>}
+      </form>
+
       {sheets.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
           <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg viewBox="0 0 24 24" fill="none" className="w-7 h-7 text-gray-400"><rect x="2" y="7" width="20" height="15" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M16 7V5a2 2 0 0 0-4 0v2M8 7V5a2 2 0 0 0-4 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M8 12h8M8 16h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
           </div>
-          <p className="text-base font-semibold text-gray-700">No dispatch sheets yet</p>
-          <p className="text-sm text-gray-400 mt-1">Select packed orders on Orders and generate one.</p>
-          <Link href="/ecommerce/orders" className="inline-block mt-4 text-sm font-medium text-[#16202E] underline decoration-dotted">
-            Go to Orders →
-          </Link>
+          <p className="text-base font-semibold text-gray-700">{from || to ? "No dispatch sheets in this date range" : "No dispatch sheets yet"}</p>
+          <p className="text-sm text-gray-400 mt-1">{from || to ? "Try a different date range." : "Select packed orders on Orders and generate one."}</p>
+          {!(from || to) && (
+            <Link href="/ecommerce/orders" className="inline-block mt-4 text-sm font-medium text-[#16202E] underline decoration-dotted">
+              Go to Orders →
+            </Link>
+          )}
         </div>
       ) : (
         <>
