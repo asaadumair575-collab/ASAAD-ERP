@@ -37,6 +37,14 @@ async function getAutoProgress(metric: string, userId: number, date: Date): Prom
       where: { repliedById: userId, repliedAt: { gte: dayStart, lt: dayEnd } },
     });
   }
+  if (metric === "CONFIRM_ORDERS") {
+    // Not attributed per-employee (EcomOrder has no confirmedById) — counts
+    // whoever confirmed an order today, which is fine since only one person
+    // runs this job at a time.
+    return prisma.ecomOrder.count({
+      where: { confirmedAt: { gte: dayStart, lt: dayEnd } },
+    });
+  }
   return 0;
 }
 

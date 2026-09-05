@@ -21,10 +21,20 @@ export default async function ContactedLeadsPage({
 
   const leads = await prisma.lead.findMany({
     where: { status: "CONTACTED" },
-    orderBy: { createdAt: "desc" },
+    orderBy: { contactedAt: "desc" },
     skip: (currentPage - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
+    include: { contactedBy: { select: { displayName: true, username: true } } },
   });
+
+  // The call outcome is stored as the last "Contacted: <reason>" line in
+  // notes — pull it back out so admin can review what happened on the call
+  // without opening each lead individually.
+  function callResult(notes: string | null) {
+    if (!notes) return null;
+    const lines = notes.split("\n").filter((l) => l.startsWith("Contacted: "));
+    return lines.length ? lines[lines.length - 1].replace("Contacted: ", "") : null;
+  }
 
   return (
     <div className="space-y-6">
@@ -52,6 +62,8 @@ export default async function ContactedLeadsPage({
                 <th className="py-3 px-5">Shop Name</th>
                 <th className="py-3 px-5">Number</th>
                 <th className="py-3 px-5">City</th>
+                <th className="py-3 px-5">Call Result</th>
+                <th className="py-3 px-5">Called By</th>
                 <th className="py-3 px-5"></th>
                 <th className="py-3 px-5"></th>
                 <th className="py-3 px-5"></th>
@@ -71,6 +83,23 @@ export default async function ContactedLeadsPage({
                     </td>
                     <td className="py-3 px-5 text-gray-500">{l.phone || "-"}</td>
                     <td className="py-3 px-5 text-gray-500">{l.city || "-"}</td>
+                    <td className="py-3 px-5">
+                      {callResult(l.notes) ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                          {callResult(l.notes)}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-300">—</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-5 text-gray-500 text-xs">
+                      {l.contactedBy?.displayName ?? l.contactedBy?.username ?? "-"}
+                      {l.contactedAt && (
+                        <span className="block text-gray-400">
+                          {l.contactedAt.toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", day: "numeric", month: "short" })}
+                        </span>
+                      )}
+                    </td>
                     <td className="py-3 px-5"><WhatsAppButton phone={l.phone} /></td>
                     <td className="py-3 px-5 text-right">
                       <Link href={`/samples/new?leadId=${l.id}`} className="text-xs font-medium text-gray-500 hover:text-black transition-colors">

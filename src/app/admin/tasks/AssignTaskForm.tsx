@@ -139,6 +139,7 @@ export default function AssignTaskForm({
             <option value="RETAIL_ORDERS">Retail Orders — count today&apos;s orders booked</option>
             <option value="LEAD_CALLS">B2B Leads Contacted — count today&apos;s new-lead calls</option>
             <option value="WHATSAPP_REPLIES">WhatsApp Replies — count today&apos;s logged WhatsApp replies</option>
+            <option value="CONFIRM_ORDERS">Confirm Address — clears backlog of unconfirmed website orders</option>
           </select>
           {metric && (
             <p className="text-xs text-green-600 mt-1">✓ Progress will update automatically from system data</p>

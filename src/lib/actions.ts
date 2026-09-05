@@ -3138,13 +3138,21 @@ export async function ensureTodaysTasksFromTemplates(userId: number) {
   const missing = templates.filter((t) => !existingKeys.has(`${t.metric ?? ""}::${t.title}`));
   if (missing.length === 0) return;
 
+  // CONFIRM_ORDERS doesn't use a fixed target — every unconfirmed order
+  // (today's arrivals plus yesterday's leftovers) rolls forward until it's
+  // confirmed, so the task each day should target the actual backlog size,
+  // not a made-up number.
+  const backlogCount = missing.some((t) => t.metric === "CONFIRM_ORDERS")
+    ? await prisma.ecomOrder.count({ where: { draft: true } })
+    : 0;
+
   await prisma.employeeTask.createMany({
     data: missing.map((t) => ({
       assignedToId: userId,
       assignedById: userId,
       title: t.title,
       description: t.description,
-      targetValue: t.targetValue,
+      targetValue: t.metric === "CONFIRM_ORDERS" ? Math.max(backlogCount, 1) : t.targetValue,
       unit: t.unit,
       metric: t.metric,
       date: today,
