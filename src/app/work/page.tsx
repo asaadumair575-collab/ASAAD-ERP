@@ -26,11 +26,12 @@ export default async function WorkPage({
     });
 
     return (
-      <div className="max-w-2xl mx-auto py-2 space-y-6">
-        <div className="bg-gradient-to-br from-[#16202E] to-[#232F42] rounded-2xl px-6 py-8 text-center shadow-sm">
-          <p className="text-xs font-semibold text-[#BFD732] uppercase tracking-widest mb-2">Employee</p>
-          <h1 className="text-3xl font-bold tracking-tight text-white">My Work</h1>
-          <p className="text-sm text-gray-400 mt-2">Daily start times</p>
+      <div className="max-w-2xl space-y-6">
+        <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm">
+          <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
+          <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Employee</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">My Work</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Daily start times</p>
         </div>
 
         <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
@@ -83,11 +84,12 @@ export default async function WorkPage({
     : null;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 py-2">
-      <div className="bg-gradient-to-br from-[#16202E] to-[#232F42] rounded-2xl px-6 py-8 text-center shadow-sm">
-        <p className="text-xs font-semibold text-[#BFD732] uppercase tracking-widest mb-2">Employee</p>
-        <h1 className="text-3xl font-bold tracking-tight text-white">My Work</h1>
-        <p className="text-sm text-gray-400 mt-2">
+    <div className="max-w-2xl space-y-6">
+      <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm">
+        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
+        <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Employee</p>
+        <h1 className="text-2xl font-bold text-white tracking-tight">My Work</h1>
+        <p className="text-sm text-gray-400 mt-0.5">
           {new Date().toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", weekday: "long", day: "numeric", month: "long" })}
         </p>
       </div>
