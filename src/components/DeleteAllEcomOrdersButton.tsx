@@ -31,8 +31,8 @@ export default function DeleteAllEcomOrdersButton({ orderCount }: { orderCount: 
     <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
       <p className="text-sm text-red-800">
         This permanently deletes all <strong>{orderCount}</strong> Retail COD orders — draft and confirmed —
-        along with their items, payments, status logs, and CPR settlement history. This does <strong>not</strong>{" "}
-        affect Retail Advance (wholesale) or any other module. This cannot be undone.
+        along with their items, payments, status logs, CPR settlement history, and dispatch sheets. This does{" "}
+        <strong>not</strong> affect Retail Advance (wholesale) or any other module. This cannot be undone.
       </p>
       <p className="text-xs text-red-700">
         Type <code className="bg-red-100 px-1 py-0.5 rounded">{CONFIRM_TEXT}</code> to confirm:
