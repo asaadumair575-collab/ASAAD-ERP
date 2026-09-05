@@ -1870,6 +1870,7 @@ export async function deleteAllEcomOrders(formData: FormData) {
     prisma.ecomOrderItem.deleteMany({}),
     prisma.ecomPayment.deleteMany({}),
     prisma.ecomOrder.deleteMany({}),
+    prisma.cprBatch.deleteMany({}),
   ]);
   revalidatePath("/ecommerce/orders");
   revalidatePath("/ecommerce/finance");
@@ -1877,6 +1878,7 @@ export async function deleteAllEcomOrders(formData: FormData) {
   revalidatePath("/ecommerce/shopify-orders");
   revalidatePath("/ecommerce/expenses");
   revalidatePath("/ecommerce/settings");
+  revalidatePath("/ecommerce/cpr");
 }
 
 export async function deleteEcomExpense(id: number) {
