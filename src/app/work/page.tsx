@@ -3,6 +3,8 @@ import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import ClockInButton from "./ClockInButton";
 import TaskBox from "./TaskBox";
+import LogWhatsappButton from "./LogWhatsappButton";
+import { ensureTodaysTasksFromTemplates } from "@/lib/actions";
 
 async function getAutoProgress(metric: string, userId: number, date: Date): Promise<number> {
   const dayStart = new Date(date);
@@ -25,6 +27,16 @@ async function getAutoProgress(metric: string, userId: number, date: Date): Prom
       where: { createdByUserId: userId, createdAt: { gte: dayStart, lt: dayEnd } },
     });
   }
+  if (metric === "LEAD_CALLS") {
+    return prisma.lead.count({
+      where: { contactedById: userId, contactedAt: { gte: dayStart, lt: dayEnd } },
+    });
+  }
+  if (metric === "WHATSAPP_REPLIES") {
+    return prisma.whatsappReplyLog.count({
+      where: { repliedById: userId, repliedAt: { gte: dayStart, lt: dayEnd } },
+    });
+  }
   return 0;
 }
 
@@ -36,6 +48,8 @@ export default async function WorkPage() {
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
+
+  await ensureTodaysTasksFromTemplates(session.id);
 
   const [shift, tasks] = await Promise.all([
     prisma.employeeShift.findFirst({
@@ -103,6 +117,11 @@ export default async function WorkPage() {
       {/* Tasks grid */}
       {hasStarted && (
         <>
+          {tasksWithProgress.some((t) => t.metric === "WHATSAPP_REPLIES") && (
+            <div className="flex justify-end">
+              <LogWhatsappButton />
+            </div>
+          )}
           {tasks.length === 0 ? (
             <div className="border border-dashed border-gray-200 rounded-2xl p-12 text-center space-y-1">
               <p className="text-sm font-medium text-gray-400">No tasks for today</p>

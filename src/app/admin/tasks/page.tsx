@@ -3,7 +3,9 @@ import { getSessionUser } from "@/lib/auth";
 
 import { redirect } from "next/navigation";
 import AssignTaskForm from "./AssignTaskForm";
-import { deleteTask } from "@/lib/actions";
+import TemplateForm from "./TemplateForm";
+import TemplateToggle from "./TemplateToggle";
+import { deleteTask, deleteTaskTemplate } from "@/lib/actions";
 import DeleteButton from "@/components/DeleteButton";
 
 export default async function AdminTasksPage() {
@@ -15,7 +17,7 @@ export default async function AdminTasksPage() {
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const [employees, tasks] = await Promise.all([
+  const [employees, tasks, templates] = await Promise.all([
     prisma.user.findMany({
       where: { isAdmin: false },
       orderBy: { displayName: "asc" },
@@ -23,6 +25,10 @@ export default async function AdminTasksPage() {
     }),
     prisma.employeeTask.findMany({
       where: { date: { gte: today, lt: tomorrow } },
+      include: { assignedTo: { select: { displayName: true, username: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.taskTemplate.findMany({
       include: { assignedTo: { select: { displayName: true, username: true } } },
       orderBy: { createdAt: "desc" },
     }),
@@ -39,6 +45,40 @@ export default async function AdminTasksPage() {
         </p>
       </div>
 
+      <TemplateForm employees={employees} />
+
+      {/* Recurring templates */}
+      <div>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Recurring Daily Tasks</h2>
+        {templates.length === 0 ? (
+          <div className="border border-dashed border-gray-200 rounded-2xl p-8 text-center">
+            <p className="text-sm text-gray-400">No recurring tasks set up yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {templates.map((t) => {
+              const deleteTemplateBound = deleteTaskTemplate.bind(null, t.id);
+              return (
+                <div key={t.id} className="border border-gray-200 rounded-2xl p-4 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-800">{t.title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {t.assignedTo.displayName ?? t.assignedTo.username} · {t.targetValue} {t.unit}
+                      {t.metric && <span className="text-green-600"> · auto-tracked</span>}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <TemplateToggle id={t.id} active={t.active} />
+                    <DeleteButton action={deleteTemplateBound} message="Delete this recurring task?" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <h2 className="text-sm font-semibold text-gray-700 -mb-2">One-off Task (today only)</h2>
       <AssignTaskForm employees={employees} defaultDate={todayStr} />
 
       {/* Today's assigned tasks */}

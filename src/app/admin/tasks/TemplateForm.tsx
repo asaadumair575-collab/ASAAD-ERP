@@ -1,17 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { assignTask } from "@/lib/actions";
+import { createTaskTemplate } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 
-const UNIT_OPTIONS = ["calls", "leads", "orders", "follow-ups", "dispatches", "entries"];
+const UNIT_OPTIONS = ["calls", "leads", "orders", "follow-ups", "replies", "entries"];
 
-export default function AssignTaskForm({
+export default function TemplateForm({
   employees,
-  defaultDate,
 }: {
   employees: { id: number; displayName: string | null; username: string }[];
-  defaultDate: string;
 }) {
   const [assignedToId, setAssignedToId] = useState("");
   const [title, setTitle] = useState("");
@@ -20,7 +18,6 @@ export default function AssignTaskForm({
   const [unit, setUnit] = useState("calls");
   const [customUnit, setCustomUnit] = useState("");
   const [metric, setMetric] = useState("");
-  const [date, setDate] = useState(defaultDate);
   const [pending, startTransition] = useTransition();
   const [success, setSuccess] = useState(false);
   const router = useRouter();
@@ -31,14 +28,13 @@ export default function AssignTaskForm({
   function save() {
     if (!canSave) return;
     startTransition(async () => {
-      await assignTask({
+      await createTaskTemplate({
         assignedToId: parseInt(assignedToId),
         title: title.trim(),
         description: description.trim() || undefined,
         targetValue: parseInt(targetValue),
         unit: effectiveUnit,
         metric: metric || undefined,
-        date,
       });
       setTitle("");
       setDescription("");
@@ -51,7 +47,10 @@ export default function AssignTaskForm({
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 shadow-sm">
-      <h2 className="text-sm font-semibold text-gray-800">New Task</h2>
+      <div>
+        <h2 className="text-sm font-semibold text-gray-800">New Recurring Task</h2>
+        <p className="text-xs text-gray-400 mt-0.5">Runs every day automatically — no need to re-assign it each morning.</p>
+      </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
@@ -144,27 +143,17 @@ export default function AssignTaskForm({
             <p className="text-xs text-green-600 mt-1">✓ Progress will update automatically from system data</p>
           )}
         </div>
-
-        <div>
-          <label className="text-xs font-medium text-gray-600 block mb-1">Date</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-          />
-        </div>
       </div>
 
       <div className="flex items-center justify-between">
-        {success && <p className="text-xs text-green-600 font-medium">✓ Task assigned!</p>}
+        {success && <p className="text-xs text-green-600 font-medium">✓ Recurring task created!</p>}
         <div className="ml-auto">
           <button
             onClick={save}
             disabled={!canSave || pending}
             className="bg-black text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-gray-800 disabled:opacity-40 transition-colors"
           >
-            {pending ? "Assigning..." : "Assign Task"}
+            {pending ? "Saving..." : "Create Recurring Task"}
           </button>
         </div>
       </div>

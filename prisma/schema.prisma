@@ -182,6 +182,8 @@ model User {
   weightVerifications  WeightVerification[]
   dispatchSheetsCreated    DispatchSheet[] @relation("DispatchSheetCreatedBy")
   dispatchSheetsDispatched DispatchSheet[] @relation("DispatchSheetDispatchedBy")
+  taskTemplates        TaskTemplate[]       @relation("TaskTemplateAssignee")
+  whatsappReplyLogs    WhatsappReplyLog[]   @relation("WhatsappReplyLogRepliedBy")
 }
 
 model EmpCommissionEntry {
@@ -680,6 +682,39 @@ model EmployeeTask {
 
   @@index([assignedToId])
   @@index([assignedToId, date])
+}
+
+// A recurring per-employee task definition. Every day, the first load of
+// /work for that employee instantiates one EmployeeTask per active template
+// for that day (if one doesn't already exist) — so an admin sets this up
+// once per employee instead of re-assigning the same task every morning.
+model TaskTemplate {
+  id           Int      @id @default(autoincrement())
+  assignedTo   User     @relation("TaskTemplateAssignee", fields: [assignedToId], references: [id], onDelete: Cascade)
+  assignedToId Int
+  title        String
+  description  String?
+  targetValue  Int
+  unit         String
+  metric       String?  // REORDER_CALLS | RETAIL_FOLLOWUP | RETAIL_ORDERS | LEAD_CALLS | SHOPIFY_CONFIRMATIONS | WHATSAPP_REPLIES | null = manual
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([assignedToId])
+}
+
+// A lightweight log an employee taps to record "I just handled a WhatsApp
+// conversation" — there's no separate WhatsApp inbox in this app, so this is
+// the only way to make WhatsApp handling countable as a task metric.
+model WhatsappReplyLog {
+  id          Int      @id @default(autoincrement())
+  repliedBy   User     @relation("WhatsappReplyLogRepliedBy", fields: [repliedById], references: [id], onDelete: Cascade)
+  repliedById Int
+  note        String?
+  repliedAt   DateTime @default(now())
+
+  @@index([repliedById])
+  @@index([repliedAt])
 }
 
 // ── Calling Module ─────────────────────────────────────────────────────────

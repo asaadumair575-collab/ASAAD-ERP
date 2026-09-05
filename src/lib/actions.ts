@@ -3071,3 +3071,87 @@ export async function deleteTask(taskId: number) {
   await prisma.employeeTask.delete({ where: { id: taskId } });
   revalidatePath("/admin/tasks");
 }
+
+// A recurring daily task definition per employee — set up once, so the
+// admin doesn't have to re-assign the same task every morning.
+export async function createTaskTemplate(data: {
+  assignedToId: number;
+  title: string;
+  description?: string;
+  targetValue: number;
+  unit: string;
+  metric?: string;
+}) {
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Unauthorized");
+
+  await prisma.taskTemplate.create({
+    data: {
+      assignedToId: data.assignedToId,
+      title: data.title,
+      description: data.description || null,
+      targetValue: data.targetValue,
+      unit: data.unit,
+      metric: data.metric || null,
+    },
+  });
+  revalidatePath("/admin/tasks");
+}
+
+export async function toggleTaskTemplate(id: number, active: boolean) {
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Unauthorized");
+  await prisma.taskTemplate.update({ where: { id }, data: { active } });
+  revalidatePath("/admin/tasks");
+}
+
+export async function deleteTaskTemplate(id: number) {
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Unauthorized");
+  await prisma.taskTemplate.delete({ where: { id } });
+  revalidatePath("/admin/tasks");
+}
+
+// Creates today's EmployeeTask rows from every active TaskTemplate that
+// doesn't already have a task for today — called on /work page load so
+// tasks appear automatically without an admin touching anything each day.
+export async function ensureTodaysTasksFromTemplates(userId: number) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const [templates, existingTasks] = await Promise.all([
+    prisma.taskTemplate.findMany({ where: { assignedToId: userId, active: true } }),
+    prisma.employeeTask.findMany({
+      where: { assignedToId: userId, date: { gte: today, lt: tomorrow } },
+      select: { title: true, metric: true },
+    }),
+  ]);
+  if (templates.length === 0) return;
+
+  const existingKeys = new Set(existingTasks.map((t) => `${t.metric ?? ""}::${t.title}`));
+  const missing = templates.filter((t) => !existingKeys.has(`${t.metric ?? ""}::${t.title}`));
+  if (missing.length === 0) return;
+
+  await prisma.employeeTask.createMany({
+    data: missing.map((t) => ({
+      assignedToId: userId,
+      assignedById: userId,
+      title: t.title,
+      description: t.description,
+      targetValue: t.targetValue,
+      unit: t.unit,
+      metric: t.metric,
+      date: today,
+    })),
+  });
+}
+
+export async function logWhatsappReply(note?: string) {
+  const me = await requireAuth();
+  await prisma.whatsappReplyLog.create({
+    data: { repliedById: me.id, note: note || null },
+  });
+  revalidatePath("/work");
+}
