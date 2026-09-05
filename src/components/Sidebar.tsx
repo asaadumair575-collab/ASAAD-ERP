@@ -115,7 +115,7 @@ export default function Sidebar({
   const isOnRetail = pathname.startsWith("/retail");
   const isOnLeads = pathname.startsWith("/leads");
   const isOnEcommerce = pathname.startsWith("/ecommerce") || pathname.startsWith("/ecommerce/shopify-dashboard");
-  const isOnEmployee = pathname.startsWith("/emp-commission") || pathname.startsWith("/performance");
+  const isOnEmployee = pathname.startsWith("/emp-commission") || pathname.startsWith("/performance") || pathname.startsWith("/work");
   const isOnReorder = pathname.startsWith("/reorder");
   const isOnComplaints = pathname.startsWith("/complaints");
 
@@ -335,6 +335,9 @@ export default function Sidebar({
         </button>
         {openSection === "employee" && (
           <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
+            <NavLink href="/work" active={pathname.startsWith("/work")} compact onClick={closeMobile}>
+              My Work
+            </NavLink>
             {canView(permissions, "emp_commission", isAdmin) && (
               <NavLink href="/emp-commission" active={isActive("/emp-commission")} compact onClick={closeMobile}>
                 {isAdmin ? "Commission" : "My Commission"}
