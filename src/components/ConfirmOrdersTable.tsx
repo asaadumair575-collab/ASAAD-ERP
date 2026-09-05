@@ -115,8 +115,8 @@ export default function ConfirmOrdersTable({
                         <span className="w-1.5 h-1.5 rounded-full bg-red-400" />Returned
                       </span>
                     ) : dispatchedSet.has(o.id) ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-teal-200 bg-teal-50 text-teal-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                         Dispatched{o.trackingNumber && weightByTracking[o.trackingNumber] != null ? ` · ${weightByTracking[o.trackingNumber].toFixed(2)} kg` : ""}
                       </span>
                     ) : dispatched && o.packedAt ? (
@@ -207,8 +207,8 @@ export default function ConfirmOrdersTable({
                         <span className="w-1.5 h-1.5 rounded-full bg-red-400" />Returned
                       </span>
                     ) : dispatchedSet.has(o.id) ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-teal-200 bg-teal-50 text-teal-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                         Dispatched{o.trackingNumber && weightByTracking[o.trackingNumber] != null ? ` · ${weightByTracking[o.trackingNumber].toFixed(2)} kg` : ""}
                       </span>
                     ) : dispatched && o.packedAt ? (
