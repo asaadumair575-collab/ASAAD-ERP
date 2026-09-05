@@ -5,6 +5,8 @@ import { userLabel } from "@/lib/userLabel";
 import { todayPK, pkDayStart, pkDayEnd } from "@/lib/tz";
 import PerformanceFilter from "./PerformanceFilter";
 import { Suspense } from "react";
+import TaskStatCard from "@/components/TaskStatCard";
+import { getLiveTaskStats } from "@/lib/taskStats";
 
 function dateLabelForStr(dateStr: string, todayStr: string) {
   const yesterdayStr = (() => {
@@ -202,6 +204,16 @@ export default async function PerformancePage({
     ? await prisma.user.findMany({ where: { isAdmin: false }, orderBy: { displayName: "asc" } })
     : [];
 
+  // The employee's actual assigned tasks (from My Work) — these replace the
+  // old hardcoded calls/orders target system whenever a single employee is
+  // in view, so Performance always reflects whatever's really assigned.
+  const myTasks = filterUserId
+    ? await prisma.employeeTask.findMany({ where: { assignedToId: filterUserId }, orderBy: { createdAt: "desc" } })
+    : [];
+  const myTasksWithStats = await Promise.all(
+    myTasks.map(async (t) => ({ task: t, stats: await getLiveTaskStats(t.metric, t.assignedToId, t.targetValue, dayStart, dayEnd) }))
+  );
+
   const callLogs = await prisma.reorderCallLog.findMany({
     where: {
       calledAt: { gte: dayStart, lte: dayEnd },
@@ -363,6 +375,24 @@ export default async function PerformancePage({
         <PerformanceFilter users={users} isAdmin={isAdmin} />
       </Suspense>
 
+      {/* Assigned tasks — replaces the old fixed calls/orders target system
+          whenever we're looking at one specific employee, so this always
+          reflects whatever's actually assigned on My Work. */}
+      {filterUserId ? (
+        myTasksWithStats.length === 0 ? (
+          <div className="border border-dashed border-gray-200 rounded-2xl p-10 text-center">
+            <p className="text-sm font-medium text-gray-400">No tasks assigned</p>
+            <p className="text-xs text-gray-300 mt-1">Assign tasks from My Work to see progress here.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {myTasksWithStats.map(({ task, stats }) => (
+              <TaskStatCard key={task.id} task={task} stats={stats} />
+            ))}
+          </div>
+        )
+      ) : (
+      <>
       {/* Stat cards */}
       <div className="grid grid-cols-3 gap-3">
         {/* Calls card */}
@@ -464,6 +494,8 @@ export default async function PerformancePage({
               : `${ordersBehind} more orders needed to hit today's target`}
           </span>
         </div>
+      )}
+      </>
       )}
 
       {/* Bar chart */}

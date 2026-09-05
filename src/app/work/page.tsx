@@ -4,98 +4,10 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import ClockInButton from "./ClockInButton";
 import AssignTaskModal from "./AssignTaskModal";
-import DeleteButton from "@/components/DeleteButton";
-import EditTaskTargetButton from "./EditTaskTargetButton";
 import LiveRefresh from "./LiveRefresh";
+import TaskStatCard from "@/components/TaskStatCard";
+import { getLiveTaskStats } from "@/lib/taskStats";
 import { deleteTask } from "@/lib/actions";
-
-async function getLiveTaskStats(metric: string | null, assignedToId: number, targetValue: number) {
-  const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
-  const dayStart = new Date(`${todayPK}T00:00:00+05:00`);
-  const dayEnd = new Date(`${todayPK}T23:59:59+05:00`);
-
-  if (metric === "CONFIRM_ORDERS") {
-    const [remaining, doneToday] = await Promise.all([
-      prisma.ecomOrder.count({ where: { draft: true } }),
-      prisma.ecomOrder.count({ where: { confirmedAt: { gte: dayStart, lt: dayEnd } } }),
-    ]);
-    return { remaining, doneToday, remainingLabel: "Remaining orders" };
-  }
-  if (metric === "REORDER_CALLS") {
-    const doneToday = await prisma.reorderCallLog.count({
-      where: { calledById: assignedToId, calledAt: { gte: dayStart, lt: dayEnd } },
-    });
-    return { remaining: Math.max(targetValue - doneToday, 0), doneToday, remainingLabel: `Left of ${targetValue}` };
-  }
-  if (metric === "LEAD_CALLS") {
-    const doneToday = await prisma.lead.count({
-      where: { contactedById: assignedToId, contactedAt: { gte: dayStart, lt: dayEnd } },
-    });
-    return { remaining: Math.max(targetValue - doneToday, 0), doneToday, remainingLabel: `Left of ${targetValue}` };
-  }
-  if (metric === "RETAIL_ORDERS") {
-    const doneToday = await prisma.retailOrder.count({
-      where: { createdByUserId: assignedToId, createdAt: { gte: dayStart, lt: dayEnd } },
-    });
-    return { remaining: Math.max(targetValue - doneToday, 0), doneToday, remainingLabel: `Left of ${targetValue}` };
-  }
-  return { remaining: 0, doneToday: 0, remainingLabel: "Remaining" };
-}
-
-function TaskCard({
-  task,
-  stats,
-  deleteAction,
-}: {
-  task: { id: number; title: string; description: string | null; unit: string; metric: string | null; targetValue: number; assignedTo?: { displayName: string | null; username: string } };
-  stats: { remaining: number; doneToday: number; remainingLabel: string };
-  deleteAction?: () => Promise<void>;
-}) {
-  return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900">{task.title}</p>
-          {task.assignedTo && (
-            <p className="text-xs text-gray-400 mt-0.5">{task.assignedTo.displayName ?? task.assignedTo.username}</p>
-          )}
-        </div>
-        {deleteAction && (
-          <div className="flex items-center gap-3 shrink-0">
-            {(task.metric === "REORDER_CALLS" || task.metric === "LEAD_CALLS" || task.metric === "RETAIL_ORDERS") && <EditTaskTargetButton taskId={task.id} currentTarget={task.targetValue} />}
-            <DeleteButton action={deleteAction} message="Remove this task?" />
-          </div>
-        )}
-      </div>
-      <div className="flex items-center gap-6 pt-1">
-        <div>
-          <p className={`text-2xl font-bold tabular-nums ${stats.remaining > 0 ? "text-red-600" : "text-[#16202E]"}`}>{stats.remaining}</p>
-          <p className="text-xs text-gray-400">{stats.remainingLabel}</p>
-        </div>
-        <div className="w-px h-8 bg-gray-100" />
-        <div>
-          <p className="text-2xl font-bold text-green-600 tabular-nums">{stats.doneToday}</p>
-          <p className="text-xs text-gray-400">Done today</p>
-        </div>
-      </div>
-      {(() => {
-        const total = stats.doneToday + stats.remaining;
-        const pct = total > 0 ? Math.min(100, Math.round((stats.doneToday / total) * 100)) : 0;
-        return (
-          <div className="space-y-1">
-            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all ${pct >= 100 ? "bg-green-500" : "bg-[#16202E]"}`}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <p className="text-[11px] text-gray-400 text-right">{pct}%</p>
-          </div>
-        );
-      })()}
-    </div>
-  );
-}
 
 export default async function WorkPage({
   searchParams,
@@ -111,6 +23,9 @@ export default async function WorkPage({
   const dayStr = date ?? todayPK;
   const dayStart = new Date(`${dayStr}T00:00:00+05:00`);
   const dayEnd = new Date(`${dayStr}T23:59:59+05:00`);
+  // Tasks always show today's progress regardless of the clock-in date filter above.
+  const todayStart = new Date(`${todayPK}T00:00:00+05:00`);
+  const todayEnd = new Date(`${todayPK}T23:59:59+05:00`);
 
   const Tabs = (
     <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
@@ -144,7 +59,7 @@ export default async function WorkPage({
     ]);
 
     const tasksWithStats = await Promise.all(
-      tasks.map(async (t) => ({ task: t, stats: await getLiveTaskStats(t.metric, t.assignedToId, t.targetValue) }))
+      tasks.map(async (t) => ({ task: t, stats: await getLiveTaskStats(t.metric, t.assignedToId, t.targetValue, todayStart, todayEnd) }))
     );
 
     return (
@@ -212,7 +127,7 @@ export default async function WorkPage({
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {tasksWithStats.map(({ task, stats }) => (
-                  <TaskCard key={task.id} task={task} stats={stats} deleteAction={deleteTask.bind(null, task.id)} />
+                  <TaskStatCard key={task.id} task={task} stats={stats} deleteAction={deleteTask.bind(null, task.id)} />
                 ))}
               </div>
             )}
@@ -236,7 +151,7 @@ export default async function WorkPage({
     : null;
 
   const myTasksWithStats = await Promise.all(
-    myTasks.map(async (t) => ({ task: t, stats: await getLiveTaskStats(t.metric, t.assignedToId, t.targetValue) }))
+    myTasks.map(async (t) => ({ task: t, stats: await getLiveTaskStats(t.metric, t.assignedToId, t.targetValue, todayStart, todayEnd) }))
   );
 
   return (
@@ -283,7 +198,7 @@ export default async function WorkPage({
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {myTasksWithStats.map(({ task, stats }) => (
-                <TaskCard key={task.id} task={task} stats={stats} />
+                <TaskStatCard key={task.id} task={task} stats={stats} />
               ))}
             </div>
           )}
