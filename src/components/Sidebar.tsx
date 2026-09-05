@@ -131,6 +131,8 @@ export default function Sidebar({
     return null;
   }
   const [openSection, setOpenSection] = useState<Section>(sectionForPath());
+  const isOnAnalytics = pathname.startsWith("/ecommerce/ads-manager") || pathname.startsWith("/ecommerce/postex-analytics");
+  const [analyticsOpen, setAnalyticsOpen] = useState(isOnAnalytics);
 
   useEffect(() => {
     setOpenSection(sectionForPath());
@@ -357,8 +359,20 @@ export default function Sidebar({
             {openSection === "ecommerce" && (
               <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
                 <NavLink href="/ecommerce/shopify-dashboard" active={pathname.startsWith("/ecommerce/shopify-dashboard")} compact onClick={closeMobile}>All Dashboard</NavLink>
-                <NavLink href="/ecommerce/ads-manager" active={pathname.startsWith("/ecommerce/ads-manager")} compact onClick={closeMobile}>Ads Manager</NavLink>
-                <NavLink href="/ecommerce/postex-analytics" active={pathname.startsWith("/ecommerce/postex-analytics")} compact onClick={closeMobile}>Postex Analytics</NavLink>
+                <button
+                  type="button"
+                  onClick={() => setAnalyticsOpen((v) => !v)}
+                  className={`w-full flex items-center justify-between pl-1 pr-2.5 py-1.5 rounded-lg text-sm transition-colors ${isOnAnalytics ? "text-white font-semibold" : "text-gray-400 hover:text-gray-200"}`}
+                >
+                  <span>Analytics</span>
+                  <span className={`transition-transform text-gray-500 ${analyticsOpen ? "rotate-90" : ""}`}>{icons.chevron}</span>
+                </button>
+                {analyticsOpen && (
+                  <div className="ml-3 pl-3 border-l border-white/10 space-y-0.5">
+                    <NavLink href="/ecommerce/ads-manager" active={pathname.startsWith("/ecommerce/ads-manager")} compact onClick={closeMobile}>Ads Manager</NavLink>
+                    <NavLink href="/ecommerce/postex-analytics" active={pathname.startsWith("/ecommerce/postex-analytics")} compact onClick={closeMobile}>Postex Analytics</NavLink>
+                  </div>
+                )}
                 <NavLink href="/ecommerce/shopify-orders" active={pathname.startsWith("/ecommerce/shopify-orders")} compact onClick={closeMobile}>
                   <span className="inline-flex items-center gap-1.5">
                     <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5 shrink-0 opacity-70"><path d="M2 4.5h12M2 8h12M2 11.5h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
