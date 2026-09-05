@@ -88,81 +88,41 @@ function LocationIcon() {
   );
 }
 
-const CONTACT_REASONS = [
-  "Interested",
-  "Not Interested",
-  "Not Working in Balls",
-  "Will Contact Later",
-  "Wrong Number",
-  "No Response",
-  "Others",
-];
+const CONTACT_REASONS = ["Interested", "Not Interested"];
 
 // Directly visible on the row for NEW leads — no burying it in a menu.
 // Clicking it immediately asks what happened on the call before saving.
+// Simple, single-tap: call happened, pick the outcome, done — no picker,
+// no confirm step, no free-text reason.
 function ContactButton({ lead, contactAction }: {
   lead: Lead;
   contactAction: (id: number, reason?: string) => Promise<void>;
 }) {
-  const [open, setOpen] = useState(false);
-  const [selectedReason, setSelectedReason] = useState("");
-  const [customReason, setCustomReason] = useState("");
   const [isPending, startTransition] = useTransition();
-  const ref = useRef<HTMLDivElement>(null);
+  const [choosing, setChoosing] = useState<string | null>(null);
 
-  useEffect(() => {
-    function onClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) closeAll();
-    }
-    if (open) document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [open]);
-
-  function closeAll() {
-    setOpen(false);
-    setSelectedReason("");
-    setCustomReason("");
-  }
-
-  function confirmContact() {
-    const reason = selectedReason === "Others" ? customReason.trim() : selectedReason;
+  function mark(reason: string) {
+    setChoosing(reason);
     startTransition(async () => {
-      await contactAction(lead.id, reason || undefined);
-      closeAll();
+      await contactAction(lead.id, reason);
     });
   }
 
   return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors whitespace-nowrap"
-      >
-        Mark Contacted
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-56 bg-white border border-gray-200 rounded-xl shadow-lg py-2 px-2 text-sm space-y-1">
-          <p className="text-xs font-medium text-gray-500 px-1 pb-1 border-b border-gray-100">Baat kya hui? Call result select karein:</p>
-          {CONTACT_REASONS.map((r) => (
-            <button key={r} type="button" onClick={() => { setSelectedReason(r); if (r !== "Others") setCustomReason(""); }}
-              className={`w-full text-left text-xs px-2.5 py-2 rounded-lg transition-colors ${selectedReason === r ? "bg-black text-white" : "hover:bg-gray-50 text-gray-700"}`}
-            >
-              {r}
-            </button>
-          ))}
-          {selectedReason === "Others" && (
-            <input autoFocus type="text" value={customReason} onChange={(e) => setCustomReason(e.target.value)}
-              placeholder="Reason likhein..." className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-black mt-1" />
-          )}
-          <button type="button" onClick={confirmContact}
-            disabled={isPending || !selectedReason || (selectedReason === "Others" && !customReason.trim())}
-            className="w-full mt-1 bg-black text-white text-xs font-medium py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-40"
-          >
-            {isPending ? "Saving…" : "Confirm"}
-          </button>
-        </div>
-      )}
+    <div className="flex items-center gap-1">
+      {CONTACT_REASONS.map((r) => (
+        <button
+          key={r}
+          type="button"
+          onClick={() => mark(r)}
+          disabled={isPending}
+          className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap disabled:opacity-50 ${
+            r === "Interested" ? "bg-green-600 text-white hover:bg-green-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          {isPending && choosing === r ? "…" : r}
+        </button>
+      ))}
     </div>
   );
 }
