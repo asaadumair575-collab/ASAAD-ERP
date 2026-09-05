@@ -12,20 +12,23 @@ import { deleteTask } from "@/lib/actions";
 export default async function WorkPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; tab?: string }>;
+  searchParams: Promise<{ date?: string; tab?: string; taskDate?: string; taskUser?: string }>;
 }) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
-  const { date, tab } = await searchParams;
+  const { date, tab, taskDate, taskUser } = await searchParams;
   const activeTab = tab === "tasks" ? "tasks" : "clockin";
   const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
   const dayStr = date ?? todayPK;
   const dayStart = new Date(`${dayStr}T00:00:00+05:00`);
   const dayEnd = new Date(`${dayStr}T23:59:59+05:00`);
-  // Tasks always show today's progress regardless of the clock-in date filter above.
-  const todayStart = new Date(`${todayPK}T00:00:00+05:00`);
-  const todayEnd = new Date(`${todayPK}T23:59:59+05:00`);
+  // The Tasks tab has its own independent date filter, separate from the
+  // clock-in one above — defaults to today when unset.
+  const taskDayStr = taskDate ?? todayPK;
+  const todayStart = new Date(`${taskDayStr}T00:00:00+05:00`);
+  const todayEnd = new Date(`${taskDayStr}T23:59:59+05:00`);
+  const taskUserId = taskUser ? parseInt(taskUser) : undefined;
 
   const Tabs = (
     <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
@@ -52,6 +55,7 @@ export default async function WorkPage({
       }),
       activeTab === "tasks"
         ? prisma.employeeTask.findMany({
+            where: taskUserId ? { assignedToId: taskUserId } : {},
             include: { assignedTo: { select: { displayName: true, username: true } } },
             orderBy: { createdAt: "desc" },
           })
@@ -117,7 +121,29 @@ export default async function WorkPage({
         {activeTab === "tasks" && (
           <div className="space-y-4">
             <LiveRefresh />
-            <div className="flex justify-end">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
+                <input type="hidden" name="tab" value="tasks" />
+                <select
+                  name="taskUser"
+                  defaultValue={taskUser ?? ""}
+                  className="bg-gray-50 border border-transparent rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                >
+                  <option value="">All employees</option>
+                  {employees.map((e) => (
+                    <option key={e.id} value={e.id}>{e.displayName ?? e.username}</option>
+                  ))}
+                </select>
+                <input
+                  type="date"
+                  name="taskDate"
+                  defaultValue={taskDayStr}
+                  max={todayPK}
+                  className="bg-gray-50 border border-transparent rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                />
+                <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors">Filter</button>
+                {(taskUser || taskDate) && <Link href="/work?tab=tasks" className="text-sm text-gray-400 hover:text-black px-2">Reset</Link>}
+              </form>
               <AssignTaskModal employees={employees} />
             </div>
             {tasksWithStats.length === 0 ? (
