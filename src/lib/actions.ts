@@ -3036,6 +3036,7 @@ export async function assignTask(data: {
   description?: string;
   unit: string;
   metric: string;
+  targetValue?: number;
 }) {
   const me = await requireAuth();
   if (!me.isAdmin) throw new Error("Unauthorized");
@@ -3046,7 +3047,7 @@ export async function assignTask(data: {
       assignedById: me.id,
       title: data.title,
       description: data.description || null,
-      targetValue: 0,
+      targetValue: data.targetValue ?? 0,
       unit: data.unit,
       metric: data.metric,
       date: new Date(),

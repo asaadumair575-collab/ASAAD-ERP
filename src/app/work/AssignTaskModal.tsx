@@ -10,6 +10,16 @@ const TASK_TYPES = [
     title: "Order Confirmation",
     unit: "orders",
     description: "Confirm every new website order — live count of what's still pending, updates the moment a new order comes in.",
+    needsTarget: false,
+    defaultTarget: 0,
+  },
+  {
+    metric: "REORDER_CALLS",
+    title: "Reordering Calls",
+    unit: "calls",
+    description: "Calls made today from the reorder campaigns, against a daily target you set.",
+    needsTarget: true,
+    defaultTarget: 50,
   },
 ];
 
@@ -21,16 +31,24 @@ export default function AssignTaskModal({
   const [open, setOpen] = useState(false);
   const [assignedToId, setAssignedToId] = useState("");
   const [taskType, setTaskType] = useState(TASK_TYPES[0].metric);
+  const [targetValue, setTargetValue] = useState(String(TASK_TYPES[0].defaultTarget));
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
   const selected = TASK_TYPES.find((t) => t.metric === taskType)!;
-  const canSave = !!assignedToId;
+  const canSave = !!assignedToId && (!selected.needsTarget || (parseInt(targetValue) > 0));
 
   function close() {
     setOpen(false);
     setAssignedToId("");
     setTaskType(TASK_TYPES[0].metric);
+    setTargetValue(String(TASK_TYPES[0].defaultTarget));
+  }
+
+  function changeTaskType(metric: string) {
+    setTaskType(metric);
+    const t = TASK_TYPES.find((t) => t.metric === metric)!;
+    setTargetValue(String(t.defaultTarget));
   }
 
   function save() {
@@ -42,6 +60,7 @@ export default function AssignTaskModal({
         description: selected.description,
         unit: selected.unit,
         metric: selected.metric,
+        targetValue: selected.needsTarget ? parseInt(targetValue) : undefined,
       });
       close();
       router.refresh();
@@ -91,7 +110,7 @@ export default function AssignTaskModal({
               <label className="text-xs font-medium text-gray-600 block mb-1">Task Type</label>
               <select
                 value={taskType}
-                onChange={(e) => setTaskType(e.target.value)}
+                onChange={(e) => changeTaskType(e.target.value)}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"
               >
                 {TASK_TYPES.map((t) => (
@@ -100,6 +119,19 @@ export default function AssignTaskModal({
               </select>
               <p className="text-xs text-gray-400 mt-1.5">{selected.description}</p>
             </div>
+
+            {selected.needsTarget && (
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Daily Target ({selected.unit})</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={targetValue}
+                  onChange={(e) => setTargetValue(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                />
+              </div>
+            )}
 
             <div className="flex gap-2 pt-1">
               <button

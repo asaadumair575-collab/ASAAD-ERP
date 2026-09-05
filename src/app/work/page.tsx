@@ -8,7 +8,7 @@ import DeleteButton from "@/components/DeleteButton";
 import LiveRefresh from "./LiveRefresh";
 import { deleteTask } from "@/lib/actions";
 
-async function getLiveTaskStats(metric: string | null) {
+async function getLiveTaskStats(metric: string | null, assignedToId: number, targetValue: number) {
   const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
   const dayStart = new Date(`${todayPK}T00:00:00+05:00`);
   const dayEnd = new Date(`${todayPK}T23:59:59+05:00`);
@@ -18,9 +18,15 @@ async function getLiveTaskStats(metric: string | null) {
       prisma.ecomOrder.count({ where: { draft: true } }),
       prisma.ecomOrder.count({ where: { confirmedAt: { gte: dayStart, lt: dayEnd } } }),
     ]);
-    return { remaining, doneToday };
+    return { remaining, doneToday, remainingLabel: "Remaining orders" };
   }
-  return { remaining: 0, doneToday: 0 };
+  if (metric === "REORDER_CALLS") {
+    const doneToday = await prisma.reorderCallLog.count({
+      where: { calledById: assignedToId, calledAt: { gte: dayStart, lt: dayEnd } },
+    });
+    return { remaining: Math.max(targetValue - doneToday, 0), doneToday, remainingLabel: `Left of ${targetValue}` };
+  }
+  return { remaining: 0, doneToday: 0, remainingLabel: "Remaining" };
 }
 
 function TaskCard({
@@ -29,7 +35,7 @@ function TaskCard({
   deleteAction,
 }: {
   task: { id: number; title: string; description: string | null; unit: string; assignedTo?: { displayName: string | null; username: string } };
-  stats: { remaining: number; doneToday: number };
+  stats: { remaining: number; doneToday: number; remainingLabel: string };
   deleteAction?: () => Promise<void>;
 }) {
   return (
@@ -46,7 +52,7 @@ function TaskCard({
       <div className="flex items-center gap-6 pt-1">
         <div>
           <p className={`text-2xl font-bold tabular-nums ${stats.remaining > 0 ? "text-red-600" : "text-[#16202E]"}`}>{stats.remaining}</p>
-          <p className="text-xs text-gray-400">Remaining {task.unit}</p>
+          <p className="text-xs text-gray-400">{stats.remainingLabel}</p>
         </div>
         <div className="w-px h-8 bg-gray-100" />
         <div>
@@ -105,7 +111,7 @@ export default async function WorkPage({
     ]);
 
     const tasksWithStats = await Promise.all(
-      tasks.map(async (t) => ({ task: t, stats: await getLiveTaskStats(t.metric) }))
+      tasks.map(async (t) => ({ task: t, stats: await getLiveTaskStats(t.metric, t.assignedToId, t.targetValue) }))
     );
 
     return (
@@ -197,7 +203,7 @@ export default async function WorkPage({
     : null;
 
   const myTasksWithStats = await Promise.all(
-    myTasks.map(async (t) => ({ task: t, stats: await getLiveTaskStats(t.metric) }))
+    myTasks.map(async (t) => ({ task: t, stats: await getLiveTaskStats(t.metric, t.assignedToId, t.targetValue) }))
   );
 
   return (
