@@ -19,9 +19,12 @@ type SnapshotRow = {
 // Creates a saved, printable-anytime snapshot of a dispatch list. Either a
 // specific set of order ids, or a date whose whole day of Postex bookings
 // must all be packed first — same "nothing missing" rule as the live sheet.
-// Only one dispatch list may exist per calendar day, and once an order has
-// gone on a list it can never appear on another — both to stop duplicate
-// gate-verification sheets from causing a mistake.
+// An order that's already on a dispatch list can never go on another one —
+// that's a lifetime restriction per order, not per date. (There used to
+// also be a "one sheet per date" rule, but that was wrong: it blocked
+// generating any new list for a day that already had one, even for orders
+// that day never actually got included in it — a dead end for those
+// orders. Removed.)
 export async function POST(req: NextRequest) {
   const me = await getSessionUser();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -50,18 +53,6 @@ export async function POST(req: NextRequest) {
   }
   dayStart = new Date(`${resolvedDate}T00:00:00+05:00`);
   dayEnd = new Date(`${resolvedDate}T23:59:59+05:00`);
-
-  // Only one dispatch list per calendar day.
-  const existing = await prisma.dispatchSheet.findUnique({ where: { date: dayStart } });
-  if (existing) {
-    return NextResponse.json(
-      {
-        error: `A dispatch list for this date already exists — ${dispatchSheetNumber(existing.id)}, generated ${existing.createdAt.toLocaleString("en-PK", { timeZone: "Asia/Karachi", dateStyle: "medium", timeStyle: "short" })}. View it on the Dispatch page instead of generating again.`,
-        existingId: existing.id,
-      },
-      { status: 409 }
-    );
-  }
 
   const pending = await prisma.ecomOrder.findMany({
     where: { dispatchedAt: { gte: dayStart, lte: dayEnd }, packedAt: null },
@@ -136,25 +127,18 @@ export async function POST(req: NextRequest) {
   const totalValue = snapshot.reduce((s, o) => s + o.totalAmount, 0);
   const totalWeight = snapshot.reduce((s, o) => s + (o.weight ?? 0), 0);
 
-  let sheet;
-  try {
-    sheet = await prisma.dispatchSheet.create({
-      data: {
-        date: dayStart,
-        orderIds: orders.map((o) => o.id),
-        totalParcels,
-        totalValue,
-        totalWeight,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        snapshot: snapshot as any,
-        createdById: me.id,
-      },
-    });
-  } catch {
-    // Unique constraint race — someone else generated one for this date
-    // between our check above and this insert.
-    return NextResponse.json({ error: "A dispatch list for this date was just generated — view it on the Dispatch page instead." }, { status: 409 });
-  }
+  const sheet = await prisma.dispatchSheet.create({
+    data: {
+      date: dayStart,
+      orderIds: orders.map((o) => o.id),
+      totalParcels,
+      totalValue,
+      totalWeight,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      snapshot: snapshot as any,
+      createdById: me.id,
+    },
+  });
 
   return NextResponse.json({ ok: true, id: sheet.id, sheetNumber: dispatchSheetNumber(sheet.id) });
 }

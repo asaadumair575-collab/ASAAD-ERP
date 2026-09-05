@@ -721,7 +721,7 @@ model WeightVerification {
 // without needing to reselect anything.
 model DispatchSheet {
   id            Int       @id @default(autoincrement())
-  date          DateTime  @unique
+  date          DateTime
   orderIds      Int[]
   totalParcels  Int
   totalValue    Float
@@ -738,4 +738,6 @@ model DispatchSheet {
   dispatchedAt  DateTime?
   dispatchedBy  User?     @relation("DispatchSheetDispatchedBy", fields: [dispatchedById], references: [id])
   dispatchedById Int?
+
+  @@index([date])
 }
