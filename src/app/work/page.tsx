@@ -5,6 +5,7 @@ import Link from "next/link";
 import ClockInButton from "./ClockInButton";
 import AssignTaskModal from "./AssignTaskModal";
 import DeleteButton from "@/components/DeleteButton";
+import EditTaskTargetButton from "./EditTaskTargetButton";
 import LiveRefresh from "./LiveRefresh";
 import { deleteTask } from "@/lib/actions";
 
@@ -34,7 +35,7 @@ function TaskCard({
   stats,
   deleteAction,
 }: {
-  task: { id: number; title: string; description: string | null; unit: string; assignedTo?: { displayName: string | null; username: string } };
+  task: { id: number; title: string; description: string | null; unit: string; metric: string | null; targetValue: number; assignedTo?: { displayName: string | null; username: string } };
   stats: { remaining: number; doneToday: number; remainingLabel: string };
   deleteAction?: () => Promise<void>;
 }) {
@@ -47,7 +48,12 @@ function TaskCard({
             <p className="text-xs text-gray-400 mt-0.5">{task.assignedTo.displayName ?? task.assignedTo.username}</p>
           )}
         </div>
-        {deleteAction && <DeleteButton action={deleteAction} message="Remove this task?" />}
+        {deleteAction && (
+          <div className="flex items-center gap-3 shrink-0">
+            {task.metric === "REORDER_CALLS" && <EditTaskTargetButton taskId={task.id} currentTarget={task.targetValue} />}
+            <DeleteButton action={deleteAction} message="Remove this task?" />
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-6 pt-1">
         <div>

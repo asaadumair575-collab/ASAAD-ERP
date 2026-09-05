@@ -3062,3 +3062,10 @@ export async function deleteTask(taskId: number) {
   await prisma.employeeTask.delete({ where: { id: taskId } });
   revalidatePath("/work");
 }
+
+export async function updateTaskTarget(taskId: number, targetValue: number) {
+  const me = await requireAuth();
+  if (!me.isAdmin) throw new Error("Unauthorized");
+  await prisma.employeeTask.update({ where: { id: taskId }, data: { targetValue } });
+  revalidatePath("/work");
+}
