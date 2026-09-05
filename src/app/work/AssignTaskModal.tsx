@@ -29,6 +29,14 @@ const TASK_TYPES = [
     needsTarget: true,
     defaultTarget: 50,
   },
+  {
+    metric: "RETAIL_ORDERS",
+    title: "Daily Orders",
+    unit: "orders",
+    description: "Retail advance orders the employee entered manually today, against a daily target you set.",
+    needsTarget: true,
+    defaultTarget: 10,
+  },
 ];
 
 export default function AssignTaskModal({
