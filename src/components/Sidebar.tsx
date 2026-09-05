@@ -308,9 +308,6 @@ export default function Sidebar({
             {openSection === "leads" && (
               <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
                 <NavLink href="/leads" active={pathname === "/leads"} compact onClick={closeMobile}>All Shops</NavLink>
-                {canViewSub(permissions, "leads_not_contacted", isAdmin) && (
-                  <NavLink href="/leads/not-contacted" active={pathname.startsWith("/leads/not-contacted")} compact onClick={closeMobile}>Not Contacted</NavLink>
-                )}
                 {canViewSub(permissions, "leads_contacted", isAdmin) && (
                   <NavLink href="/leads/contacted" active={pathname.startsWith("/leads/contacted")} compact onClick={closeMobile}>Contacted</NavLink>
                 )}
