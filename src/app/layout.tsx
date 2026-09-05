@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { getBusinessProfile } from "@/lib/businessProfile";
 import { getSessionUser } from "@/lib/auth";
@@ -55,6 +56,21 @@ export default async function RootLayout({
   const unreadCount = me
     ? await prisma.message.count({ where: { receiverId: me.id, readAt: null } }).catch(() => 0)
     : 0;
+
+  // Non-admin employees must clock in before doing anything else — otherwise
+  // it's easy to forget, and there'd be no record of when the day started.
+  // /work itself (and its own API route) stays reachable so they can clock
+  // in; everything else redirects there until they do.
+  if (!isStandalonePage && me && !me.isAdmin && pathname !== "/work" && !pathname.startsWith("/api/")) {
+    const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+    const dayStart = new Date(`${todayPK}T00:00:00+05:00`);
+    const dayEnd = new Date(`${todayPK}T23:59:59+05:00`);
+    const shift = await prisma.employeeShift.findFirst({
+      where: { userId: me.id, startedAt: { gte: dayStart, lte: dayEnd } },
+      select: { id: true },
+    });
+    if (!shift) redirect("/work");
+  }
 
   if (isStandalonePage) {
     return (
