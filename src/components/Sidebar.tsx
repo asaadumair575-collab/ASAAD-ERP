@@ -335,9 +335,6 @@ export default function Sidebar({
         </button>
         {openSection === "employee" && (
           <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
-            <NavLink href="/work" active={pathname.startsWith("/work")} compact onClick={closeMobile}>
-              My Work
-            </NavLink>
             {canView(permissions, "emp_commission", isAdmin) && (
               <NavLink href="/emp-commission" active={isActive("/emp-commission")} compact onClick={closeMobile}>
                 {isAdmin ? "Commission" : "My Commission"}
@@ -440,16 +437,6 @@ export default function Sidebar({
 
         {isAdmin && <SectionLabel>Admin</SectionLabel>}
 
-        {isAdmin && (
-          <NavLink
-            href="/admin/tasks"
-            active={pathname.startsWith("/admin/tasks")}
-            icon={icons.users}
-            onClick={closeMobile}
-          >
-            Assign Tasks
-          </NavLink>
-        )}
 
         {isAdmin && (
           <NavLink
