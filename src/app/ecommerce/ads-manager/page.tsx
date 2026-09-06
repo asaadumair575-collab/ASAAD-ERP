@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { fetchMetaStats, fetchActiveCreatives } from "@/lib/metaAds";
@@ -224,7 +225,11 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
         ) : (
           <div className="divide-y divide-gray-50">
             {creativesResult.creatives.map((c) => (
-              <div key={c.id} className="px-5 py-3 flex items-center gap-3">
+              <Link
+                key={c.id}
+                href={`/ecommerce/ads-manager/creative/${c.id}?from=${from}&to=${to}`}
+                className="px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors"
+              >
                 {c.thumbnailUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={c.thumbnailUrl} alt="" className="w-12 h-12 rounded-lg object-cover border border-gray-100 shrink-0" />
@@ -241,7 +246,8 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
                     {c.dailyBudget != null ? `Rs ${fmt(c.dailyBudget)}/day` : c.lifetimeBudget != null ? `Rs ${fmt(c.lifetimeBudget)} lifetime` : "no budget set"}
                   </p>
                 </div>
-              </div>
+                <svg viewBox="0 0 12 12" fill="none" className="w-3.5 h-3.5 text-gray-300 shrink-0"><path d="M4.5 2.5l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </Link>
             ))}
           </div>
         )}

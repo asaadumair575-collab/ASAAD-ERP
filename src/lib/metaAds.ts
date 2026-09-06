@@ -183,3 +183,110 @@ export async function fetchActiveCreatives(from: string, to: string): Promise<Me
     return { creatives: [], error: "network", detail: e instanceof Error ? e.message : String(e) };
   }
 }
+
+export type MetaCreativeDetail = {
+  id: string;
+  name: string;
+  status: string;
+  campaignName: string;
+  adsetName: string;
+  dailyBudget: number | null;
+  lifetimeBudget: number | null;
+  imageUrl: string | null;
+  thumbnailUrl: string | null;
+  title: string | null;
+  body: string | null;
+  spend: number;
+  impressions: number;
+  clicks: number;
+  ctr: number;
+  cpc: number;
+  reach: number;
+  purchases: number;
+};
+
+export type MetaCreativeDetailResult = {
+  creative: MetaCreativeDetail | null;
+  error?: string;
+  detail?: string;
+};
+
+// Full detail for one ad — its creative (image/copy) plus its own insights
+// for the selected range, for the "click a creative to see everything about
+// it" drill-down from the Active Ad Creatives list.
+export async function fetchCreativeDetail(adId: string, from: string, to: string): Promise<MetaCreativeDetailResult> {
+  const token = process.env.META_ACCESS_TOKEN;
+  if (!token) return { creative: null, error: "config" };
+
+  const adFields =
+    "id,name,effective_status,adset{name,daily_budget,lifetime_budget},campaign{name},creative{thumbnail_url,image_url,title,body}";
+  const adUrl = `https://graph.facebook.com/v21.0/${adId}?fields=${adFields}&access_token=${encodeURIComponent(token)}`;
+
+  const insightsFields = "spend,impressions,clicks,ctr,cpc,reach,actions";
+  const insightsUrl = `https://graph.facebook.com/v21.0/${adId}/insights?time_range=${encodeURIComponent(
+    JSON.stringify({ since: from, until: to })
+  )}&fields=${insightsFields}&access_token=${encodeURIComponent(token)}`;
+
+  try {
+    const [adRes, insightsRes] = await Promise.all([
+      fetch(adUrl, { cache: "no-store", signal: AbortSignal.timeout(15000) }),
+      fetch(insightsUrl, { cache: "no-store", signal: AbortSignal.timeout(15000) }),
+    ]);
+
+    const adBody = await adRes.text();
+    if (!adRes.ok) {
+      let message = `HTTP ${adRes.status}`;
+      try {
+        message = JSON.parse(adBody)?.error?.message ?? message;
+      } catch {}
+      return { creative: null, error: `api:${adRes.status}`, detail: message };
+    }
+
+    const adJson = JSON.parse(adBody);
+    const adset = (adJson.adset ?? {}) as Record<string, unknown>;
+    const campaign = (adJson.campaign ?? {}) as Record<string, unknown>;
+    const creative = (adJson.creative ?? {}) as Record<string, unknown>;
+
+    let spend = 0, impressions = 0, clicks = 0, ctr = 0, cpc = 0, reach = 0, purchases = 0;
+    if (insightsRes.ok) {
+      const insightsJson = JSON.parse(await insightsRes.text());
+      const row = (insightsJson?.data ?? [])[0] as Record<string, unknown> | undefined;
+      if (row) {
+        spend = parseFloat(String(row.spend ?? "0")) || 0;
+        impressions = parseInt(String(row.impressions ?? "0")) || 0;
+        clicks = parseInt(String(row.clicks ?? "0")) || 0;
+        ctr = parseFloat(String(row.ctr ?? "0")) || 0;
+        cpc = parseFloat(String(row.cpc ?? "0")) || 0;
+        reach = parseInt(String(row.reach ?? "0")) || 0;
+        const actions = (row.actions ?? []) as { action_type: string; value: string }[];
+        const purchaseAction = actions.find((a) => a.action_type === "purchase" || a.action_type === "omni_purchase");
+        if (purchaseAction) purchases = parseInt(purchaseAction.value) || 0;
+      }
+    }
+
+    return {
+      creative: {
+        id: String(adJson.id ?? adId),
+        name: String(adJson.name ?? "Unnamed ad"),
+        status: String(adJson.effective_status ?? "UNKNOWN"),
+        campaignName: String(campaign.name ?? "—"),
+        adsetName: String(adset.name ?? "—"),
+        dailyBudget: adset.daily_budget != null ? Number(adset.daily_budget) / 100 : null,
+        lifetimeBudget: adset.lifetime_budget != null ? Number(adset.lifetime_budget) / 100 : null,
+        imageUrl: (creative.image_url as string) ?? null,
+        thumbnailUrl: (creative.thumbnail_url as string) ?? null,
+        title: (creative.title as string) ?? null,
+        body: (creative.body as string) ?? null,
+        spend,
+        impressions,
+        clicks,
+        ctr,
+        cpc,
+        reach,
+        purchases,
+      },
+    };
+  } catch (e) {
+    return { creative: null, error: "network", detail: e instanceof Error ? e.message : String(e) };
+  }
+}
