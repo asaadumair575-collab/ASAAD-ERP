@@ -95,6 +95,12 @@ const icons = {
       <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
+  audit: (
+    <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 shrink-0">
+      <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10 5.5V10l3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
 };
 
 export default function Sidebar({
@@ -456,6 +462,16 @@ export default function Sidebar({
             onClick={closeMobile}
           >
             Users
+          </NavLink>
+        )}
+        {isAdmin && (
+          <NavLink
+            href="/settings/audit-log"
+            active={pathname.startsWith("/settings/audit-log")}
+            icon={icons.audit}
+            onClick={closeMobile}
+          >
+            Audit Log
           </NavLink>
         )}
         {canView(permissions, "bug_reports", isAdmin) && (

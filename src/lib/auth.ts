@@ -1,5 +1,6 @@
 import { randomBytes, scryptSync, createHmac, timingSafeEqual } from "crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { setCurrentActor } from "@/lib/auditContext";
 
 const SESSION_COOKIE = "session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 365; // 1 year
@@ -81,7 +82,19 @@ export async function getSessionUser() {
   const username = await getSessionUsername();
   if (!username) return null;
   const { prisma } = await import("@/lib/prisma");
-  return prisma.user.findUnique({ where: { username } });
+  const user = await prisma.user.findUnique({ where: { username } });
+  if (user) {
+    let ip: string | null = null;
+    try {
+      const h = await headers();
+      ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || null;
+    } catch {
+      // headers() is unavailable in some non-request contexts; audit
+      // entries just won't have an IP for those calls.
+    }
+    setCurrentActor({ userId: user.id, userName: user.displayName ?? user.username, ip });
+  }
+  return user;
 }
 
 // Used by the Employee Call mobile app instead of a username/password login —

@@ -893,6 +893,28 @@ export async function deleteSample(id: number) {
   redirect("/samples");
 }
 
+async function logAuthEvent(entry: {
+  action: "LOGIN" | "LOGIN_FAILED" | "LOGOUT";
+  userId: number | null;
+  userName: string | null;
+  ip: string;
+  summary: string;
+}) {
+  await prisma.auditLog
+    .create({
+      data: {
+        userId: entry.userId,
+        userName: entry.userName,
+        ip: entry.ip,
+        action: entry.action,
+        model: "Auth",
+        recordId: entry.userId != null ? String(entry.userId) : null,
+        summary: entry.summary,
+      },
+    })
+    .catch(() => {});
+}
+
 export async function loginAction(formData: FormData) {
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
@@ -902,11 +924,13 @@ export async function loginAction(formData: FormData) {
 
   const ipError = loginIpRateLimit(ip);
   if (ipError) {
+    await logAuthEvent({ action: "LOGIN_FAILED", userId: null, userName: username, ip, summary: `Login blocked (rate limit): ${username}` });
     redirect(`/login?error=${encodeURIComponent(ipError)}`);
   }
 
   const rateLimitError = loginRateLimit(username);
   if (rateLimitError) {
+    await logAuthEvent({ action: "LOGIN_FAILED", userId: null, userName: username, ip, summary: `Login blocked (rate limit): ${username}` });
     redirect(`/login?error=${encodeURIComponent(rateLimitError)}`);
   }
 
@@ -914,10 +938,12 @@ export async function loginAction(formData: FormData) {
   const dbUser = await prisma.user.findUnique({ where: { username } });
   if (dbUser) {
     if (!verifyPassword(password, dbUser.passwordHash)) {
+      await logAuthEvent({ action: "LOGIN_FAILED", userId: dbUser.id, userName: dbUser.displayName ?? dbUser.username, ip, summary: `Wrong password: ${username}` });
       redirect(`/login?error=${encodeURIComponent("Invalid username or password")}`);
     }
     clearLoginAttempts(username);
     await setSessionCookie(username);
+    await logAuthEvent({ action: "LOGIN", userId: dbUser.id, userName: dbUser.displayName ?? dbUser.username, ip, summary: `Logged in: ${dbUser.displayName ?? dbUser.username}` });
     redirect("/");
   }
 
@@ -928,13 +954,21 @@ export async function loginAction(formData: FormData) {
   if (appUsername && appPassword && username === appUsername && password.trim() === appPassword) {
     clearLoginAttempts(username);
     await setSessionCookie(username);
+    await logAuthEvent({ action: "LOGIN", userId: null, userName: username, ip, summary: `Logged in: ${username} (env admin)` });
     redirect("/");
   }
 
+  await logAuthEvent({ action: "LOGIN_FAILED", userId: null, userName: username, ip, summary: `Invalid username or password: ${username}` });
   redirect(`/login?error=${encodeURIComponent("Invalid username or password")}`);
 }
 
 export async function logoutAction() {
+  const me = await getSessionUser();
+  if (me) {
+    const h = await headers();
+    const ip = (h.get("x-forwarded-for")?.split(",")[0]?.trim()) || h.get("x-real-ip") || "unknown";
+    await logAuthEvent({ action: "LOGOUT", userId: me.id, userName: me.displayName ?? me.username, ip, summary: `Logged out: ${me.displayName ?? me.username}` });
+  }
   await clearSessionCookie();
   redirect("/login");
 }

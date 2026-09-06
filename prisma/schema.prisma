@@ -776,3 +776,26 @@ model DispatchSheet {
 
   @@index([date])
 }
+
+// System-wide activity trail: every login and every create/update/delete
+// across the app, captured automatically (see lib/prisma.ts's query
+// extension and lib/auditContext.ts) rather than logged by hand in each
+// action. userId/userName are plain fields, not a relation, so deleting a
+// user never cascades into (or is blocked by) their audit history.
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  userName  String?
+  ip        String?
+  action    String   // LOGIN, LOGIN_FAILED, LOGOUT, CREATE, UPDATE, DELETE
+  model     String   // Prisma model name, or "Auth" for login/logout events
+  recordId  String?
+  summary   String?
+  changes   Json?
+  createdAt DateTime @default(now())
+
+  @@index([model, recordId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+}

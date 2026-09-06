@@ -108,6 +108,23 @@ export default async function SettingsPage() {
         </Link>
       )}
 
+      {me?.isAdmin && (
+        <Link
+          href="/settings/audit-log"
+          className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:bg-gray-50 transition-colors group"
+        >
+          <div>
+            <p className="text-sm font-semibold">Audit Log</p>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Every login and change across the app — who, what, and when
+            </p>
+          </div>
+          <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5 text-gray-300 group-hover:text-gray-400 transition-colors">
+            <path d="M7 4l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </Link>
+      )}
+
       <div className="border border-red-200 bg-red-50 rounded-2xl p-5 space-y-3">
         <div>
           <h2 className="text-sm font-semibold text-red-800">Danger Zone</h2>
