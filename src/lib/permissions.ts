@@ -82,6 +82,8 @@ export const SUB_MODULES = [
   // Ecommerce
   { parentKey: "ecommerce",   key: "ecom_draft_orders",          label: "Draft Orders"          },
   { parentKey: "ecommerce",   key: "ecom_orders",                label: "Orders"                },
+  { parentKey: "ecommerce",   key: "ecom_all_orders",            label: "All Orders"            },
+  { parentKey: "ecommerce",   key: "ecom_dispatch",              label: "Dispatch"              },
   { parentKey: "ecommerce",   key: "ecom_customers",             label: "Customers"             },
   { parentKey: "ecommerce",   key: "ecom_finance",               label: "Finance"               },
   { parentKey: "ecommerce",   key: "ecom_expenses",              label: "Expenses"              },

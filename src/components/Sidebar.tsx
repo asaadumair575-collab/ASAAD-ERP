@@ -414,10 +414,10 @@ export default function Sidebar({
                     {canViewSub(permissions, "ecom_orders", isAdmin) && (
                       <NavLink href="/ecommerce/orders" active={pathname.startsWith("/ecommerce/orders")} compact onClick={closeMobile}>Orders</NavLink>
                     )}
-                    {canViewSub(permissions, "ecom_orders", isAdmin) && (
+                    {canViewSub(permissions, "ecom_all_orders", isAdmin) && (
                       <NavLink href="/ecommerce/all-orders" active={pathname.startsWith("/ecommerce/all-orders")} compact onClick={closeMobile}>All Orders</NavLink>
                     )}
-                    {canViewSub(permissions, "ecom_orders", isAdmin) && (
+                    {canViewSub(permissions, "ecom_dispatch", isAdmin) && (
                       <NavLink href="/ecommerce/dispatch" active={pathname.startsWith("/ecommerce/dispatch")} compact onClick={closeMobile}>Dispatch</NavLink>
                     )}
                   </div>
