@@ -2,12 +2,6 @@ import { loginAction } from "@/lib/actions";
 import SubmitButton from "@/components/SubmitButton";
 import TbsLogo from "@/components/TbsLogo";
 
-const FEATURES = [
-  "Website order to Postex dispatch in one flow",
-  "Live retail, leads, reorder and employee tracking",
-  "Finance, expenses and ad spend, all in one place",
-];
-
 export default async function LoginPage({
   searchParams,
 }: {
@@ -26,28 +20,17 @@ export default async function LoginPage({
           <TbsLogo size={40} />
           <div>
             <p className="font-bold tracking-tight leading-tight">THE BOUNDARY SHOP</p>
-            <p className="text-[11px] text-gray-400 tracking-wide">Wholesale &amp; Retail ERP</p>
+            <p className="text-[11px] text-gray-400 tracking-wide">Internal Office System</p>
           </div>
         </div>
 
         <div className="relative mt-10 md:mt-0">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
-            One system for wholesale, retail COD and every order in between.
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
+            Orders, dispatch, finance and team — in one place.
           </h1>
-          <p className="text-gray-400 mt-4 max-w-md">
-            Leads, orders, dispatch, finance and your team — managed end to end from a single dashboard.
+          <p className="text-gray-400 mt-3 max-w-md">
+            For office use only.
           </p>
-
-          <div className="mt-8 space-y-3">
-            {FEATURES.map((f) => (
-              <div key={f} className="flex items-center gap-3">
-                <span className="shrink-0 w-6 h-6 rounded-full bg-[#BFD732]/15 flex items-center justify-center">
-                  <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5"><path d="M3.5 8.5l3 3 6-7" stroke="#BFD732" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </span>
-                <span className="text-sm text-gray-200">{f}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         <p className="relative text-xs text-gray-500 mt-10 md:mt-0">
