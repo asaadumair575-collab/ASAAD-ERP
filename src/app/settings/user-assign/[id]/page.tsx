@@ -4,7 +4,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { parsePermissions, canView, canViewSub } from "@/lib/permissions";
 import { updateWholesaleAccess } from "@/lib/actions";
-import SubmitButton from "@/components/SubmitButton";
+import ModuleAccessCard from "@/components/ModuleAccessCard";
 
 const WHOLESALE_PAGES = [
   { key: "wh_customers", label: "Customers" },
@@ -15,6 +15,13 @@ const WHOLESALE_PAGES = [
   { key: "wh_commission", label: "Commission" },
   { key: "wh_dispatch", label: "Dispatch" },
 ];
+
+// Modules get added here one at a time — each is its own ModuleAccessCard
+// with its own page list, its own bound save action, and its own mapping
+// onto the underlying permissions storage (see updateWholesaleAccess for
+// the pattern to follow for the next one).
+const MODULES_BUILT = ["wholesale"];
+const MODULES_PLANNED = ["Retail COD", "Leads", "Reorder / Followup", "Performance", "Complaints", "Employee"];
 
 export default async function UserAssignDetailPage({
   params,
@@ -34,7 +41,7 @@ export default async function UserAssignDetailPage({
 
   const perms = parsePermissions(user.permissions);
 
-  const initial: Record<string, boolean> = {
+  const wholesaleInitial: Record<string, boolean> = {
     wh_customers: canView(perms, "clients", false),
     wh_invoicing: canView(perms, "sales", false) && canViewSub(perms, "sales_invoices", false),
     wh_orders: canView(perms, "sales", false),
@@ -47,7 +54,7 @@ export default async function UserAssignDetailPage({
   const saveWholesaleAccess = updateWholesaleAccess.bind(null, userId);
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-3xl space-y-6 pb-10">
       <div className="flex items-center gap-3">
         <Link href="/settings/user-assign" className="text-gray-400 hover:text-black transition-colors">
           <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5"><path d="M12.5 4.5 7 10l5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -71,40 +78,28 @@ export default async function UserAssignDetailPage({
         </div>
       )}
 
-      <form action={saveWholesaleAccess} className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <p className="text-sm font-semibold text-gray-800">Wholesale</p>
-          <p className="text-xs text-gray-400 mt-0.5">Which wholesale pages this user can see</p>
+      <div>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 px-1">
+          Modules ({MODULES_BUILT.length} of {MODULES_BUILT.length + MODULES_PLANNED.length} set up)
+        </p>
+        <div className="space-y-4">
+          <ModuleAccessCard
+            title="Wholesale"
+            description="Which wholesale pages this user can see"
+            pages={WHOLESALE_PAGES}
+            initial={wholesaleInitial}
+            action={saveWholesaleAccess}
+          />
         </div>
-        <div className="p-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {WHOLESALE_PAGES.map((p) => (
-            <label
-              key={p.key}
-              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-gray-200 text-gray-700 has-checked:border-black has-checked:bg-black has-checked:text-white cursor-pointer transition-colors"
-            >
-              <input
-                type="checkbox"
-                name={p.key}
-                value="1"
-                defaultChecked={initial[p.key]}
-                className="w-3.5 h-3.5 accent-black rounded"
-              />
-              <span className="text-sm font-medium">{p.label}</span>
-            </label>
+      </div>
+
+      <div className="border border-dashed border-gray-200 rounded-2xl p-6">
+        <p className="text-sm font-medium text-gray-500 mb-2.5">Coming next</p>
+        <div className="flex flex-wrap gap-1.5">
+          {MODULES_PLANNED.map((m) => (
+            <span key={m} className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">{m}</span>
           ))}
         </div>
-        <div className="px-5 py-4 border-t border-gray-100 flex justify-end">
-          <SubmitButton
-            pendingText="Saving..."
-            className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-colors"
-          >
-            Save Access
-          </SubmitButton>
-        </div>
-      </form>
-
-      <div className="border border-dashed border-gray-200 rounded-2xl p-10 text-center">
-        <p className="text-sm font-medium text-gray-400">Other modules coming next</p>
       </div>
     </div>
   );
