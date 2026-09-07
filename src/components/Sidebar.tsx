@@ -374,6 +374,9 @@ export default function Sidebar({
                 {canViewSub(permissions, "ecom_all_dashboard", isAdmin) && (
                   <NavLink href="/ecommerce/shopify-dashboard" active={pathname.startsWith("/ecommerce/shopify-dashboard")} compact onClick={closeMobile}>All Dashboard</NavLink>
                 )}
+                {(canViewSub(permissions, "ecom_analytics_ads", isAdmin) ||
+                  canViewSub(permissions, "ecom_analytics_postex", isAdmin) ||
+                  canViewSub(permissions, "ecom_analytics_website", isAdmin)) && (
                 <button
                   type="button"
                   onClick={() => setAnalyticsOpen((v) => !v)}
@@ -382,6 +385,7 @@ export default function Sidebar({
                   <span>Analytics</span>
                   <span className={`transition-transform text-gray-500 ${analyticsOpen ? "rotate-90" : ""}`}>{icons.chevron}</span>
                 </button>
+                )}
                 {analyticsOpen && (
                   <div className="ml-3 pl-3 border-l border-white/10 space-y-0.5">
                     {canViewSub(permissions, "ecom_analytics_ads", isAdmin) && (
@@ -395,6 +399,10 @@ export default function Sidebar({
                     )}
                   </div>
                 )}
+                {(canViewSub(permissions, "ecom_draft_orders", isAdmin) ||
+                  canViewSub(permissions, "ecom_orders", isAdmin) ||
+                  canViewSub(permissions, "ecom_all_orders", isAdmin) ||
+                  canViewSub(permissions, "ecom_dispatch", isAdmin)) && (
                 <button
                   type="button"
                   onClick={() => setEcomOrdersOpen((v) => !v)}
@@ -403,6 +411,7 @@ export default function Sidebar({
                   <span>Orders</span>
                   <span className={`transition-transform text-gray-500 ${ecomOrdersOpen ? "rotate-90" : ""}`}>{icons.chevron}</span>
                 </button>
+                )}
                 {ecomOrdersOpen && (
                   <div className="ml-3 pl-3 border-l border-white/10 space-y-0.5">
                     {canViewSub(permissions, "ecom_draft_orders", isAdmin) && (
