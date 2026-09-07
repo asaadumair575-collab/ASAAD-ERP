@@ -10,6 +10,36 @@ function today() {
 }
 
 export default function EcomExpenseForm({ action }: { action: (fd: FormData) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-1.5 bg-black text-white text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors"
+        >
+          <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4"><path d="M8 3.5v9M3.5 8h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+          Add Expense
+        </button>
+      </div>
+
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <ExpenseFormCard action={action} onSaved={() => setOpen(false)} />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function ExpenseFormCard({ action, onSaved }: { action: (fd: FormData) => Promise<void>; onSaved: () => void }) {
   const [tab, setTab] = useState<"FIXED" | "VARIABLE">("VARIABLE");
   const [pending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
@@ -17,7 +47,7 @@ export default function EcomExpenseForm({ action }: { action: (fd: FormData) => 
   const categories = tab === "FIXED" ? FIXED_CATEGORIES : VARIABLE_CATEGORIES;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
       {/* Tabs */}
       <div className="flex border-b border-gray-100">
         <button
@@ -44,6 +74,7 @@ export default function EcomExpenseForm({ action }: { action: (fd: FormData) => 
             fd.set("type", tab);
             await action(fd);
             formRef.current?.reset();
+            onSaved();
           })
         }
         className="p-5 grid grid-cols-2 gap-4"
