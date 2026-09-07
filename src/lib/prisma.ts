@@ -76,13 +76,69 @@ function diffRows(model: string, before: Row | null, after: Row | null): Record<
   return changes;
 }
 
-function summarize(model: string, row: Row | null): string {
+// Plain-English names for what admins actually call these things, used in
+// place of the raw Prisma model name in audit summaries.
+const MODEL_LABELS: Record<string, string> = {
+  RetailOrder: "retail advance order",
+  RetailCustomer: "retail customer",
+  EcomOrder: "retail COD order",
+  DraftOrder: "draft order",
+  Lead: "B2B lead",
+  Sample: "sample",
+  Client: "wholesale client",
+  Order: "wholesale order",
+  User: "user",
+  EcomExpense: "ecommerce expense",
+  Complaint: "complaint",
+  DispatchSheet: "dispatch sheet",
+  ReorderLead: "reorder lead",
+  ReorderCampaign: "reorder campaign",
+  EmployeeTask: "task",
+  TaskTemplate: "recurring task",
+  EmpCommissionEntry: "commission entry",
+  EmpWithdrawal: "withdrawal",
+}
+
+function modelLabel(model: string): string {
+  return MODEL_LABELS[model] ?? model.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+}
+
+function rowName(row: Row): string | undefined {
+  return (row.customerName ?? row.name ?? row.displayName ?? row.username ?? row.shopNumber ?? row.title) as
+    | string
+    | undefined;
+}
+
+// Recognizes a handful of common "this update actually means something
+// specific" transitions (an order getting confirmed, dispatched, etc.) so
+// the audit log reads like "Confirmed retail COD order — Ahmed" instead of
+// a generic "Updated retail COD order" for every single field edit.
+function describeTransition(model: string, before: Row, after: Row): string | null {
+  if ((model === "EcomOrder" || model === "DraftOrder") && !before.confirmed && after.confirmed) return "Confirmed";
+  if (model === "EcomOrder" && before.draftStatus !== "CONFIRMED" && after.draftStatus === "CONFIRMED") return "Confirmed";
+  if (model === "EcomOrder" && !before.dispatchedAt && after.dispatchedAt) return "Dispatched";
+  if (model === "EcomOrder" && !before.packedAt && after.packedAt) return "Packed";
+  if (model === "EcomOrder" && !before.returned && after.returned) return "Marked returned";
+  if (model === "RetailOrder" && !before.dispatched && after.dispatched) return "Dispatched";
+  if (model === "Lead" && before.status !== "CONTACTED" && after.status === "CONTACTED") return "Contacted";
+  if (model === "Lead" && before.status !== "CONFIRMED" && after.status === "CONFIRMED") return "Confirmed";
+  if (model === "Complaint" && before.status !== "RESOLVED" && after.status === "RESOLVED") return "Resolved";
+  return null;
+}
+
+function summarize(model: string, row: Row | null, action: "CREATE" | "UPDATE" | "DELETE" = "CREATE", before: Row | null = null): string {
   if (!row) return model;
-  const name =
-    (row.customerName ?? row.name ?? row.displayName ?? row.username ?? row.shopNumber ?? row.title) as
-      | string
-      | undefined;
-  return name ? `${model} — ${name}` : `${model} #${row.id ?? ""}`;
+  const label = modelLabel(model);
+  const name = rowName(row);
+  const suffix = name ? ` — ${name}` : ` #${row.id ?? ""}`;
+
+  if (action === "UPDATE" && before) {
+    const transition = describeTransition(model, before, row);
+    if (transition) return `${transition} ${label}${suffix}`;
+    return `Updated ${label}${suffix}`;
+  }
+  if (action === "DELETE") return `Deleted ${label}${suffix}`;
+  return `Created ${label}${suffix}`;
 }
 
 function toDelegateName(model: string): string {
@@ -152,7 +208,7 @@ function createClient() {
             await logEntry({
               action: "CREATE",
               recordId: row?.id != null ? String(row.id) : null,
-              summary: summarize(model, row),
+              summary: summarize(model, row, "CREATE"),
               changes: { after: redact(model, row) },
             });
             return result;
@@ -164,7 +220,7 @@ function createClient() {
             await logEntry({
               action: "DELETE",
               recordId: row?.id != null ? String(row.id) : null,
-              summary: summarize(model, row),
+              summary: summarize(model, row, "DELETE"),
               changes: { before: redact(model, row) },
             });
             return result;
@@ -190,7 +246,7 @@ function createClient() {
               await logEntry({
                 action: "CREATE",
                 recordId: after?.id != null ? String(after.id) : null,
-                summary: summarize(model, after),
+                summary: summarize(model, after, "CREATE"),
                 changes: { after: redact(model, after) },
               });
             } else {
@@ -199,7 +255,7 @@ function createClient() {
                 await logEntry({
                   action: "UPDATE",
                   recordId: after?.id != null ? String(after.id) : null,
-                  summary: summarize(model, after),
+                  summary: summarize(model, after, "UPDATE", before),
                   changes,
                 });
               }

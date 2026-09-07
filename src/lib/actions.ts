@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { sendPushToAll } from "@/lib/push";
+import { setCurrentActor, getCurrentActor } from "@/lib/auditContext";
 import * as XLSX from "xlsx";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import {
@@ -49,6 +50,10 @@ async function generateRetailCustomerCode(city: string | null): Promise<string> 
 async function requireAuth() {
   const me = await getSessionUser();
   if (!me) throw new Error("Not authenticated");
+  // Belt-and-suspenders: re-assert the actor right before the caller does any
+  // writes, in case something upstream (a cached response, a re-entrant call)
+  // let a stale/empty AsyncLocalStorage context slip through.
+  setCurrentActor({ userId: me.id, userName: me.displayName ?? me.username, ip: getCurrentActor().ip });
   return me;
 }
 
@@ -946,7 +951,7 @@ export async function loginAction(formData: FormData) {
     }
     clearLoginAttempts(username);
     await setSessionCookie(username);
-    await logAuthEvent({ action: "LOGIN", userId: dbUser.id, userName: dbUser.displayName ?? dbUser.username, ip, summary: `Logged in: ${dbUser.displayName ?? dbUser.username}` });
+    await logAuthEvent({ action: "LOGIN", userId: dbUser.id, userName: dbUser.displayName ?? dbUser.username, ip, summary: `${dbUser.displayName ?? dbUser.username} logged in to website` });
     redirect(dbUser.mustSetPassword ? "/set-password" : "/");
   }
 
@@ -957,7 +962,7 @@ export async function loginAction(formData: FormData) {
   if (appUsername && appPassword && username === appUsername && password.trim() === appPassword) {
     clearLoginAttempts(username);
     await setSessionCookie(username);
-    await logAuthEvent({ action: "LOGIN", userId: null, userName: username, ip, summary: `Logged in: ${username} (env admin)` });
+    await logAuthEvent({ action: "LOGIN", userId: null, userName: username, ip, summary: `${username} logged in to website` });
     redirect("/");
   }
 
@@ -970,7 +975,7 @@ export async function logoutAction() {
   if (me) {
     const h = await headers();
     const ip = (h.get("x-forwarded-for")?.split(",")[0]?.trim()) || h.get("x-real-ip") || "unknown";
-    await logAuthEvent({ action: "LOGOUT", userId: me.id, userName: me.displayName ?? me.username, ip, summary: `Logged out: ${me.displayName ?? me.username}` });
+    await logAuthEvent({ action: "LOGOUT", userId: me.id, userName: me.displayName ?? me.username, ip, summary: `${me.displayName ?? me.username} logged out of website` });
   }
   await clearSessionCookie();
   redirect("/login");
