@@ -3150,3 +3150,41 @@ export async function setInitialPassword(formData: FormData) {
 
   redirect("/");
 }
+
+// Wholesale-page checkboxes on the new User Assign detail page map onto the
+// existing module + sub-permission system (same storage the rest of the app
+// already gates on) — just recomputed fresh from these 7 boxes each save,
+// merged into whatever else is already on the user's permissions.
+export async function updateWholesaleAccess(userId: number, formData: FormData) {
+  await requireAdmin();
+
+  const customers = formData.get("wh_customers") === "1";
+  const invoicing = formData.get("wh_invoicing") === "1";
+  const orders = formData.get("wh_orders") === "1";
+  const products = formData.get("wh_products") === "1";
+  const financePage = formData.get("wh_finance") === "1";
+  const commissionPage = formData.get("wh_commission") === "1";
+  const dispatchPage = formData.get("wh_dispatch") === "1";
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { permissions: true } });
+  if (!user) throw new Error("User not found");
+
+  const { parsePermissions } = await import("@/lib/permissions");
+  const perms = parsePermissions(user.permissions) as Record<string, unknown>;
+
+  perms.clients = customers ? "view" : "none";
+  perms.sales = (invoicing || orders || products) ? "view" : "none";
+  perms.finance = (financePage || commissionPage) ? "view" : "none";
+  perms.commission = commissionPage ? "view" : "none";
+  perms.dispatch = dispatchPage ? "view" : "none";
+
+  const sub = (perms.sub as Record<string, boolean>) ?? {};
+  sub.sales_invoices = invoicing;
+  sub.sales_products = products;
+  sub.finance_main = financePage;
+  sub.finance_commission = commissionPage;
+  perms.sub = sub;
+
+  await prisma.user.update({ where: { id: userId }, data: { permissions: perms as never } });
+  revalidatePath(`/settings/user-assign/${userId}`);
+}

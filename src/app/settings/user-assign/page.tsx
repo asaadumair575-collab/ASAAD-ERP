@@ -40,21 +40,28 @@ export default async function UserAssignPage() {
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="divide-y divide-gray-50">
             {users.map((u) => (
-              <div key={u.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
+              <Link
+                key={u.id}
+                href={`/settings/user-assign/${u.id}`}
+                className="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors"
+              >
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900">{u.displayName ?? u.username}</p>
                   <p className="text-xs text-gray-400">@{u.username}</p>
                 </div>
-                {u.mustSetPassword ? (
-                  <span className="shrink-0 inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700">
-                    Pending — hasn&apos;t set a password
-                  </span>
-                ) : (
-                  <span className="shrink-0 inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-green-200 bg-green-50 text-green-700">
-                    Active
-                  </span>
-                )}
-              </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {u.mustSetPassword ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700">
+                      Pending — hasn&apos;t set a password
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border border-green-200 bg-green-50 text-green-700">
+                      Active
+                    </span>
+                  )}
+                  <svg viewBox="0 0 12 12" fill="none" className="w-3.5 h-3.5 text-gray-300"><path d="M4.5 2.5l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </div>
+              </Link>
             ))}
           </div>
         </div>
