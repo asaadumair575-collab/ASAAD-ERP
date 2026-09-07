@@ -1,5 +1,6 @@
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export default async function UserAssignPage() {
   const me = await getSessionUser();
@@ -12,6 +13,16 @@ export default async function UserAssignPage() {
         <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Settings</p>
         <h1 className="text-2xl font-bold text-white tracking-tight">User Assign</h1>
         <p className="text-sm text-gray-400 mt-0.5">New user access system — in progress</p>
+      </div>
+
+      <div className="flex justify-end">
+        <Link
+          href="/settings/user-assign/new"
+          className="inline-flex items-center gap-1.5 bg-black text-white text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors"
+        >
+          <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4"><path d="M8 3.5v9M3.5 8h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+          Create New User
+        </Link>
       </div>
 
       <div className="border border-dashed border-gray-200 rounded-2xl p-16 text-center">
