@@ -85,6 +85,7 @@ export const SUB_MODULES = [
   { parentKey: "ecommerce",   key: "ecom_expenses",              label: "Expenses"              },
   { parentKey: "ecommerce",   key: "ecom_cpr",                   label: "CPR / PostEx"          },
   { parentKey: "ecommerce",   key: "ecom_import",                label: "Import Orders"         },
+  { parentKey: "ecommerce",   key: "ecom_analytics_website",     label: "Analytics: Website"    },
 ] as const;
 
 export type SubModuleKey = (typeof SUB_MODULES)[number]["key"];

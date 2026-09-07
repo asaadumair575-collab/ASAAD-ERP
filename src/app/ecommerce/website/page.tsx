@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import DateRangeNav from "@/components/DateRangeNav";
 import { fetchWebOrders } from "@/lib/webOrders";
+import { parsePermissions, canViewSub } from "@/lib/permissions";
 
 export const maxDuration = 60;
 
@@ -135,6 +136,7 @@ export default async function WebsiteAnalyticsPage({
 }) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
+  if (!canViewSub(parsePermissions(me.permissions), "ecom_analytics_website", me.isAdmin)) redirect("/");
 
   const { from: fromParam, to: toParam } = await searchParams;
   const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
