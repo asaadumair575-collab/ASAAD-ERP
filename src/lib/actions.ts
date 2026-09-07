@@ -3187,4 +3187,5 @@ export async function updateWholesaleAccess(userId: number, formData: FormData) 
 
   await prisma.user.update({ where: { id: userId }, data: { permissions: perms as never } });
   revalidatePath(`/settings/user-assign/${userId}`);
+  redirect(`/settings/user-assign/${userId}?saved=1`);
 }
