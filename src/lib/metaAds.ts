@@ -290,3 +290,67 @@ export async function fetchCreativeDetail(adId: string, from: string, to: string
     return { creative: null, error: "network", detail: e instanceof Error ? e.message : String(e) };
   }
 }
+
+export type MetaAccountStatus = {
+  active: boolean;
+  statusLabel: string;
+  disableReason: string | null;
+  error?: string;
+  detail?: string;
+};
+
+const ACCOUNT_STATUS_LABELS: Record<number, string> = {
+  1: "Active",
+  2: "Disabled",
+  3: "Unsettled",
+  7: "Pending Risk Review",
+  8: "Pending Settlement",
+  9: "In Grace Period",
+  100: "Pending Closure",
+  101: "Closed",
+};
+
+const DISABLE_REASON_LABELS: Record<number, string> = {
+  0: "None",
+  1: "Ads policy violation",
+  2: "IP review",
+  3: "Payment declined / risk review",
+  4: "Account shut down",
+  5: "Ad account under review",
+  6: "Business integrity review",
+  7: "Permanently closed",
+  10: "Payment method issue",
+  11: "Behavioural integrity review",
+};
+
+// Is the ad account itself allowed to spend right now, and if not, why —
+// separate from whether any individual campaign happens to be paused.
+export async function fetchAccountStatus(): Promise<MetaAccountStatus> {
+  const token = process.env.META_ACCESS_TOKEN;
+  const accountId = process.env.META_AD_ACCOUNT_ID;
+  if (!token || !accountId) return { active: false, statusLabel: "Not configured", disableReason: null, error: "config" };
+
+  const url = `https://graph.facebook.com/v21.0/${accountId}?fields=account_status,disable_reason&access_token=${encodeURIComponent(token)}`;
+
+  try {
+    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(15000) });
+    const body = await res.text();
+    if (!res.ok) {
+      let message = `HTTP ${res.status}`;
+      try {
+        message = JSON.parse(body)?.error?.message ?? message;
+      } catch {}
+      return { active: false, statusLabel: "Unknown", disableReason: null, error: `api:${res.status}`, detail: message };
+    }
+    const json = JSON.parse(body);
+    const status = Number(json.account_status ?? 0);
+    const disableReasonCode = Number(json.disable_reason ?? 0);
+    return {
+      active: status === 1,
+      statusLabel: ACCOUNT_STATUS_LABELS[status] ?? `Status ${status}`,
+      disableReason: disableReasonCode > 0 ? (DISABLE_REASON_LABELS[disableReasonCode] ?? `Reason ${disableReasonCode}`) : null,
+    };
+  } catch (e) {
+    return { active: false, statusLabel: "Unknown", disableReason: null, error: "network", detail: e instanceof Error ? e.message : String(e) };
+  }
+}

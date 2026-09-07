@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { fetchMetaStats, fetchActiveCreatives } from "@/lib/metaAds";
+import { fetchMetaStats, fetchActiveCreatives, fetchAccountStatus } from "@/lib/metaAds";
 import { fetchWebOrders, isMetaAdOrder, type WebOrder } from "@/lib/webOrders";
 import DateRangeNav from "@/components/DateRangeNav";
 import AdsManagerCharts, { type AdsDailyPoint } from "@/components/AdsManagerCharts";
@@ -100,10 +100,11 @@ export default async function AdsManagerPage({
 }
 
 async function AdsContent({ from, to }: { from: string; to: string }) {
-  const [meta, { orders }, creativesResult] = await Promise.all([
+  const [meta, { orders }, creativesResult, accountStatus] = await Promise.all([
     fetchMetaStats(from, to),
     fetchWebOrders(from, to),
     fetchActiveCreatives(from, to),
+    fetchAccountStatus(),
   ]);
   const adOrders = orders.filter((o) => isMetaAdOrder(o.source));
   const totalOrders = orders.length;
@@ -141,6 +142,28 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
 
   return (
     <>
+      {/* Account status — is Meta even letting this account spend right now? */}
+      {!accountStatus.error && (
+        <div className={`rounded-2xl px-5 py-3.5 flex items-center gap-3 border ${
+          accountStatus.active ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"
+        }`}>
+          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${accountStatus.active ? "bg-emerald-500" : "bg-red-500"}`} />
+          <div>
+            <p className={`text-sm font-semibold ${accountStatus.active ? "text-emerald-800" : "text-red-800"}`}>
+              Ad Account: {accountStatus.active ? "Active" : accountStatus.statusLabel}
+            </p>
+            {!accountStatus.active && accountStatus.disableReason && (
+              <p className="text-xs text-red-600 mt-0.5">Reason: {accountStatus.disableReason}</p>
+            )}
+          </div>
+        </div>
+      )}
+      {accountStatus.error && accountStatus.error !== "config" && (
+        <div className="border border-amber-200 bg-amber-50 rounded-2xl px-5 py-3 text-xs text-amber-700">
+          Could not check account status ({accountStatus.error.replace("api:", "code ")}).
+        </div>
+      )}
+
       {/* Headline row — everything here comes straight from Meta's own numbers */}
       <div>
         <div className="flex items-center gap-2 mb-2">
