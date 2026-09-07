@@ -371,7 +371,9 @@ export default function Sidebar({
             </button>
             {openSection === "ecommerce" && (
               <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
-                <NavLink href="/ecommerce/shopify-dashboard" active={pathname.startsWith("/ecommerce/shopify-dashboard")} compact onClick={closeMobile}>All Dashboard</NavLink>
+                {canViewSub(permissions, "ecom_all_dashboard", isAdmin) && (
+                  <NavLink href="/ecommerce/shopify-dashboard" active={pathname.startsWith("/ecommerce/shopify-dashboard")} compact onClick={closeMobile}>All Dashboard</NavLink>
+                )}
                 <button
                   type="button"
                   onClick={() => setAnalyticsOpen((v) => !v)}

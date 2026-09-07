@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import DateNav from "./DateNav";
 import { fetchMetaStats } from "@/lib/metaAds";
 import { fetchWebOrders, isMetaAdOrder, type WebOrder } from "@/lib/webOrders";
+import { parsePermissions, canViewSub } from "@/lib/permissions";
 
 export const maxDuration = 60;
 
@@ -229,6 +230,7 @@ export default async function ShopifyDashboardPage({
 }) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
+  if (!canViewSub(parsePermissions(me.permissions), "ecom_all_dashboard", me.isAdmin)) redirect("/");
 
   const { from: fromParam, to: toParam } = await searchParams;
 

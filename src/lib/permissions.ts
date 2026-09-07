@@ -80,6 +80,7 @@ export const SUB_MODULES = [
   { parentKey: "commission",  key: "commission_manage",          label: "Manage Commission"     },
 
   // Ecommerce
+  { parentKey: "ecommerce",   key: "ecom_all_dashboard",         label: "All Dashboard"         },
   { parentKey: "ecommerce",   key: "ecom_draft_orders",          label: "Draft Orders"          },
   { parentKey: "ecommerce",   key: "ecom_orders",                label: "Orders"                },
   { parentKey: "ecommerce",   key: "ecom_all_orders",            label: "All Orders"            },
