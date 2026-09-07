@@ -182,7 +182,7 @@ export default function Sidebar({
           Dashboard
         </NavLink>
 
-        {(canView(permissions, "clients", isAdmin) || canView(permissions, "sales", isAdmin) || canView(permissions, "finance", isAdmin)) && (
+        {(canView(permissions, "clients", isAdmin) || canView(permissions, "sales", isAdmin) || canView(permissions, "finance", isAdmin) || canView(permissions, "dispatch", isAdmin)) && (
           <>
             <button
               type="button"
