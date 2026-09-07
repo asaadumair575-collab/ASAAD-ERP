@@ -109,6 +109,7 @@ export const ACCESS_MODULES: AccessModuleConfig[] = [
       { key: "dispatch", label: "Dispatch", module: "ecommerce", sub: "ecom_dispatch", group: "Orders" },
       { key: "book_postex", label: "Book on Postex", module: "ecommerce", sub: "ecom_book_postex", group: "Orders" },
       { key: "generate_dispatch", label: "Generate Dispatch List", module: "ecommerce", sub: "ecom_generate_dispatch", group: "Orders" },
+      { key: "print_labels", label: "Print Labels", module: "ecommerce", sub: "ecom_print_labels", group: "Orders" },
       { key: "customers", label: "Customers", module: "ecommerce", sub: "ecom_customers" },
       { key: "finance", label: "Finance", module: "ecommerce", sub: "ecom_finance" },
       { key: "expenses", label: "Expenses", module: "ecommerce", sub: "ecom_expenses" },

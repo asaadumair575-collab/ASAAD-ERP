@@ -34,6 +34,7 @@ export default function ConfirmOrdersTable({
   sheetByOrderId = {},
   canBookPostex = true,
   canGenerateDispatch = true,
+  canPrintLabels = true,
 }: {
   orders: Order[];
   weightByTracking?: Record<string, number>;
@@ -41,6 +42,7 @@ export default function ConfirmOrdersTable({
   sheetByOrderId?: Record<number, { id: number; number: string }>;
   canBookPostex?: boolean;
   canGenerateDispatch?: boolean;
+  canPrintLabels?: boolean;
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const dispatchedSet = new Set(dispatchedOrderIds);
@@ -73,7 +75,7 @@ export default function ConfirmOrdersTable({
           <div className="flex items-center gap-2 flex-wrap">
             <button onClick={() => setSelected(new Set())} className="text-xs text-orange-400 hover:text-orange-700 transition-colors py-1.5">Clear</button>
             {canGenerateDispatch && <DispatchListSelectedButton selectedIds={Array.from(selected)} />}
-            {orders.some((o) => selected.has(o.id) && o.trackingNumber) && (
+            {canPrintLabels && orders.some((o) => selected.has(o.id) && o.trackingNumber) && (
               <PrintLabelsButton selectedIds={orders.filter((o) => selected.has(o.id) && o.trackingNumber).map((o) => o.id)} />
             )}
             {canBookPostex && <BulkDispatchButton selectedIds={Array.from(selected)} orders={orders} />}

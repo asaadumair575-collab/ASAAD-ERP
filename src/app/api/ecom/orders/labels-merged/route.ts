@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { fetchAirwayBillPdfWithFallback } from "@/lib/postexInvoice";
 import { PDFDocument } from "pdf-lib";
+import { parsePermissions, canViewSub } from "@/lib/permissions";
 
 export const maxDuration = 60;
 
@@ -16,6 +17,9 @@ const POSTEX_MAX_PER_CALL = 10;
 export async function GET(req: NextRequest) {
   const me = await getSessionUser();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!canViewSub(parsePermissions(me.permissions), "ecom_print_labels", me.isAdmin)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
 
   const idsParam = req.nextUrl.searchParams.get("ids");
   const ids = idsParam ? idsParam.split(",").map(Number).filter((n) => !Number.isNaN(n)) : [];
