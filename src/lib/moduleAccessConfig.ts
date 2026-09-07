@@ -9,6 +9,10 @@ export type AccessPageConfig = {
   // (mirrors compound AND conditions in the sidebar, e.g. Commission needs
   // both the commission module and finance).
   alsoModules?: ModuleKey[];
+  // Visually clusters this page under a sub-heading within the card,
+  // mirroring the sidebar's own nested groups (e.g. Analytics, Orders).
+  // Pages with no group render in the plain top-level grid.
+  group?: string;
 };
 
 export type AccessModuleConfig = {
@@ -96,10 +100,11 @@ export const ACCESS_MODULES: AccessModuleConfig[] = [
     description: "Which Retail COD pages this user can see",
     pages: [
       { key: "dashboard", label: "All Dashboard", module: "ecommerce" },
-      { key: "ads", label: "Analytics: Ads Manager", module: "ecommerce", sub: "ecom_analytics_ads" },
-      { key: "postex", label: "Analytics: Postex", module: "ecommerce", sub: "ecom_analytics_postex" },
-      { key: "website", label: "Analytics: Website", module: "ecommerce", sub: "ecom_analytics_website" },
-      { key: "orders", label: "Orders / Dispatch", module: "ecommerce", sub: "ecom_orders" },
+      { key: "ads", label: "Ads Manager", module: "ecommerce", sub: "ecom_analytics_ads", group: "Analytics" },
+      { key: "postex", label: "Postex Analytics", module: "ecommerce", sub: "ecom_analytics_postex", group: "Analytics" },
+      { key: "website", label: "Website", module: "ecommerce", sub: "ecom_analytics_website", group: "Analytics" },
+      { key: "draft", label: "Draft Orders", module: "ecommerce", sub: "ecom_draft_orders", group: "Orders" },
+      { key: "orders", label: "Orders / All Orders / Dispatch", module: "ecommerce", sub: "ecom_orders", group: "Orders" },
       { key: "customers", label: "Customers", module: "ecommerce", sub: "ecom_customers" },
       { key: "finance", label: "Finance", module: "ecommerce", sub: "ecom_finance" },
       { key: "expenses", label: "Expenses", module: "ecommerce", sub: "ecom_expenses" },
