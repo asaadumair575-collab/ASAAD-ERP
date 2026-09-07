@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import LiveRefresh from "@/components/LiveRefresh";
 import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import ConfirmOrdersTable from "@/components/ConfirmOrdersTable";
@@ -64,6 +65,7 @@ export default async function EcomOrdersPage({
 
   return (
     <div className="space-y-6">
+      <LiveRefresh />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>

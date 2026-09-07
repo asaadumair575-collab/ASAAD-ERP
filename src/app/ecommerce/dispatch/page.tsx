@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LiveRefresh from "@/components/LiveRefresh";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -31,6 +32,7 @@ export default async function DispatchListPage({
 
   return (
     <div className="space-y-6">
+      <LiveRefresh />
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Dispatch</h1>

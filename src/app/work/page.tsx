@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import ClockInButton from "./ClockInButton";
 import AssignTaskModal from "./AssignTaskModal";
-import LiveRefresh from "./LiveRefresh";
+import LiveRefresh from "@/components/LiveRefresh";
 import TaskStatCard from "@/components/TaskStatCard";
 import { getLiveTaskStats } from "@/lib/taskStats";
 import { deleteTask } from "@/lib/actions";

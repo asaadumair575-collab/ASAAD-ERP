@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import LiveRefresh from "@/components/LiveRefresh";
 import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
 
@@ -45,6 +46,7 @@ export default async function AllOrdersPage({
 
   return (
     <div className="space-y-6">
+      <LiveRefresh />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">All Orders</h1>
         <p className="text-sm text-gray-500 mt-0.5">

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import LiveRefresh from "@/components/LiveRefresh";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -66,6 +67,7 @@ export default async function DraftOrdersPage({
 
   return (
     <div className="space-y-5">
+      <LiveRefresh />
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Draft Orders</h1>
