@@ -3155,38 +3155,44 @@ export async function setInitialPassword(formData: FormData) {
 // existing module + sub-permission system (same storage the rest of the app
 // already gates on) — just recomputed fresh from these 7 boxes each save,
 // merged into whatever else is already on the user's permissions.
-export async function updateWholesaleAccess(userId: number, formData: FormData) {
+// Generic save for any ACCESS_MODULES section (src/lib/moduleAccessConfig.ts)
+// — each page checkbox maps to a module (set "view" if any of its pages are
+// checked) and optionally one sub-permission, so adding a new module card is
+// just adding a config entry, no new action needed.
+export async function updateModuleAccess(userId: number, moduleConfigKey: string, formData: FormData) {
   await requireAdmin();
 
-  const customers = formData.get("wh_customers") === "1";
-  const invoicing = formData.get("wh_invoicing") === "1";
-  const orders = formData.get("wh_orders") === "1";
-  const products = formData.get("wh_products") === "1";
-  const financePage = formData.get("wh_finance") === "1";
-  const commissionPage = formData.get("wh_commission") === "1";
-  const dispatchPage = formData.get("wh_dispatch") === "1";
+  const { ACCESS_MODULES } = await import("@/lib/moduleAccessConfig");
+  const config = ACCESS_MODULES.find((m) => m.key === moduleConfigKey);
+  if (!config) throw new Error("Unknown module");
 
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { permissions: true } });
   if (!user) throw new Error("User not found");
 
   const { parsePermissions } = await import("@/lib/permissions");
   const perms = parsePermissions(user.permissions) as Record<string, unknown>;
-
-  perms.clients = customers ? "view" : "none";
-  perms.sales = (invoicing || orders || products) ? "view" : "none";
-  perms.finance = (financePage || commissionPage) ? "view" : "none";
-  perms.commission = commissionPage ? "view" : "none";
-  perms.dispatch = dispatchPage ? "view" : "none";
-
   const sub = (perms.sub as Record<string, boolean>) ?? {};
-  sub.sales_invoices = invoicing;
-  sub.sales_orders = orders;
-  sub.sales_products = products;
-  sub.finance_main = financePage;
-  sub.finance_commission = commissionPage;
+
+  const modulesInConfig = new Set<string>();
+  const modulesGranted = new Set<string>();
+  for (const p of config.pages) {
+    modulesInConfig.add(p.module);
+    for (const m of p.alsoModules ?? []) modulesInConfig.add(m);
+
+    const checked = formData.get(p.key) === "1";
+    if (checked) {
+      modulesGranted.add(p.module);
+      for (const m of p.alsoModules ?? []) modulesGranted.add(m);
+    }
+    if (p.sub) sub[p.sub] = checked;
+  }
+
+  for (const m of modulesInConfig) {
+    perms[m] = modulesGranted.has(m) ? "view" : "none";
+  }
   perms.sub = sub;
 
   await prisma.user.update({ where: { id: userId }, data: { permissions: perms as never } });
   revalidatePath(`/settings/user-assign/${userId}`);
-  redirect(`/settings/user-assign/${userId}?saved=1`);
+  redirect(`/settings/user-assign/${userId}?saved=${moduleConfigKey}`);
 }
