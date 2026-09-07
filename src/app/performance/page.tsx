@@ -201,7 +201,7 @@ export default async function PerformancePage({
     : (!isAdmin ? me?.id ?? undefined : undefined);
 
   const users = isAdmin
-    ? await prisma.user.findMany({ where: { isAdmin: false }, orderBy: { displayName: "asc" } })
+    ? await prisma.user.findMany({ where: { isAdmin: false, isEmployee: true }, orderBy: { displayName: "asc" } })
     : [];
 
   // The employee's actual assigned tasks (from My Work) — these replace the

@@ -154,6 +154,7 @@ model User {
   username             String               @unique
   passwordHash         String
   mustSetPassword      Boolean              @default(false)
+  isEmployee           Boolean              @default(true)
   displayName          String?
   isAdmin              Boolean              @default(false)
   permissions          Json                 @default("{}")

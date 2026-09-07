@@ -68,7 +68,7 @@ export default async function RootLayout({
   // it's easy to forget, and there'd be no record of when the day started.
   // /work itself (and its own API route) stays reachable so they can clock
   // in; everything else redirects there until they do.
-  if (!isStandalonePage && me && !me.isAdmin && pathname !== "/work" && !pathname.startsWith("/api/")) {
+  if (!isStandalonePage && me && !me.isAdmin && me.isEmployee && pathname !== "/work" && !pathname.startsWith("/api/")) {
     const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
     const dayStart = new Date(`${todayPK}T00:00:00+05:00`);
     const dayEnd = new Date(`${todayPK}T23:59:59+05:00`);
@@ -99,6 +99,7 @@ export default async function RootLayout({
         <AppShell
           businessName={profile?.name ?? "Trader CRM"}
           isAdmin={me?.isAdmin ?? false}
+          isEmployee={me?.isEmployee ?? true}
           username={me?.isAdmin ? "Admin" : (me?.displayName ?? me?.username ?? null)}
           permissions={parsePermissions(me?.permissions)}
           unreadCount={unreadCount}

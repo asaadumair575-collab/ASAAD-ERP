@@ -49,7 +49,7 @@ export default async function WorkPage({
         orderBy: { startedAt: "asc" },
       }),
       prisma.user.findMany({
-        where: { isAdmin: false },
+        where: { isAdmin: false, isEmployee: true },
         orderBy: { displayName: "asc" },
         select: { id: true, displayName: true, username: true },
       }),

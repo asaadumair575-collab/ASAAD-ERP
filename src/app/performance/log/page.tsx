@@ -11,7 +11,7 @@ export default async function PerformanceLogPage() {
   if (!me) redirect("/login");
   const isAdmin = me.isAdmin ?? false;
 
-  const users = isAdmin ? await prisma.user.findMany({ where: { isAdmin: false }, orderBy: { displayName: "asc" } }) : [];
+  const users = isAdmin ? await prisma.user.findMany({ where: { isAdmin: false, isEmployee: true }, orderBy: { displayName: "asc" } }) : [];
 
   const entries = await prisma.empPerformance.findMany({
     ...(isAdmin ? {} : { where: { userId: me.id } }),

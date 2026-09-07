@@ -42,7 +42,7 @@ export default async function EmpCommissionPage({
         orderBy: { date: "desc" },
       }),
       prisma.user.findMany({
-        where: { isAdmin: false },
+        where: { isAdmin: false, isEmployee: true },
         select: { id: true, displayName: true, username: true },
         orderBy: { username: "asc" },
       }),

@@ -83,7 +83,7 @@ export default async function ReportPage({
     targetOrders = target?.newOrders ?? 0;
 
     const employees = await prisma.user.findMany({
-      where: { isAdmin: false },
+      where: { isAdmin: false, isEmployee: true },
       orderBy: { displayName: "asc" },
     });
 

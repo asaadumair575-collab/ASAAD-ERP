@@ -3196,3 +3196,13 @@ export async function updateModuleAccess(userId: number, moduleConfigKey: string
   revalidatePath(`/settings/user-assign/${userId}`);
   redirect(`/settings/user-assign/${userId}?saved=${moduleConfigKey}`);
 }
+
+// Off = this account is not an employee — it drops out of every employee
+// picker (reorder call assignment, performance filters, commission, task
+// assignment) and stops being forced through clock-in / My Work.
+export async function setIsEmployee(userId: number, isEmployee: boolean) {
+  await requireAdmin();
+  await prisma.user.update({ where: { id: userId }, data: { isEmployee } });
+  revalidatePath(`/settings/user-assign/${userId}`);
+  revalidatePath("/settings/user-assign");
+}

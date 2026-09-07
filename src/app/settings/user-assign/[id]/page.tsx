@@ -6,6 +6,7 @@ import { parsePermissions } from "@/lib/permissions";
 import { ACCESS_MODULES, computeInitial } from "@/lib/moduleAccessConfig";
 import { updateModuleAccess } from "@/lib/actions";
 import ModuleAccessCard from "@/components/ModuleAccessCard";
+import IsEmployeeToggle from "./IsEmployeeToggle";
 
 export default async function UserAssignDetailPage({
   params,
@@ -50,6 +51,8 @@ export default async function UserAssignDetailPage({
           ✓ {savedModule.title} access saved.
         </div>
       )}
+
+      <IsEmployeeToggle userId={user.id} isEmployee={user.isEmployee} />
 
       <div>
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 px-1">

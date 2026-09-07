@@ -10,6 +10,7 @@ export default function AppShell({
   children,
   businessName,
   isAdmin,
+  isEmployee = true,
   username,
   permissions,
   unreadCount = 0,
@@ -17,6 +18,7 @@ export default function AppShell({
   children: React.ReactNode;
   businessName: string;
   isAdmin: boolean;
+  isEmployee?: boolean;
   username: string | null;
   permissions?: UserPermissions;
   unreadCount?: number;
@@ -28,6 +30,7 @@ export default function AppShell({
       <Sidebar
         businessName={businessName}
         isAdmin={isAdmin}
+        isEmployee={isEmployee}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
         permissions={permissions}
