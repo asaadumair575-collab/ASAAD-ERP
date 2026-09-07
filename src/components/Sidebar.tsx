@@ -469,6 +469,16 @@ export default function Sidebar({
         )}
         {isAdmin && (
           <NavLink
+            href="/settings/user-assign"
+            active={pathname.startsWith("/settings/user-assign")}
+            icon={icons.users}
+            onClick={closeMobile}
+          >
+            User Assign
+          </NavLink>
+        )}
+        {isAdmin && (
+          <NavLink
             href="/settings/audit-log"
             active={pathname.startsWith("/settings/audit-log")}
             icon={icons.audit}
