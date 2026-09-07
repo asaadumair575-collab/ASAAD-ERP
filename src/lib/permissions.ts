@@ -86,6 +86,8 @@ export const SUB_MODULES = [
   { parentKey: "ecommerce",   key: "ecom_expenses",              label: "Expenses"              },
   { parentKey: "ecommerce",   key: "ecom_cpr",                   label: "CPR / PostEx"          },
   { parentKey: "ecommerce",   key: "ecom_import",                label: "Import Orders"         },
+  { parentKey: "ecommerce",   key: "ecom_analytics_ads",         label: "Analytics: Ads Manager"},
+  { parentKey: "ecommerce",   key: "ecom_analytics_postex",      label: "Analytics: Postex"     },
   { parentKey: "ecommerce",   key: "ecom_analytics_website",     label: "Analytics: Website"    },
 ] as const;
 

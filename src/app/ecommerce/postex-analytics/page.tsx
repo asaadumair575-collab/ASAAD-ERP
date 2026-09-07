@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import DateRangeNav from "@/components/DateRangeNav";
 import PostexAnalyticsCharts, { type PostexDailyPoint } from "@/components/PostexAnalyticsCharts";
+import { parsePermissions, canViewSub } from "@/lib/permissions";
 
 export const maxDuration = 30;
 
@@ -18,6 +19,7 @@ export default async function PostexAnalyticsPage({
 }) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
+  if (!canViewSub(parsePermissions(me.permissions), "ecom_analytics_postex", me.isAdmin)) redirect("/");
 
   const { from: fromParam, to: toParam } = await searchParams;
   const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });

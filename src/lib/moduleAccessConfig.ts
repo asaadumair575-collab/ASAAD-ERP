@@ -84,7 +84,9 @@ export const ACCESS_MODULES: AccessModuleConfig[] = [
     title: "Retail COD",
     description: "Which Retail COD pages this user can see",
     pages: [
-      { key: "dashboard", label: "Dashboard & Analytics", module: "ecommerce" },
+      { key: "dashboard", label: "All Dashboard", module: "ecommerce" },
+      { key: "ads", label: "Analytics: Ads Manager", module: "ecommerce", sub: "ecom_analytics_ads" },
+      { key: "postex", label: "Analytics: Postex", module: "ecommerce", sub: "ecom_analytics_postex" },
       { key: "website", label: "Analytics: Website", module: "ecommerce", sub: "ecom_analytics_website" },
       { key: "orders", label: "Orders / Dispatch", module: "ecommerce", sub: "ecom_orders" },
       { key: "customers", label: "Customers", module: "ecommerce", sub: "ecom_customers" },

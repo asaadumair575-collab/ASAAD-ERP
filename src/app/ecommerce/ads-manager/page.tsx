@@ -6,6 +6,7 @@ import { fetchMetaStats, fetchActiveCreatives } from "@/lib/metaAds";
 import { fetchWebOrders, isMetaAdOrder, type WebOrder } from "@/lib/webOrders";
 import DateRangeNav from "@/components/DateRangeNav";
 import AdsManagerCharts, { type AdsDailyPoint } from "@/components/AdsManagerCharts";
+import { parsePermissions, canViewSub } from "@/lib/permissions";
 
 export const maxDuration = 30;
 
@@ -52,6 +53,7 @@ export default async function AdsManagerPage({
 }) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
+  if (!canViewSub(parsePermissions(me.permissions), "ecom_analytics_ads", me.isAdmin)) redirect("/");
 
   const { from: fromParam, to: toParam } = await searchParams;
   const todayPK = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });

@@ -374,8 +374,12 @@ export default function Sidebar({
                 </button>
                 {analyticsOpen && (
                   <div className="ml-3 pl-3 border-l border-white/10 space-y-0.5">
-                    <NavLink href="/ecommerce/ads-manager" active={pathname.startsWith("/ecommerce/ads-manager")} compact onClick={closeMobile}>Ads Manager</NavLink>
-                    <NavLink href="/ecommerce/postex-analytics" active={pathname.startsWith("/ecommerce/postex-analytics")} compact onClick={closeMobile}>Postex Analytics</NavLink>
+                    {canViewSub(permissions, "ecom_analytics_ads", isAdmin) && (
+                      <NavLink href="/ecommerce/ads-manager" active={pathname.startsWith("/ecommerce/ads-manager")} compact onClick={closeMobile}>Ads Manager</NavLink>
+                    )}
+                    {canViewSub(permissions, "ecom_analytics_postex", isAdmin) && (
+                      <NavLink href="/ecommerce/postex-analytics" active={pathname.startsWith("/ecommerce/postex-analytics")} compact onClick={closeMobile}>Postex Analytics</NavLink>
+                    )}
                     {canViewSub(permissions, "ecom_analytics_website", isAdmin) && (
                       <NavLink href="/ecommerce/website" active={pathname.startsWith("/ecommerce/website")} compact onClick={closeMobile}>Website</NavLink>
                     )}
