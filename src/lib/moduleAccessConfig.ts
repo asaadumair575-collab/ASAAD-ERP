@@ -23,6 +23,17 @@ export type AccessModuleConfig = {
 // these two in sync when a page's gating changes.
 export const ACCESS_MODULES: AccessModuleConfig[] = [
   {
+    key: "general",
+    title: "General",
+    description: "Core pages every account may or may not need",
+    pages: [
+      { key: "dashboard", label: "Dashboard", module: "dashboard" },
+      { key: "messages", label: "Messages", module: "messages" },
+      { key: "bug_reports", label: "Bug Reports", module: "bug_reports" },
+      { key: "employee_call_verification", label: "Employee Call Verification", module: "employee_call_verification" },
+    ],
+  },
+  {
     key: "wholesale",
     title: "Wholesale",
     description: "Which wholesale pages this user can see",

@@ -330,32 +330,36 @@ export default function Sidebar({
           </>
         )}
 
-        <button
-          type="button"
-          onClick={() => toggleSection("employee")}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEmployee ? "bg-white/10 text-white font-semibold" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}
-        >
-          <span className="flex items-center gap-2.5">{icons.finance} Employee</span>
-          <span className={`transition-transform text-gray-500 ${openSection === "employee" ? "rotate-90" : ""}`}>{icons.chevron}</span>
-        </button>
-        {openSection === "employee" && (
-          <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
-            {isEmployee && (
-              <NavLink href="/work" active={pathname.startsWith("/work")} compact onClick={closeMobile}>
-                My Work
-              </NavLink>
+        {(isAdmin || isEmployee) && (
+          <>
+            <button
+              type="button"
+              onClick={() => toggleSection("employee")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEmployee ? "bg-white/10 text-white font-semibold" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}
+            >
+              <span className="flex items-center gap-2.5">{icons.finance} Employee</span>
+              <span className={`transition-transform text-gray-500 ${openSection === "employee" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+            </button>
+            {openSection === "employee" && (
+              <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
+                {isEmployee && (
+                  <NavLink href="/work" active={pathname.startsWith("/work")} compact onClick={closeMobile}>
+                    My Work
+                  </NavLink>
+                )}
+                {canView(permissions, "emp_commission", isAdmin) && (
+                  <NavLink href="/emp-commission" active={isActive("/emp-commission")} compact onClick={closeMobile}>
+                    {isAdmin ? "Commission" : "My Commission"}
+                  </NavLink>
+                )}
+                {canView(permissions, "performance", isAdmin) && (
+                  <NavLink href="/performance" active={pathname.startsWith("/performance")} compact onClick={closeMobile}>
+                    Performance
+                  </NavLink>
+                )}
+              </div>
             )}
-            {canView(permissions, "emp_commission", isAdmin) && (
-              <NavLink href="/emp-commission" active={isActive("/emp-commission")} compact onClick={closeMobile}>
-                {isAdmin ? "Commission" : "My Commission"}
-              </NavLink>
-            )}
-            {canView(permissions, "performance", isAdmin) && (
-              <NavLink href="/performance" active={pathname.startsWith("/performance")} compact onClick={closeMobile}>
-                Performance
-              </NavLink>
-            )}
-          </div>
+          </>
         )}
 
         {canView(permissions, "ecommerce", isAdmin) && (
