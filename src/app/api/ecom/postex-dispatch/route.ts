@@ -3,6 +3,7 @@ import { after } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { fetchAirwayBillPdfWithFallback } from "@/lib/postexInvoice";
+import { parsePermissions, canViewSub } from "@/lib/permissions";
 
 const POSTEX_BASE = "https://api.postex.pk/services/integration/api";
 const POSTEX_TOKEN = process.env.POSTEX_API_TOKEN ?? "";
@@ -73,6 +74,9 @@ async function createPostexBooking(order: {
 export async function POST(req: NextRequest) {
   const me = await getSessionUser();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!canViewSub(parsePermissions(me.permissions), "ecom_book_postex", me.isAdmin)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
 
   const { ids } = await req.json(); // array of order ids
   if (!Array.isArray(ids) || ids.length === 0)

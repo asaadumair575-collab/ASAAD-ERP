@@ -4,12 +4,16 @@ import DateRangeFilter from "@/components/DateRangeFilter";
 import ConfirmOrdersTable from "@/components/ConfirmOrdersTable";
 import ScanAndWeighModal from "@/components/ScanAndWeighModal";
 import { dispatchSheetNumber } from "@/lib/dispatchSheetNumber";
+import { getSessionUser } from "@/lib/auth";
+import { parsePermissions, canViewSub } from "@/lib/permissions";
 
 export default async function EcomOrdersPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; from?: string; to?: string; status?: string }>;
 }) {
+  const me = await getSessionUser();
+  const canBookPostex = !!me && canViewSub(parsePermissions(me.permissions), "ecom_book_postex", me.isAdmin);
   const { q, from, to, status } = await searchParams;
   const fromDate = from ? new Date(`${from}T00:00:00`) : undefined;
   const toDate   = to   ? new Date(`${to}T23:59:59.999`) : undefined;
@@ -95,7 +99,7 @@ export default async function EcomOrdersPage({
           <p className="text-sm text-gray-400 mt-1">Confirm orders from Draft Orders to see them here.</p>
         </div>
       ) : (
-        <ConfirmOrdersTable orders={orders} weightByTracking={weightByTracking} dispatchedOrderIds={dispatchedOrderIds} sheetByOrderId={sheetByOrderId} />
+        <ConfirmOrdersTable orders={orders} weightByTracking={weightByTracking} dispatchedOrderIds={dispatchedOrderIds} sheetByOrderId={sheetByOrderId} canBookPostex={canBookPostex} />
       )}
     </div>
   );

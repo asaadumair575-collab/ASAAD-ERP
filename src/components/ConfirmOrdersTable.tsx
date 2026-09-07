@@ -32,11 +32,13 @@ export default function ConfirmOrdersTable({
   weightByTracking = {},
   dispatchedOrderIds = [],
   sheetByOrderId = {},
+  canBookPostex = true,
 }: {
   orders: Order[];
   weightByTracking?: Record<string, number>;
   dispatchedOrderIds?: number[];
   sheetByOrderId?: Record<number, { id: number; number: string }>;
+  canBookPostex?: boolean;
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const dispatchedSet = new Set(dispatchedOrderIds);
@@ -72,7 +74,7 @@ export default function ConfirmOrdersTable({
             {orders.some((o) => selected.has(o.id) && o.trackingNumber) && (
               <PrintLabelsButton selectedIds={orders.filter((o) => selected.has(o.id) && o.trackingNumber).map((o) => o.id)} />
             )}
-            <BulkDispatchButton selectedIds={Array.from(selected)} orders={orders} />
+            {canBookPostex && <BulkDispatchButton selectedIds={Array.from(selected)} orders={orders} />}
           </div>
         </div>
       )}
