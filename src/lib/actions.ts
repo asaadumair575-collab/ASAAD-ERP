@@ -3206,3 +3206,12 @@ export async function setIsEmployee(userId: number, isEmployee: boolean) {
   revalidatePath(`/settings/user-assign/${userId}`);
   revalidatePath("/settings/user-assign");
 }
+
+export async function deleteUserAssign(userId: number) {
+  await requireAdmin();
+  const count = await prisma.user.count();
+  if (count <= 1) throw new Error("Cannot delete the last remaining user");
+  await prisma.user.delete({ where: { id: userId } });
+  revalidatePath("/settings/user-assign");
+  redirect("/settings/user-assign");
+}
