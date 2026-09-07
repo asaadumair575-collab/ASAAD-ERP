@@ -47,8 +47,9 @@ export default async function RootLayout({
   const isLoginPage = pathname === "/login";
   // The dispatch sheet opens in its own tab as a printable report — showing
   // the full app shell (sidebar, header) around it there just looks odd, so
-  // it renders standalone like the login page does.
-  const isStandalonePage = isLoginPage || pathname === "/ecommerce/dispatch/sheet";
+  // it renders standalone like the login page does. /set-password is the
+  // same full-screen login-style layout for a brand-new account.
+  const isStandalonePage = isLoginPage || pathname === "/ecommerce/dispatch/sheet" || pathname === "/set-password";
   const [profile, me] = isStandalonePage
     ? [null, null]
     : await Promise.all([getBusinessProfile(), getSessionUser()]);
@@ -56,6 +57,12 @@ export default async function RootLayout({
   const unreadCount = me
     ? await prisma.message.count({ where: { receiverId: me.id, readAt: null } }).catch(() => 0)
     : 0;
+
+  // A brand-new account (created via User Assign, no password set yet) must
+  // set one before touching anything else in the app.
+  if (!isStandalonePage && me?.mustSetPassword) {
+    redirect("/set-password");
+  }
 
   // Non-admin employees must clock in before doing anything else — otherwise
   // it's easy to forget, and there'd be no record of when the day started.

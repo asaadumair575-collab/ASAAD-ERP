@@ -937,14 +937,17 @@ export async function loginAction(formData: FormData) {
   // Check DB users first
   const dbUser = await prisma.user.findUnique({ where: { username } });
   if (dbUser) {
-    if (!verifyPassword(password, dbUser.passwordHash)) {
+    // A brand-new account created via User Assign has no real password yet
+    // (an unguessable random one was set) — let them in on username alone
+    // so they land straight on the "set your password" screen.
+    if (!dbUser.mustSetPassword && !verifyPassword(password, dbUser.passwordHash)) {
       await logAuthEvent({ action: "LOGIN_FAILED", userId: dbUser.id, userName: dbUser.displayName ?? dbUser.username, ip, summary: `Wrong password: ${username}` });
       redirect(`/login?error=${encodeURIComponent("Invalid username or password")}`);
     }
     clearLoginAttempts(username);
     await setSessionCookie(username);
     await logAuthEvent({ action: "LOGIN", userId: dbUser.id, userName: dbUser.displayName ?? dbUser.username, ip, summary: `Logged in: ${dbUser.displayName ?? dbUser.username}` });
-    redirect("/");
+    redirect(dbUser.mustSetPassword ? "/set-password" : "/");
   }
 
   // Fallback: env-based admin credentials
@@ -3102,4 +3105,48 @@ export async function updateTaskTarget(taskId: number, targetValue: number) {
   if (!me.isAdmin) throw new Error("Unauthorized");
   await prisma.employeeTask.update({ where: { id: taskId }, data: { targetValue } });
   revalidatePath("/work");
+}
+
+// ── User Assign (new user-access system, in progress) ──────────────────────
+
+// Admin only sets a username here — no password. The account gets an
+// unguessable random passwordHash and mustSetPassword=true, so the person
+// picks their own password the first time they open their account.
+export async function createUserAssign(formData: FormData) {
+  await requireAdmin();
+  const username = String(formData.get("username") ?? "").trim().toLowerCase();
+  const displayName = String(formData.get("displayName") ?? "").trim() || null;
+
+  if (!username) redirect(`/settings/user-assign/new?error=${encodeURIComponent("Username is required")}`);
+
+  const existing = await prisma.user.findUnique({ where: { username } });
+  if (existing) redirect(`/settings/user-assign/new?error=${encodeURIComponent("That username is already taken")}`);
+
+  await prisma.user.create({
+    data: {
+      username,
+      displayName,
+      passwordHash: hashPassword(generateApiToken()),
+      mustSetPassword: true,
+    },
+  });
+
+  revalidatePath("/settings/user-assign");
+  redirect("/settings/user-assign");
+}
+
+export async function setInitialPassword(formData: FormData) {
+  const me = await requireAuth();
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+
+  if (password.length < 6) redirect(`/set-password?error=${encodeURIComponent("Password must be at least 6 characters")}`);
+  if (password !== confirm) redirect(`/set-password?error=${encodeURIComponent("Passwords don't match")}`);
+
+  await prisma.user.update({
+    where: { id: me.id },
+    data: { passwordHash: hashPassword(password), mustSetPassword: false },
+  });
+
+  redirect("/");
 }
