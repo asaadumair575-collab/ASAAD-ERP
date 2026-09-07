@@ -241,14 +241,16 @@ export default async function ShopifyDashboardPage({
   const dayStart = new Date(`${from}T00:00:00+05:00`);
   const dayEnd = new Date(`${to}T23:59:59+05:00`);
 
-  const [{ orders, error }, courier, visitRows, meta] = await Promise.all([
+  const [{ orders, error }, courier, visitRows, meta, dispatchSheets] = await Promise.all([
     fetchWebOrders(from, to),
     fetchPostexStats(from, to),
     prisma.websiteVisit
       .findMany({ where: { createdAt: { gte: dayStart, lte: dayEnd } }, select: { visitorId: true } })
       .catch(() => []),
     fetchMetaStats(from, to),
+    prisma.dispatchSheet.findMany({ where: { dispatchedAt: { not: null } }, select: { orderIds: true } }).catch(() => []),
   ]);
+  const dispatchedOrderIds = new Set(dispatchSheets.flatMap((s) => s.orderIds));
 
   const visitors = new Set(visitRows.map((v) => v.visitorId)).size;
   const pageViews = visitRows.length;
@@ -261,6 +263,33 @@ export default async function ShopifyDashboardPage({
   const confirmed = orders.filter((o) => !o.draft).length;
   const conversionRate = pctNum(confirmed, total);
   const paidRevenue = orders.reduce((s, o) => s + o.paid, 0);
+
+  // --- Cost per order: Meta's own spend against Meta's own reported purchases
+  // for this range — same figure used on Ads Manager, surfaced here too so
+  // it's visible without leaving the main dashboard.
+  const costPerOrder = meta.reportedPurchases > 0 ? meta.spend / meta.reportedPurchases : 0;
+
+  // --- Fulfillment breakdown: of everything that arrived in this range,
+  // how much actually shipped vs. fell out and why. Cancelled/Not Picked
+  // come from the confirmation call outcome (draftStatus); Dispatched comes
+  // from actually being on a dispatched DispatchSheet; Returned is a courier
+  // RTO after the fact. "Pending" is whatever hasn't resolved either way yet.
+  const dispatchedCount = orders.filter((o) => dispatchedOrderIds.has(o.id)).length;
+  const returnedCount = orders.filter((o) => o.returned).length;
+  const cancelledCount = orders.filter((o) => o.draftStatus === "CANCELLED").length;
+  const notPickedCount = orders.filter((o) => o.draftStatus === "CALL_NOT_PICKED" || o.draftStatus === "NUMBER_OFF").length;
+  const pendingCount = Math.max(0, total - dispatchedCount - returnedCount - cancelledCount - notPickedCount);
+
+  // --- Profit & loss for this range: revenue minus what it actually cost to
+  // fulfil (shipping/courier, ads, packaging) and what returns cost, using
+  // the same per-order cost fields Finance uses elsewhere.
+  const totalShippingCost = orders.reduce((s, o) => s + o.shippingCost, 0);
+  const totalAdCost = orders.reduce((s, o) => s + o.adCost, 0);
+  const totalPackagingCost = orders.reduce((s, o) => s + o.packagingCost, 0);
+  const totalReturnCost = orders.reduce((s, o) => s + o.returnCost, 0);
+  const totalCosts = totalShippingCost + totalAdCost + totalPackagingCost + totalReturnCost;
+  const netProfit = revenue - totalCosts;
+  const profitMargin = revenue > 0 ? Math.round((netProfit / revenue) * 100) : 0;
 
   // --- City breakdown ---
   const cityMap: Record<string, { orders: number; revenue: number }> = {};
@@ -400,6 +429,64 @@ export default async function ShopifyDashboardPage({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <RevenueCard label="Advance Received" value={`Rs ${fmt(paidRevenue)}`} sub="payments recorded" />
             <RevenueCard label="Orders per day" value={from === to ? String(total) : String(Math.round(total / (Math.max(1, Math.ceil((new Date(to).getTime() - new Date(from).getTime()) / 86400000) + 1))))} sub={from === to ? "today" : "avg daily"} />
+          </div>
+
+          {/* Cost per order */}
+          {meta.reportedPurchases > 0 && (
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5 flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Cost Per Order</p>
+                <p className="text-xs text-gray-400 mt-0.5">Rs {fmt(meta.spend)} ad spend ÷ {fmt(meta.reportedPurchases)} Meta-reported purchase{meta.reportedPurchases === 1 ? "" : "s"}</p>
+              </div>
+              <p className="text-2xl font-bold text-orange-500 tabular-nums">Rs {fmt(costPerOrder)}</p>
+            </div>
+          )}
+
+          {/* Fulfillment breakdown — where orders actually end up */}
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <p className="text-sm font-semibold text-gray-800">Fulfillment Breakdown</p>
+              <p className="text-xs text-gray-400 mt-0.5">What happened to the {total} order{total === 1 ? "" : "s"} in this range</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 p-5">
+              <FulfillCard label="Dispatched" count={dispatchedCount} total={total} dot="bg-emerald-500" />
+              <FulfillCard label="Pending" count={pendingCount} total={total} dot="bg-gray-400" />
+              <FulfillCard label="Cancelled" count={cancelledCount} total={total} dot="bg-red-400" />
+              <FulfillCard label="Not Picked" count={notPickedCount} total={total} dot="bg-amber-400" />
+              <FulfillCard label="Returned" count={returnedCount} total={total} dot="bg-orange-500" />
+            </div>
+            {total > 0 && (
+              <div className="px-5 pb-5">
+                <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100">
+                  <div className="bg-emerald-500" style={{ width: pct(dispatchedCount, total) }} />
+                  <div className="bg-gray-400" style={{ width: pct(pendingCount, total) }} />
+                  <div className="bg-red-400" style={{ width: pct(cancelledCount, total) }} />
+                  <div className="bg-amber-400" style={{ width: pct(notPickedCount, total) }} />
+                  <div className="bg-orange-500" style={{ width: pct(returnedCount, total) }} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Profit & Loss */}
+          <div className="bg-[#16202E] rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/10">
+              <p className="text-sm font-semibold text-white">Profit &amp; Loss</p>
+              <p className="text-xs text-gray-400 mt-0.5">Revenue minus shipping, ads, packaging and return costs for this range</p>
+            </div>
+            <div className="p-5 space-y-2.5">
+              <PLRow label="Revenue" value={revenue} positive />
+              <PLRow label="Shipping / Courier" value={-totalShippingCost} />
+              <PLRow label="Ad Spend" value={-totalAdCost} />
+              <PLRow label="Packaging" value={-totalPackagingCost} />
+              <PLRow label="Returns" value={-totalReturnCost} />
+              <div className="border-t border-white/10 pt-2.5 flex items-center justify-between">
+                <span className="text-sm font-semibold text-white">Net Profit</span>
+                <span className={`text-lg font-bold tabular-nums ${netProfit >= 0 ? "text-[#BFD732]" : "text-red-400"}`}>
+                  {netProfit < 0 ? "-" : ""}Rs {fmt(Math.abs(netProfit))} <span className="text-xs font-medium text-gray-400">({profitMargin}%)</span>
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* City breakdown */}
@@ -569,6 +656,32 @@ function RevenueCard({ label, value, sub }: { label: string; value: string; sub?
       <p className="text-xs font-medium text-gray-400 mb-2">{label}</p>
       <p className="text-xl font-bold text-gray-900 tabular-nums">{value}</p>
       {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+    </div>
+  );
+}
+
+function FulfillCard({ label, count, total, dot }: { label: string; count: number; total: number; dot: string }) {
+  return (
+    <div className="rounded-xl bg-gray-50/60 border border-gray-100 p-3.5">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className={`w-2 h-2 rounded-full ${dot}`} />
+        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
+      </div>
+      <p className="text-xl font-bold text-[#16202E] tabular-nums leading-none">{count}</p>
+      <p className="text-xs text-gray-400 mt-1">{total > 0 ? `${Math.round((count / total) * 100)}%` : "—"}</p>
+    </div>
+  );
+}
+
+function PLRow({ label, value, positive }: { label: string; value: number; positive?: boolean }) {
+  const fmtSigned = (n: number) =>
+    `${n < 0 ? "-" : positive ? "" : ""}Rs ${Math.abs(n).toLocaleString("en-PK", { maximumFractionDigits: 0 })}`;
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-gray-400">{label}</span>
+      <span className={`text-sm font-medium tabular-nums ${positive ? "text-white" : "text-red-300"}`}>
+        {fmtSigned(value)}
+      </span>
     </div>
   );
 }

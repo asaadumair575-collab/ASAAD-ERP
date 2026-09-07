@@ -10,6 +10,14 @@ export type WebOrder = {
   date: Date;
   paid: number;
   source: string | null;
+  returned: boolean;
+  trackingNumber: string | null;
+  dispatchedAt: Date | null;
+  draftStatus: string | null;
+  shippingCost: number;
+  adCost: number;
+  packagingCost: number;
+  returnCost: number;
 };
 
 // Sources the storefront tags as coming from a Meta (Facebook/Instagram) ad —
@@ -37,6 +45,8 @@ export async function fetchWebOrders(from: string, to: string): Promise<{ orders
       where: { date: { gte: dayStart, lte: dayEnd } },
       select: {
         id: true, totalAmount: true, city: true, draft: true, date: true, source: true,
+        returned: true, trackingNumber: true, dispatchedAt: true, draftStatus: true,
+        shippingCost: true, adCost: true, packagingCost: true, returnCost: true,
         payments: { select: { amount: true } },
       },
     });
@@ -49,6 +59,14 @@ export async function fetchWebOrders(from: string, to: string): Promise<{ orders
         date: r.date,
         paid: r.payments.reduce((s, p) => s + p.amount, 0),
         source: r.source,
+        returned: r.returned,
+        trackingNumber: r.trackingNumber,
+        dispatchedAt: r.dispatchedAt,
+        draftStatus: r.draftStatus,
+        shippingCost: r.shippingCost,
+        adCost: r.adCost,
+        packagingCost: r.packagingCost,
+        returnCost: r.returnCost,
       })),
     };
   } catch {
