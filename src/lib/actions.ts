@@ -3180,6 +3180,7 @@ export async function updateWholesaleAccess(userId: number, formData: FormData) 
 
   const sub = (perms.sub as Record<string, boolean>) ?? {};
   sub.sales_invoices = invoicing;
+  sub.sales_orders = orders;
   sub.sales_products = products;
   sub.finance_main = financePage;
   sub.finance_commission = commissionPage;

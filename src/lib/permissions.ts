@@ -31,6 +31,7 @@ export const SUB_MODULES = [
 
   // Sales
   { parentKey: "sales",       key: "sales_invoices",             label: "Invoicing"             },
+  { parentKey: "sales",       key: "sales_orders",               label: "Orders"                },
   { parentKey: "sales",       key: "sales_products",             label: "Products"              },
 
   // Dispatch

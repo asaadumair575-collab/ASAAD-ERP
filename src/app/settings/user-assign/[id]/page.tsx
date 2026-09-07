@@ -44,7 +44,7 @@ export default async function UserAssignDetailPage({
   const wholesaleInitial: Record<string, boolean> = {
     wh_customers: canView(perms, "clients", false),
     wh_invoicing: canView(perms, "sales", false) && canViewSub(perms, "sales_invoices", false),
-    wh_orders: canView(perms, "sales", false),
+    wh_orders: canView(perms, "sales", false) && canViewSub(perms, "sales_orders", false),
     wh_products: canView(perms, "sales", false) && canViewSub(perms, "sales_products", false),
     wh_finance: canView(perms, "finance", false) && canViewSub(perms, "finance_main", false),
     wh_commission: canView(perms, "commission", false) && canViewSub(perms, "finance_commission", false),

@@ -202,7 +202,7 @@ export default function Sidebar({
                 {canView(permissions, "sales", isAdmin) && canViewSub(permissions, "sales_invoices", isAdmin) && (
                   <NavLink href="/sales/invoices" active={pathname.startsWith("/sales/invoices")} compact onClick={closeMobile}>Invoicing</NavLink>
                 )}
-                {canView(permissions, "sales", isAdmin) && (
+                {canView(permissions, "sales", isAdmin) && canViewSub(permissions, "sales_orders", isAdmin) && (
                   <NavLink href="/sales/orders" active={pathname.startsWith("/sales/orders")} compact onClick={closeMobile}>Orders</NavLink>
                 )}
                 {canView(permissions, "finance", isAdmin) && canView(permissions, "commission", isAdmin) && canViewSub(permissions, "finance_commission", isAdmin) && (
