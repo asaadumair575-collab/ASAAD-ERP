@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { dispatchSheetNumber } from "@/lib/dispatchSheetNumber";
+import { parsePermissions, canViewSub } from "@/lib/permissions";
 
 type SnapshotRow = {
   id: number;
@@ -28,6 +29,9 @@ type SnapshotRow = {
 export async function POST(req: NextRequest) {
   const me = await getSessionUser();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!canViewSub(parsePermissions(me.permissions), "ecom_generate_dispatch", me.isAdmin)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
 
   const { orderIds, date: dateParam } = await req.json();
   const explicitIds: number[] | null = Array.isArray(orderIds) ? orderIds.map(Number).filter((n) => !Number.isNaN(n)) : null;
