@@ -996,7 +996,7 @@ export async function createUser(formData: FormData) {
   for (const s of SUB_MODULES) {
     if (formData.get(`sub_${s.key}`) === "1") sub[s.key] = true;
   }
-  if (Object.keys(sub).length > 0) permissions.sub = sub;
+  permissions.sub = sub;
 
   await prisma.user.create({
     data: { username, passwordHash: hashPassword(password), displayName, isAdmin, permissions: permissions as never },
@@ -1022,7 +1022,7 @@ export async function updateUser(id: number, formData: FormData) {
   for (const s of SUB_MODULES) {
     if (formData.get(`sub_${s.key}`) === "1") sub[s.key] = true;
   }
-  if (Object.keys(sub).length > 0) permissions.sub = sub;
+  permissions.sub = sub;
 
   await prisma.user.update({
     where: { id },

@@ -137,7 +137,7 @@ export default function Sidebar({
     return null;
   }
   const [openSection, setOpenSection] = useState<Section>(sectionForPath());
-  const isOnAnalytics = pathname.startsWith("/ecommerce/ads-manager") || pathname.startsWith("/ecommerce/postex-analytics");
+  const isOnAnalytics = pathname.startsWith("/ecommerce/ads-manager") || pathname.startsWith("/ecommerce/postex-analytics") || pathname.startsWith("/ecommerce/website");
   const [analyticsOpen, setAnalyticsOpen] = useState(isOnAnalytics);
   const isOnEcomOrders = pathname.startsWith("/ecommerce/shopify-orders") || pathname.startsWith("/ecommerce/orders") || pathname.startsWith("/ecommerce/all-orders") || pathname.startsWith("/ecommerce/dispatch");
   const [ecomOrdersOpen, setEcomOrdersOpen] = useState(isOnEcomOrders);
@@ -376,6 +376,7 @@ export default function Sidebar({
                   <div className="ml-3 pl-3 border-l border-white/10 space-y-0.5">
                     <NavLink href="/ecommerce/ads-manager" active={pathname.startsWith("/ecommerce/ads-manager")} compact onClick={closeMobile}>Ads Manager</NavLink>
                     <NavLink href="/ecommerce/postex-analytics" active={pathname.startsWith("/ecommerce/postex-analytics")} compact onClick={closeMobile}>Postex Analytics</NavLink>
+                    <NavLink href="/ecommerce/website" active={pathname.startsWith("/ecommerce/website")} compact onClick={closeMobile}>Website</NavLink>
                   </div>
                 )}
                 <button

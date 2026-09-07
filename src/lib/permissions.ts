@@ -167,7 +167,12 @@ export function canManage(perms: UserPermissions, module: ModuleKey, isAdmin: bo
 
 export function canViewSub(perms: UserPermissions, subKey: SubModuleKey, isAdmin: boolean): boolean {
   if (isAdmin) return true;
-  if (!perms.sub || Object.keys(perms.sub).length === 0) return true;
+  // `sub` missing entirely means it was never configured for this user (a
+  // legacy account, or one created before this sub-key existed) — default
+  // to allowed. Once `sub` has been saved at all (even as `{}`, meaning
+  // every sub-checkbox was explicitly unchecked), absence of a key there
+  // means "deliberately denied", not "not yet decided".
+  if (perms.sub === undefined) return true;
   return perms.sub[subKey] === true;
 }
 
