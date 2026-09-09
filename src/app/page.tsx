@@ -100,15 +100,17 @@ export default async function DashboardPage({
   ].filter((d) => d.value > 0);
 
   // ── Lead status breakdown ──────────────────────────────────────
-  const leadCounts = { NEW: 0, CONTACTED: 0, SAMPLE_SENT: 0 };
+  const leadCounts = { NEW: 0, CONTACTED: 0, INTERESTED: 0, SAMPLE_SENT: 0 };
   for (const l of leads) {
     if (l.status === "NEW") leadCounts.NEW++;
     else if (l.status === "CONTACTED") leadCounts.CONTACTED++;
+    else if (l.status === "INTERESTED") leadCounts.INTERESTED++;
     else if (l.status === "SAMPLE_SENT") leadCounts.SAMPLE_SENT++;
   }
   const leadStatusData: LeadStatusData[] = [
     { name: "Not Contacted", value: leadCounts.NEW, color: "#e5e7eb" },
     { name: "Contacted", value: leadCounts.CONTACTED, color: "#a1a1aa" },
+    { name: "Interested", value: leadCounts.INTERESTED, color: "#f59e0b" },
     { name: "Sample Sent", value: leadCounts.SAMPLE_SENT, color: "#09090b" },
   ].filter((d) => d.value > 0);
 

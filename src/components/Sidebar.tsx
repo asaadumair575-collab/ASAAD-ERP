@@ -319,6 +319,9 @@ export default function Sidebar({
                 {canViewSub(permissions, "leads_contacted", isAdmin) && (
                   <NavLink href="/leads/contacted" active={pathname.startsWith("/leads/contacted")} compact onClick={closeMobile}>Contacted</NavLink>
                 )}
+                {canViewSub(permissions, "leads_interested", isAdmin) && (
+                  <NavLink href="/leads/interested" active={pathname.startsWith("/leads/interested")} compact onClick={closeMobile}>Interested — Call</NavLink>
+                )}
                 {canViewSub(permissions, "leads_sample_sent", isAdmin) && (
                   <NavLink href="/leads/sample-sent" active={pathname.startsWith("/leads/sample-sent")} compact onClick={closeMobile}>Samples</NavLink>
                 )}

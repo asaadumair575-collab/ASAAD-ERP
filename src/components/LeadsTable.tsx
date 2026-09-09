@@ -25,6 +25,11 @@ const statusConfig: Record<string, { label: string; dot: string; pill: string }>
     dot: "bg-blue-500",
     pill: "bg-blue-50 text-blue-700 border border-blue-200",
   },
+  INTERESTED: {
+    label: "Interested — Call",
+    dot: "bg-amber-500",
+    pill: "bg-amber-50 text-amber-700 border border-amber-200",
+  },
   SAMPLE_SENT: {
     label: "Sample Sent",
     dot: "bg-purple-500",

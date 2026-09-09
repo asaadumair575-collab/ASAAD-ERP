@@ -842,6 +842,7 @@ export async function createSample(formData: FormData) {
       data: { status: "SAMPLE_SENT" },
     });
     revalidatePath("/leads/contacted");
+    revalidatePath("/leads/interested");
     revalidatePath("/leads/sample-sent");
     revalidatePath(`/leads/${leadId}`);
   }
@@ -1100,7 +1101,7 @@ export async function resetAllData(formData: FormData) {
   redirect("/settings");
 }
 
-const LEAD_STATUSES = ["NEW", "CONTACTED", "SAMPLE_SENT", "CANCELLED", "CONFIRMED"];
+const LEAD_STATUSES = ["NEW", "CONTACTED", "INTERESTED", "SAMPLE_SENT", "CANCELLED", "CONFIRMED"];
 
 function isDuplicateLead(
   existing: { shopNumber: string; name: string | null; phone: string | null }[],
@@ -1299,21 +1300,30 @@ export async function markLeadContacted(id: number, reason?: string) {
       : `Contacted: ${reason}`
     : existing ?? null;
 
+  // "Interested" shops go straight into a dedicated queue for the senior to
+  // personally call — that's the whole point of this outcome. "Not
+  // Interested" is a dead end, so it's filed straight as cancelled instead
+  // of sitting in a generic "Contacted" bucket nobody reviews.
+  const status = reason === "Not Interested" ? "CANCELLED" : reason === "Interested" ? "INTERESTED" : "CONTACTED";
+
   await prisma.lead.update({
     where: { id },
-    data: { status: "CONTACTED", notes, contactedById: me.id, contactedAt: new Date() },
+    data: { status, notes, contactedById: me.id, contactedAt: new Date() },
   });
 
   revalidatePath("/leads");
   revalidatePath("/leads/not-contacted");
   revalidatePath(`/leads/${id}`);
   revalidatePath("/leads/contacted");
+  revalidatePath("/leads/interested");
+  revalidatePath("/leads/cancelled");
 }
 
 export async function cancelLead(id: number) {
   await prisma.lead.update({ where: { id }, data: { status: "CANCELLED" } });
 
   revalidatePath("/leads/contacted");
+  revalidatePath("/leads/interested");
   revalidatePath(`/leads/${id}`);
   revalidatePath("/leads/cancelled");
   redirect("/leads/cancelled");
@@ -1334,6 +1344,7 @@ export async function cancelLeadFromSample(id: number, formData: FormData) {
 
   revalidatePath("/samples");
   revalidatePath("/leads/contacted");
+  revalidatePath("/leads/interested");
   revalidatePath(`/leads/${id}`);
   revalidatePath("/leads/cancelled");
 }
@@ -1344,6 +1355,7 @@ export async function bulkUpdateLeadStatus(ids: number[], status: string) {
   revalidatePath("/leads");
   revalidatePath("/leads/not-contacted");
   revalidatePath("/leads/contacted");
+  revalidatePath("/leads/interested");
   revalidatePath("/leads/sample-sent");
   revalidatePath("/leads/cancelled");
 }
@@ -1352,6 +1364,7 @@ export async function deleteLead(id: number) {
   await prisma.lead.delete({ where: { id } });
   revalidatePath("/leads/not-contacted");
   revalidatePath("/leads/contacted");
+  revalidatePath("/leads/interested");
   revalidatePath("/leads/sample-sent");
   revalidatePath("/leads/cancelled");
   redirect("/leads/not-contacted");
@@ -1386,6 +1399,7 @@ export async function convertLeadToClient(id: number, formData: FormData) {
 
   revalidatePath("/leads/sample-sent");
   revalidatePath("/leads/contacted");
+  revalidatePath("/leads/interested");
   revalidatePath("/leads/not-contacted");
   revalidatePath("/clients");
   revalidatePath("/samples");
