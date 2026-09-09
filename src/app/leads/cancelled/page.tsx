@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { deleteLead } from "@/lib/actions";
+import { getSessionUser } from "@/lib/auth";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import DeleteButton from "@/components/DeleteButton";
 
@@ -13,6 +14,7 @@ export default async function CancelledLeadsPage({
 }) {
   const { page } = await searchParams;
   const currentPage = Math.max(1, Number(page) || 1);
+  const me = await getSessionUser();
 
   const totalCount = await prisma.lead.count({ where: { status: "CANCELLED" } });
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -66,7 +68,7 @@ export default async function CancelledLeadsPage({
                     <td className="py-3 px-5 text-gray-500">{l.city || "-"}</td>
                     <td className="py-3 px-5"><WhatsAppButton phone={l.phone} /></td>
                     <td className="py-3 px-5 text-right">
-                      <DeleteButton action={deleteBound} />
+                      {me?.isAdmin && <DeleteButton action={deleteBound} />}
                     </td>
                   </tr>
                 );

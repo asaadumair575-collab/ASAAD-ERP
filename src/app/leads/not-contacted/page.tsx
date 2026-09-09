@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { markLeadContacted, deleteLead } from "@/lib/actions";
+import { getSessionUser } from "@/lib/auth";
 import LeadsSelectableTable from "@/components/LeadsSelectableTable";
 
 const PAGE_SIZE = 30;
@@ -19,6 +20,7 @@ export default async function NotContactedLeadsPage({
 }) {
   const { added, skipped, error, q, city, page } = await searchParams;
   const currentPage = Math.max(1, Number(page) || 1);
+  const me = await getSessionUser();
 
   const where = {
     status: "NEW",
@@ -156,6 +158,7 @@ export default async function NotContactedLeadsPage({
           leads={leads}
           contactedAction={markLeadContacted}
           deleteAction={deleteLead}
+          isAdmin={!!me?.isAdmin}
         />
       )}
 

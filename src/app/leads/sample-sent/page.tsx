@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { toLocalDateStr, todayPK } from "@/lib/tz";
 import { convertLeadToClient, deleteLead, createLeadSample, updateSampleResponse } from "@/lib/actions";
+import { getSessionUser } from "@/lib/auth";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import ConfirmClientModal from "@/components/ConfirmClientModal";
 import DeleteButton from "@/components/DeleteButton";
@@ -18,6 +19,7 @@ export default async function SampleSentLeadsPage({
 }) {
   const { page } = await searchParams;
   const currentPage = Math.max(1, Number(page) || 1);
+  const me = await getSessionUser();
 
   const [totalCount, leads, contactedLeads] = await Promise.all([
     prisma.lead.count({ where: { status: "SAMPLE_SENT" } }),
@@ -140,7 +142,7 @@ export default async function SampleSentLeadsPage({
                       <ConfirmClientModal confirmAction={confirmBound} defaultName={l.name} />
                     </td>
                     <td className="py-3 px-5 text-right">
-                      <DeleteButton action={deleteBound} />
+                      {me?.isAdmin && <DeleteButton action={deleteBound} />}
                     </td>
                   </tr>
                 );

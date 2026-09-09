@@ -53,10 +53,12 @@ export default function LeadsSelectableTable({
   leads,
   contactedAction,
   deleteAction,
+  isAdmin = false,
 }: {
   leads: Lead[];
   contactedAction: (id: number, interested: boolean) => Promise<void>;
   deleteAction: (id: number) => Promise<void>;
+  isAdmin?: boolean;
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [copied, setCopied] = useState(false);
@@ -165,7 +167,7 @@ export default function LeadsSelectableTable({
                   <ContactButton leadId={l.id} contactedAction={contactedAction} />
                 </td>
                 <td className="py-3 px-5 text-right">
-                  <DeleteButton action={deleteAction.bind(null, l.id)} />
+                  {isAdmin && <DeleteButton action={deleteAction.bind(null, l.id)} />}
                 </td>
               </tr>
             ))}

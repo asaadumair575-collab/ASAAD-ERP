@@ -132,9 +132,10 @@ function ContactButton({ lead, contactAction }: {
   );
 }
 
-function RowMenu({ lead, deleteAction }: {
+function RowMenu({ lead, deleteAction, isAdmin }: {
   lead: Lead;
   deleteAction: (id: number) => Promise<void>;
+  isAdmin: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"menu" | "delete">("menu");
@@ -177,10 +178,14 @@ function RowMenu({ lead, deleteAction }: {
               <Link href={`/leads/${lead.id}`} onClick={closeAll} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-gray-700 transition-colors">
                 View Details
               </Link>
-              <div className="border-t border-gray-100 my-1" />
-              <button type="button" onClick={() => setMode("delete")} className="w-full text-left flex items-center gap-2 px-3 py-2 hover:bg-red-50 text-red-600 transition-colors">
-                Delete
-              </button>
+              {isAdmin && (
+                <>
+                  <div className="border-t border-gray-100 my-1" />
+                  <button type="button" onClick={() => setMode("delete")} className="w-full text-left flex items-center gap-2 px-3 py-2 hover:bg-red-50 text-red-600 transition-colors">
+                    Delete
+                  </button>
+                </>
+              )}
             </>
           )}
 
@@ -286,10 +291,12 @@ export default function LeadsTable({
   leads,
   contactAction,
   deleteAction,
+  isAdmin = false,
 }: {
   leads: Lead[];
   contactAction: (id: number, interested: boolean) => Promise<void>;
   deleteAction: (id: number) => Promise<void>;
+  isAdmin?: boolean;
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [copied, setCopied] = useState(false);
@@ -457,7 +464,7 @@ export default function LeadsTable({
                     </button>
                     {l.status === "NEW" && <ContactButton lead={l} contactAction={contactAction} />}
                     {l.status === "CONTACTED" && <LeadInterestButtons leadId={l.id} interestAction={markLeadInterest} />}
-                    <RowMenu lead={l} deleteAction={deleteAction} />
+                    <RowMenu lead={l} deleteAction={deleteAction} isAdmin={isAdmin} />
                   </div>
                 </td>
               </tr>

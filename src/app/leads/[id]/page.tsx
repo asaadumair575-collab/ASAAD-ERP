@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { markLeadContacted, markLeadInterest, deleteLead, convertLeadToClient, cancelLead } from "@/lib/actions";
+import { getSessionUser } from "@/lib/auth";
 import { toLocalDateStr } from "@/lib/tz";
 import SubmitButton from "@/components/SubmitButton";
 import ConfirmClientModal from "@/components/ConfirmClientModal";
@@ -43,6 +44,7 @@ export default async function LeadDetailPage({
 
   if (!lead) notFound();
 
+  const me = await getSessionUser();
   const contactBound = markLeadContacted.bind(null, lead.id);
   const deleteBound = deleteLead.bind(null, lead.id);
   const convertBound = convertLeadToClient.bind(null, lead.id);
@@ -116,7 +118,9 @@ export default async function LeadDetailPage({
             triggerClassName="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors"
           />
         )}
-        <DeleteButton action={deleteBound} message="This lead will be permanently deleted." />
+        {me?.isAdmin && (
+          <DeleteButton action={deleteBound} message="This lead will be permanently deleted." />
+        )}
       </div>
 
       <div>

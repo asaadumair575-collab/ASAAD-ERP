@@ -1378,6 +1378,7 @@ export async function bulkUpdateLeadStatus(ids: number[], status: string) {
 }
 
 export async function deleteLead(id: number) {
+  await requireAdmin();
   await prisma.lead.delete({ where: { id } });
   revalidatePath("/leads/not-contacted");
   revalidatePath("/leads/contacted");

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { cancelLead, deleteLead, convertLeadToClient } from "@/lib/actions";
+import { getSessionUser } from "@/lib/auth";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import ConfirmClientModal from "@/components/ConfirmClientModal";
 import DeleteButton from "@/components/DeleteButton";
@@ -17,6 +18,7 @@ export default async function DealInProcessPage({
 }) {
   const { page } = await searchParams;
   const currentPage = Math.max(1, Number(page) || 1);
+  const me = await getSessionUser();
 
   const totalCount = await prisma.lead.count({ where: { status: "INTERESTED" } });
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -100,7 +102,7 @@ export default async function DealInProcessPage({
                       </form>
                     </td>
                     <td className="py-3 px-5 text-right">
-                      <DeleteButton action={deleteBound} />
+                      {me?.isAdmin && <DeleteButton action={deleteBound} />}
                     </td>
                   </tr>
                 );
