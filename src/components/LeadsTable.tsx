@@ -2,7 +2,8 @@
 
 import { useMemo, useState, useRef, useEffect, useTransition } from "react";
 import Link from "next/link";
-import { bulkUpdateLeadStatus } from "@/lib/actions";
+import { bulkUpdateLeadStatus, markLeadInterest } from "@/lib/actions";
+import LeadInterestButtons from "@/components/LeadInterestButtons";
 
 type Lead = {
   id: number;
@@ -26,7 +27,7 @@ const statusConfig: Record<string, { label: string; dot: string; pill: string }>
     pill: "bg-blue-50 text-blue-700 border border-blue-200",
   },
   INTERESTED: {
-    label: "Interested — Call",
+    label: "Deal in Process",
     dot: "bg-amber-500",
     pill: "bg-amber-50 text-amber-700 border border-amber-200",
   },
@@ -93,42 +94,30 @@ function LocationIcon() {
   );
 }
 
-const CONTACT_REASONS = ["Interested", "Not Interested"];
-
 // Directly visible on the row for NEW leads — no burying it in a menu.
-// Clicking it immediately asks what happened on the call before saving.
-// Simple, single-tap: call happened, pick the outcome, done — no picker,
-// no confirm step, no free-text reason.
+// This just records that the call happened; whether the shop is actually
+// interested is asked separately once it lands on the Contacted list.
 function ContactButton({ lead, contactAction }: {
   lead: Lead;
-  contactAction: (id: number, reason?: string) => Promise<void>;
+  contactAction: (id: number) => Promise<void>;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [choosing, setChoosing] = useState<string | null>(null);
 
-  function mark(reason: string) {
-    setChoosing(reason);
+  function mark() {
     startTransition(async () => {
-      await contactAction(lead.id, reason);
+      await contactAction(lead.id);
     });
   }
 
   return (
-    <div className="flex items-center gap-1">
-      {CONTACT_REASONS.map((r) => (
-        <button
-          key={r}
-          type="button"
-          onClick={() => mark(r)}
-          disabled={isPending}
-          className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap disabled:opacity-50 ${
-            r === "Interested" ? "bg-green-600 text-white hover:bg-green-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-          }`}
-        >
-          {isPending && choosing === r ? "…" : r}
-        </button>
-      ))}
-    </div>
+    <button
+      type="button"
+      onClick={mark}
+      disabled={isPending}
+      className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors whitespace-nowrap disabled:opacity-50"
+    >
+      {isPending ? "…" : "Mark Contacted"}
+    </button>
   );
 }
 
@@ -288,7 +277,7 @@ export default function LeadsTable({
   deleteAction,
 }: {
   leads: Lead[];
-  contactAction: (id: number, reason?: string) => Promise<void>;
+  contactAction: (id: number) => Promise<void>;
   deleteAction: (id: number) => Promise<void>;
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -456,6 +445,7 @@ export default function LeadsTable({
                       <WhatsAppIcon />
                     </button>
                     {l.status === "NEW" && <ContactButton lead={l} contactAction={contactAction} />}
+                    {l.status === "CONTACTED" && <LeadInterestButtons leadId={l.id} interestAction={markLeadInterest} />}
                     <RowMenu lead={l} deleteAction={deleteAction} />
                   </div>
                 </td>

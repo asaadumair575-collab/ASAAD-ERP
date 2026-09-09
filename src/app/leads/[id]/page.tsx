@@ -1,16 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { markLeadContacted, deleteLead, convertLeadToClient, cancelLead } from "@/lib/actions";
+import { markLeadContacted, markLeadInterest, deleteLead, convertLeadToClient, cancelLead } from "@/lib/actions";
 import { toLocalDateStr } from "@/lib/tz";
 import SubmitButton from "@/components/SubmitButton";
 import ConfirmClientModal from "@/components/ConfirmClientModal";
 import DeleteButton from "@/components/DeleteButton";
 import ContactReasonModal from "@/components/ContactReasonModal";
+import LeadInterestButtons from "@/components/LeadInterestButtons";
 
 const statusStyles: Record<string, string> = {
   NEW: "bg-gray-100 text-gray-700",
   CONTACTED: "bg-yellow-50 text-yellow-800 border border-yellow-200",
+  INTERESTED: "bg-amber-50 text-amber-700 border border-amber-200",
   SAMPLE_SENT: "bg-blue-50 text-blue-700 border border-blue-200",
   CANCELLED: "bg-red-50 text-red-700 border border-red-200",
   CONFIRMED: "bg-black text-white",
@@ -19,6 +21,7 @@ const statusStyles: Record<string, string> = {
 const statusLabels: Record<string, string> = {
   NEW: "New",
   CONTACTED: "Contacted",
+  INTERESTED: "Deal in Process",
   SAMPLE_SENT: "Sample Sent",
   CANCELLED: "Cancelled",
   CONFIRMED: "Confirmed",
@@ -80,11 +83,14 @@ export default async function LeadDetailPage({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         {lead.status === "NEW" && (
           <ContactReasonModal action={contactBound} />
         )}
-        {(lead.status === "NEW" || lead.status === "CONTACTED") && (
+        {lead.status === "CONTACTED" && (
+          <LeadInterestButtons leadId={lead.id} interestAction={markLeadInterest} />
+        )}
+        {(lead.status === "NEW" || lead.status === "CONTACTED" || lead.status === "INTERESTED") && (
           <Link
             href={`/samples/new?leadId=${lead.id}`}
             className="border border-gray-200 text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
@@ -92,7 +98,7 @@ export default async function LeadDetailPage({
             Send Sample
           </Link>
         )}
-        {lead.status === "CONTACTED" && (
+        {lead.status === "INTERESTED" && (
           <form action={cancelBound}>
             <SubmitButton
               pendingText="Cancelling..."
@@ -102,7 +108,7 @@ export default async function LeadDetailPage({
             </SubmitButton>
           </form>
         )}
-        {(lead.status === "CONTACTED" || lead.status === "SAMPLE_SENT") && (
+        {(lead.status === "INTERESTED" || lead.status === "SAMPLE_SENT") && (
           <ConfirmClientModal
             confirmAction={convertBound}
             defaultName={lead.name}

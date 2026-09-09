@@ -842,7 +842,7 @@ export async function createSample(formData: FormData) {
       data: { status: "SAMPLE_SENT" },
     });
     revalidatePath("/leads/contacted");
-    revalidatePath("/leads/interested");
+    revalidatePath("/leads/deal-in-process");
     revalidatePath("/leads/sample-sent");
     revalidatePath(`/leads/${leadId}`);
   }
@@ -1288,34 +1288,46 @@ export async function setLeadStatus(id: number, status: string) {
   revalidatePath(`/leads/${id}`);
 }
 
-export async function markLeadContacted(id: number, reason?: string) {
+// Step 1: employee calls a NEW shop and just confirms the call happened.
+// No outcome is asked yet — that's a separate step once the lead shows up
+// on the Contacted list (see markLeadInterest below).
+export async function markLeadContacted(id: number) {
   const me = await requireAuth();
   const lead = await prisma.lead.findUnique({ where: { id } });
   if (!lead || lead.status !== "NEW") return;
 
-  const existing = lead.notes?.trim();
-  const notes = reason
-    ? existing
-      ? `${existing}\nContacted: ${reason}`
-      : `Contacted: ${reason}`
-    : existing ?? null;
-
-  // "Interested" shops go straight into a dedicated queue for the senior to
-  // personally call — that's the whole point of this outcome. "Not
-  // Interested" is a dead end, so it's filed straight as cancelled instead
-  // of sitting in a generic "Contacted" bucket nobody reviews.
-  const status = reason === "Not Interested" ? "CANCELLED" : reason === "Interested" ? "INTERESTED" : "CONTACTED";
-
   await prisma.lead.update({
     where: { id },
-    data: { status, notes, contactedById: me.id, contactedAt: new Date() },
+    data: { status: "CONTACTED", contactedById: me.id, contactedAt: new Date() },
   });
 
   revalidatePath("/leads");
   revalidatePath("/leads/not-contacted");
   revalidatePath(`/leads/${id}`);
   revalidatePath("/leads/contacted");
-  revalidatePath("/leads/interested");
+}
+
+// Step 2: on the Contacted list, the system asks whether the shop is
+// actually interested. Interested shops move into "Deal in Process" — the
+// senior's own call queue to close them. Not-interested ones are a dead
+// end and go straight to Cancelled.
+export async function markLeadInterest(id: number, interested: boolean) {
+  const lead = await prisma.lead.findUnique({ where: { id } });
+  if (!lead || lead.status !== "CONTACTED") return;
+
+  const existing = lead.notes?.trim();
+  const tag = interested ? "Interested" : "Not Interested";
+  const notes = existing ? `${existing}\n${tag}` : tag;
+
+  await prisma.lead.update({
+    where: { id },
+    data: { status: interested ? "INTERESTED" : "CANCELLED", notes },
+  });
+
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${id}`);
+  revalidatePath("/leads/contacted");
+  revalidatePath("/leads/deal-in-process");
   revalidatePath("/leads/cancelled");
 }
 
@@ -1323,7 +1335,7 @@ export async function cancelLead(id: number) {
   await prisma.lead.update({ where: { id }, data: { status: "CANCELLED" } });
 
   revalidatePath("/leads/contacted");
-  revalidatePath("/leads/interested");
+  revalidatePath("/leads/deal-in-process");
   revalidatePath(`/leads/${id}`);
   revalidatePath("/leads/cancelled");
   redirect("/leads/cancelled");
@@ -1344,7 +1356,7 @@ export async function cancelLeadFromSample(id: number, formData: FormData) {
 
   revalidatePath("/samples");
   revalidatePath("/leads/contacted");
-  revalidatePath("/leads/interested");
+  revalidatePath("/leads/deal-in-process");
   revalidatePath(`/leads/${id}`);
   revalidatePath("/leads/cancelled");
 }
@@ -1355,7 +1367,7 @@ export async function bulkUpdateLeadStatus(ids: number[], status: string) {
   revalidatePath("/leads");
   revalidatePath("/leads/not-contacted");
   revalidatePath("/leads/contacted");
-  revalidatePath("/leads/interested");
+  revalidatePath("/leads/deal-in-process");
   revalidatePath("/leads/sample-sent");
   revalidatePath("/leads/cancelled");
 }
@@ -1364,7 +1376,7 @@ export async function deleteLead(id: number) {
   await prisma.lead.delete({ where: { id } });
   revalidatePath("/leads/not-contacted");
   revalidatePath("/leads/contacted");
-  revalidatePath("/leads/interested");
+  revalidatePath("/leads/deal-in-process");
   revalidatePath("/leads/sample-sent");
   revalidatePath("/leads/cancelled");
   redirect("/leads/not-contacted");
@@ -1399,7 +1411,7 @@ export async function convertLeadToClient(id: number, formData: FormData) {
 
   revalidatePath("/leads/sample-sent");
   revalidatePath("/leads/contacted");
-  revalidatePath("/leads/interested");
+  revalidatePath("/leads/deal-in-process");
   revalidatePath("/leads/not-contacted");
   revalidatePath("/clients");
   revalidatePath("/samples");

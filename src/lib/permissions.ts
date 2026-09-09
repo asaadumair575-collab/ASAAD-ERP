@@ -25,7 +25,7 @@ export const SUB_MODULES = [
   // Leads
   { parentKey: "leads",       key: "leads_not_contacted",        label: "Not Contacted"         },
   { parentKey: "leads",       key: "leads_contacted",            label: "Contacted"             },
-  { parentKey: "leads",       key: "leads_interested",           label: "Interested"            },
+  { parentKey: "leads",       key: "leads_deal_in_process",       label: "Deal in Process"       },
   { parentKey: "leads",       key: "leads_sample_sent",          label: "Samples"               },
   { parentKey: "leads",       key: "leads_cancelled",            label: "Cancelled"             },
   { parentKey: "leads",       key: "leads_add",                  label: "Add Shop"              },

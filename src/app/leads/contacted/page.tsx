@@ -1,10 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { cancelLead, deleteLead, convertLeadToClient } from "@/lib/actions";
+import { deleteLead, markLeadInterest } from "@/lib/actions";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import SubmitButton from "@/components/SubmitButton";
-import ConfirmClientModal from "@/components/ConfirmClientModal";
 import DeleteButton from "@/components/DeleteButton";
+import LeadInterestButtons from "@/components/LeadInterestButtons";
 
 const PAGE_SIZE = 30;
 
@@ -27,22 +26,13 @@ export default async function ContactedLeadsPage({
     include: { contactedBy: { select: { displayName: true, username: true } } },
   });
 
-  // The call outcome is stored as the last "Contacted: <reason>" line in
-  // notes — pull it back out so admin can review what happened on the call
-  // without opening each lead individually.
-  function callResult(notes: string | null) {
-    if (!notes) return null;
-    const lines = notes.split("\n").filter((l) => l.startsWith("Contacted: "));
-    return lines.length ? lines[lines.length - 1].replace("Contacted: ", "") : null;
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Contacted Shops</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {totalCount} lead{totalCount === 1 ? "" : "s"} marked contacted
+            {totalCount} lead{totalCount === 1 ? "" : "s"} called — mark whether they&apos;re interested
           </p>
         </div>
         <Link href="/leads/not-contacted" className="text-sm font-medium text-gray-500 hover:text-black transition-colors">
@@ -62,20 +52,15 @@ export default async function ContactedLeadsPage({
                 <th className="py-3 px-5">Shop Name</th>
                 <th className="py-3 px-5">Number</th>
                 <th className="py-3 px-5">City</th>
-                <th className="py-3 px-5">Call Result</th>
                 <th className="py-3 px-5">Called By</th>
                 <th className="py-3 px-5"></th>
-                <th className="py-3 px-5"></th>
-                <th className="py-3 px-5"></th>
-                <th className="py-3 px-5"></th>
+                <th className="py-3 px-5">Interested?</th>
                 <th className="py-3 px-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {leads.map((l) => {
-                const cancelBound = cancelLead.bind(null, l.id);
                 const deleteBound = deleteLead.bind(null, l.id);
-                const confirmBound = convertLeadToClient.bind(null, l.id);
                 return (
                   <tr key={l.id} className="hover:bg-gray-50/70 transition-colors">
                     <td className="py-3 px-5 font-medium">
@@ -83,15 +68,6 @@ export default async function ContactedLeadsPage({
                     </td>
                     <td className="py-3 px-5 text-gray-500">{l.phone || "-"}</td>
                     <td className="py-3 px-5 text-gray-500">{l.city || "-"}</td>
-                    <td className="py-3 px-5">
-                      {callResult(l.notes) ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                          {callResult(l.notes)}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-300">—</span>
-                      )}
-                    </td>
                     <td className="py-3 px-5 text-gray-500 text-xs">
                       {l.contactedBy?.displayName ?? l.contactedBy?.username ?? "-"}
                       {l.contactedAt && (
@@ -101,20 +77,8 @@ export default async function ContactedLeadsPage({
                       )}
                     </td>
                     <td className="py-3 px-5"><WhatsAppButton phone={l.phone} /></td>
-                    <td className="py-3 px-5 text-right">
-                      <Link href={`/samples/new?leadId=${l.id}`} className="text-xs font-medium text-gray-500 hover:text-black transition-colors">
-                        Sample Sent
-                      </Link>
-                    </td>
-                    <td className="py-3 px-5 text-right">
-                      <ConfirmClientModal confirmAction={confirmBound} defaultName={l.name} />
-                    </td>
-                    <td className="py-3 px-5 text-right">
-                      <form action={cancelBound}>
-                        <button type="submit" className="text-xs font-medium text-gray-400 hover:text-red-600 transition-colors">
-                          Cancel
-                        </button>
-                      </form>
+                    <td className="py-3 px-5">
+                      <LeadInterestButtons leadId={l.id} interestAction={markLeadInterest} />
                     </td>
                     <td className="py-3 px-5 text-right">
                       <DeleteButton action={deleteBound} />

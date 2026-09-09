@@ -110,7 +110,7 @@ export default async function DashboardPage({
   const leadStatusData: LeadStatusData[] = [
     { name: "Not Contacted", value: leadCounts.NEW, color: "#e5e7eb" },
     { name: "Contacted", value: leadCounts.CONTACTED, color: "#a1a1aa" },
-    { name: "Interested", value: leadCounts.INTERESTED, color: "#f59e0b" },
+    { name: "Deal in Process", value: leadCounts.INTERESTED, color: "#f59e0b" },
     { name: "Sample Sent", value: leadCounts.SAMPLE_SENT, color: "#09090b" },
   ].filter((d) => d.value > 0);
 

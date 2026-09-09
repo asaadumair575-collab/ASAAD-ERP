@@ -10,7 +10,7 @@ const PAGE_SIZE = 30;
 // The employee's first call filters shops into "Interested" — this page is
 // the senior's own call queue: everyone who said yes, waiting for the
 // senior's personal follow-up call to actually close them.
-export default async function InterestedLeadsPage({
+export default async function DealInProcessPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string }>;
@@ -33,7 +33,7 @@ export default async function InterestedLeadsPage({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Interested — Call These</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Deal in Process</h1>
           <p className="text-sm text-gray-500 mt-0.5">
             {totalCount} shop{totalCount === 1 ? "" : "s"} said yes to your team — call them yourself to close
           </p>
@@ -45,7 +45,7 @@ export default async function InterestedLeadsPage({
 
       {leads.length === 0 ? (
         <div className="border border-gray-200 rounded-2xl p-12 text-center">
-          <p className="text-gray-400 text-sm">No interested shops waiting on your call.</p>
+          <p className="text-gray-400 text-sm">No deals in process waiting on your call.</p>
         </div>
       ) : (
         <div className="table-container">
@@ -115,13 +115,13 @@ export default async function InterestedLeadsPage({
           <span>Page {currentPage} of {totalPages}</span>
           <div className="flex gap-2">
             {currentPage > 1 && (
-              <Link href={{ pathname: "/leads/interested", query: { page: currentPage - 1 } }}
+              <Link href={{ pathname: "/leads/deal-in-process", query: { page: currentPage - 1 } }}
                 className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                 ← Previous
               </Link>
             )}
             {currentPage < totalPages && (
-              <Link href={{ pathname: "/leads/interested", query: { page: currentPage + 1 } }}
+              <Link href={{ pathname: "/leads/deal-in-process", query: { page: currentPage + 1 } }}
                 className="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                 Next 30 →
               </Link>

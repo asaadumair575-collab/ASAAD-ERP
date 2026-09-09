@@ -8,7 +8,7 @@ const PAGE_SIZE = 30;
 const STATUS_LABELS: Record<string, string> = {
   NEW: "Not Contacted",
   CONTACTED: "Contacted",
-  INTERESTED: "Interested — Call",
+  INTERESTED: "Deal in Process",
   SAMPLE_SENT: "Sample Sent",
   CANCELLED: "Cancelled",
   CONFIRMED: "Confirmed",
