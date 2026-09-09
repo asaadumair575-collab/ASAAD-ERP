@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getSessionUser } from "@/lib/auth";
+import { deleteEcomOrder } from "@/lib/actions";
+import DeleteButton from "@/components/DeleteButton";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
@@ -9,13 +12,14 @@ function fmt(n: number) {
 export default async function EcomOrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const orderId = parseInt(id, 10);
-  const order = await prisma.ecomOrder.findUnique({
-    where: { id: orderId },
-    include: { items: true },
-  });
+  const [order, me] = await Promise.all([
+    prisma.ecomOrder.findUnique({ where: { id: orderId }, include: { items: true } }),
+    getSessionUser(),
+  ]);
   if (!order) notFound();
 
   const orderLabel = order.notes?.replace("Shopify Order ", "") ?? `#${order.id}`;
+  const deleteBound = deleteEcomOrder.bind(null, order.id);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -34,6 +38,9 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
             <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200">Partial</span>
           ) : (
             <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200">Confirmed</span>
+          )}
+          {me?.isAdmin && (
+            <DeleteButton action={deleteBound} message="This retail COD order will be permanently deleted." />
           )}
         </div>
       </div>

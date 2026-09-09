@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import DraftStatusModal from "@/components/DraftStatusModal";
 import DateRangePicker from "@/components/DateRangePicker";
+import DeleteButton from "@/components/DeleteButton";
+import { deleteEcomOrder } from "@/lib/actions";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -139,6 +141,11 @@ export default async function DraftOrdersPage({
                   <span className="text-sm font-semibold text-gray-900 tabular-nums">Rs {fmt(o.totalAmount)}</span>
                   <DraftStatusModal id={o.id} initial={o.draftStatus ?? null} logs={o.statusLogs} />
                 </div>
+                {me.isAdmin && (
+                  <div className="mt-2 flex justify-end">
+                    <DeleteButton action={deleteEcomOrder.bind(null, o.id)} message={`Order ${label} will be permanently deleted.`} />
+                  </div>
+                )}
               </div>
             );
           })}
@@ -156,6 +163,7 @@ export default async function DraftOrdersPage({
                 <th className="py-2.5 px-3">Items</th>
                 <th className="py-2.5 px-3 text-right">Total</th>
                 <th className="py-2.5 px-3">Status</th>
+                {me.isAdmin && <th className="py-2.5 px-3 text-right">Delete</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -184,6 +192,11 @@ export default async function DraftOrdersPage({
                     <td className="py-2.5 px-3">
                       <DraftStatusModal id={o.id} initial={o.draftStatus ?? null} logs={o.statusLogs} />
                     </td>
+                    {me.isAdmin && (
+                      <td className="py-2.5 px-3 text-right">
+                        <DeleteButton action={deleteEcomOrder.bind(null, o.id)} message={`Order ${label} will be permanently deleted.`} />
+                      </td>
+                    )}
                   </tr>
                 );
               })}

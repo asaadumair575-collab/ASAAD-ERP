@@ -103,7 +103,7 @@ export default async function EcomOrdersPage({
           <p className="text-sm text-gray-400 mt-1">Confirm orders from Draft Orders to see them here.</p>
         </div>
       ) : (
-        <ConfirmOrdersTable orders={orders} weightByTracking={weightByTracking} dispatchedOrderIds={dispatchedOrderIds} sheetByOrderId={sheetByOrderId} canBookPostex={canBookPostex} canGenerateDispatch={canGenerateDispatch} canPrintLabels={canPrintLabels} />
+        <ConfirmOrdersTable orders={orders} weightByTracking={weightByTracking} dispatchedOrderIds={dispatchedOrderIds} sheetByOrderId={sheetByOrderId} canBookPostex={canBookPostex} canGenerateDispatch={canGenerateDispatch} canPrintLabels={canPrintLabels} isAdmin={!!me?.isAdmin} />
       )}
     </div>
   );

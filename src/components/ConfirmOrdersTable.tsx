@@ -5,6 +5,8 @@ import Link from "next/link";
 import BulkDispatchButton from "./BulkDispatchButton";
 import DispatchListSelectedButton from "./DispatchListSelectedButton";
 import PrintLabelsButton from "./PrintLabelsButton";
+import DeleteButton from "./DeleteButton";
+import { deleteEcomOrder } from "@/lib/actions";
 
 type Order = {
   id: number;
@@ -35,6 +37,7 @@ export default function ConfirmOrdersTable({
   canBookPostex = true,
   canGenerateDispatch = true,
   canPrintLabels = true,
+  isAdmin = false,
 }: {
   orders: Order[];
   weightByTracking?: Record<string, number>;
@@ -43,6 +46,7 @@ export default function ConfirmOrdersTable({
   canBookPostex?: boolean;
   canGenerateDispatch?: boolean;
   canPrintLabels?: boolean;
+  isAdmin?: boolean;
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const dispatchedSet = new Set(dispatchedOrderIds);
@@ -148,6 +152,11 @@ export default function ConfirmOrdersTable({
                       </span>
                     )}
                   </div>
+                  {isAdmin && (
+                    <div className="mt-2 flex justify-end">
+                      <DeleteButton action={deleteEcomOrder.bind(null, o.id)} message={`Order ${orderLabel} will be permanently deleted.`} />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -174,6 +183,7 @@ export default function ConfirmOrdersTable({
               <th className="py-2.5 px-3 text-right">Total</th>
               <th className="py-2.5 px-3">Status</th>
               <th className="py-2.5 pr-4 text-right">Dispatch List</th>
+              {isAdmin && <th className="py-2.5 pr-4 text-right">Delete</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -245,6 +255,11 @@ export default function ConfirmOrdersTable({
                       <span className="text-xs font-medium text-gray-400">Dispatch list generated</span>
                     )}
                   </td>
+                  {isAdmin && (
+                    <td className="py-2.5 pr-4 text-right">
+                      <DeleteButton action={deleteEcomOrder.bind(null, o.id)} message={`Order ${orderLabel} will be permanently deleted.`} />
+                    </td>
+                  )}
                 </tr>
               );
             })}

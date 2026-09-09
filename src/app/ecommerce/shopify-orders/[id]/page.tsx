@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import DraftStatusModal from "@/components/DraftStatusModal";
 import ConfirmDraftButton from "@/components/ConfirmDraftButton";
+import { getSessionUser } from "@/lib/auth";
+import { deleteEcomOrder } from "@/lib/actions";
+import DeleteButton from "@/components/DeleteButton";
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -17,15 +20,19 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 
 export default async function DraftOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const order = await prisma.ecomOrder.findUnique({
-    where: { id: parseInt(id, 10) },
-    include: { items: true, statusLogs: { orderBy: { createdAt: "asc" } } },
-  });
+  const [order, me] = await Promise.all([
+    prisma.ecomOrder.findUnique({
+      where: { id: parseInt(id, 10) },
+      include: { items: true, statusLogs: { orderBy: { createdAt: "asc" } } },
+    }),
+    getSessionUser(),
+  ]);
   if (!order || !order.draft) notFound();
 
   const label = order.notes?.replace("Shopify Order ", "") ?? `#${order.id}`;
   const statusMeta = order.draftStatus ? STATUS_META[order.draftStatus] : null;
   const subtotal = order.items.reduce((s, i) => s + i.rate * i.quantity, 0);
+  const deleteBound = deleteEcomOrder.bind(null, order.id);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -49,6 +56,9 @@ export default async function DraftOrderDetailPage({ params }: { params: Promise
             <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-200">New</span>
           )}
           <ConfirmDraftButton id={order.id} />
+          {me?.isAdmin && (
+            <DeleteButton action={deleteBound} message="This retail COD order will be permanently deleted." />
+          )}
         </div>
       </div>
 

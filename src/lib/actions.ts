@@ -1801,10 +1801,14 @@ export async function createEcomOrder(formData: FormData) {
 
 export async function deleteEcomOrder(orderId: number) {
   await requireAdmin();
-  await prisma.ecomOrder.delete({ where: { id: orderId } });
+  const order = await prisma.ecomOrder.delete({ where: { id: orderId } });
   revalidatePath("/ecommerce");
   revalidatePath("/ecommerce/orders");
-  redirect("/ecommerce/orders");
+  revalidatePath("/ecommerce/all-orders");
+  revalidatePath("/ecommerce/shopify-orders");
+  revalidatePath("/ecommerce/dispatch");
+  revalidatePath("/ecommerce/finance");
+  redirect(order.draft ? "/ecommerce/shopify-orders" : "/ecommerce/orders");
 }
 
 export async function updateEcomOrderCosts(orderId: number, formData: FormData) {
