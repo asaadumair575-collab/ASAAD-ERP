@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import DeleteButton from "@/components/DeleteButton";
@@ -12,13 +12,50 @@ type Lead = {
   city: string | null;
 };
 
+// Single-tap: call happened, pick the outcome right there, done.
+function ContactButton({ leadId, contactedAction }: {
+  leadId: number;
+  contactedAction: (id: number, interested: boolean) => Promise<void>;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const [choosing, setChoosing] = useState<"yes" | "no" | null>(null);
+
+  function mark(interested: boolean) {
+    setChoosing(interested ? "yes" : "no");
+    startTransition(async () => {
+      await contactedAction(leadId, interested);
+    });
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 justify-end">
+      <button
+        type="button"
+        onClick={() => mark(false)}
+        disabled={isPending}
+        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors disabled:opacity-50 whitespace-nowrap"
+      >
+        {isPending && choosing === "no" ? "…" : "Not Interested"}
+      </button>
+      <button
+        type="button"
+        onClick={() => mark(true)}
+        disabled={isPending}
+        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+      >
+        {isPending && choosing === "yes" ? "…" : "Interested"}
+      </button>
+    </div>
+  );
+}
+
 export default function LeadsSelectableTable({
   leads,
   contactedAction,
   deleteAction,
 }: {
   leads: Lead[];
-  contactedAction: (id: number) => Promise<void>;
+  contactedAction: (id: number, interested: boolean) => Promise<void>;
   deleteAction: (id: number) => Promise<void>;
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -125,11 +162,7 @@ export default function LeadsSelectableTable({
                 <td className="py-3 px-5 text-gray-500">{l.city || "-"}</td>
                 <td className="py-3 px-5"><WhatsAppButton phone={l.phone} /></td>
                 <td className="py-3 px-5 text-right">
-                  <form action={contactedAction.bind(null, l.id)}>
-                    <button type="submit" className="text-xs font-medium text-gray-500 hover:text-black transition-colors">
-                      Mark Contacted
-                    </button>
-                  </form>
+                  <ContactButton leadId={l.id} contactedAction={contactedAction} />
                 </td>
                 <td className="py-3 px-5 text-right">
                   <DeleteButton action={deleteAction.bind(null, l.id)} />

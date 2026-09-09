@@ -95,29 +95,40 @@ function LocationIcon() {
 }
 
 // Directly visible on the row for NEW leads — no burying it in a menu.
-// This just records that the call happened; whether the shop is actually
-// interested is asked separately once it lands on the Contacted list.
+// Clicking it immediately asks what happened on the call before saving.
 function ContactButton({ lead, contactAction }: {
   lead: Lead;
-  contactAction: (id: number) => Promise<void>;
+  contactAction: (id: number, interested: boolean) => Promise<void>;
 }) {
   const [isPending, startTransition] = useTransition();
+  const [choosing, setChoosing] = useState<"yes" | "no" | null>(null);
 
-  function mark() {
+  function mark(interested: boolean) {
+    setChoosing(interested ? "yes" : "no");
     startTransition(async () => {
-      await contactAction(lead.id);
+      await contactAction(lead.id, interested);
     });
   }
 
   return (
-    <button
-      type="button"
-      onClick={mark}
-      disabled={isPending}
-      className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors whitespace-nowrap disabled:opacity-50"
-    >
-      {isPending ? "…" : "Mark Contacted"}
-    </button>
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => mark(false)}
+        disabled={isPending}
+        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors whitespace-nowrap disabled:opacity-50"
+      >
+        {isPending && choosing === "no" ? "…" : "Not Interested"}
+      </button>
+      <button
+        type="button"
+        onClick={() => mark(true)}
+        disabled={isPending}
+        className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors whitespace-nowrap disabled:opacity-50"
+      >
+        {isPending && choosing === "yes" ? "…" : "Interested"}
+      </button>
+    </div>
   );
 }
 
@@ -277,7 +288,7 @@ export default function LeadsTable({
   deleteAction,
 }: {
   leads: Lead[];
-  contactAction: (id: number) => Promise<void>;
+  contactAction: (id: number, interested: boolean) => Promise<void>;
   deleteAction: (id: number) => Promise<void>;
 }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());

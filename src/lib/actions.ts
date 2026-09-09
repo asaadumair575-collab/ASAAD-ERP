@@ -1288,29 +1288,34 @@ export async function setLeadStatus(id: number, status: string) {
   revalidatePath(`/leads/${id}`);
 }
 
-// Step 1: employee calls a NEW shop and just confirms the call happened.
-// No outcome is asked yet — that's a separate step once the lead shows up
-// on the Contacted list (see markLeadInterest below).
-export async function markLeadContacted(id: number) {
+// Employee calls a NEW shop — the system asks right there whether the shop
+// is interested. Interested shops move straight into "Deal in Process" —
+// the senior's own call queue to close them. Not-interested ones are a
+// dead end and go straight to Cancelled. No separate holding step.
+export async function markLeadContacted(id: number, interested: boolean) {
   const me = await requireAuth();
   const lead = await prisma.lead.findUnique({ where: { id } });
   if (!lead || lead.status !== "NEW") return;
 
+  const existing = lead.notes?.trim();
+  const tag = interested ? "Interested" : "Not Interested";
+  const notes = existing ? `${existing}\n${tag}` : tag;
+
   await prisma.lead.update({
     where: { id },
-    data: { status: "CONTACTED", contactedById: me.id, contactedAt: new Date() },
+    data: { status: interested ? "INTERESTED" : "CANCELLED", notes, contactedById: me.id, contactedAt: new Date() },
   });
 
   revalidatePath("/leads");
   revalidatePath("/leads/not-contacted");
   revalidatePath(`/leads/${id}`);
   revalidatePath("/leads/contacted");
+  revalidatePath("/leads/deal-in-process");
+  revalidatePath("/leads/cancelled");
 }
 
-// Step 2: on the Contacted list, the system asks whether the shop is
-// actually interested. Interested shops move into "Deal in Process" — the
-// senior's own call queue to close them. Not-interested ones are a dead
-// end and go straight to Cancelled.
+// Kept for any lead still sitting in the legacy CONTACTED state from
+// before this flow was merged into a single step.
 export async function markLeadInterest(id: number, interested: boolean) {
   const lead = await prisma.lead.findUnique({ where: { id } });
   if (!lead || lead.status !== "CONTACTED") return;
