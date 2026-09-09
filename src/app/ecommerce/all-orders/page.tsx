@@ -8,8 +8,22 @@ function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
 }
 
-function statusBadge(o: { draft: boolean; returned: boolean; trackingNumber: string | null; packedAt: Date | null; status: string }) {
-  if (o.draft) return { label: "Draft", cls: "border-gray-200 bg-gray-50 text-gray-500", dot: "bg-gray-300" };
+// Draft rows carry their own outcome in draftStatus (set from the phone
+// call verifying the order) — show that instead of a blanket "Draft" so
+// this list reflects what actually happened, not just that it arrived
+// as a Shopify draft.
+const DRAFT_STATUS_BADGE: Record<string, { label: string; cls: string; dot: string }> = {
+  CALL_NOT_PICKED: { label: "Call Not Picked", cls: "border-yellow-200 bg-yellow-50 text-yellow-700", dot: "bg-yellow-400" },
+  NUMBER_OFF: { label: "Number Off", cls: "border-orange-200 bg-orange-50 text-orange-700", dot: "bg-orange-400" },
+  CANCELLED: { label: "Cancelled", cls: "border-red-200 bg-red-50 text-red-600", dot: "bg-red-400" },
+  CONFIRMED: { label: "Confirmed", cls: "border-green-200 bg-green-50 text-green-700", dot: "bg-green-500" },
+};
+
+function statusBadge(o: { draft: boolean; draftStatus: string | null; returned: boolean; trackingNumber: string | null; packedAt: Date | null; status: string }) {
+  if (o.draft) {
+    if (o.draftStatus && DRAFT_STATUS_BADGE[o.draftStatus]) return DRAFT_STATUS_BADGE[o.draftStatus];
+    return { label: "Draft", cls: "border-gray-200 bg-gray-50 text-gray-500", dot: "bg-gray-300" };
+  }
   if (o.returned) return { label: "Returned", cls: "border-red-200 bg-red-50 text-red-600", dot: "bg-red-400" };
   if (o.trackingNumber && o.packedAt) return { label: "Packed", cls: "border-emerald-200 bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" };
   if (o.trackingNumber) return { label: "Booked", cls: "border-blue-200 bg-blue-50 text-blue-700", dot: "bg-blue-400" };
@@ -36,6 +50,10 @@ export default async function AllOrdersPage({
   // returned all show up as long as the arrival date matches.
   const orders = await prisma.ecomOrder.findMany({
     where: {
+      // Orders taken in through the separate custom-website intake API
+      // (externalRef "web:...") are a different source than the Shopify
+      // store and get their own listing — keep them out of this one.
+      NOT: { shopifyOrderId: { startsWith: "web:" } },
       ...(fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {}),
       ...(q ? { OR: [{ customerName: { contains: q, mode: "insensitive" } }, { phone: { contains: q } }, { city: { contains: q, mode: "insensitive" } }] } : {}),
     },
