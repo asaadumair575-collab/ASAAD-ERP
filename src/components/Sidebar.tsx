@@ -420,6 +420,9 @@ export default function Sidebar({
                 )}
                 {ecomOrdersOpen && (
                   <div className="ml-3 pl-3 border-l border-white/10 space-y-0.5">
+                    {canViewSub(permissions, "ecom_all_orders", isAdmin) && (
+                      <NavLink href="/ecommerce/all-orders" active={pathname.startsWith("/ecommerce/all-orders")} compact onClick={closeMobile}>All Orders</NavLink>
+                    )}
                     {canViewSub(permissions, "ecom_draft_orders", isAdmin) && (
                       <NavLink href="/ecommerce/shopify-orders" active={pathname.startsWith("/ecommerce/shopify-orders")} compact onClick={closeMobile}>
                         <span className="inline-flex items-center gap-1.5">
@@ -430,9 +433,6 @@ export default function Sidebar({
                     )}
                     {canViewSub(permissions, "ecom_orders", isAdmin) && (
                       <NavLink href="/ecommerce/orders" active={pathname.startsWith("/ecommerce/orders")} compact onClick={closeMobile}>Orders</NavLink>
-                    )}
-                    {canViewSub(permissions, "ecom_all_orders", isAdmin) && (
-                      <NavLink href="/ecommerce/all-orders" active={pathname.startsWith("/ecommerce/all-orders")} compact onClick={closeMobile}>All Orders</NavLink>
                     )}
                     {canViewSub(permissions, "ecom_dispatch", isAdmin) && (
                       <NavLink href="/ecommerce/dispatch" active={pathname.startsWith("/ecommerce/dispatch")} compact onClick={closeMobile}>Dispatch</NavLink>
