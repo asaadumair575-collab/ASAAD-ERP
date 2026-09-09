@@ -160,6 +160,7 @@ model User {
   permissions          Json                 @default("{}")
   apiToken             String?              @unique
   fcmToken             String?
+  sessionVersion       Int                  @default(0)
   createdAt            DateTime             @default(now())
   empCommissionEntries EmpCommissionEntry[]
   empWithdrawals       EmpWithdrawal[]

@@ -951,7 +951,7 @@ export async function loginAction(formData: FormData) {
       redirect(`/login?error=${encodeURIComponent("Invalid username or password")}`);
     }
     clearLoginAttempts(username);
-    await setSessionCookie(username);
+    await setSessionCookie(username, dbUser.sessionVersion);
     await logAuthEvent({ action: "LOGIN", userId: dbUser.id, userName: dbUser.displayName ?? dbUser.username, ip, summary: `${dbUser.displayName ?? dbUser.username} logged in to website` });
     redirect(dbUser.mustSetPassword ? "/set-password" : "/");
   }
@@ -1061,6 +1061,18 @@ export async function regenerateApiToken(id: number) {
 export async function revokeApiToken(id: number) {
   await requireAdmin();
   await prisma.user.update({ where: { id }, data: { apiToken: null } });
+  revalidatePath(`/settings/users/${id}`);
+}
+
+// Kicks this user out of every browser they're currently logged in on —
+// bumping sessionVersion invalidates every cookie issued before now (see
+// getSessionUser in lib/auth.ts). They'll be asked to log in again next
+// time they load any page.
+export async function forceLogoutUser(id: number) {
+  const me = await requireAdmin();
+  if (me.id === id) throw new Error("You can't force-logout your own account — just log out normally.");
+  await prisma.user.update({ where: { id }, data: { sessionVersion: { increment: 1 } } });
+  revalidatePath("/settings/users");
   revalidatePath(`/settings/users/${id}`);
 }
 

@@ -7,6 +7,7 @@ import {
   deleteUser,
   regenerateApiToken,
   revokeApiToken,
+  forceLogoutUser,
 } from "@/lib/actions";
 import { MODULES, SUB_MODULES, parsePermissions } from "@/lib/permissions";
 import SubmitButton from "@/components/SubmitButton";
@@ -32,6 +33,7 @@ export default async function UserDetailPage({
   const deleteBound = deleteUser.bind(null, userId);
   const regenerateTokenBound = regenerateApiToken.bind(null, userId);
   const revokeTokenBound = revokeApiToken.bind(null, userId);
+  const forceLogoutBound = forceLogoutUser.bind(null, userId);
 
   const totalUsers = await prisma.user.count();
 
@@ -147,6 +149,24 @@ export default async function UserDetailPage({
           Update Password
         </SubmitButton>
       </form>
+
+      {/* Session */}
+      {user.id !== me.id && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold">Session</h2>
+            <p className="text-xs text-gray-500 mt-1">
+              Force this user out of every device they&apos;re currently logged in on. They&apos;ll be
+              asked to sign in again next time they open the app.
+            </p>
+          </div>
+          <form action={forceLogoutBound}>
+            <SubmitButton pendingText="Logging out..." className="border border-red-200 text-red-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-red-50 transition-colors">
+              Force Logout
+            </SubmitButton>
+          </form>
+        </div>
+      )}
 
       {/* Employee Call mobile app */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
