@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { sendPushToAll } from "@/lib/push";
 
 const SECRET = process.env.SHOPIFY_WEBHOOK_SECRET ?? "";
 
@@ -74,6 +75,12 @@ export async function POST(req: NextRequest) {
       },
     },
   });
+
+  sendPushToAll({
+    title: "New Retail COD draft order",
+    body: `${customerName}${city ? ` · ${city}` : ""} — Rs ${totalAmount.toLocaleString("en-PK", { maximumFractionDigits: 0 })}`,
+    url: "/ecommerce/shopify-orders",
+  }).catch(() => {});
 
   return NextResponse.json({ ok: true, orderId: order.id });
 }

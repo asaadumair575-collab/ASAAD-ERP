@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { publicApiRateLimit } from "@/lib/publicApiRateLimit";
 import { timingSafeEqualStr } from "@/lib/timingSafeEqual";
+import { sendPushToAll } from "@/lib/push";
 
 // Public order intake for external storefronts (e.g. a custom website).
 // The caller authenticates with a shared secret via the X-Api-Key header.
@@ -95,6 +96,12 @@ export async function POST(req: NextRequest) {
       },
     },
   });
+
+  sendPushToAll({
+    title: "New Retail COD draft order",
+    body: `${customerName}${city ? ` · ${city}` : ""} — Rs ${totalAmount.toLocaleString("en-PK", { maximumFractionDigits: 0 })}`,
+    url: "/ecommerce/shopify-orders",
+  }).catch(() => {});
 
   return NextResponse.json({ ok: true, orderId: order.id });
 }
