@@ -1,5 +1,6 @@
 "use client";
 
+import { ecomOrderLabel } from "@/lib/ecomOrderLabel";
 import { useState } from "react";
 import Link from "next/link";
 import BulkDispatchButton from "./BulkDispatchButton";
@@ -90,7 +91,7 @@ export default function ConfirmOrdersTable({
       {/* Mobile card list */}
       <div className="sm:hidden space-y-2">
         {orders.map((o) => {
-          const orderLabel = o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
+          const orderLabel = ecomOrderLabel(o);
           const isSelected = selected.has(o.id);
           const dispatched = !!o.trackingNumber;
           return (
@@ -188,7 +189,7 @@ export default function ConfirmOrdersTable({
           </thead>
           <tbody className="divide-y divide-gray-100">
             {orders.map((o) => {
-              const orderLabel = o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
+              const orderLabel = ecomOrderLabel(o);
               const isSelected = selected.has(o.id);
               const dispatched = !!o.trackingNumber;
               return (

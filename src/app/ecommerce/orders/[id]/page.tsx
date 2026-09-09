@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ecomOrderLabel } from "@/lib/ecomOrderLabel";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
@@ -18,7 +19,7 @@ export default async function EcomOrderPage({ params }: { params: Promise<{ id: 
   ]);
   if (!order) notFound();
 
-  const orderLabel = order.notes?.replace("Shopify Order ", "") ?? `#${order.id}`;
+  const orderLabel = ecomOrderLabel(order);
   const deleteBound = deleteEcomOrder.bind(null, order.id);
 
   return (

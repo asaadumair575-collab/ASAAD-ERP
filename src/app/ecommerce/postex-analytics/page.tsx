@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import DateRangeNav from "@/components/DateRangeNav";
 import PostexAnalyticsCharts, { type PostexDailyPoint } from "@/components/PostexAnalyticsCharts";
 import { parsePermissions, canViewSub } from "@/lib/permissions";
+import { ecomOrderLabel } from "@/lib/ecomOrderLabel";
 
 export const maxDuration = 30;
 
@@ -132,7 +133,7 @@ async function PostexContent({ from, to }: { from: string; to: string }) {
   }
   const dailyPoints = [...dailyMap.values()];
 
-  const orderLabel = (o: { id: number; notes: string | null }) => o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
+  const orderLabel = ecomOrderLabel;
 
   return (
     <>

@@ -1,4 +1,5 @@
 import { getSessionUser } from "@/lib/auth";
+import { ecomOrderLabel } from "@/lib/ecomOrderLabel";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import DispatchDateControls from "@/components/DispatchDateControls";
@@ -142,7 +143,7 @@ export default async function EcomDispatchPage({
 
   const rows: Row[] = orders.map((o) => ({
     id: o.id,
-    orderLabel: o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`,
+    orderLabel: ecomOrderLabel(o),
     customerName: o.customerName,
     phone: o.phone,
     city: o.city,
@@ -296,7 +297,7 @@ function renderSheet({
               <ul className="mt-3 space-y-1.5">
                 {pendingPack.map((o) => (
                   <li key={o.id} className="text-xs text-red-700 bg-white border border-red-100 rounded-lg px-3 py-2 flex items-center justify-between">
-                    <span className="font-medium">{o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`} — {o.customerName}</span>
+                    <span className="font-medium">{ecomOrderLabel(o)} — {o.customerName}</span>
                     <span className="font-mono text-red-400">{o.trackingNumber ?? "—"}</span>
                   </li>
                 ))}

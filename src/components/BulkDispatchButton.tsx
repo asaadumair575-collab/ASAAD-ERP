@@ -1,5 +1,6 @@
 "use client";
 
+import { ecomOrderLabel } from "@/lib/ecomOrderLabel";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -84,7 +85,7 @@ export default function BulkDispatchButton({
             {/* Order list */}
             <div className="max-h-64 overflow-y-auto divide-y divide-gray-50">
               {selectedOrders.map(o => {
-                const label = o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
+                const label = ecomOrderLabel(o);
                 const result = results?.find(r => r.id === o.id);
                 return (
                   <div key={o.id} className="px-4 sm:px-6 py-3 flex items-center justify-between gap-3">

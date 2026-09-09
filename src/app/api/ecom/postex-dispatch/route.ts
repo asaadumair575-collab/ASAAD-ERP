@@ -19,7 +19,8 @@ async function createPostexBooking(order: {
   payments: { amount: number }[];
   items: { description: string; quantity: number }[];
 }) {
-  const orderRef = order.notes?.replace("Shopify Order ", "") ?? `E-${order.id}`;
+  const notes = order.notes?.trim();
+  const orderRef = notes?.startsWith("Shopify Order ") ? notes.slice("Shopify Order ".length).trim() || `E-${order.id}` : `E-${order.id}`;
   const advancePaid = order.payments.reduce((s, p) => s + p.amount, 0);
   const codAmount = Math.max(0, order.totalAmount - advancePaid);
   const deliveryAddress = order.address ?? order.city ?? "";

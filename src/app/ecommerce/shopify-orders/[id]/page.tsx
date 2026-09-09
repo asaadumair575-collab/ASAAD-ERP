@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ecomOrderLabel } from "@/lib/ecomOrderLabel";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import DraftStatusModal from "@/components/DraftStatusModal";
@@ -29,7 +30,7 @@ export default async function DraftOrderDetailPage({ params }: { params: Promise
   ]);
   if (!order || !order.draft) notFound();
 
-  const label = order.notes?.replace("Shopify Order ", "") ?? `#${order.id}`;
+  const label = ecomOrderLabel(order);
   const statusMeta = order.draftStatus ? STATUS_META[order.draftStatus] : null;
   const subtotal = order.items.reduce((s, i) => s + i.rate * i.quantity, 0);
   const deleteBound = deleteEcomOrder.bind(null, order.id);

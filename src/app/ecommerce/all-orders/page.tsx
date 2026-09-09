@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ecomOrderLabel } from "@/lib/ecomOrderLabel";
 import LiveRefresh from "@/components/LiveRefresh";
 import Link from "next/link";
 import DateRangeFilter from "@/components/DateRangeFilter";
@@ -83,7 +84,7 @@ export default async function AllOrdersPage({
           <div className="sm:hidden space-y-2">
             {orders.map((o) => {
               const badge = statusBadge(o);
-              const orderLabel = o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
+              const orderLabel = ecomOrderLabel(o);
               return (
                 <div key={o.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-3">
                   <div className="flex items-center justify-between gap-2">
@@ -123,7 +124,7 @@ export default async function AllOrdersPage({
               <tbody className="divide-y divide-gray-100">
                 {orders.map((o) => {
                   const badge = statusBadge(o);
-                  const orderLabel = o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
+                  const orderLabel = ecomOrderLabel(o);
                   return (
                     <tr key={o.id} className="hover:bg-gray-50 transition-colors">
                       <td className="py-2.5 px-4 font-semibold text-gray-900 text-xs">{orderLabel}</td>

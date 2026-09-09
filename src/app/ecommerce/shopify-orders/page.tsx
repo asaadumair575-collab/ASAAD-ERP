@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ecomOrderLabel } from "@/lib/ecomOrderLabel";
 import LiveRefresh from "@/components/LiveRefresh";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -123,7 +124,7 @@ export default async function DraftOrdersPage({
         {/* Mobile card list */}
         <div className="sm:hidden space-y-2">
           {orders.map((o) => {
-            const label = o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
+            const label = ecomOrderLabel(o);
             return (
               <div key={o.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-3">
                 <div className="flex items-center justify-between gap-2">
@@ -168,7 +169,7 @@ export default async function DraftOrdersPage({
             </thead>
             <tbody className="divide-y divide-gray-100">
               {orders.map((o) => {
-                const label = o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`;
+                const label = ecomOrderLabel(o);
                 const statusMeta = o.draftStatus ? STATUS_META[o.draftStatus] : null;
                 return (
                   <tr key={o.id} className="hover:bg-gray-50 transition-colors group">

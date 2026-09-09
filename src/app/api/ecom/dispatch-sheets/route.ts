@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { dispatchSheetNumber } from "@/lib/dispatchSheetNumber";
+import { ecomOrderLabel } from "@/lib/ecomOrderLabel";
 import { parsePermissions, canViewSub } from "@/lib/permissions";
 
 type SnapshotRow = {
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: `${conflicting.length} order(s) are already on another dispatch list: ${conflicting
-          .map((o) => `${o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`} → ${dispatchSheetNumber(sheetByOrderId.get(o.id)!)}`)
+          .map((o) => `${ecomOrderLabel(o)} → ${dispatchSheetNumber(sheetByOrderId.get(o.id)!)}`)
           .join(", ")}. An order can only appear on one list.`,
         conflicting: conflicting.map((o) => ({ id: o.id, customerName: o.customerName, trackingNumber: o.trackingNumber, sheetNumber: dispatchSheetNumber(sheetByOrderId.get(o.id)!) })),
       },
@@ -116,7 +117,7 @@ export async function POST(req: NextRequest) {
 
   const snapshot: SnapshotRow[] = orders.map((o) => ({
     id: o.id,
-    orderLabel: o.notes?.replace("Shopify Order ", "") ?? `#${o.id}`,
+    orderLabel: ecomOrderLabel(o),
     customerName: o.customerName,
     phone: o.phone,
     city: o.city,
