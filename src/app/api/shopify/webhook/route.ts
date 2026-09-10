@@ -65,10 +65,18 @@ export async function POST(req: NextRequest) {
       items: {
         create: lineItems.map((item) => {
           const i = item as Record<string, unknown>;
+          // Shopify's line item "name" is "{title} - {variant_title}" (e.g.
+          // "Cancon Pro 72 - Pack of 3") — "title" alone is just the product
+          // name with no pack-size info, which made Finance's "pack of N"
+          // detection always miss and fall back to a wrong hardcoded size.
+          const description = String(i.name ?? i.title ?? "Product");
           return {
-            description: String(i.title ?? i.name ?? "Product"),
+            description,
             quantity: Number(i.quantity ?? 1),
-            packSize: 12,
+            // Only a fallback for the rare item whose name doesn't carry a
+            // parseable "pack of N" — Finance's getPackSize() re-derives the
+            // real pack size from the description text whenever it can.
+            packSize: 1,
             rate: parseFloat(String(i.price ?? "0")) || 0,
           };
         }),
