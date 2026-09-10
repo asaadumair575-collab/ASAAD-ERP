@@ -463,7 +463,9 @@ export default function Sidebar({
           </>
         )}
 
-        {canView(permissions, "ecommerce", isAdmin) && (
+        {/* Retail COD (New) hidden for now, per request — pages still live
+            at /retail-cod-new, just not linked from the sidebar. */}
+        {false && canView(permissions, "ecommerce", isAdmin) && (
           <>
             <button type="button" onClick={() => toggleSection("ecommerceV2")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEcommerceV2 ? "bg-white/10 text-white font-semibold" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}>
