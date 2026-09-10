@@ -18,9 +18,41 @@ function extractWeight(text: string): string {
   return decimalMatch ?? matches[0] ?? "";
 }
 
-// Grayscale + contrast-stretch + upscale the cropped scale-display region —
-// digital scale LCDs are low-contrast and small, so this sharpens the digits
-// before OCR sees them, which is what was causing misreads.
+// Otsu's method — picks the grayscale threshold that best splits the image
+// into two classes (background vs. digit strokes) by maximizing the
+// variance between them. Far more reliable than a fixed midpoint threshold
+// since scale LCDs vary a lot in brightness/glare between photos.
+function otsuThreshold(gray: Uint8ClampedArray): number {
+  const histogram = new Array(256).fill(0);
+  for (const v of gray) histogram[v]++;
+  const total = gray.length;
+
+  let sum = 0;
+  for (let t = 0; t < 256; t++) sum += t * histogram[t];
+
+  let sumB = 0, wB = 0, best = 0, bestVariance = 0;
+  for (let t = 0; t < 256; t++) {
+    wB += histogram[t];
+    if (wB === 0) continue;
+    const wF = total - wB;
+    if (wF === 0) break;
+    sumB += t * histogram[t];
+    const mB = sumB / wB;
+    const mF = (sum - sumB) / wF;
+    const variance = wB * wF * (mB - mF) ** 2;
+    if (variance > bestVariance) {
+      bestVariance = variance;
+      best = t;
+    }
+  }
+  return best;
+}
+
+// Grayscale + binarize + upscale the cropped scale-display region — digital
+// scale LCDs are low-contrast (often bright digits on a dark backlight),
+// which generic OCR misreads badly. Otsu-thresholding down to pure
+// black-on-white turns the segmented digits into clean shapes Tesseract can
+// actually recognize, which is what was causing misreads.
 function preprocessForOcr(source: HTMLCanvasElement): HTMLCanvasElement {
   const scale = 3;
   const out = document.createElement("canvas");
@@ -32,20 +64,31 @@ function preprocessForOcr(source: HTMLCanvasElement): HTMLCanvasElement {
 
   const imgData = octx.getImageData(0, 0, out.width, out.height);
   const d = imgData.data;
+  const pixelCount = d.length / 4;
 
-  // Grayscale + find min/max for contrast stretching.
-  let min = 255, max = 0;
-  const gray = new Uint8ClampedArray(d.length / 4);
+  const gray = new Uint8ClampedArray(pixelCount);
   for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-    const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-    gray[p] = g;
-    if (g < min) min = g;
-    if (g > max) max = g;
+    gray[p] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
   }
-  const range = Math.max(max - min, 1);
-  for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-    const stretched = ((gray[p] - min) / range) * 255;
-    d[i] = d[i + 1] = d[i + 2] = stretched;
+
+  const threshold = otsuThreshold(gray);
+
+  // Sample the crop's border pixels to figure out which side of the
+  // threshold is "background" — LCDs can be either bright digits on a
+  // dark panel or dark digits on a bright one, so this can't be assumed.
+  const w = out.width, h = out.height;
+  let borderSum = 0, borderCount = 0;
+  for (let x = 0; x < w; x += Math.max(1, Math.floor(w / 40))) {
+    borderSum += gray[x]; borderCount++;
+    borderSum += gray[(h - 1) * w + x]; borderCount++;
+  }
+  const backgroundIsLight = borderSum / borderCount >= threshold;
+
+  for (let p = 0; p < pixelCount; p++) {
+    const isBackground = backgroundIsLight ? gray[p] >= threshold : gray[p] < threshold;
+    const v = isBackground ? 255 : 0; // background -> white, digits -> black
+    const i = p * 4;
+    d[i] = d[i + 1] = d[i + 2] = v;
   }
   octx.putImageData(imgData, 0, 0);
   return out;
@@ -210,6 +253,9 @@ export default function ScanAndWeighModal() {
       await worker.setParameters({
         tessedit_char_whitelist: "0123456789.",
         tessedit_pageseg_mode: PSM.SINGLE_LINE,
+        // Biases the classifier toward digit-shaped glyphs — helps with
+        // 7-segment LCD digits, which don't look like normal printed text.
+        classify_bln_numeric_mode: "1",
       });
       const { data } = await worker.recognize(cropDataUrl);
       await worker.terminate();
