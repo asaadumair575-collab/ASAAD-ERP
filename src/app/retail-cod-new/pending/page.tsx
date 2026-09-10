@@ -1,19 +1,23 @@
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { fetchStageOrders } from "@/lib/retail-cod-v2/fetchOrders";
-import PageHeader from "@/components/retail-cod-v2/PageHeader";
-import OrdersTable from "@/components/retail-cod-v2/OrdersTable";
+import StagePage from "@/components/retail-cod-v2/StagePage";
 
-export default async function PendingOrdersV2Page() {
+export default async function PendingOrdersV2Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; from?: string; to?: string; page?: string }>;
+}) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
-  const orders = await fetchStageOrders("PENDING");
-
   return (
-    <div className="space-y-6">
-      <PageHeader active="/retail-cod-new/pending" title="Pending Orders" subtitle={`${orders.length} order${orders.length === 1 ? "" : "s"} waiting on a first look`} />
-      <OrdersTable orders={orders} showStageColumn={false} />
-    </div>
+    <StagePage
+      stage="PENDING"
+      active="/retail-cod-new/pending"
+      basePath="/retail-cod-new/pending"
+      title="Pending Orders"
+      subtitle="Waiting on a first look — oldest waiting first"
+      searchParams={searchParams}
+    />
   );
 }

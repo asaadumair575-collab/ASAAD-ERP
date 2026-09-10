@@ -4,11 +4,11 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import { STAGE_META } from "@/lib/retail-cod-v2/stageMeta";
 import { STAGES } from "@/lib/retail-cod-v2/stages";
 
-export default function StageChart({ counts }: { counts: Record<string, number> }) {
+export default function StageChart({ counts }: { counts: Record<string, { count: number; value: number }> }) {
   const data = STAGES.map((stage) => ({
     stage,
     label: STAGE_META[stage].label,
-    count: counts[stage] ?? 0,
+    count: counts[stage]?.count ?? 0,
     color: STAGE_META[stage].chartColor,
   }));
 

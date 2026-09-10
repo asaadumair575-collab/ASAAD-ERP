@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { Package, Phone, MapPin, ChevronDown, Loader2 } from "lucide-react";
+import { Package, Phone, MapPin, ChevronDown, Loader2, MessageCircle, Clock3 } from "lucide-react";
 import { useOrderSelection } from "@/lib/retail-cod-v2/store";
 import { setOrderStage, bulkSetOrderStage } from "@/lib/retail-cod-v2/actions";
 import { STAGES, type OrderStage } from "@/lib/retail-cod-v2/stages";
@@ -20,10 +20,26 @@ export type OrderRow = {
   items: string;
   trackingNumber: string | null;
   stage: string;
+  stageUpdatedAt: string;
 };
 
 function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
+}
+
+// Age since the order last changed stage — the whole point of this queue
+// view is "who's been waiting too long", so this needs to jump out visually
+// rather than sit as another plain date column.
+function Aging({ since }: { since: string }) {
+  const hours = (Date.now() - new Date(since).getTime()) / 3_600_000;
+  const label = hours < 1 ? "<1h" : hours < 24 ? `${Math.floor(hours)}h` : `${Math.floor(hours / 24)}d`;
+  const urgency = hours >= 24 ? "text-red-600 bg-red-50 border-red-200" : hours >= 8 ? "text-amber-700 bg-amber-50 border-amber-200" : "text-gray-500 bg-gray-50 border-gray-200";
+  return (
+    <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border ${urgency}`}>
+      <Clock3 className="w-3 h-3" />
+      {label}
+    </span>
+  );
 }
 
 function StageMoveSelect({ orderId, currentStage }: { orderId: number; currentStage: string }) {
@@ -123,39 +139,57 @@ export default function OrdersTable({ orders, showStageColumn = true }: { orders
               <th className="py-2.5 px-3">Customer</th>
               <th className="py-2.5 px-3">Items</th>
               <th className="py-2.5 px-3 text-right">Total</th>
+              <th className="py-2.5 px-3">Waiting</th>
               {showStageColumn && <th className="py-2.5 px-3">Stage</th>}
+              <th className="py-2.5 px-3 text-center">Contact</th>
               <th className="py-2.5 pr-4 text-right">Move</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {orders.map((o) => (
-              <tr key={o.id} className={`hover:bg-gray-50/70 transition-colors ${selected.has(o.id) ? "bg-blue-50/40" : ""}`}>
-                <td className="py-2.5 pl-4 pr-2">
-                  <input type="checkbox" checked={selected.has(o.id)} onChange={() => toggle(o.id)} className="rounded border-gray-300" />
-                </td>
-                <td className="py-2.5 px-3">
-                  <Link href={`/ecommerce/orders/${o.id}`} className="font-semibold text-gray-900 hover:text-blue-600 hover:underline transition-colors text-xs">
-                    {o.orderLabel}
-                  </Link>
-                  <p className="text-[11px] text-gray-400 mt-0.5">{o.date}</p>
-                </td>
-                <td className="py-2.5 px-3">
-                  <p className="text-gray-900 text-xs font-medium">{o.customerName}</p>
-                  <div className="flex items-center gap-2.5 mt-0.5 text-[11px] text-gray-400">
-                    {o.phone && <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{o.phone}</span>}
-                    {o.city && <span className="inline-flex items-center gap-1"><MapPin className="w-3 h-3" />{o.city}</span>}
-                  </div>
-                </td>
-                <td className="py-2.5 px-3 text-gray-500 text-xs max-w-[220px] truncate">{o.items}</td>
-                <td className="py-2.5 px-3 text-right tabular-nums font-medium text-gray-900 text-xs">Rs {fmt(o.totalAmount)}</td>
-                {showStageColumn && (
-                  <td className="py-2.5 px-3"><StageBadge stage={o.stage} /></td>
-                )}
-                <td className="py-2.5 pr-4 text-right">
-                  <StageMoveSelect orderId={o.id} currentStage={o.stage} />
-                </td>
-              </tr>
-            ))}
+            {orders.map((o) => {
+              const phoneDigits = o.phone?.replace(/\D/g, "");
+              return (
+                <tr key={o.id} className={`hover:bg-gray-50/70 transition-colors ${selected.has(o.id) ? "bg-blue-50/40" : ""}`}>
+                  <td className="py-2.5 pl-4 pr-2">
+                    <input type="checkbox" checked={selected.has(o.id)} onChange={() => toggle(o.id)} className="rounded border-gray-300" />
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <Link href={`/ecommerce/orders/${o.id}`} className="font-semibold text-gray-900 hover:text-blue-600 hover:underline transition-colors text-xs">
+                      {o.orderLabel}
+                    </Link>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{o.date}</p>
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <p className="text-gray-900 text-xs font-medium">{o.customerName}</p>
+                    <div className="flex items-center gap-2.5 mt-0.5 text-[11px] text-gray-400">
+                      {o.phone && <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{o.phone}</span>}
+                      {o.city && <span className="inline-flex items-center gap-1"><MapPin className="w-3 h-3" />{o.city}</span>}
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-3 text-gray-500 text-xs max-w-[220px] truncate">{o.items}</td>
+                  <td className="py-2.5 px-3 text-right tabular-nums font-medium text-gray-900 text-xs">Rs {fmt(o.totalAmount)}</td>
+                  <td className="py-2.5 px-3"><Aging since={o.stageUpdatedAt} /></td>
+                  {showStageColumn && (
+                    <td className="py-2.5 px-3"><StageBadge stage={o.stage} /></td>
+                  )}
+                  <td className="py-2.5 px-3">
+                    {phoneDigits && (
+                      <div className="flex items-center justify-center gap-1">
+                        <a href={`tel:${phoneDigits}`} title="Call" className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                          <Phone className="w-3.5 h-3.5" />
+                        </a>
+                        <a href={`https://wa.me/${phoneDigits}`} target="_blank" rel="noopener noreferrer" title="WhatsApp" className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors">
+                          <MessageCircle className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    )}
+                  </td>
+                  <td className="py-2.5 pr-4 text-right">
+                    <StageMoveSelect orderId={o.id} currentStage={o.stage} />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

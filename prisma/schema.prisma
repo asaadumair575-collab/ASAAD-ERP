@@ -368,6 +368,7 @@ model EcomOrder {
   // Retail COD pages still read. Values: PENDING, CONFIRMED, HOLD,
   // READY_TO_PACK, PACKED_DISPATCH.
   stage           String          @default("PENDING")
+  stageUpdatedAt  DateTime        @default(now())
   items         EcomOrderItem[]
   payments      EcomPayment[]
   statusLogs    EcomOrderStatusLog[]

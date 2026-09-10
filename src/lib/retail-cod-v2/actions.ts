@@ -27,7 +27,7 @@ async function requireAuth() {
 export async function setOrderStage(id: number, stage: OrderStage) {
   await requireAuth();
   if (!STAGES.includes(stage)) throw new Error("Invalid stage");
-  await prisma.ecomOrder.update({ where: { id }, data: { stage } });
+  await prisma.ecomOrder.update({ where: { id }, data: { stage, stageUpdatedAt: new Date() } });
   revalidateAllStagePaths();
 }
 
@@ -35,6 +35,6 @@ export async function bulkSetOrderStage(ids: number[], stage: OrderStage) {
   await requireAuth();
   if (!ids.length) return;
   if (!STAGES.includes(stage)) throw new Error("Invalid stage");
-  await prisma.ecomOrder.updateMany({ where: { id: { in: ids } }, data: { stage } });
+  await prisma.ecomOrder.updateMany({ where: { id: { in: ids } }, data: { stage, stageUpdatedAt: new Date() } });
   revalidateAllStagePaths();
 }

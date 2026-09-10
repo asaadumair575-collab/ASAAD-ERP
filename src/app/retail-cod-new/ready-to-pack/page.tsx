@@ -1,19 +1,23 @@
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { fetchStageOrders } from "@/lib/retail-cod-v2/fetchOrders";
-import PageHeader from "@/components/retail-cod-v2/PageHeader";
-import OrdersTable from "@/components/retail-cod-v2/OrdersTable";
+import StagePage from "@/components/retail-cod-v2/StagePage";
 
-export default async function ReadyToPackOrdersV2Page() {
+export default async function ReadyToPackOrdersV2Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; from?: string; to?: string; page?: string }>;
+}) {
   const me = await getSessionUser();
   if (!me) redirect("/login");
 
-  const orders = await fetchStageOrders("READY_TO_PACK");
-
   return (
-    <div className="space-y-6">
-      <PageHeader active="/retail-cod-new/ready-to-pack" title="Ready to Pack" subtitle={`${orders.length} order${orders.length === 1 ? "" : "s"} cleared for packing`} />
-      <OrdersTable orders={orders} showStageColumn={false} />
-    </div>
+    <StagePage
+      stage="READY_TO_PACK"
+      active="/retail-cod-new/ready-to-pack"
+      basePath="/retail-cod-new/ready-to-pack"
+      title="Ready to Pack"
+      subtitle="Cleared for packing — oldest waiting first"
+      searchParams={searchParams}
+    />
   );
 }
