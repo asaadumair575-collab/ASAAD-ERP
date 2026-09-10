@@ -120,18 +120,22 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const isOnWholesale = pathname.startsWith("/clients") || pathname.startsWith("/sales") || pathname.startsWith("/finance") || pathname.startsWith("/commission") || pathname.startsWith("/sales/orders") || pathname.startsWith("/dispatch");
-  const isOnRetail = pathname.startsWith("/retail");
+  // Scoped with a trailing slash so "/retail-cod-new" (a separate section)
+  // doesn't get swallowed by this prefix check.
+  const isOnRetail = pathname === "/retail" || pathname.startsWith("/retail/");
   const isOnLeads = pathname.startsWith("/leads");
   const isOnEcommerce = pathname.startsWith("/ecommerce") || pathname.startsWith("/ecommerce/shopify-dashboard");
+  const isOnEcommerceV2 = pathname.startsWith("/retail-cod-new");
   const isOnEmployee = pathname.startsWith("/emp-commission") || pathname.startsWith("/performance") || pathname.startsWith("/work");
   const isOnReorder = pathname.startsWith("/reorder");
   const isOnComplaints = pathname.startsWith("/complaints");
 
-  type Section = "wholesale" | "retail" | "leads" | "ecommerce" | "employee" | "reorder" | "complaints" | null;
+  type Section = "wholesale" | "retail" | "leads" | "ecommerce" | "ecommerceV2" | "employee" | "reorder" | "complaints" | null;
   function sectionForPath(): Section {
     if (isOnWholesale) return "wholesale";
     if (isOnRetail) return "retail";
     if (isOnLeads) return "leads";
+    if (isOnEcommerceV2) return "ecommerceV2";
     if (isOnEcommerce) return "ecommerce";
     if (isOnEmployee) return "employee";
     if (isOnReorder) return "reorder";
@@ -454,6 +458,26 @@ export default function Sidebar({
                 {isAdmin && (
                   <NavLink href="/ecommerce/settings" active={pathname.startsWith("/ecommerce/settings")} compact onClick={closeMobile}>Settings</NavLink>
                 )}
+              </div>
+            )}
+          </>
+        )}
+
+        {canView(permissions, "ecommerce", isAdmin) && (
+          <>
+            <button type="button" onClick={() => toggleSection("ecommerceV2")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEcommerceV2 ? "bg-white/10 text-white font-semibold" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}>
+              <span className="flex items-center gap-2.5">{icons.retail} Retail COD (New)</span>
+              <span className={`transition-transform text-gray-500 ${openSection === "ecommerceV2" ? "rotate-90" : ""}`}>{icons.chevron}</span>
+            </button>
+            {openSection === "ecommerceV2" && (
+              <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
+                <NavLink href="/retail-cod-new" active={pathname === "/retail-cod-new"} compact onClick={closeMobile}>All Orders</NavLink>
+                <NavLink href="/retail-cod-new/pending" active={pathname.startsWith("/retail-cod-new/pending")} compact onClick={closeMobile}>Pending Orders</NavLink>
+                <NavLink href="/retail-cod-new/confirmed" active={pathname.startsWith("/retail-cod-new/confirmed")} compact onClick={closeMobile}>Confirmed Orders</NavLink>
+                <NavLink href="/retail-cod-new/hold" active={pathname.startsWith("/retail-cod-new/hold")} compact onClick={closeMobile}>Hold Orders</NavLink>
+                <NavLink href="/retail-cod-new/ready-to-pack" active={pathname.startsWith("/retail-cod-new/ready-to-pack")} compact onClick={closeMobile}>Ready to Packed</NavLink>
+                <NavLink href="/retail-cod-new/packed-dispatch" active={pathname.startsWith("/retail-cod-new/packed-dispatch")} compact onClick={closeMobile}>Packed & Ready to Dispatch</NavLink>
               </div>
             )}
           </>

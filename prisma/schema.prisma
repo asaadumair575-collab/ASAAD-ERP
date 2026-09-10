@@ -363,9 +363,16 @@ model EcomOrder {
   confirmedAt     DateTime?
   source          String?
   createdAt       DateTime        @default(now())
+  // Drives the new Retail COD (New) pipeline view — independent of the
+  // legacy draft/confirmed/dispatched fields above, which the original
+  // Retail COD pages still read. Values: PENDING, CONFIRMED, HOLD,
+  // READY_TO_PACK, PACKED_DISPATCH.
+  stage           String          @default("PENDING")
   items         EcomOrderItem[]
   payments      EcomPayment[]
   statusLogs    EcomOrderStatusLog[]
+
+  @@index([stage])
 }
 
 model EcomOrderStatusLog {
