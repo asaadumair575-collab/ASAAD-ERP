@@ -19,12 +19,20 @@ const DRAFT_STATUS_BADGE: Record<string, { label: string; cls: string; dot: stri
   CONFIRMED: { label: "Confirmed", cls: "border-green-200 bg-green-50 text-green-700", dot: "bg-green-500" },
 };
 
-function statusBadge(o: { draft: boolean; draftStatus: string | null; returned: boolean; trackingNumber: string | null; packedAt: Date | null; status: string }) {
+function statusBadge(
+  o: { id: number; draft: boolean; draftStatus: string | null; returned: boolean; trackingNumber: string | null; packedAt: Date | null; status: string },
+  dispatchedOrderIds: Set<number>
+) {
   if (o.draft) {
     if (o.draftStatus && DRAFT_STATUS_BADGE[o.draftStatus]) return DRAFT_STATUS_BADGE[o.draftStatus];
     return { label: "Draft", cls: "border-gray-200 bg-gray-50 text-gray-500", dot: "bg-gray-300" };
   }
   if (o.returned) return { label: "Returned", cls: "border-red-200 bg-red-50 text-red-600", dot: "bg-red-400" };
+  // "Dispatched" means the parcel has actually left through the Scan &
+  // Dispatch gate — on a DispatchSheet that's been dispatched — not just
+  // packed and waiting on one. Checked before "Packed" so a dispatched
+  // order doesn't get stuck showing the earlier packed badge forever.
+  if (dispatchedOrderIds.has(o.id)) return { label: "Dispatched", cls: "border-indigo-200 bg-indigo-50 text-indigo-700", dot: "bg-indigo-500" };
   if (o.trackingNumber && o.packedAt) return { label: "Packed", cls: "border-emerald-200 bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" };
   if (o.trackingNumber) return { label: "Booked", cls: "border-blue-200 bg-blue-50 text-blue-700", dot: "bg-blue-400" };
   if (o.status === "PAID") return { label: "Delivered", cls: "border-green-200 bg-green-50 text-green-700", dot: "bg-green-500" };
@@ -48,18 +56,22 @@ export default async function AllOrdersPage({
   // page that answers "who ordered on this specific day?" reliably.
   // No status filter of any kind — draft, confirmed, packed, dispatched,
   // returned all show up as long as the arrival date matches.
-  const orders = await prisma.ecomOrder.findMany({
-    where: {
-      // Orders taken in through the separate custom-website intake API
-      // (externalRef "web:...") are a different source than the Shopify
-      // store and get their own listing — keep them out of this one.
-      NOT: { shopifyOrderId: { startsWith: "web:" } },
-      ...(fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {}),
-      ...(q ? { OR: [{ customerName: { contains: q, mode: "insensitive" } }, { phone: { contains: q } }, { city: { contains: q, mode: "insensitive" } }] } : {}),
-    },
-    include: { items: true },
-    orderBy: { date: "desc" },
-  });
+  const [orders, dispatchedSheets] = await Promise.all([
+    prisma.ecomOrder.findMany({
+      where: {
+        // Orders taken in through the separate custom-website intake API
+        // (externalRef "web:...") are a different source than the Shopify
+        // store and get their own listing — keep them out of this one.
+        NOT: { shopifyOrderId: { startsWith: "web:" } },
+        ...(fromDate || toDate ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } } : {}),
+        ...(q ? { OR: [{ customerName: { contains: q, mode: "insensitive" } }, { phone: { contains: q } }, { city: { contains: q, mode: "insensitive" } }] } : {}),
+      },
+      include: { items: true },
+      orderBy: { date: "desc" },
+    }),
+    prisma.dispatchSheet.findMany({ where: { dispatchedAt: { not: null } }, select: { orderIds: true } }),
+  ]);
+  const dispatchedOrderIds = new Set(dispatchedSheets.flatMap((s) => s.orderIds));
 
   const totalValue = orders.reduce((s, o) => s + o.totalAmount, 0);
 
@@ -101,7 +113,7 @@ export default async function AllOrdersPage({
           {/* Mobile cards */}
           <div className="sm:hidden space-y-2">
             {orders.map((o) => {
-              const badge = statusBadge(o);
+              const badge = statusBadge(o, dispatchedOrderIds);
               const orderLabel = ecomOrderLabel(o);
               return (
                 <div key={o.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-3">
@@ -141,7 +153,7 @@ export default async function AllOrdersPage({
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {orders.map((o) => {
-                  const badge = statusBadge(o);
+                  const badge = statusBadge(o, dispatchedOrderIds);
                   const orderLabel = ecomOrderLabel(o);
                   return (
                     <tr key={o.id} className="hover:bg-gray-50 transition-colors">
