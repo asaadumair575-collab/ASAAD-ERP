@@ -7,6 +7,11 @@ import ScanAndWeighModal from "@/components/ScanAndWeighModal";
 import { dispatchSheetNumber } from "@/lib/dispatchSheetNumber";
 import { getSessionUser } from "@/lib/auth";
 import { parsePermissions, canViewSub } from "@/lib/permissions";
+import { pkDayStart, pkDayEnd, todayPK } from "@/lib/tz";
+
+function fmt(n: number) {
+  return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
+}
 
 export default async function EcomOrdersPage({
   searchParams,
@@ -65,6 +70,17 @@ export default async function EcomOrdersPage({
   const weightByTracking: Record<string, number> = {};
   for (const v of verifications) weightByTracking[v.trackingNumber] = v.weight;
 
+  // Independent of the filters above — always "how many parcels got
+  // confirmed today and for how much", regardless of what date range or
+  // status the list is currently filtered to.
+  const confirmedTodayAgg = await prisma.ecomOrder.aggregate({
+    where: { draft: false, confirmedAt: { gte: pkDayStart(todayPK()), lte: pkDayEnd(todayPK()) } },
+    _count: { _all: true },
+    _sum: { totalAmount: true },
+  });
+  const confirmedTodayCount = confirmedTodayAgg._count._all;
+  const confirmedTodayAmount = confirmedTodayAgg._sum.totalAmount ?? 0;
+
   return (
     <div className="space-y-6">
       <LiveRefresh />
@@ -76,6 +92,20 @@ export default async function EcomOrdersPage({
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <ScanAndWeighModal />
+        </div>
+      </div>
+
+      {/* Today's confirmed parcels — how many closed today, and for how much */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+          <p className="text-[11px] font-semibold text-green-700 uppercase tracking-wide">Confirmed Today</p>
+          <p className="text-2xl font-bold text-green-800 mt-0.5 tabular-nums">{confirmedTodayCount}</p>
+          <p className="text-xs text-green-600 mt-0.5">parcel{confirmedTodayCount === 1 ? "" : "s"}</p>
+        </div>
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+          <p className="text-[11px] font-semibold text-green-700 uppercase tracking-wide">Amount Confirmed Today</p>
+          <p className="text-2xl font-bold text-green-800 mt-0.5 tabular-nums">Rs {fmt(confirmedTodayAmount)}</p>
+          <p className="text-xs text-green-600 mt-0.5">order value</p>
         </div>
       </div>
 
