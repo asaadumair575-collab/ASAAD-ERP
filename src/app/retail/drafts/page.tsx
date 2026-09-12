@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { saveBankDetails, deleteDraftOrder } from "@/lib/actions";
+import { pkDayStart, pkDayEnd, todayPK } from "@/lib/tz";
 
 export default async function DraftsPage() {
   const me = await getSessionUser();
@@ -20,6 +21,11 @@ export default async function DraftsPage() {
   const pending   = drafts.filter((d) => !d.confirmed);
   const confirmed = drafts.filter((d) => d.confirmed);
 
+  const dayStart = pkDayStart(todayPK());
+  const dayEnd = pkDayEnd(todayPK());
+  const confirmedToday = confirmed.filter((d) => d.confirmedAt && d.confirmedAt >= dayStart && d.confirmedAt <= dayEnd);
+  const confirmedTodayAmount = confirmedToday.reduce((s, d) => s + d.advanceAmount, 0);
+
   const hasBankInfo = profile?.bankAccountNumber;
 
   return (
@@ -35,6 +41,20 @@ export default async function DraftsPage() {
         >
           + Create Draft
         </Link>
+      </div>
+
+      {/* Today's confirmed parcels — how many closed today, and for how much */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+          <p className="text-[11px] font-semibold text-green-700 uppercase tracking-wide">Confirmed Today</p>
+          <p className="text-2xl font-bold text-green-800 mt-0.5 tabular-nums">{confirmedToday.length}</p>
+          <p className="text-xs text-green-600 mt-0.5">parcel{confirmedToday.length === 1 ? "" : "s"}</p>
+        </div>
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+          <p className="text-[11px] font-semibold text-green-700 uppercase tracking-wide">Amount Confirmed Today</p>
+          <p className="text-2xl font-bold text-green-800 mt-0.5 tabular-nums">Rs {confirmedTodayAmount.toLocaleString("en-PK")}</p>
+          <p className="text-xs text-green-600 mt-0.5">advance received</p>
+        </div>
       </div>
 
       {/* Bank account setup — admin only, show if not configured */}
