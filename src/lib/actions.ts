@@ -1655,8 +1655,22 @@ export async function updateRetailCustomer(id: number, formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim() || null;
   if (!name) throw new Error("Name is required");
   await prisma.retailCustomer.update({ where: { id }, data: { name, phone, city, address, notes } });
+
+  // RetailOrder.city/phone/address are snapshotted at order-creation time,
+  // not a live join to the customer — so a corrected city here previously
+  // never reached any order already booked for this customer, including
+  // ones still sitting undispatched. Only touch undispatched orders: once
+  // a courier label is printed, the shipping details on that order are
+  // locked in for a reason.
+  await prisma.retailOrder.updateMany({
+    where: { retailCustomerId: id, dispatched: false },
+    data: { customerName: name, phone, city, address },
+  });
+
   revalidatePath("/retail/customers");
   revalidatePath(`/retail/customers/${id}`);
+  revalidatePath("/retail/orders");
+  revalidatePath("/retail/dispatch");
   redirect(`/retail/customers/${id}`);
 }
 
