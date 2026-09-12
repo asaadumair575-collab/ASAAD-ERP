@@ -54,21 +54,13 @@ export default async function AllOrdersPage({
   // confirmation, booking, packing, or dispatch. Every other order list in
   // the app shows the last status-update date instead, so this is the only
   // page that answers "who ordered on this specific day?" reliably.
-  // No status filter of any kind — draft, confirmed, packed, dispatched,
-  // returned all show up as long as the arrival date matches.
+  // No status filter, and no source filter either — every order regardless
+  // of where it came from (Shopify, the custom-website intake, manual
+  // entry) shows up here as long as the arrival date matches.
   const [orders, dispatchedSheets] = await Promise.all([
     prisma.ecomOrder.findMany({
       where: {
         AND: [
-          // Orders taken in through the separate custom-website intake API
-          // (externalRef "web:...") are a different source than the Shopify
-          // store and get their own listing — keep them out of this one.
-          // Written as an explicit OR (rather than NOT startsWith) because
-          // most orders have a null shopifyOrderId (manually created, or
-          // pre-dating that field) and SQL's three-valued logic makes
-          // `NOT (NULL LIKE 'web:%')` evaluate to NULL, not true — silently
-          // dropping every such row instead of keeping it.
-          { OR: [{ shopifyOrderId: null }, { NOT: { shopifyOrderId: { startsWith: "web:" } } }] },
           ...(fromDate || toDate ? [{ date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } }] : []),
           ...(q ? [{ OR: [{ customerName: { contains: q, mode: "insensitive" as const } }, { phone: { contains: q } }, { city: { contains: q, mode: "insensitive" as const } }] }] : []),
         ],
