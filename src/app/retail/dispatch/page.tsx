@@ -26,12 +26,32 @@ export default async function RetailDispatchPage() {
 
   const sortedDates = Array.from(groups.keys()).sort((a, b) => b.localeCompare(a));
 
+  const grandTotalValue = orders.reduce((s, o) => s + o.totalAmount, 0);
+  const grandTotalDozens = orders.reduce((s, o) => s + o.items.reduce((is, i) => is + i.quantity, 0), 0);
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Dispatch</h1>
         <p className="text-sm text-gray-500 mt-0.5">Dispatched retail orders grouped by date</p>
       </div>
+
+      {orders.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Number of Parcels</p>
+            <p className="text-2xl font-bold text-[#16202E] mt-0.5 tabular-nums">{orders.length}</p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Total Value</p>
+            <p className="text-2xl font-bold text-[#16202E] mt-0.5 tabular-nums">Rs {fmt(grandTotalValue)}</p>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Total Dozens</p>
+            <p className="text-2xl font-bold text-[#16202E] mt-0.5 tabular-nums">{grandTotalDozens}</p>
+          </div>
+        </div>
+      )}
 
       {sortedDates.length === 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-14 text-center shadow-sm">
