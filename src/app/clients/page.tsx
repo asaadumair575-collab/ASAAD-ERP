@@ -94,12 +94,22 @@ export default async function ClientsPage({
             <span className="text-gray-400">{inactiveCount} nil</span>
           </p>
         </div>
+        <div className="flex flex-wrap gap-2 justify-end">
+        <a
+            href="/api/customers/export?type=wholesale"
+            download
+            title="Excel + all payment screenshots (ZIP)"
+            className="shrink-0 text-sm font-medium border border-gray-200 bg-white px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Export Sales + Screenshots
+          </a>
         <Link
           href="/clients/new"
           className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
         >
           + Add Customer
         </Link>
+        </div>
       </div>
 
       {/* Filter bar */}

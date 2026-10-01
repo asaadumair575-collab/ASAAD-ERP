@@ -115,7 +115,15 @@ export default async function ClientDetailPage({
             </p>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <a
+            href={`/api/customers/export?type=wholesale&id=${client.id}`}
+            download
+            title="Excel + all payment screenshots (ZIP)"
+            className="shrink-0 text-sm font-medium border border-gray-200 bg-white px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Export Sales + Screenshots
+          </a>
           <Link
             href={`/clients/${client.id}/edit`}
             className="text-sm font-medium border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"

@@ -55,7 +55,17 @@ export default async function RetailCustomerDetailPage({
             </p>
           )}
         </div>
-        {isAdmin && <DeleteButton action={deleteBound} message="This customer will be unlinked from their orders and removed." />}
+        <div className="flex flex-wrap gap-2 justify-end">
+          <a
+            href={`/api/customers/export?type=retail&id=${customer.id}`}
+            download
+            title="Excel + all payment screenshots (ZIP)"
+            className="shrink-0 text-sm font-medium border border-gray-200 bg-white px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Export Sales + Screenshots
+          </a>
+          {isAdmin && <DeleteButton action={deleteBound} message="This customer will be unlinked from their orders and removed." />}
+        </div>
       </div>
 
       {/* Stats */}

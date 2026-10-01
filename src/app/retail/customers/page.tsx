@@ -42,12 +42,22 @@ export default async function RetailCustomersPage({
             {city ? ` in ${city}` : ""}
           </p>
         </div>
+        <div className="flex flex-wrap gap-2 justify-end">
+        <a
+            href="/api/customers/export?type=retail"
+            download
+            title="Excel + all payment screenshots (ZIP)"
+            className="shrink-0 text-sm font-medium border border-gray-200 bg-white px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Export Sales + Screenshots
+          </a>
         <Link
           href="/retail/customers/new"
           className="shrink-0 bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
         >
           + Add Customer
         </Link>
+        </div>
       </div>
 
       {/* Search + City filter */}
