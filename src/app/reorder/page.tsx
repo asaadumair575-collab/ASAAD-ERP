@@ -64,6 +64,14 @@ export default async function ReorderPage({
             🔄 Retail Follow-up
           </Link>
           <ReorderUploadModal />
+          <a
+            href="/api/reorder/export"
+            download
+            title="All campaigns, leads and call history (Excel)"
+            className="border border-gray-200 bg-white text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
+          >
+            ⬇ Export All
+          </a>
           {me.isAdmin && (
             <Link
               href="/reorder/audit"
