@@ -181,6 +181,16 @@ export default async function ReorderPage({
                         View Leads
                       </Link>
                     )}
+                    {(!underReview || me.isAdmin) && (
+                      <a
+                        href={`/api/reorder/export?id=${c.id}`}
+                        download
+                        title="Download this campaign's leads and call history (Excel)"
+                        className="text-xs border border-gray-200 bg-white text-gray-700 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        ⬇ Export
+                      </a>
+                    )}
                     {me.isAdmin && (
                       <form action={toggleActive}>
                         <button
