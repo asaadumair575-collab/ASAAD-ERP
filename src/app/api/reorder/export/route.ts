@@ -8,8 +8,8 @@ import { userLabel } from "@/lib/userLabel";
 export const maxDuration = 60;
 
 // Every reorder campaign with all its leads and call history, as one Excel
-// workbook (Campaigns / Leads / Call History sheets) — for moving the data
-// to another system. ?id=<n> limits it to one campaign.
+// workbook (Leads / Call History / Campaigns sheets; Leads first so the file
+// opens on them) — for moving the data to another system. ?id=<n> limits it to one campaign.
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Pending",
@@ -89,18 +89,18 @@ export async function GET(req: NextRequest) {
     XLSX.utils.book_append_sheet(wb, ws, name);
   };
   sheet(
-    "Campaigns",
-    ["ID", "Campaign", "Type", "Active", "Created", "Created By", "Total Leads", ...Object.values(STATUS_LABELS)],
-    campaignRows,
-    [6, 30, 16, 8, 12, 16, 11, ...Object.keys(STATUS_LABELS).map(() => 12)],
-  );
-  sheet(
     "Leads",
     ["Campaign", "Customer Name", "Phone", "Email", "Address", "City", "Previous Item", "Status", "Last Note", "Follow-up Date", "Last Called", "Called By", "PostEx Tracking", "Active On App", "Total Calls", "Added On"],
     leadRows,
     [26, 24, 14, 22, 36, 14, 30, 18, 36, 13, 17, 14, 16, 12, 10, 12],
   );
   sheet("Call History", ["Campaign", "Customer Name", "Phone", "Status", "Note", "Called At", "Called By"], callRows, [26, 24, 14, 18, 40, 17, 14]);
+  sheet(
+    "Campaigns",
+    ["ID", "Campaign", "Type", "Active", "Created", "Created By", "Total Leads", ...Object.values(STATUS_LABELS)],
+    campaignRows,
+    [6, 30, 16, 8, 12, 16, 11, ...Object.keys(STATUS_LABELS).map(() => 12)],
+  );
 
   const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
   const label = id ? campaigns[0].name.replace(/[^\w\- ]+/g, "").trim().slice(0, 50) || `campaign-${id}` : "reorder-campaigns";
