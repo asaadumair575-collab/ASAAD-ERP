@@ -9,7 +9,10 @@ export const maxDuration = 60;
 
 // Every reorder campaign with all its leads and call history, as one Excel
 // workbook (Leads / Call History / Campaigns sheets; Leads first so the file
-// opens on them) — for moving the data to another system. ?id=<n> limits it to one campaign.
+// opens on them, and an importer that reads only the first sheet gets the
+// leads) — for moving the data to another system. Name / Phone / City lead
+// the Leads sheet so header-matching importers pick them up.
+// ?id=<n> limits it to one campaign.
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Pending",
@@ -70,7 +73,7 @@ export async function GET(req: NextRequest) {
 
     for (const l of c.leads) {
       leadRows.push([
-        c.name, l.customerName, l.phone, l.email ?? "", l.address ?? "", l.city ?? "", l.prevItem ?? "",
+        l.customerName, l.phone, l.city ?? "", l.address ?? "", l.email ?? "", l.prevItem ?? "", c.name,
         status(l.status), l.callNote ?? "", day(l.followUpDate), stamp(l.calledAt),
         l.calledBy ? userLabel(l.calledBy) : "", l.postexTrackingNumber ?? "", l.activeOnApp ? "Yes" : "No",
         l.callLogs.length, day(l.createdAt),
@@ -90,9 +93,9 @@ export async function GET(req: NextRequest) {
   };
   sheet(
     "Leads",
-    ["Campaign", "Customer Name", "Phone", "Email", "Address", "City", "Previous Item", "Status", "Last Note", "Follow-up Date", "Last Called", "Called By", "PostEx Tracking", "Active On App", "Total Calls", "Added On"],
+    ["Customer Name", "Phone", "City", "Address", "Email", "Previous Item", "Campaign", "Status", "Last Note", "Follow-up Date", "Last Called", "Called By", "PostEx Tracking", "Active On App", "Total Calls", "Added On"],
     leadRows,
-    [26, 24, 14, 22, 36, 14, 30, 18, 36, 13, 17, 14, 16, 12, 10, 12],
+    [24, 14, 14, 36, 22, 30, 26, 18, 36, 13, 17, 14, 16, 12, 10, 12],
   );
   sheet("Call History", ["Campaign", "Customer Name", "Phone", "Status", "Note", "Called At", "Called By"], callRows, [26, 24, 14, 18, 40, 17, 14]);
   sheet(
