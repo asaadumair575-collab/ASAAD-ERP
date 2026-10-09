@@ -9,8 +9,9 @@ export const maxDuration = 60;
 
 // Customers + every order they placed (date, items, quantity, amount) +
 // every payment with its screenshot, as a ZIP:
-//   <name>.xlsx                       Customers / Orders / Items / Payments sheets
-//   screenshots/<customer>/<file>     the payment screenshots, linked from the Payments sheet
+//   <name>.xlsx                       Customers / Ledger / Orders / Items / Payments sheets
+//   ledgers/<customer>.xlsx           one ledger per customer (debit, credit, running balance)
+//   screenshots/<customer>/<file>     the payment screenshots, linked from Payments and the ledgers
 //
 // ?type=wholesale|retail   which customer book (default wholesale)
 // ?id=<n>                  only that one customer
@@ -213,6 +214,67 @@ export async function GET(req: NextRequest) {
     ];
   });
 
+  // Same ledger as the customer page: each order is a debit on its date,
+  // each payment a credit on its date, with a running balance.
+  type LedgerEntry = { date: Date; description: string; debit: number; credit: number; paymentId: number | null; note: string };
+  const ledgers = new Map<string, LedgerEntry[]>();
+  for (const o of data.orders) {
+    const list = ledgers.get(o.customerKey) ?? [];
+    const items = o.items.map((i) => `${i.description} x${i.quantity}`).join(", ");
+    list.push({ date: o.date, description: `Order ${o.ref}`, debit: o.total, credit: 0, paymentId: null, note: items });
+    for (const p of o.payments) {
+      list.push({ date: p.date, description: `Payment - ${o.ref} (${p.method.replace(/_/g, " ").toLowerCase()})`, debit: 0, credit: p.amount, paymentId: p.hasScreenshot ? p.id : null, note: p.note ?? "" });
+    }
+    ledgers.set(o.customerKey, list);
+  }
+  for (const list of ledgers.values()) list.sort((a, b) => a.date.getTime() - b.date.getTime());
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+
+  // Rows for one customer's ledger; `linkPrefix` makes the screenshot path
+  // relative to wherever the sheet lives inside the ZIP.
+  const ledgerRowsFor = (key: string, linkPrefix: string) => {
+    let balance = 0;
+    return (ledgers.get(key) ?? []).map((e) => {
+      balance += e.debit - e.credit;
+      const shot = e.paymentId ? shotPath.get(e.paymentId) : undefined;
+      return {
+        row: [day(e.date), e.description, e.note, e.debit || "", e.credit || "", round2(balance), shot ? `${linkPrefix}${shot}` : ""] as (string | number)[],
+        link: shot ? `${linkPrefix}${shot}` : null,
+      };
+    });
+  };
+  const LEDGER_HEADERS = ["Date", "Description", "Details", "Debit", "Credit", "Balance", "Screenshot"];
+  const LEDGER_WIDTHS = [12, 30, 44, 12, 12, 12, 60];
+
+  const addLinks = (ws: XLSX.WorkSheet, links: (string | null)[], firstRow: number, col: number) => {
+    links.forEach((link, i) => {
+      if (!link) return;
+      ws[XLSX.utils.encode_cell({ r: firstRow + i, c: col })] = { t: "s", v: link, l: { Target: link } };
+    });
+  };
+
+  const buildCustomerLedger = (c: ExportCustomer) => {
+    const rows = ledgerRowsFor(c.key, "../");
+    const debit = rows.reduce((s, r) => s + (Number(r.row[3]) || 0), 0);
+    const credit = rows.reduce((s, r) => s + (Number(r.row[4]) || 0), 0);
+    const info: (string | number)[][] = [
+      [`Ledger — ${c.name}`],
+      ["Code", c.code], ["Business", c.business], ["City", c.city], ["Phone", c.phone], ["Address", c.address],
+      [],
+      LEDGER_HEADERS,
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([
+      ...info,
+      ...rows.map((r) => r.row),
+      ["", "Total", "", round2(debit), round2(credit), round2(debit - credit), ""],
+    ]);
+    ws["!cols"] = LEDGER_WIDTHS.map((wch) => ({ wch }));
+    addLinks(ws, rows.map((r) => r.link), info.length, 6);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Ledger");
+    return new Uint8Array(XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer);
+  };
+
   const buildWorkbook = () => {
     const wb = XLSX.utils.book_new();
     const sheet = (name: string, headers: string[], rows: (string | number)[][], widths: number[]) => {
@@ -222,6 +284,22 @@ export async function GET(req: NextRequest) {
       return ws;
     };
     sheet("Customers", ["Code", "Name", "Business", "City", "Phone", "Address", "Orders", "Total Qty (dzn)", "Total Sale", "Received", "Balance", "First Order", "Last Order"], customerRows, [10, 24, 20, 14, 14, 30, 8, 14, 12, 12, 12, 12, 12]);
+    // All customers' ledgers on one sheet, each customer's block followed by a total line.
+    const allLedger: (string | number)[][] = [];
+    const allLinks: (string | null)[] = [];
+    for (const c of data.customers) {
+      const rows = ledgerRowsFor(c.key, "");
+      if (rows.length === 0) continue;
+      for (const r of rows) {
+        allLedger.push([c.code, c.name, ...r.row]);
+        allLinks.push(r.link);
+      }
+      const last = rows[rows.length - 1].row[5];
+      allLedger.push(["", `${c.name} — closing balance`, "", "", "", "", "", last, ""], []);
+      allLinks.push(null, null);
+    }
+    const ledgerWs = sheet("Ledger", ["Code", "Customer", ...LEDGER_HEADERS], allLedger, [10, 24, ...LEDGER_WIDTHS]);
+    addLinks(ledgerWs, allLinks, 1, 8);
     sheet("Orders", ["Date", "Order #", "Code", "Customer", "City", "Items", "Qty (dzn)", "Amount", "Paid", "Balance", "Status"], orderRows, [12, 10, 10, 24, 14, 50, 10, 12, 12, 12, 10]);
     sheet("Items", ["Date", "Order #", "Code", "Customer", "Product", "Qty (dzn)", "Rate", "Amount"], itemRows, [12, 10, 10, 24, 30, 10, 10, 12]);
     const payWs = sheet("Payments", ["Date", "Order #", "Code", "Customer", "Amount", "Method", "Note", "Screenshot"], paymentRows.map((r) => r.slice(0, 8)), [12, 10, 10, 24, 12, 14, 24, 60]);
@@ -267,6 +345,14 @@ export async function GET(req: NextRequest) {
           return;
         }
         zip.addFile(`${label}-sales.xlsx`, buildWorkbook());
+        const used = new Set<string>();
+        for (const c of data.customers) {
+          if (!ledgers.has(c.key)) continue;
+          let file = folderFor(c.key);
+          for (let n = 2; used.has(file.toLowerCase()); n++) file = `${folderFor(c.key)} (${n})`;
+          used.add(file.toLowerCase());
+          zip.addFile(`ledgers/${file}.xlsx`, buildCustomerLedger(c));
+        }
         zip.finish();
         controller.close();
       } catch (err) {
