@@ -26,7 +26,7 @@ export default function PageHeader({ active, title, subtitle }: { active: string
               key={t.href}
               href={t.href}
               className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg whitespace-nowrap transition-colors ${
-                isActive ? "bg-[#16202E] text-[#BFD732]" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                isActive ? "bg-[#F15A24] text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
               }`}
             >
               <Icon className="w-3.5 h-3.5" />

@@ -93,7 +93,7 @@ export default async function DispatchListPage({
                 )}
                 <Link
                   href={`/ecommerce/dispatch/sheet?sheetId=${s.id}&print=1`}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-[#16202E] text-[#BFD732] hover:bg-[#232F42] transition-colors"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-[#F15A24] text-white hover:bg-[#D9480F] transition-colors"
                 >
                   Print
                 </Link>
@@ -152,7 +152,7 @@ export default async function DispatchListPage({
                   <td className="py-3 pr-4 text-right">
                     <Link
                       href={`/ecommerce/dispatch/sheet?sheetId=${s.id}&print=1`}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#16202E] text-[#BFD732] hover:bg-[#232F42] transition-colors"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#F15A24] text-white hover:bg-[#D9480F] transition-colors"
                     >
                       Print
                     </Link>

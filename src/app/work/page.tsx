@@ -69,8 +69,8 @@ export default async function WorkPage({
     return (
       <div className="max-w-5xl space-y-6">
         <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm">
-          <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
-          <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Employee</p>
+          <div className="absolute inset-y-0 left-0 w-1.5 bg-[#F15A24]" />
+          <p className="text-[11px] font-semibold text-[#FF9466] uppercase tracking-[0.18em] mb-1">Employee</p>
           <h1 className="text-2xl font-bold text-white tracking-tight">My Work</h1>
           <p className="text-sm text-gray-400 mt-0.5">Daily start times</p>
         </div>
@@ -183,8 +183,8 @@ export default async function WorkPage({
   return (
     <div className="max-w-5xl space-y-6">
       <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm">
-        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
-        <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Employee</p>
+        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#F15A24]" />
+        <p className="text-[11px] font-semibold text-[#FF9466] uppercase tracking-[0.18em] mb-1">Employee</p>
         <h1 className="text-2xl font-bold text-white tracking-tight">My Work</h1>
         <p className="text-sm text-gray-400 mt-0.5">
           {new Date().toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", weekday: "long", day: "numeric", month: "long" })}

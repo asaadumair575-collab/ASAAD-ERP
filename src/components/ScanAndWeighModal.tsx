@@ -313,7 +313,7 @@ export default function ScanAndWeighModal() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="bg-[#16202E] text-[#BFD732] text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#232F42] transition-colors flex items-center gap-1.5"
+        className="bg-[#F15A24] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#D9480F] transition-colors flex items-center gap-1.5"
       >
         <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
           <path d="M3 6.5V4.5A1.5 1.5 0 0 1 4.5 3h2M13.5 3h2A1.5 1.5 0 0 1 17 4.5v2M17 13.5v2a1.5 1.5 0 0 1-1.5 1.5h-2M6.5 17h-2A1.5 1.5 0 0 1 3 15.5v-2M3 10h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -328,7 +328,7 @@ export default function ScanAndWeighModal() {
 
           {stage === "verifying" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60">
-              <div className="w-10 h-10 border-4 border-white/20 border-t-[#BFD732] rounded-full animate-spin" />
+              <div className="w-10 h-10 border-4 border-white/20 border-t-[#F15A24] rounded-full animate-spin" />
               <p className="text-sm text-white font-medium">Checking {pendingCn.current} in system…</p>
             </div>
           )}
@@ -336,7 +336,7 @@ export default function ScanAndWeighModal() {
           {stage === "barcode" && (
             <>
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-64 h-64 max-w-[70%] aspect-square border-2 border-[#BFD732] rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
+                <div className="w-64 h-64 max-w-[70%] aspect-square border-2 border-[#F15A24] rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
               </div>
               <div className="absolute bottom-0 inset-x-0 px-4 py-5 text-center">
                 <p className="text-sm text-white/80">Hold the airway bill&apos;s QR code inside the frame</p>
@@ -347,14 +347,14 @@ export default function ScanAndWeighModal() {
           {stage === "position" && (
             <>
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-[70%] aspect-[3.2/1] border-2 border-[#BFD732] rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]" />
+                <div className="w-[70%] aspect-[3.2/1] border-2 border-[#F15A24] rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]" />
               </div>
               <div className="absolute bottom-0 inset-x-0 px-4 py-6 flex flex-col items-center gap-3">
                 <p className="text-sm text-white/80">Place the parcel on the scale — fit the weight display inside the frame</p>
                 <button
                   type="button"
                   onClick={capturePhoto}
-                  className="w-16 h-16 rounded-full bg-white border-4 border-[#BFD732] active:scale-95 transition-transform"
+                  className="w-16 h-16 rounded-full bg-white border-4 border-[#F15A24] active:scale-95 transition-transform"
                   aria-label="Capture"
                 />
               </div>
@@ -395,7 +395,7 @@ export default function ScanAndWeighModal() {
                       onKeyDown={(e) => e.key === "Enter" && saveWeight()}
                       disabled={ocrRunning || stage === "saving"}
                       placeholder={ocrRunning ? "…" : "0"}
-                      className="w-full border-2 border-gray-100 focus:border-[#BFD732] rounded-2xl pl-4 pr-14 py-4 text-4xl font-bold tabular-nums text-[#16202E] focus:outline-none disabled:opacity-40 bg-gray-50 focus:bg-white transition-colors"
+                      className="w-full border-2 border-gray-100 focus:border-[#F15A24] rounded-2xl pl-4 pr-14 py-4 text-4xl font-bold tabular-nums text-[#16202E] focus:outline-none disabled:opacity-40 bg-gray-50 focus:bg-white transition-colors"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">g</span>
                   </div>
@@ -409,11 +409,11 @@ export default function ScanAndWeighModal() {
                     type="button"
                     onClick={saveWeight}
                     disabled={ocrRunning || stage === "saving" || !parseFloat(grams || "0")}
-                    className="mt-4 w-full bg-[#16202E] text-[#BFD732] font-semibold text-base py-3.5 rounded-2xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                    className="mt-4 w-full bg-[#F15A24] text-white font-semibold text-base py-3.5 rounded-2xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                   >
                     {stage === "saving" ? (
                       <>
-                        <span className="w-4 h-4 border-2 border-[#BFD732]/30 border-t-[#BFD732] rounded-full animate-spin" />
+                        <span className="w-4 h-4 border-2 border-[#F15A24]/30 border-t-[#F15A24] rounded-full animate-spin" />
                         Saving &amp; marking packed…
                       </>
                     ) : (

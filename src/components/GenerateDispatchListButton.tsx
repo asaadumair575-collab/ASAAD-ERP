@@ -35,7 +35,7 @@ export default function GenerateDispatchListButton() {
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#BFD732] focus:border-transparent"
+          className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F15A24] focus:border-transparent"
         />
         <button
           type="button"

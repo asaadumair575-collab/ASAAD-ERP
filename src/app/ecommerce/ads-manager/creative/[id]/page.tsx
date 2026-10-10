@@ -45,10 +45,10 @@ export default async function CreativeDetailPage({
       ) : (
         <>
           <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm">
-            <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
+            <div className="absolute inset-y-0 left-0 w-1.5 bg-[#F15A24]" />
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Ad Creative</p>
+                <p className="text-[11px] font-semibold text-[#FF9466] uppercase tracking-[0.18em] mb-1">Ad Creative</p>
                 <h1 className="text-xl font-bold text-white tracking-tight truncate">{creative.name}</h1>
                 <p className="text-sm text-gray-400 mt-0.5 truncate">{creative.campaignName} · {creative.adsetName}</p>
               </div>

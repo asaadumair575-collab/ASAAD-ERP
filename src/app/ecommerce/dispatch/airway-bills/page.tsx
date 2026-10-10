@@ -10,8 +10,8 @@ export default async function AirwayBillsPage() {
   return (
     <div className="max-w-2xl space-y-6 pb-8">
       <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm">
-        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
-        <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
+        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#F15A24]" />
+        <p className="text-[11px] font-semibold text-[#FF9466] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
         <h1 className="text-2xl font-bold text-white tracking-tight">PostEx Airway Bills</h1>
         <p className="text-sm text-gray-400 mt-0.5">Download the label / airway bill PDF for a day's dispatched parcels</p>
       </div>
@@ -26,7 +26,7 @@ export default async function AirwayBillsPage() {
           type="date"
           name="date"
           defaultValue={todayPK}
-          className="border border-gray-200 rounded-xl px-3 py-2.5 sm:py-2 text-base sm:text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#BFD732] focus:border-transparent w-full sm:w-auto"
+          className="border border-gray-200 rounded-xl px-3 py-2.5 sm:py-2 text-base sm:text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F15A24] focus:border-transparent w-full sm:w-auto"
         />
         <button
           type="submit"

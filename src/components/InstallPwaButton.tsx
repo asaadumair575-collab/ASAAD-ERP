@@ -60,7 +60,7 @@ export default function InstallPwaButton() {
       <button
         type="button"
         onClick={handleInstall}
-        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
       >
         <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
           <path

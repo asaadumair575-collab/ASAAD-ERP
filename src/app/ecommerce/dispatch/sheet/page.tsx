@@ -223,8 +223,8 @@ function renderSheet({
       {print === "1" && !blocked && <AutoPrint />}
       <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm print:hidden flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
-          <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
+          <div className="absolute inset-y-0 left-0 w-1.5 bg-[#F15A24]" />
+          <p className="text-[11px] font-semibold text-[#FF9466] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
           <h1 className="text-2xl font-bold text-white tracking-tight">Dispatch List{sheetNumber ? ` — ${sheetNumber}` : ""}</h1>
           <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
           {dispatchedAt && (
@@ -314,7 +314,7 @@ function renderSheet({
           <p className="text-3xl font-bold tabular-nums text-[#16202E]">{totalParcels}</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-[#BFD732]" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#F15A24]" />
           <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Total Value of Parcels</p>
           <p className="text-3xl font-bold tabular-nums text-[#16202E]">Rs {fmt(totalValue)}</p>
         </div>

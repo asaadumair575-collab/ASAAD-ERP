@@ -38,7 +38,7 @@ export default function TopHeader({
   const initial = (username ?? "U").charAt(0).toUpperCase();
 
   return (
-    <header className="h-14 shrink-0 flex items-center gap-3 px-4 border-b border-gray-200 bg-white/80 backdrop-blur-md print:hidden">
+    <header className="h-16 shrink-0 flex items-center gap-3 px-4 sm:px-6 border-b border-gray-100 bg-white print:hidden">
       {/* Mobile hamburger */}
       <button
         type="button"
@@ -61,8 +61,8 @@ export default function TopHeader({
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search clients..."
-            className="w-full h-9 pl-9 pr-3 bg-gray-100 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:bg-white transition-colors"
+            placeholder="Search customers, phone…"
+            className="w-full h-10 pl-9 pr-3 bg-gray-50 border border-gray-100 rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F15A24]/30 focus:border-[#F15A24]/40 focus:bg-white transition-colors"
           />
         </div>
       </form>
@@ -70,12 +70,12 @@ export default function TopHeader({
       <div className="flex items-center gap-1 ml-auto">
         <NotificationToggle />
         {/* Messages bell */}
-        <Link href="/messages" className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+        <Link href="/messages" className="relative p-2 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
           <svg viewBox="0 0 20 20" fill="none" className="w-[18px] h-[18px]">
             <path d="M10 2a6 6 0 0 0-6 6v2.5l-1.5 2.5h15L16 10.5V8a6 6 0 0 0-6-6ZM8 16a2 2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+            <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#F15A24] text-white text-[10px] font-bold flex items-center justify-center leading-none">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
@@ -86,9 +86,9 @@ export default function TopHeader({
           <button
             type="button"
             onClick={() => setUserOpen((v) => !v)}
-            className="flex items-center gap-2 pl-1 pr-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 pl-1 pr-2.5 py-1.5 rounded-xl hover:bg-gray-50 transition-colors"
           >
-            <span className="w-7 h-7 rounded-full bg-zinc-900 text-white text-xs font-semibold flex items-center justify-center shrink-0">
+            <span className="w-8 h-8 rounded-full bg-[#F15A24] text-white text-xs font-semibold flex items-center justify-center shrink-0">
               {initial}
             </span>
             <span className="text-sm font-medium text-gray-700 hidden sm:block max-w-[120px] truncate">

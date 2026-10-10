@@ -88,7 +88,7 @@ export default function AssignTaskModal({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 bg-[#16202E] text-[#BFD732] text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-[#232F42] transition-colors"
+        className="inline-flex items-center gap-1.5 bg-[#F15A24] text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-[#D9480F] transition-colors"
       >
         <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4"><path d="M8 3.5v9M3.5 8h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
         Assign Task

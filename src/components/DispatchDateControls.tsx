@@ -9,7 +9,7 @@ export default function DispatchDateControls({ date, basePath }: { date: string;
         type="date"
         name="date"
         defaultValue={date}
-        className="border border-gray-200 rounded-xl px-3 py-2.5 sm:py-2 text-base sm:text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#BFD732] focus:border-transparent w-full sm:w-auto"
+        className="border border-gray-200 rounded-xl px-3 py-2.5 sm:py-2 text-base sm:text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F15A24] focus:border-transparent w-full sm:w-auto"
       />
       <input type="hidden" name="print" value="1" />
       <button

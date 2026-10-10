@@ -166,24 +166,24 @@ export default function Sidebar({
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      <div className="h-14 flex items-center justify-between px-4 border-b border-white/10 shrink-0">
+      <div className="h-16 flex items-center justify-between px-4 shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="shrink-0">
             <TbsLogo size={30} />
           </div>
-          <span className="text-sm font-bold tracking-tight text-white truncate">{businessName}</span>
+          <span className="text-[15px] font-bold tracking-tight text-gray-900 truncate">{businessName}</span>
         </div>
         <button
           type="button"
           onClick={closeMobile}
           aria-label="Close menu"
-          className="md:hidden p-1.5 rounded-lg text-gray-400 hover:bg-white/10 hover:text-gray-200 transition-colors"
+          className="md:hidden p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
         >
           {icons.close}
         </button>
       </div>
 
-      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
         <NavLink href="/" active={isActive("/")} icon={icons.dashboard} onClick={closeMobile}>
           Dashboard
         </NavLink>
@@ -193,15 +193,15 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => toggleSection("wholesale")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                isOnWholesale ? "bg-white/10 text-white font-semibold" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-colors ${
+                isOnWholesale ? "bg-[#FFF1EA] text-[#D9480F] font-semibold" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
               <span className="flex items-center gap-2.5">{icons.clients} Wholesale</span>
               <span className={`transition-transform text-gray-500 ${openSection === "wholesale" ? "rotate-90" : ""}`}>{icons.chevron}</span>
             </button>
             {openSection === "wholesale" && (
-              <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 {canView(permissions, "clients", isAdmin) && (
                   <NavLink href="/clients" active={pathname.startsWith("/clients")} compact onClick={closeMobile}>Customers</NavLink>
                 )}
@@ -233,15 +233,15 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => toggleSection("retail")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                isOnRetail ? "bg-white/10 text-white font-semibold" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-colors ${
+                isOnRetail ? "bg-[#FFF1EA] text-[#D9480F] font-semibold" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
               <span className="flex items-center gap-2.5">{icons.retail} Retail Advance</span>
               <span className={`transition-transform text-gray-500 ${openSection === "retail" ? "rotate-90" : ""}`}>{icons.chevron}</span>
             </button>
             {openSection === "retail" && (
-              <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 {canViewSub(permissions, "retail_overview", isAdmin) && (
                   <NavLink href="/retail" active={pathname === "/retail"} compact onClick={closeMobile}>Overview</NavLink>
                 )}
@@ -271,8 +271,8 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => toggleSection("reorder")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                isOnReorder ? "bg-white/10 text-white font-semibold" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-colors ${
+                isOnReorder ? "bg-[#FFF1EA] text-[#D9480F] font-semibold" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
               <span className="flex items-center gap-2.5">
@@ -286,7 +286,7 @@ export default function Sidebar({
               <span className={`transition-transform text-gray-500 ${openSection === "reorder" ? "rotate-90" : ""}`}>{icons.chevron}</span>
             </button>
             {openSection === "reorder" && (
-              <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 {canViewSub(permissions, "reorder_campaigns", isAdmin) && (
                   <NavLink href="/reorder" active={pathname === "/reorder"} compact onClick={closeMobile}>Campaigns</NavLink>
                 )}
@@ -310,15 +310,15 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => toggleSection("leads")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                isOnLeads ? "bg-white/10 text-white font-semibold" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-colors ${
+                isOnLeads ? "bg-[#FFF1EA] text-[#D9480F] font-semibold" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
             >
               <span className="flex items-center gap-2.5">{icons.leads} Leads</span>
               <span className={`transition-transform text-gray-500 ${openSection === "leads" ? "rotate-90" : ""}`}>{icons.chevron}</span>
             </button>
             {openSection === "leads" && (
-              <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 <NavLink href="/leads" active={pathname === "/leads"} compact onClick={closeMobile}>All Shops</NavLink>
                 {canViewSub(permissions, "leads_not_contacted", isAdmin) && (
                   <NavLink href="/leads/not-contacted" active={pathname.startsWith("/leads/not-contacted")} compact onClick={closeMobile}>Not Contacted</NavLink>
@@ -345,13 +345,13 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => toggleSection("employee")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEmployee ? "bg-white/10 text-white font-semibold" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-colors ${isOnEmployee ? "bg-[#FFF1EA] text-[#D9480F] font-semibold" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}
             >
               <span className="flex items-center gap-2.5">{icons.finance} Employee</span>
               <span className={`transition-transform text-gray-500 ${openSection === "employee" ? "rotate-90" : ""}`}>{icons.chevron}</span>
             </button>
             {openSection === "employee" && (
-              <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 {isEmployee && (
                   <NavLink href="/work" active={pathname.startsWith("/work")} compact onClick={closeMobile}>
                     My Work
@@ -375,12 +375,12 @@ export default function Sidebar({
         {canView(permissions, "ecommerce", isAdmin) && (
           <>
             <button type="button" onClick={() => toggleSection("ecommerce")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEcommerce ? "bg-white/10 text-white font-semibold" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}>
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-colors ${isOnEcommerce ? "bg-[#FFF1EA] text-[#D9480F] font-semibold" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}>
               <span className="flex items-center gap-2.5">{icons.retail} Retail COD</span>
               <span className={`transition-transform text-gray-500 ${openSection === "ecommerce" ? "rotate-90" : ""}`}>{icons.chevron}</span>
             </button>
             {openSection === "ecommerce" && (
-              <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 {canViewSub(permissions, "ecom_all_dashboard", isAdmin) && (
                   <NavLink href="/ecommerce/shopify-dashboard" active={pathname.startsWith("/ecommerce/shopify-dashboard")} compact onClick={closeMobile}>All Dashboard</NavLink>
                 )}
@@ -390,14 +390,14 @@ export default function Sidebar({
                 <button
                   type="button"
                   onClick={() => setAnalyticsOpen((v) => !v)}
-                  className={`w-full flex items-center justify-between pl-1 pr-2.5 py-1.5 rounded-lg text-sm transition-colors ${isOnAnalytics ? "text-white font-semibold" : "text-gray-400 hover:text-gray-200"}`}
+                  className={`w-full flex items-center justify-between pl-1 pr-2.5 py-1.5 rounded-xl text-sm transition-colors ${isOnAnalytics ? "text-[#D9480F] font-semibold" : "text-gray-600 hover:text-gray-900"}`}
                 >
                   <span>Analytics</span>
                   <span className={`transition-transform text-gray-500 ${analyticsOpen ? "rotate-90" : ""}`}>{icons.chevron}</span>
                 </button>
                 )}
                 {analyticsOpen && (
-                  <div className="ml-3 pl-3 border-l border-white/10 space-y-0.5">
+                  <div className="ml-3 pl-3 border-l border-gray-100 space-y-0.5">
                     {canViewSub(permissions, "ecom_analytics_ads", isAdmin) && (
                       <NavLink href="/ecommerce/ads-manager" active={pathname.startsWith("/ecommerce/ads-manager")} compact onClick={closeMobile}>Ads Manager</NavLink>
                     )}
@@ -416,14 +416,14 @@ export default function Sidebar({
                 <button
                   type="button"
                   onClick={() => setEcomOrdersOpen((v) => !v)}
-                  className={`w-full flex items-center justify-between pl-1 pr-2.5 py-1.5 rounded-lg text-sm transition-colors ${isOnEcomOrders ? "text-white font-semibold" : "text-gray-400 hover:text-gray-200"}`}
+                  className={`w-full flex items-center justify-between pl-1 pr-2.5 py-1.5 rounded-xl text-sm transition-colors ${isOnEcomOrders ? "text-[#D9480F] font-semibold" : "text-gray-600 hover:text-gray-900"}`}
                 >
                   <span>Orders</span>
                   <span className={`transition-transform text-gray-500 ${ecomOrdersOpen ? "rotate-90" : ""}`}>{icons.chevron}</span>
                 </button>
                 )}
                 {ecomOrdersOpen && (
-                  <div className="ml-3 pl-3 border-l border-white/10 space-y-0.5">
+                  <div className="ml-3 pl-3 border-l border-gray-100 space-y-0.5">
                     {canViewSub(permissions, "ecom_all_orders", isAdmin) && (
                       <NavLink href="/ecommerce/all-orders" active={pathname.startsWith("/ecommerce/all-orders")} compact onClick={closeMobile}>All Orders</NavLink>
                     )}
@@ -468,12 +468,12 @@ export default function Sidebar({
         {false && canView(permissions, "ecommerce", isAdmin) && (
           <>
             <button type="button" onClick={() => toggleSection("ecommerceV2")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnEcommerceV2 ? "bg-white/10 text-white font-semibold" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}>
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-colors ${isOnEcommerceV2 ? "bg-[#FFF1EA] text-[#D9480F] font-semibold" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}>
               <span className="flex items-center gap-2.5">{icons.retail} Retail COD (New)</span>
               <span className={`transition-transform text-gray-500 ${openSection === "ecommerceV2" ? "rotate-90" : ""}`}>{icons.chevron}</span>
             </button>
             {openSection === "ecommerceV2" && (
-              <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 <NavLink href="/retail-cod-new" active={pathname === "/retail-cod-new"} compact onClick={closeMobile}>All Orders</NavLink>
                 <NavLink href="/retail-cod-new/pending" active={pathname.startsWith("/retail-cod-new/pending")} compact onClick={closeMobile}>Pending Orders</NavLink>
                 <NavLink href="/retail-cod-new/confirmed" active={pathname.startsWith("/retail-cod-new/confirmed")} compact onClick={closeMobile}>Confirmed Orders</NavLink>
@@ -488,12 +488,12 @@ export default function Sidebar({
         {canView(permissions, "complaints", isAdmin) && (
           <>
             <button type="button" onClick={() => toggleSection("complaints")}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isOnComplaints ? "bg-white/10 text-white font-semibold" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}>
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-colors ${isOnComplaints ? "bg-[#FFF1EA] text-[#D9480F] font-semibold" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}>
               <span className="flex items-center gap-2.5">{icons.sales} Complaints</span>
               <span className={`transition-transform text-gray-500 ${openSection === "complaints" ? "rotate-90" : ""}`}>{icons.chevron}</span>
             </button>
             {openSection === "complaints" && (
-              <div className="ml-4 pl-3 border-l border-white/10 space-y-0.5 py-0.5">
+              <div className="ml-4 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                 <NavLink href="/complaints" active={pathname === "/complaints"} compact onClick={closeMobile}>All Complaints</NavLink>
                 <NavLink href="/complaints/new" active={pathname === "/complaints/new"} compact onClick={closeMobile}>Launch Complaint</NavLink>
               </div>
@@ -556,16 +556,16 @@ export default function Sidebar({
         )}
       </nav>
 
-      <div className="px-3 py-3 border-t border-white/10 space-y-0.5 shrink-0">
+      <div className="px-3 py-3 border-t border-gray-100 space-y-0.5 shrink-0">
         <InstallPwaButton />
-        <p className="px-3 py-1.5 text-xs text-gray-500">The Boundary Shop · v1.0</p>
+        <p className="px-3 py-1.5 text-xs text-gray-400">The Boundary Shop · v1.0</p>
       </div>
     </div>
   );
 
   return (
     <>
-      <aside className="hidden md:flex w-60 shrink-0 flex-col h-screen bg-[#16202E] print:hidden sticky top-0">
+      <aside className="hidden md:flex w-60 shrink-0 flex-col h-screen bg-white border-r border-gray-100 print:hidden sticky top-0">
         {sidebarContent}
       </aside>
 
@@ -577,7 +577,7 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#16202E] flex flex-col md:hidden transform transition-transform duration-300 ease-in-out print:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white flex flex-col md:hidden transform transition-transform duration-300 ease-in-out print:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -589,7 +589,7 @@ export default function Sidebar({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500 select-none">
+    <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 select-none">
       {children}
     </p>
   );
@@ -614,12 +614,12 @@ function NavLink({
     <Link
       href={href}
       onClick={onClick}
-      className={`flex items-center gap-2.5 rounded-lg text-sm transition-colors ${
+      className={`flex items-center gap-2.5 rounded-xl text-sm transition-colors ${
         compact ? "px-3 py-1.5" : "px-3 py-2"
       } ${
         active
-          ? "bg-[#BFD732] text-[#16202E] font-semibold"
-          : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+          ? "bg-[#F15A24] text-white font-semibold shadow-sm shadow-orange-200"
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
       }`}
     >
       {icon}

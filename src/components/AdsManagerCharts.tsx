@@ -125,7 +125,7 @@ export default function AdsManagerCharts({ data }: { data: AdsDailyPoint[] }) {
             onClick={() => setTab(t.key)}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
               tab === t.key
-                ? "bg-[#16202E] text-[#BFD732] shadow-sm"
+                ? "bg-[#F15A24] text-white shadow-sm"
                 : "bg-gray-50 border border-gray-200 text-gray-500 hover:bg-gray-100"
             }`}
           >
@@ -149,7 +149,7 @@ export default function AdsManagerCharts({ data }: { data: AdsDailyPoint[] }) {
             <Tooltip content={<PerformanceTooltip />} cursor={{ fill: "#f9fafb" }} />
             <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
             <Bar dataKey="spend" name="Ad Spend" fill="#1877F2" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="revenue" name="Revenue" fill="#BFD732" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="revenue" name="Revenue" fill="#F15A24" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       )}

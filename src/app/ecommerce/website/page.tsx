@@ -77,7 +77,7 @@ function DualBarChart({ points }: { points: DayPoint[] }) {
             <rect x={gx} y={H - padB - vh} width={barW} height={vh} fill="#5a6b7c" rx="2">
               <title>{`${p.label}: ${p.visitors} visitors`}</title>
             </rect>
-            <rect x={gx + barW + 2} y={H - padB - oh} width={barW} height={oh} fill="#BFD732" rx="2">
+            <rect x={gx + barW + 2} y={H - padB - oh} width={barW} height={oh} fill="#F15A24" rx="2">
               <title>{`${p.label}: ${p.orders} orders`}</title>
             </rect>
             {i % labelEvery === 0 && (
@@ -114,7 +114,7 @@ function ConversionLineChart({ points }: { points: DayPoint[] }) {
       ))}
       <path d={linePath} fill="none" stroke="#16202E" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
       {conv.map((v, i) => (
-        <circle key={i} cx={padL + i * stepX} cy={y(v)} r="2.5" fill="#BFD732" stroke="#16202E" strokeWidth="1">
+        <circle key={i} cx={padL + i * stepX} cy={y(v)} r="2.5" fill="#F15A24" stroke="#16202E" strokeWidth="1">
           <title>{`${points[i].label}: ${v}%`}</title>
         </circle>
       ))}
@@ -178,8 +178,8 @@ export default async function WebsiteAnalyticsPage({
   return (
     <div className="max-w-5xl space-y-6 pb-8">
       <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm">
-        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
-        <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Analytics · The Boundary Shop</p>
+        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#F15A24]" />
+        <p className="text-[11px] font-semibold text-[#FF9466] uppercase tracking-[0.18em] mb-1">Analytics · The Boundary Shop</p>
         <h1 className="text-2xl font-bold text-white tracking-tight">Website</h1>
         <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
       </div>
@@ -202,7 +202,7 @@ export default async function WebsiteAnalyticsPage({
           <p className="text-sm font-semibold text-gray-800">Visitors vs Orders {from === to ? "" : "by Day"}</p>
           <div className="flex items-center gap-3 text-xs">
             <span className="flex items-center gap-1.5 text-gray-500"><span className="w-2 h-2 rounded-full bg-[#5a6b7c]" />Visitors</span>
-            <span className="flex items-center gap-1.5 text-gray-500"><span className="w-2 h-2 rounded-full bg-[#BFD732]" />Orders</span>
+            <span className="flex items-center gap-1.5 text-gray-500"><span className="w-2 h-2 rounded-full bg-[#F15A24]" />Orders</span>
           </div>
         </div>
         <DualBarChart points={points} />
@@ -248,7 +248,7 @@ export default async function WebsiteAnalyticsPage({
 function BigStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-1 bg-[#BFD732]" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-[#F15A24]" />
       <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">{label}</p>
       <p className="text-3xl font-bold tabular-nums leading-none text-[#16202E]">{value}</p>
       {sub && <p className="text-xs mt-1.5 font-semibold text-gray-400">{sub}</p>}

@@ -172,7 +172,7 @@ async function AdsContent({ from, to }: { from: string; to: string }) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <StatCard label="Ad Spend" value={`Rs ${fmt(meta.spend)}`} accent="bg-[#1877F2]" />
-          <StatCard label="Sales (Meta-reported)" value={`Rs ${fmt(meta.reportedRevenue)}`} sub={meta.reportedPurchases > 0 ? `${fmt(meta.reportedPurchases)} purchases` : undefined} accent="bg-[#BFD732]" />
+          <StatCard label="Sales (Meta-reported)" value={`Rs ${fmt(meta.reportedRevenue)}`} sub={meta.reportedPurchases > 0 ? `${fmt(meta.reportedPurchases)} purchases` : undefined} accent="bg-[#F15A24]" />
           <StatCard
             label="ROAS"
             value={`${meta.reportedRoas.toFixed(2)}x`}

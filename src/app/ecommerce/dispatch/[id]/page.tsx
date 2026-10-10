@@ -125,7 +125,7 @@ export default async function DispatchSheetDetailPage({ params }: { params: Prom
       <div className="pb-6">
         <Link
           href={`/ecommerce/dispatch/sheet?sheetId=${sheet.id}&print=1`}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg bg-[#16202E] text-[#BFD732] hover:bg-[#232F42] transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg bg-[#F15A24] text-white hover:bg-[#D9480F] transition-colors"
         >
           Print Sheet
         </Link>

@@ -38,7 +38,7 @@ export default async function DashboardPage({
     ? { date: { ...(fromDate ? { gte: fromDate } : {}), ...(toDate ? { lte: toDate } : {}) } }
     : {};
 
-  const [clients, leads, orders, retailCustomers, retailOrders] = await Promise.all([
+  const [clients, leads, orders, retailCustomers, retailOrders, dueOrders] = await Promise.all([
     prisma.client.findMany({
       include: { orders: { include: { payments: true } } },
     }),
@@ -52,6 +52,13 @@ export default async function DashboardPage({
     prisma.retailOrder.aggregate({
       where: dateFilter,
       _sum: { totalAmount: true },
+    }),
+    // "Needs attention": confirmed orders still waiting on payment, oldest first.
+    prisma.order.findMany({
+      where: { confirmed: true, paymentStatus: { in: ["UNPAID", "PARTIAL"] } },
+      include: { payments: { select: { amount: true } }, client: { select: { id: true, name: true, city: true } } },
+      orderBy: { date: "asc" },
+      take: 8,
     }),
   ]);
 
@@ -94,9 +101,9 @@ export default async function DashboardPage({
     else statusCounts.UNPAID++;
   }
   const paymentStatusData: PaymentStatusData[] = [
-    { name: "Paid", value: statusCounts.PAID, color: "#09090b" },
-    { name: "Partial", value: statusCounts.PARTIAL, color: "#f59e0b" },
-    { name: "Unpaid", value: statusCounts.UNPAID, color: "#e5e7eb" },
+    { name: "Paid", value: statusCounts.PAID, color: "#12B76A" },
+    { name: "Partial", value: statusCounts.PARTIAL, color: "#F79009" },
+    { name: "Unpaid", value: statusCounts.UNPAID, color: "#F04438" },
   ].filter((d) => d.value > 0);
 
   // ── Lead status breakdown ──────────────────────────────────────
@@ -110,8 +117,8 @@ export default async function DashboardPage({
   const leadStatusData: LeadStatusData[] = [
     { name: "Not Contacted", value: leadCounts.NEW, color: "#e5e7eb" },
     { name: "Contacted", value: leadCounts.CONTACTED, color: "#a1a1aa" },
-    { name: "Deal in Process", value: leadCounts.INTERESTED, color: "#f59e0b" },
-    { name: "Sample Sent", value: leadCounts.SAMPLE_SENT, color: "#09090b" },
+    { name: "Deal in Process", value: leadCounts.INTERESTED, color: "#FDB022" },
+    { name: "Sample Sent", value: leadCounts.SAMPLE_SENT, color: "#F15A24" },
   ].filter((d) => d.value > 0);
 
   // ── By city ───────────────────────────────────────────────────
@@ -146,6 +153,20 @@ export default async function DashboardPage({
 
   const retailSaleTotal = retailOrders._sum.totalAmount ?? 0;
 
+  // KPI badges compare this month so far with the same days of last month,
+  // so a half-finished month isn't measured against a full one.
+  const pctChange = (cur: number, prev: number) => (prev > 0 ? ((cur - prev) / prev) * 100 : null);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthSameDay = new Date(lastMonthStart.getTime() + (now.getTime() - monthStart.getTime()));
+  const thisPeriod = orders.filter((o) => o.date >= monthStart);
+  const lastPeriod = orders.filter((o) => o.date >= lastMonthStart && o.date <= lastMonthSameDay);
+  const ordersThisMonth = thisPeriod.length;
+  const saleChange = pctChange(thisPeriod.reduce((s, o) => s + o.saleAmount, 0), lastPeriod.reduce((s, o) => s + o.saleAmount, 0));
+  const ordersChange = pctChange(thisPeriod.length, lastPeriod.length);
+  const newClientsThisMonth = clients.filter((c) => c.createdAt >= monthStart).length;
+  const balanceOrders = orders.filter((o) => o.paymentStatus !== "PAID").length;
+
   const hasSalesData = orders.length > 0;
   const hasLeadData = leads.length > 0;
 
@@ -175,41 +196,69 @@ export default async function DashboardPage({
         )}
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Dashboard</h1>
             <p className="text-sm text-gray-500 mt-0.5">
               {from || to
                 ? `${from ?? "—"} to ${to ?? "—"}`
                 : "Overview of your business performance."}
             </p>
           </div>
-          <AmountToggleButton />
+          <div className="w-full sm:w-auto flex flex-wrap items-center gap-2">
+            <form method="GET" className="w-full sm:w-auto flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-1.5">
+              <DateRangeFilter from={from} to={to} />
+              <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+                Apply
+              </button>
+              {(from || to) && (
+                <Link href="/" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>
+              )}
+            </form>
+            <AmountToggleButton />
+          </div>
         </div>
 
-        {/* Date filter */}
-        <form method="GET" className="flex flex-wrap gap-2 items-center bg-white border border-gray-200 rounded-xl shadow-sm p-2.5">
-          <DateRangeFilter from={from} to={to} />
-          <button type="submit" className="bg-black text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-            Apply
-          </button>
-          {(from || to) && (
-            <Link href="/" className="text-sm text-gray-400 hover:text-black px-2">Clear</Link>
-          )}
-        </form>
-
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard label="B2B Customers" value={totalClients} />
-          <StatCard label="Retail Customers" value={retailCustomers} />
-          <StatCard label="Wholesale Sale" value={<Amount value={fmt(totalSale)} />} />
-          <StatCard label="Retail Sale" value={<Amount value={fmt(retailSaleTotal)} />} />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard
+            tone="green"
+            icon={<path d="M3 14l4.5-4.5 3 3L17 6M12 6h5v5" />}
+            label="Wholesale Revenue"
+            value={<Amount value={`Rs ${fmt(totalSale)}`} />}
+            change={saleChange}
+            sub={<>Retail: <Amount value={`Rs ${fmt(retailSaleTotal)}`} /></>}
+          />
+          <KpiCard
+            tone="green"
+            icon={<path d="M3 4h2l1.6 8.2a1 1 0 0 0 1 .8h7.6a1 1 0 0 0 1-.8L17.5 7H6M9 17h.01M15 17h.01" />}
+            label="Confirmed Orders"
+            value={totalOrders.toLocaleString()}
+            change={ordersChange}
+            sub={`${ordersThisMonth} this month`}
+          />
+          <KpiCard
+            tone="orange"
+            icon={<path d="M10 3l8 14H2L10 3zM10 8v4M10 14.5h.01" />}
+            label="Balance Due"
+            value={<Amount value={`Rs ${fmt(pendingSale)}`} />}
+            badge={`${balanceOrders} orders`}
+            sub={<>Received: <Amount value={`Rs ${fmt(totalReceived)}`} /></>}
+          />
+          <KpiCard
+            tone="teal"
+            icon={<path d="M7 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM1.5 17a5.5 5.5 0 0 1 11 0M13.5 3.5a3 3 0 0 1 0 5.5M18.5 17a5.5 5.5 0 0 0-3.5-5.1" />}
+            label="B2B Customers"
+            value={totalClients.toLocaleString()}
+            badge={newClientsThisMonth > 0 ? `+${newClientsThisMonth} new` : undefined}
+            sub={`${retailCustomers.toLocaleString()} retail customers`}
+          />
         </div>
 
         {/* Sales trend + Payment status */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-800 mb-4">Monthly Sales — Last 7 Months</h2>
+            <h2 className="text-base font-semibold text-gray-900 mb-4">Monthly Sales — Last 7 Months</h2>
             {hasSalesData ? (
               <SalesBarChart data={monthlyStats} />
             ) : (
@@ -218,7 +267,7 @@ export default async function DashboardPage({
           </div>
 
           <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-800 mb-1">Payment Status</h2>
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Payment Status</h2>
             <p className="text-xs text-gray-400 mb-3">{totalOrders} confirmed orders</p>
             {hasSalesData ? (
               <PaymentStatusPie data={paymentStatusData} />
@@ -228,10 +277,74 @@ export default async function DashboardPage({
           </div>
         </div>
 
+        {/* Needs attention */}
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-5 py-4">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-[#FFF1EA] text-[#F15A24] flex items-center justify-center">
+                <svg viewBox="0 0 20 20" fill="none" className="w-3.5 h-3.5"><circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.6" /><path d="M10 6.5v4M10 13.5h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+              </span>
+              <h2 className="text-base font-semibold text-gray-900">Needs Attention</h2>
+              <span className="text-xs font-medium text-[#D9480F] bg-[#FFF1EA] px-2 py-0.5 rounded-full">{dueOrders.length} items</span>
+            </div>
+            <Link href="/sales/invoices/advance" className="text-sm font-medium text-[#F15A24] hover:text-[#D9480F]">View All</Link>
+          </div>
+          {dueOrders.length === 0 ? (
+            <p className="px-5 pb-6 text-sm text-gray-400">All confirmed orders are fully paid.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left bg-[#FAFBFC] border-y border-gray-100 text-gray-500 text-xs font-medium">
+                    <th className="py-3 px-5">Invoice</th>
+                    <th className="py-3 px-5">Customer</th>
+                    <th className="py-3 px-5 hidden sm:table-cell">City</th>
+                    <th className="py-3 px-5 hidden md:table-cell">Date</th>
+                    <th className="py-3 px-5 text-right">Amount</th>
+                    <th className="py-3 px-5 text-right">Balance</th>
+                    <th className="py-3 px-5">Status</th>
+                    <th className="py-3 px-5 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {dueOrders.map((o) => {
+                    const paid = o.payments.reduce((s, p) => s + p.amount, 0);
+                    const unpaid = o.paymentStatus === "UNPAID";
+                    return (
+                      <tr key={o.id} className={unpaid ? "bg-red-50/30" : ""}>
+                        <td className="py-3 px-5 font-medium text-gray-900 whitespace-nowrap">INV-{String(o.id).padStart(4, "0")}</td>
+                        <td className="py-3 px-5 text-gray-800">{o.client.name}</td>
+                        <td className="py-3 px-5 text-gray-500 hidden sm:table-cell">{o.client.city}</td>
+                        <td className="py-3 px-5 text-gray-500 hidden md:table-cell whitespace-nowrap">
+                          {o.date.toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
+                        </td>
+                        <td className="py-3 px-5 text-right tabular-nums text-gray-700"><Amount value={fmt(o.saleAmount)} /></td>
+                        <td className={`py-3 px-5 text-right tabular-nums font-semibold ${unpaid ? "text-red-600" : "text-[#D9480F]"}`}>
+                          <Amount value={fmt(Math.max(0, o.saleAmount - paid))} />
+                        </td>
+                        <td className="py-3 px-5">
+                          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${unpaid ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"}`}>
+                            {unpaid ? "Unpaid" : "Partial"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-5 text-right">
+                          <Link href={`/clients/${o.client.id}/orders/${o.id}`} className="inline-block bg-[#F15A24] hover:bg-[#D9480F] text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg">
+                            View
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
         {/* Revenue trend + Leads */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-800 mb-4">Revenue Trend</h2>
+            <h2 className="text-base font-semibold text-gray-900 mb-4">Revenue Trend</h2>
             {hasSalesData ? (
               <RevenueTrendChart data={monthlyStats} />
             ) : (
@@ -240,7 +353,7 @@ export default async function DashboardPage({
           </div>
 
           <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-800 mb-1">Lead Pipeline</h2>
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Lead Pipeline</h2>
             <p className="text-xs text-gray-400 mb-3">{leads.length} total leads</p>
             {hasLeadData ? (
               <LeadStatusPie data={leadStatusData} />
@@ -253,7 +366,7 @@ export default async function DashboardPage({
         {/* City performance */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-800 mb-4">Sales by City</h2>
+            <h2 className="text-base font-semibold text-gray-900 mb-4">Sales by City</h2>
             {cityData.length > 0 ? (
               <CityBarChart data={cityData} />
             ) : (
@@ -263,7 +376,7 @@ export default async function DashboardPage({
 
           {/* Top customers */}
           <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-800 mb-4">Top Customers</h2>
+            <h2 className="text-base font-semibold text-gray-900 mb-4">Top Customers</h2>
             {topClients.length === 0 ? (
               <EmptyChart />
             ) : (
@@ -282,7 +395,7 @@ export default async function DashboardPage({
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-zinc-900 rounded-full"
+                          className="h-full bg-[#F15A24] rounded-full"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -337,23 +450,48 @@ function fmt(n: number) {
   return n.toLocaleString("en-PK", { maximumFractionDigits: 0 });
 }
 
-function StatCard({
+const KPI_TONES = {
+  green: "bg-emerald-50 text-emerald-600",
+  orange: "bg-[#FFF1EA] text-[#F15A24]",
+  teal: "bg-teal-50 text-teal-600",
+} as const;
+
+function KpiCard({
+  icon,
+  tone,
   label,
   value,
-  dark,
+  change,
+  badge,
+  sub,
 }: {
+  icon: React.ReactNode;
+  tone: keyof typeof KPI_TONES;
   label: string;
   value: React.ReactNode;
-  dark?: boolean;
+  change?: number | null;
+  badge?: string;
+  sub?: React.ReactNode;
 }) {
   return (
-    <div
-      className={`rounded-2xl p-5 border shadow-sm ${
-        dark ? "bg-black text-white border-black" : "bg-white text-black border-gray-200"
-      }`}
-    >
-      <div className={`text-xs ${dark ? "text-gray-400" : "text-gray-500"}`}>{label}</div>
-      <div className="text-2xl font-semibold mt-2 tracking-tight">{value}</div>
+    <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <span className={`w-10 h-10 rounded-xl flex items-center justify-center ${KPI_TONES[tone]}`}>
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+            {icon}
+          </svg>
+        </span>
+        {change != null ? (
+          <span className={`text-xs font-semibold ${change >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+            {change >= 0 ? "+" : ""}{change.toFixed(1)}%
+          </span>
+        ) : badge ? (
+          <span className="text-xs font-semibold text-[#F15A24]">{badge}</span>
+        ) : null}
+      </div>
+      <div className="text-2xl sm:text-[26px] font-bold tracking-tight text-gray-900 mt-4 tabular-nums">{value}</div>
+      <div className="text-sm text-gray-500 mt-0.5">{label}</div>
+      {sub && <div className="text-xs text-gray-400 mt-2">{sub}</div>}
     </div>
   );
 }

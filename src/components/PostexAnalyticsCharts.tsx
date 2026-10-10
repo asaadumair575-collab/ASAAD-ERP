@@ -52,7 +52,7 @@ export default function PostexAnalyticsCharts({ data }: { data: PostexDailyPoint
         <Tooltip content={<DailyTooltip />} cursor={{ fill: "#f9fafb" }} />
         <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
         <Bar yAxisId="left" dataKey="parcels" name="Parcels Booked" fill="#16202E" radius={[3, 3, 0, 0]} />
-        <Bar yAxisId="right" dataKey="amount" name="Value (Rs)" fill="#BFD732" radius={[3, 3, 0, 0]} />
+        <Bar yAxisId="right" dataKey="amount" name="Value (Rs)" fill="#F15A24" radius={[3, 3, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

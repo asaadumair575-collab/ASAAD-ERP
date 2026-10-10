@@ -16,7 +16,7 @@ export default function FilterBar({ basePath, q, from, to }: { basePath: string;
       <input type="date" name="from" defaultValue={from ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
       <span className="text-xs text-gray-400 hidden sm:inline">to</span>
       <input type="date" name="to" defaultValue={to ?? ""} className="bg-gray-50 border border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black" />
-      <button type="submit" className="bg-[#16202E] text-[#BFD732] text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#232F42] transition-colors">
+      <button type="submit" className="bg-[#F15A24] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#D9480F] transition-colors">
         Filter
       </button>
       {(q || from || to) && (

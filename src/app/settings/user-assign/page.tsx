@@ -16,8 +16,8 @@ export default async function UserAssignPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm">
-        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
-        <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Settings</p>
+        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#F15A24]" />
+        <p className="text-[11px] font-semibold text-[#FF9466] uppercase tracking-[0.18em] mb-1">Settings</p>
         <h1 className="text-2xl font-bold text-white tracking-tight">User Assign</h1>
         <p className="text-sm text-gray-400 mt-0.5">New user access system — in progress</p>
       </div>

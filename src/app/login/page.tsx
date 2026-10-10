@@ -13,7 +13,7 @@ export default async function LoginPage({
     <div className="min-h-screen w-full flex flex-col md:flex-row">
       {/* Left — brand panel */}
       <div className="relative md:w-1/2 bg-[#16202E] text-white px-8 py-10 sm:px-14 sm:py-16 flex flex-col justify-between overflow-hidden">
-        <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-[#BFD732]/10 blur-3xl" />
+        <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-[#F15A24]/10 blur-3xl" />
         <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-white/5 blur-3xl" />
 
         <div className="relative flex items-center gap-3">
@@ -77,7 +77,7 @@ export default async function LoginPage({
             </div>
             <SubmitButton
               pendingText="Signing in..."
-              className="w-full bg-[#16202E] text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#232F42] transition-colors shadow-lg shadow-black/10"
+              className="w-full bg-[#16202E] text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#D9480F] transition-colors shadow-lg shadow-black/10"
             >
               Sign In
             </SubmitButton>

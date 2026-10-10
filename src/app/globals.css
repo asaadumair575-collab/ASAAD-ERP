@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
-/* ═══ TBS Brand Theme — The Boundary Shop ═══
-   Ink navy  : #16202E
-   Lime      : #BFD732
-   Lime dark : #A8C020
-   Lime soft : #F4F8E4
+/* ═══ Brand Theme ═══
+   Ink       : #16202E  (text)
+   Brand     : #F15A24  (orange — primary actions, active nav)
+   Brand dark: #D9480F
+   Brand soft: #FFF1EA
 */
 
 :root {
@@ -13,9 +13,10 @@
 
   --ink: #16202e;
   --ink-soft: #232f42;
-  --lime: #bfd732;
-  --lime-dark: #a8c020;
-  --lime-soft: #f4f8e4;
+  --brand: #f15a24;
+  --brand-dark: #d9480f;
+  --brand-soft: #fff1ea;
+  --line: #e9ecf0;
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -34,13 +35,15 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-ink: var(--ink);
-  --color-lime-brand: var(--lime);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-soft: var(--brand-soft);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: #f6f7f4;
+  background: #f7f8fa;
   color: var(--foreground);
   font-feature-settings: "rlig" 1, "calt" 1;
 }
@@ -49,21 +52,28 @@ html {
   scroll-behavior: smooth;
 }
 
-/* ── Brand re-tint: dark utility classes → navy ─────────── */
-.bg-black, .bg-zinc-900, .bg-gray-900, .bg-neutral-900, .bg-slate-900 {
+/* ── Brand re-tint: black primary buttons → orange; other dark
+   surfaces stay ink so dark cards/badges keep their contrast ─ */
+.bg-black {
+  background-color: var(--brand) !important;
+}
+.bg-zinc-900, .bg-gray-900, .bg-neutral-900, .bg-slate-900 {
   background-color: var(--ink) !important;
 }
 .hover\:bg-gray-800:hover, .hover\:bg-zinc-800:hover, .hover\:bg-neutral-800:hover, .hover\:bg-black:hover {
-  background-color: var(--ink-soft) !important;
+  background-color: var(--brand-dark) !important;
 }
 .text-black { color: var(--ink); }
-.border-black, .border-zinc-900, .border-gray-900 { border-color: var(--ink) !important; }
-.ring-black { --tw-ring-color: var(--ink) !important; }
-.focus\:ring-black:focus { --tw-ring-color: var(--lime-dark) !important; }
+.border-black { border-color: var(--brand) !important; }
+.border-zinc-900, .border-gray-900 { border-color: var(--ink) !important; }
+.ring-black { --tw-ring-color: var(--brand) !important; }
+.focus\:ring-black:focus { --tw-ring-color: var(--brand) !important; }
+/* Soften the default card/table borders to the lighter line colour. */
+.border-gray-200 { border-color: var(--line); }
 
 /* ── Focus rings ────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--lime-dark);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -71,11 +81,11 @@ html {
 /* ── Scrollbars ─────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #d5dbc8 transparent;
+  scrollbar-color: #d6d9de transparent;
 }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb {
-  background-color: #d5dbc8;
+  background-color: #d6d9de;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -83,16 +93,16 @@ html {
 /* ── Cards / panels ─────────────────────────────────────── */
 .card {
   background: #fff;
-  border: 1px solid #e4e7de;
-  border-radius: var(--radius-2xl);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
 }
 
 /* ── Tables ─────────────────────────────────────────────── */
 .table-container {
   background: #fff;
-  border: 1px solid #e4e7de;
-  border-radius: var(--radius-2xl);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
   overflow-x: auto;
   box-shadow: var(--shadow-sm);
 }
@@ -101,7 +111,7 @@ html {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #f7f8f3;
+  background: #fafbfc;
 }
 
 /* ── Micro-interactions ─────────────────────────────────── */
@@ -150,7 +160,7 @@ a:active {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: rgba(246, 247, 244, 0.9);
+  background: rgba(247, 248, 250, 0.9);
   backdrop-filter: blur(4px);
   animation: tbs-fade-in 200ms ease;
 }
@@ -161,7 +171,7 @@ a:active {
   width: 44px;
   height: 7px;
   border-radius: 9999px;
-  background: var(--ink);
+  background: var(--brand);
   animation: tbs-shadow 0.9s ease-in-out infinite;
 }
 .tbs-loader-text {
@@ -185,9 +195,9 @@ a:active {
   line-height: 1.5;
 }
 .alert-success {
-  background: var(--lime-soft);
-  border: 1px solid #d8e69a;
-  color: #4a5a10;
+  background: #ecfdf3;
+  border: 1px solid #abefc6;
+  color: #067647;
 }
 .alert-error {
   background: #fef2f2;
@@ -195,8 +205,8 @@ a:active {
   color: #991b1b;
 }
 .alert-info {
-  background: #f7f8f3;
-  border: 1px solid #e4e7de;
+  background: #f7f8fa;
+  border: 1px solid var(--line);
   color: #374151;
 }
 
@@ -205,8 +215,8 @@ a:active {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: var(--ink);
-  color: var(--lime);
+  background: var(--brand-soft);
+  color: var(--brand-dark);
   font-size: 0.75rem;
   font-weight: 500;
   padding: 4px 10px;
@@ -214,7 +224,7 @@ a:active {
   text-decoration: none;
   transition: background var(--transition);
 }
-.filter-chip:hover { background: var(--ink-soft); }
+.filter-chip:hover { background: #ffe2d3; }
 .filter-chip-x {
   opacity: 0.6;
   font-size: 0.85em;

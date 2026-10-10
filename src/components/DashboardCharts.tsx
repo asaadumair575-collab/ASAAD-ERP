@@ -79,13 +79,13 @@ export function SalesBarChart({ data }: { data: MonthlyStat[] }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#eef0f3" vertical={false} />
         <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
         <YAxis tickFormatter={fmt} tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} width={40} />
         <Tooltip content={<CustomTooltip />} />
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-        <Bar dataKey="sales" name="Total Sale" fill="#09090b" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="received" name="Received" fill="#d4d4d8" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="sales" name="Total Sale" fill="#F15A24" radius={[6, 6, 0, 0]} />
+        <Bar dataKey="received" name="Received" fill="#FFC9B0" radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -95,13 +95,13 @@ export function RevenueTrendChart({ data }: { data: MonthlyStat[] }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <LineChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#eef0f3" vertical={false} />
         <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
         <YAxis tickFormatter={fmt} tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} width={40} />
         <Tooltip content={<CustomTooltip />} />
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-        <Line dataKey="sales" name="Total Sale" stroke="#09090b" strokeWidth={2} dot={false} />
-        <Line dataKey="received" name="Received" stroke="#a1a1aa" strokeWidth={2} dot={false} strokeDasharray="4 2" />
+        <Line dataKey="sales" name="Total Sale" stroke="#F15A24" strokeWidth={2.5} dot={false} />
+        <Line dataKey="received" name="Received" stroke="#12B76A" strokeWidth={2.5} dot={false} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -164,11 +164,11 @@ export function CityBarChart({ data }: { data: CityData[] }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={top} layout="vertical" margin={{ top: 4, right: 8, left: 4, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#eef0f3" horizontal={false} />
         <XAxis type="number" tickFormatter={fmt} tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
         <YAxis dataKey="city" type="category" tick={{ fontSize: 11, fill: "#6b7280" }} axisLine={false} tickLine={false} width={64} />
         <Tooltip content={<CustomTooltip />} />
-        <Bar dataKey="sale" name="Sales" fill="#09090b" radius={[0, 4, 4, 0]} />
+        <Bar dataKey="sale" name="Sales" fill="#F15A24" radius={[0, 6, 6, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

@@ -201,7 +201,7 @@ function BarChart({
               d={h > 0
                 ? `M${x},${H - padB} v${-(h - r)} q0,${-r} ${r},${-r} h${barW - 2 * r} q${r},0 ${r},${r} v${h - r} z`
                 : `M${x},${H - padB} h${barW} z`}
-              fill={i === peakIdx && v > 0 ? "#BFD732" : color}
+              fill={i === peakIdx && v > 0 ? "#F15A24" : color}
               opacity={v === 0 ? 0.15 : 1}
             >
               <title>{`${b.label}: ${valuePrefix}${v.toLocaleString("en-PK", { maximumFractionDigits: 0 })}`}</title>
@@ -320,15 +320,15 @@ export default async function ShopifyDashboardPage({
     <div className="max-w-5xl space-y-6 pb-8">
       {/* Header — brand hero */}
       <div className="bg-[#16202E] rounded-2xl px-6 py-5 flex items-center justify-between gap-4 flex-wrap shadow-sm relative overflow-hidden">
-        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
+        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#F15A24]" />
         <div>
-          <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
+          <p className="text-[11px] font-semibold text-[#FF9466] uppercase tracking-[0.18em] mb-1">Retail COD · The Boundary Shop</p>
           <h1 className="text-2xl font-bold text-white tracking-tight">Sales Dashboard</h1>
           <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
         </div>
         <div className="text-right">
           <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Total Revenue</p>
-          <p className="text-3xl font-bold tabular-nums text-[#BFD732]">Rs {fmt(revenue)}</p>
+          <p className="text-3xl font-bold tabular-nums text-[#FF9466]">Rs {fmt(revenue)}</p>
           <p className="text-xs text-gray-400 mt-0.5">{total} orders</p>
         </div>
       </div>
@@ -482,7 +482,7 @@ export default async function ShopifyDashboardPage({
               <PLRow label="Returns" value={-totalReturnCost} />
               <div className="border-t border-white/10 pt-2.5 flex items-center justify-between">
                 <span className="text-sm font-semibold text-white">Net Profit</span>
-                <span className={`text-lg font-bold tabular-nums ${netProfit >= 0 ? "text-[#BFD732]" : "text-red-400"}`}>
+                <span className={`text-lg font-bold tabular-nums ${netProfit >= 0 ? "text-[#FF9466]" : "text-red-400"}`}>
                   {netProfit < 0 ? "-" : ""}Rs {fmt(Math.abs(netProfit))} <span className="text-xs font-medium text-gray-400">({profitMargin}%)</span>
                 </span>
               </div>
@@ -508,7 +508,7 @@ export default async function ShopifyDashboardPage({
                       <div className="flex items-center gap-3">
                         <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-[#16202E] to-[#BFD732] rounded-full transition-all"
+                            className="h-full bg-gradient-to-r from-[#16202E] to-[#F15A24] rounded-full transition-all"
                             style={{ width: `${Math.round((stats.orders / topCityOrders) * 100)}%` }}
                           />
                         </div>
@@ -541,14 +541,14 @@ export default async function ShopifyDashboardPage({
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-[#16202E]">
           <div className="flex items-center gap-2.5">
-            <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-[#BFD732]">
+            <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-[#FF9466]">
               <path d="M2.5 6.5 10 2.5l7.5 4M2.5 6.5v7l7.5 4 7.5-4v-7M2.5 6.5 10 10.5l7.5-4M10 10.5V17.5"
                 stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <p className="text-sm font-semibold text-white">Courier — PostEx</p>
           </div>
           <div className="text-right">
-            <p className="text-xs font-semibold text-[#BFD732]">{dateLabel}</p>
+            <p className="text-xs font-semibold text-[#FF9466]">{dateLabel}</p>
             {!courier.error && <p className="text-[11px] text-gray-400 mt-0.5">{courier.total} parcels</p>}
           </div>
         </div>
@@ -568,7 +568,7 @@ export default async function ShopifyDashboardPage({
           <div className="p-5 space-y-5">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <CourierCard label="Total Parcels" value={courier.total} highlight />
-              <CourierCard label="Delivered" value={courier.delivered} sub={pct(courier.delivered, courier.total)} dot="bg-[#BFD732]" />
+              <CourierCard label="Delivered" value={courier.delivered} sub={pct(courier.delivered, courier.total)} dot="bg-[#F15A24]" />
               <CourierCard label="Out for Delivery" value={courier.outForDelivery} sub={pct(courier.outForDelivery, courier.total)} dot="bg-blue-400" />
               <CourierCard label="On the Way" value={courier.onTheWay} sub={pct(courier.onTheWay, courier.total)} dot="bg-amber-400" />
             </div>
@@ -582,13 +582,13 @@ export default async function ShopifyDashboardPage({
             {courier.total > 0 && (
               <div>
                 <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100">
-                  <div className="bg-[#BFD732]" style={{ width: pct(courier.delivered, courier.total) }} />
+                  <div className="bg-[#F15A24]" style={{ width: pct(courier.delivered, courier.total) }} />
                   <div className="bg-blue-400" style={{ width: pct(courier.outForDelivery, courier.total) }} />
                   <div className="bg-amber-400" style={{ width: pct(courier.onTheWay, courier.total) }} />
                   <div className="bg-red-400" style={{ width: pct(courier.returned, courier.total) }} />
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2.5">
-                  <LegendDot color="bg-[#BFD732]" label="Delivered" />
+                  <LegendDot color="bg-[#F15A24]" label="Delivered" />
                   <LegendDot color="bg-blue-400" label="Out for Delivery" />
                   <LegendDot color="bg-amber-400" label="On the Way" />
                   <LegendDot color="bg-red-400" label="Returned" />
@@ -609,7 +609,7 @@ export default async function ShopifyDashboardPage({
 function BigStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-1 bg-[#BFD732]" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-[#F15A24]" />
       <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">{label}</p>
       <p className="text-3xl font-bold tabular-nums leading-none text-[#16202E]">{value}</p>
       {sub && <p className="text-xs mt-1.5 font-semibold text-gray-400">{sub}</p>}
@@ -625,7 +625,7 @@ function CourierCard({ label, value, sub, dot, highlight }: { label: string; val
         {dot && <span className={`w-2 h-2 rounded-full ${dot}`} />}
         <p className={`text-[11px] font-semibold uppercase tracking-wider ${highlight ? "text-gray-400" : "text-gray-400"}`}>{label}</p>
       </div>
-      <p className={`text-2xl font-bold tabular-nums leading-none ${highlight ? "text-[#BFD732]" : "text-[#16202E]"}`}>{value}</p>
+      <p className={`text-2xl font-bold tabular-nums leading-none ${highlight ? "text-[#FF9466]" : "text-[#16202E]"}`}>{value}</p>
       {sub && <p className="text-xs mt-1 font-medium text-gray-400">{sub}</p>}
     </div>
   );

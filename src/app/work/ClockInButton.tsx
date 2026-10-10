@@ -19,7 +19,7 @@ export default function ClockInButton() {
     <button
       onClick={handleClockIn}
       disabled={pending}
-      className="w-full bg-[#BFD732] text-[#16202E] text-sm font-bold py-3.5 rounded-xl hover:bg-[#d3ec4a] disabled:opacity-50 transition-colors"
+      className="w-full bg-[#F15A24] text-white text-sm font-bold py-3.5 rounded-xl hover:bg-[#D9480F] disabled:opacity-50 transition-colors"
     >
       {pending ? "Starting..." : "▶ Start Working"}
     </button>

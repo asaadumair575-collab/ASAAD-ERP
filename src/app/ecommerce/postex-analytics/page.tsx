@@ -36,8 +36,8 @@ export default async function PostexAnalyticsPage({
   return (
     <div className="max-w-5xl space-y-6 pb-8">
       <div className="bg-[#16202E] rounded-2xl px-6 py-5 relative overflow-hidden shadow-sm">
-        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#BFD732]" />
-        <p className="text-[11px] font-semibold text-[#BFD732] uppercase tracking-[0.18em] mb-1">Courier · The Boundary Shop</p>
+        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#F15A24]" />
+        <p className="text-[11px] font-semibold text-[#FF9466] uppercase tracking-[0.18em] mb-1">Courier · The Boundary Shop</p>
         <h1 className="text-2xl font-bold text-white tracking-tight">Postex Analytics</h1>
         <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
       </div>
@@ -140,7 +140,7 @@ async function PostexContent({ from, to }: { from: string; to: string }) {
       {/* Headline */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <StatCard label="Ongoing Parcels" value={fmt(totalOngoingParcels)} sub="With Postex, not yet delivered" accent="bg-[#16202E]" />
-        <StatCard label="Ongoing Value" value={`Rs ${fmt(totalOngoingValue)}`} sub={totalOngoingWeight > 0 ? `${totalOngoingWeight.toFixed(2)} kg total` : undefined} accent="bg-[#BFD732]" />
+        <StatCard label="Ongoing Value" value={`Rs ${fmt(totalOngoingValue)}`} sub={totalOngoingWeight > 0 ? `${totalOngoingWeight.toFixed(2)} kg total` : undefined} accent="bg-[#F15A24]" />
         <StatCard label="Booked Today" value={fmt(todayCount)} sub={`Rs ${fmt(todayValue)}`} accent="bg-blue-500" />
       </div>
 

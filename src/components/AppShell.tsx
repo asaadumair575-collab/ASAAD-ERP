@@ -41,8 +41,8 @@ export default function AppShell({
           username={username}
           unreadCount={unreadCount}
         />
-        <main className="flex-1 overflow-y-auto overscroll-none bg-gray-50 [-webkit-overflow-scrolling:touch]">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 print:max-w-none print:p-0">
+        <main className="flex-1 overflow-y-auto overscroll-none bg-[#F7F8FA] [-webkit-overflow-scrolling:touch]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 print:max-w-none print:p-0">
             {children}
           </div>
         </main>
