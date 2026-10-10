@@ -49,7 +49,10 @@ export default async function RootLayout({
   // the full app shell (sidebar, header) around it there just looks odd, so
   // it renders standalone like the login page does. /set-password is the
   // same full-screen login-style layout for a brand-new account.
-  const isStandalonePage = isLoginPage || pathname === "/ecommerce/dispatch/sheet" || pathname === "/set-password";
+  // /demo is the public sales-demo ERP: its own shell and dummy data only,
+  // so it must never load the real sidebar, session or database.
+  const isDemo = pathname === "/demo" || pathname.startsWith("/demo/");
+  const isStandalonePage = isLoginPage || isDemo || pathname === "/ecommerce/dispatch/sheet" || pathname === "/set-password";
   const [profile, me] = isStandalonePage
     ? [null, null]
     : await Promise.all([getBusinessProfile(), getSessionUser()]);

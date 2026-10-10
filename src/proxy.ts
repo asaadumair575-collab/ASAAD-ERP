@@ -15,7 +15,10 @@ export function proxy(request: NextRequest) {
   if (
     pathname.startsWith("/api/shopify/") ||
     pathname.startsWith("/api/mobile/") ||
-    pathname.startsWith("/api/public/")
+    pathname.startsWith("/api/public/") ||
+    // Public sales demo — dummy data only, no login needed.
+    pathname === "/demo" ||
+    pathname.startsWith("/demo/")
   ) {
     return next();
   }
