@@ -2,6 +2,8 @@ import { BarChart3, ShoppingBag, Truck, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import LoginForm from "@/components/LoginForm";
 import Logo from "@/components/Logo";
+import { redirect } from "next/navigation";
+import { OPEN_PREVIEW } from "@/lib/preview";
 import { login } from "./actions";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -20,6 +22,7 @@ const POINTS = [
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ reason?: string }> }) {
   const { reason } = await searchParams;
+  if (OPEN_PREVIEW && !reason) redirect("/app");
   return (
     <main className="min-h-dvh grid lg:grid-cols-2">
       <section className="hidden lg:flex flex-col justify-between bg-gray-950 text-white p-12">

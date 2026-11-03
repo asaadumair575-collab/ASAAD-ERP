@@ -146,6 +146,7 @@ export async function changeAdminPassword(form: FormData) {
   const admin = await requireAdmin();
   const current = String(form.get("current") ?? "");
   const next = String(form.get("next") ?? "");
+  if (!admin.id) throw new Error("Create the admin account first (preview mode has no password).");
   if (!verifyPassword(current, admin.passwordHash)) throw new Error("Current password is wrong.");
   if (next.length < 8) throw new Error("New password must be at least 8 characters.");
   await db.admin.update({ where: { id: admin.id }, data: { passwordHash: hashPassword(next) } });

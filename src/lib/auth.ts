@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { db } from "./db";
+import { OPEN_PREVIEW, PREVIEW_ADMIN, previewUser } from "./preview";
 import { ADMIN_COOKIE, SESSION_DAYS, USER_COOKIE, createToken, readToken } from "./session";
 
 const cookieOptions = {
@@ -35,10 +36,9 @@ export function accessProblem(tenant: { status: string; expiresAt: Date | null }
 // The signed-in store user, with their tenant — null if not signed in.
 export const currentUser = cache(async () => {
   const p = readToken((await cookies()).get(USER_COOKIE)?.value);
-  if (!p) return null;
-  const user = await db.user.findUnique({ where: { id: p.id }, include: { tenant: true } });
-  if (!user || user.sessionVersion !== p.v) return null;
-  return user;
+  const user = p ? await db.user.findUnique({ where: { id: p.id }, include: { tenant: true } }) : null;
+  if (user && user.sessionVersion === p!.v) return user;
+  return OPEN_PREVIEW ? previewUser() : null;
 });
 
 // For pages and actions inside /app: signed in, account active and not expired.
@@ -58,8 +58,8 @@ export async function requireOwner() {
 
 export const currentAdmin = cache(async () => {
   const p = readToken((await cookies()).get(ADMIN_COOKIE)?.value);
-  if (!p) return null;
-  return db.admin.findUnique({ where: { id: p.id } });
+  const admin = p ? await db.admin.findUnique({ where: { id: p.id } }) : null;
+  return admin ?? (OPEN_PREVIEW ? PREVIEW_ADMIN : null);
 });
 
 export async function requireAdmin() {

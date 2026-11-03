@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import LoginForm from "@/components/LoginForm";
 import Logo from "@/components/Logo";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { OPEN_PREVIEW } from "@/lib/preview";
 import { adminLogin, adminSetup } from "../actions";
 
 export const metadata: Metadata = { title: "Admin" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminLogin() {
+  if (OPEN_PREVIEW) redirect("/admin");
   // No admin yet and none configured in the environment → first-run setup.
   const setup = !process.env.ADMIN_EMAIL && (await db.admin.count()) === 0;
   return (
