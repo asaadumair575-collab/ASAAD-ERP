@@ -35,6 +35,23 @@ export async function adminLogin(_: LoginState, form: FormData): Promise<LoginSt
   redirect("/admin");
 }
 
+// First run without ADMIN_EMAIL / ADMIN_PASSWORD: whoever opens /admin/login
+// first creates the admin account. Closed for good once an admin exists.
+export async function adminSetup(_: LoginState, form: FormData): Promise<LoginState> {
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const password = String(form.get("password") ?? "");
+  if (process.env.ADMIN_EMAIL) return { error: "Sign in with the admin email set for this site." };
+  if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Enter a valid email." };
+  if (password.length < 8) return { error: "Password must be at least 8 characters." };
+  const admin = await db.$transaction(async (tx) => {
+    if ((await tx.admin.count()) > 0) return null;
+    return tx.admin.create({ data: { email, name: "Admin", passwordHash: hashPassword(password) } });
+  });
+  if (!admin) return { error: "An admin account already exists — sign in instead." };
+  await startAdminSession(admin);
+  redirect("/admin");
+}
+
 export async function adminLogout() {
   await endSession("sd_admin");
   redirect("/admin/login");

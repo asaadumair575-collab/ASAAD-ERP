@@ -20,7 +20,8 @@ export function normalizeShop(input: string) {
 }
 
 export function appUrl() {
-  return (process.env.APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  return (process.env.APP_URL || (vercel ? `https://${vercel}` : "http://localhost:3000")).replace(/\/+$/, "");
 }
 
 // HMAC check on OAuth callback query strings.

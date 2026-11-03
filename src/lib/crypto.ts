@@ -1,9 +1,16 @@
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "crypto";
 
+// APP_SECRET signs sessions and encrypts stored API keys. When it isn't set
+// (e.g. a fresh Vercel project), a key is derived from DATABASE_URL — itself a
+// server-only secret — so the app still works securely out of the box.
+// Note: adding APP_SECRET later signs everyone out and means saved Shopify /
+// courier connections must be reconnected.
 function secret() {
   const s = process.env.APP_SECRET;
-  if (!s || s.length < 16) throw new Error("APP_SECRET is not set (min 16 characters).");
-  return s;
+  if (s && s.length >= 16) return s;
+  const db = process.env.DATABASE_URL;
+  if (!db) throw new Error("APP_SECRET (or DATABASE_URL) is not set.");
+  return createHash("sha256").update(`store-ops:app-secret:${db}`).digest("hex");
 }
 
 // ── Passwords ─────────────────────────────────────────────────────────────
