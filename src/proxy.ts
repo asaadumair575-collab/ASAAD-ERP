@@ -1,42 +1,17 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { NextResponse, type NextRequest } from "next/server";
+import { ADMIN_COOKIE, USER_COOKIE } from "@/lib/session";
 
-export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const username = token ? verifySessionToken(token) : null;
-
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-pathname", pathname);
-  const next = () =>
-    NextResponse.next({ request: { headers: requestHeaders } });
-
-  if (
-    pathname.startsWith("/api/shopify/") ||
-    pathname.startsWith("/api/mobile/") ||
-    pathname.startsWith("/api/public/") ||
-    // Public sales demo — dummy data only, no login needed.
-    pathname === "/demo" ||
-    pathname.startsWith("/demo/")
-  ) {
-    return next();
+// Cheap gate: bounce visitors without a session cookie to the right login.
+// Pages still verify the session and the account (expiry, suspension).
+export function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login" && !req.cookies.has(ADMIN_COOKIE)) {
+    return NextResponse.redirect(new URL("/admin/login", req.url));
   }
-
-  if (pathname === "/login") {
-    if (username) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-    return next();
+  if (pathname.startsWith("/app") && !req.cookies.has(USER_COOKIE)) {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
-
-  if (!username) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  return next();
+  return NextResponse.next();
 }
 
-export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest).*)"],
-};
+export const config = { matcher: ["/app/:path*", "/admin/:path*"] };

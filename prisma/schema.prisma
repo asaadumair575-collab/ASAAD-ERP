@@ -1,7 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// E-commerce operations SaaS: each Tenant is one store that bought (or is
+// trialling) the software. Lives in its own Postgres schema ("saas", set by
+// the connection — see prisma.config.ts and src/lib/db.ts) so it never mixes
+// with tables left over from the previous app.
 
 generator client {
   provider = "prisma-client"
@@ -12,801 +12,253 @@ datasource db {
   provider = "postgresql"
 }
 
-model Client {
-  id               Int      @id @default(autoincrement())
-  code             String   @unique
-  name             String
-  businessName     String?
-  city             String
-  phone            String?
-  address          String?
-  notes            String?
-  fixedRate        Boolean  @default(false)
-  fixedRateAmount  Float?
-  createdAt        DateTime @default(now())
-  orders           Order[]
-  samples          Sample[]
-  productRates     ClientProductRate[]
+enum Plan {
+  TRIAL
+  STARTER
+  GROWTH
+  PRO
 }
 
-model ClientProductRate {
-  id        Int      @id @default(autoincrement())
-  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  clientId  Int
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId Int
-  rate      Float
-  createdAt DateTime @default(now())
-
-  @@unique([clientId, productId])
-  @@index([clientId])
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
 }
 
-model Order {
-  id             Int         @id @default(autoincrement())
-  client         Client      @relation(fields: [clientId], references: [id])
-  clientId       Int
-  date           DateTime    @default(now())
-  description    String?
-  purchaseAmount Float
-  saleAmount     Float
-  discount       Float       @default(0)
-  taxPercent     Float       @default(0)
-  paymentTerms   String?
-  notes          String?     @db.Text
-  terms          String?     @db.Text
-  paymentStatus  String      @default("UNPAID")
-  orderType      String      @default("CREDIT")
-  deliveryCharge Float?
-  feltColor      String?
-  stamp          String?
-  packing        String?
-  confirmed      Boolean     @default(false)
-  dispatched     Boolean     @default(false)
-  dispatchedAt   DateTime?
-  createdAt      DateTime    @default(now())
-  items          OrderItem[]
-  payments       Payment[]
-
-  @@index([clientId])
-  @@index([confirmed])
-  @@index([confirmed, paymentStatus])
-  @@index([confirmed, dispatched])
-  @@index([paymentStatus])
+enum Role {
+  OWNER
+  STAFF
 }
 
-model Payment {
-  id         Int      @id @default(autoincrement())
-  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId    Int
-  amount     Float
-  method     String   @default("BANK_TRANSFER")
-  note       String?
-  screenshot String?  @db.Text
-  date       DateTime @default(now())
-  createdAt  DateTime @default(now())
-
-  @@index([orderId])
+enum Courier {
+  POSTEX
+  LEOPARDS
+  TCS
+  DEMO
 }
 
-model OrderItem {
-  id          Int      @id @default(autoincrement())
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId     Int
-  product     Product? @relation(fields: [productId], references: [id])
-  productId   Int?
-  description String
-  quantity    Float
-  rate        Float
-  cost        Float?
-
-  @@index([orderId])
-  @@index([productId])
+enum OrderSource {
+  SHOPIFY
+  MANUAL
 }
 
-model Product {
-  id           Int                 @id @default(autoincrement())
-  name         String
-  cost         Float?
-  createdAt    DateTime            @default(now())
-  orderItems   OrderItem[]
-  clientRates  ClientProductRate[]
+enum PaymentMethod {
+  COD
+  PREPAID
 }
 
-model BusinessProfile {
-  id                 Int     @id @default(autoincrement())
-  name               String
-  phone              String?
-  address            String?
-  logo               String? @db.Text
-  bankName           String?
-  bankAccountTitle   String?
-  bankAccountNumber  String?
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  BOOKED
+  IN_TRANSIT
+  DELIVERED
+  RETURNED
+  CANCELLED
 }
 
-model DraftOrder {
+enum ShipmentStatus {
+  BOOKED
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  RETURNED
+  CANCELLED
+}
+
+model Admin {
   id           Int      @id @default(autoincrement())
-  customerName String
-  phone        String?
-  address      String?
-  city         String?
-  items        String?
-  advanceAmount Float   @default(200)
-  confirmed    Boolean  @default(false)
-  confirmedAt  DateTime?
-  createdBy    User?    @relation(fields: [createdById], references: [id])
-  createdById  Int?
+  email        String   @unique
+  name         String
+  passwordHash String
   createdAt    DateTime @default(now())
-
-  @@index([createdById])
-  @@index([confirmed])
 }
 
-model CostRate {
-  id            Int      @id @default(autoincrement())
-  costPerDozen  Float
-  effectiveFrom DateTime @default(now())
-  createdAt     DateTime @default(now())
+model Tenant {
+  id        Int          @id @default(autoincrement())
+  name      String
+  plan      Plan         @default(TRIAL)
+  status    TenantStatus @default(ACTIVE)
+  // null = no end date (paid / unlimited)
+  expiresAt DateTime?
+  isDemo    Boolean      @default(false)
+  notes     String?
+  createdAt DateTime     @default(now())
+
+  users     User[]
+  shopify   ShopifyConnection?
+  couriers  CourierAccount[]
+  products  Product[]
+  customers Customer[]
+  orders    Order[]
+  shipments Shipment[]
+  activity  Activity[]
 }
 
 model User {
-  id                   Int                  @id @default(autoincrement())
-  username             String               @unique
-  passwordHash         String
-  mustSetPassword      Boolean              @default(false)
-  isEmployee           Boolean              @default(true)
-  displayName          String?
-  isAdmin              Boolean              @default(false)
-  permissions          Json                 @default("{}")
-  apiToken             String?              @unique
-  fcmToken             String?
-  sessionVersion       Int                  @default(0)
-  createdAt            DateTime             @default(now())
-  empCommissionEntries EmpCommissionEntry[]
-  empWithdrawals       EmpWithdrawal[]
-  empPerformances      EmpPerformance[]
-  shifts               EmployeeShift[]
-  tasksAssigned        EmployeeTask[]       @relation("TaskAssignee")
-  tasksGiven           EmployeeTask[]       @relation("TaskAssigner")
-  leadsContacted       Lead[]               @relation("LeadContactedBy")
-  retailOrders         RetailOrder[]
-  bugReports           BugReport[]
-  messagesSent         Message[]        @relation("MessagesSent")
-  messagesReceived     Message[]        @relation("MessagesReceived")
-  reorderCampaigns     ReorderCampaign[]
-  reorderCalls         ReorderLead[]    @relation("ReorderLeadCalledBy")
-  reorderCallLogs      ReorderCallLog[] @relation("ReorderCallLogCalledBy")
-  retailFollowupLogs   RetailFollowupLog[] @relation("RetailFollowupLogCalledBy")
-  pushSubscriptions    PushSubscription[]
-  complaints           Complaint[]
-  complaintMessages    ComplaintMessage[]
-  draftOrders          DraftOrder[]
-  phoneCallLogs        PhoneCallLog[]
-  weightVerifications  WeightVerification[]
-  dispatchSheetsCreated    DispatchSheet[] @relation("DispatchSheetCreatedBy")
-  dispatchSheetsDispatched DispatchSheet[] @relation("DispatchSheetDispatchedBy")
-  taskTemplates        TaskTemplate[]       @relation("TaskTemplateAssignee")
-  whatsappReplyLogs    WhatsappReplyLog[]   @relation("WhatsappReplyLogRepliedBy")
+  id             Int       @id @default(autoincrement())
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId       Int
+  name           String
+  email          String    @unique
+  passwordHash   String
+  role           Role      @default(STAFF)
+  sessionVersion Int       @default(0)
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([tenantId])
 }
 
-model EmpCommissionEntry {
-  id         Int      @id @default(autoincrement())
-  user       User     @relation(fields: [userId], references: [id])
-  userId     Int
-  date       DateTime @db.Date
-  orders     Int
-  note       String?
-  status     String   @default("pending")
-  adminNote  String?
-  createdAt  DateTime @default(now())
-
-  @@index([userId])
-  @@index([date])
-}
-
-model EmpWithdrawal {
-  id          Int      @id @default(autoincrement())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      Int
-  amount      Float
-  note        String?
-  date        DateTime @db.Date
-  status      String   @default("approved")
-  adminNote   String?
-  createdAt   DateTime @default(now())
-
-  @@index([userId])
-}
-
-model CommissionRate {
-  id            Int      @id @default(autoincrement())
-  ratePerDozen  Float
-  effectiveFrom DateTime @default(now())
-  createdAt     DateTime @default(now())
-}
-
-model CommissionOrder {
-  id           Int       @id @default(autoincrement())
-  orderFor     String
-  date         DateTime  @default(now())
-  dozens       Float
-  notes        String?
-  dispatched   Boolean   @default(false)
-  dispatchedAt DateTime?
-  createdAt    DateTime  @default(now())
-}
-
-model Sample {
-  id           Int       @id @default(autoincrement())
-  client       Client?   @relation(fields: [clientId], references: [id])
-  clientId     Int?
-  lead         Lead?     @relation(fields: [leadId], references: [id])
-  leadId       Int?
-  description  String
-  dateSent     DateTime  @default(now())
-  status       String    @default("PENDING")
-  response     String?   @db.Text
-  responseDate DateTime?
-  createdAt    DateTime  @default(now())
-
-  @@index([clientId])
-  @@index([leadId])
-}
-
-model RetailCustomer {
-  id        Int           @id @default(autoincrement())
-  code      String        @unique
-  name      String
-  phone     String?
-  city      String?
-  address   String?
-  notes     String?
-  createdAt DateTime      @default(now())
-  orders    RetailOrder[]
-}
-
-model RetailOrder {
-  id               Int              @id @default(autoincrement())
-  retailCustomer   RetailCustomer?  @relation(fields: [retailCustomerId], references: [id])
-  retailCustomerId Int?
-  customerName     String
-  phone            String?
-  city             String?
-  address          String?
-  totalAmount      Float
-  deliveryCharge   Float            @default(0)
-  courierCharge        Float            @default(0)
-  returnDeliveryCost   Float            @default(0)
-  status               String           @default("PENDING")
-  dispatched       Boolean          @default(false)
-  dispatchedAt     DateTime?
-  trackingNumber   String?
-  trackingSetAt    DateTime?
-  exportedAt       DateTime?
-  notes            String?
-  date             DateTime         @default(now())
-  createdAt        DateTime         @default(now())
-  createdBy        User?            @relation(fields: [createdByUserId], references: [id])
-  createdByUserId  Int?
-  items            RetailOrderItem[]
-  payments         RetailPayment[]
-
-  @@index([retailCustomerId])
-  @@index([createdByUserId])
-  @@index([status])
-}
-
-model RetailOrderItem {
-  id          Int         @id @default(autoincrement())
-  order       RetailOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId     Int
-  description String
-  quantity    Float
-  rate        Float
-  costPrice   Float       @default(0)
-
-  @@index([orderId])
-}
-
-model RetailPayment {
-  id         Int         @id @default(autoincrement())
-  order      RetailOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId    Int
-  amount     Float
-  channel    String      @default("BANK")
-  note       String?
-  screenshot String?
-  date       DateTime    @default(now())
-
-  @@index([orderId])
-}
-
-model Lead {
-  id              Int       @id @default(autoincrement())
-  shopNumber      String
-  name            String?
-  city            String
-  phone           String?
-  status          String    @default("NEW")
-  notes           String?   @db.Text
-  contactedById   Int?
-  contactedBy     User?     @relation("LeadContactedBy", fields: [contactedById], references: [id])
-  contactedAt     DateTime?
-  createdAt       DateTime  @default(now())
-  samples         Sample[]
-
-  @@index([contactedById, contactedAt])
-}
-
-model EcomOrder {
-  id              Int             @id @default(autoincrement())
-  date            DateTime        @default(now())
-  customerName    String
-  phone           String?
-  city            String?
-  notes           String?
-  totalAmount     Float
-  status          String          @default("PENDING")
-  returned        Boolean         @default(false)
-  shippingCost    Float           @default(0)
-  adCost          Float           @default(0)
-  packagingCost   Float           @default(0)
-  returnCost      Float           @default(0)
-  address         String?
-  trackingNumber  String?
-  label           Bytes?
-  dispatchedAt    DateTime?
-  packedAt        DateTime?
-  shopifyOrderId  String?
-  draft           Boolean         @default(false)
-  draftStatus     String?
-  confirmedAt     DateTime?
-  source          String?
-  createdAt       DateTime        @default(now())
-  // Drives the new Retail COD (New) pipeline view — independent of the
-  // legacy draft/confirmed/dispatched fields above, which the original
-  // Retail COD pages still read. Values: PENDING, CONFIRMED, HOLD,
-  // READY_TO_PACK, PACKED_DISPATCH.
-  stage           String          @default("PENDING")
-  stageUpdatedAt  DateTime        @default(now())
-  items         EcomOrderItem[]
-  payments      EcomPayment[]
-  statusLogs    EcomOrderStatusLog[]
-
-  @@index([stage])
-}
-
-model EcomOrderStatusLog {
-  id        Int       @id @default(autoincrement())
-  order     EcomOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId   Int
-  status    String
-  createdAt DateTime  @default(now())
-
-  @@index([orderId])
-}
-
-model EcomOrderItem {
-  id          Int        @id @default(autoincrement())
-  order       EcomOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId     Int
-  description String
-  quantity    Float
-  packSize    Int        @default(12)
-  rate        Float
-
-  @@index([orderId])
-}
-
-model EcomPayment {
-  id      Int       @id @default(autoincrement())
-  order   EcomOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId Int
-  amount  Float
-  note    String?
-  date    DateTime  @default(now())
-
-  @@index([orderId])
-}
-
-model CprBatch {
-  id           Int      @id @default(autoincrement())
-  appliedAt    DateTime @default(now())
-  fileCount    Int      @default(1)
-  payments     Int
-  returned     Int
-  notFound     Int
-  totalSettled Float
-}
-
-model EmpPerformance {
-  id            Int      @id @default(autoincrement())
-  user          User     @relation(fields: [userId], references: [id])
-  userId        Int
-  date          DateTime @db.Date
-  calls         Int      @default(0)
-  confirmations Int      @default(0)
-  newOrders     Int      @default(0)
-  notes         String?
-  createdAt     DateTime @default(now())
-
-  @@index([userId])
-  @@index([date])
-}
-
-model PerformanceTarget {
-  id            Int      @id @default(autoincrement())
-  calls         Int      @default(0)
-  confirmations Int      @default(0)
-  newOrders     Int      @default(0)
-  effectiveFrom DateTime @default(now())
-  createdAt     DateTime @default(now())
-}
-
-model AppSetting {
-  id    Int    @id @default(autoincrement())
-  key   String @unique
-  value String @db.Text
-}
-
-model Message {
-  id         Int      @id @default(autoincrement())
-  sender     User     @relation("MessagesSent", fields: [senderId], references: [id])
-  senderId   Int
-  receiver   User     @relation("MessagesReceived", fields: [receiverId], references: [id])
-  receiverId Int
-  body       String   @db.Text
-  readAt     DateTime?
-  createdAt  DateTime @default(now())
-
-  @@index([receiverId])
-  @@index([senderId])
-  @@index([receiverId, readAt])
-}
-
-model BugReport {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String   @db.Text
-  page        String?
-  status      String   @default("OPEN")
-  adminNote   String?
-  reportedBy  User?    @relation(fields: [reportedById], references: [id])
-  reportedById Int?
-  createdAt   DateTime @default(now())
-
-  @@index([reportedById])
-  @@index([status])
-}
-
-
-model EcomExpense {
-  id        Int      @id @default(autoincrement())
-  date      DateTime @db.Date
-  category  String
-  type      String   @default("VARIABLE")
-  amount    Float
-  note      String?
-  createdAt DateTime @default(now())
-}
-
-model ReorderCampaign {
-  id                Int                  @id @default(autoincrement())
-  name              String
-  createdAt         DateTime             @default(now())
-  createdBy         User?                @relation(fields: [createdById], references: [id])
-  createdById       Int?
-  isRetailFollowup  Boolean              @default(false)
-  isActive          Boolean              @default(true)
-  sentForAudit      Boolean              @default(false)
-  auditRequestedAt  DateTime?
-  auditFeedback     String?
-  auditReturnedAt   DateTime?
-  auditLogs         CampaignAuditLog[]
-  leads             ReorderLead[]
-}
-
-model CampaignAuditLog {
-  id           Int             @id @default(autoincrement())
-  campaign     ReorderCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  campaignId   Int
-  sentAt       DateTime
-  returnedAt   DateTime?
-  feedback     String?
-  roundStats   Json?
-  createdAt    DateTime        @default(now())
-  @@index([campaignId])
-}
-
-model ReorderLead {
-  id               Int               @id @default(autoincrement())
-  campaign         ReorderCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  campaignId       Int
-  customerName     String
-  phone            String
-  email            String?
-  address          String?
-  city             String?
-  prevItem         String?
-  status           String            @default("PENDING")
-  callNote         String?
-  followUpDate     DateTime?         @db.Date
-  calledAt         DateTime?
-  calledBy         User?             @relation("ReorderLeadCalledBy", fields: [calledById], references: [id])
-  calledById       Int?
-  createdAt              DateTime             @default(now())
-  postexTrackingNumber   String?
-  activeOnApp            Boolean              @default(false)
-  callLogs               ReorderCallLog[]
-  callAttempts           ReorderCallAttempt[]
-  callAborts             ReorderCallAbort[]
-
-  @@index([campaignId])
-  @@index([campaignId, status])
-  @@index([calledById])
-  @@index([status])
-  @@index([activeOnApp])
-}
-
-model ReorderCallLog {
-  id          Int         @id @default(autoincrement())
-  lead        ReorderLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  leadId      Int
-  status      String
-  callNote    String?
-  calledAt    DateTime    @default(now())
-  calledBy    User        @relation("ReorderCallLogCalledBy", fields: [calledById], references: [id])
-  calledById  Int
-  attemptedAt DateTime?
-  openCount   Int         @default(0)
-
-  @@index([leadId])
-  @@index([calledById])
-}
-
-model ReorderCallAttempt {
-  id       Int         @id @default(autoincrement())
-  lead     ReorderLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  leadId   Int
-  userId   Int
-  openedAt DateTime    @default(now())
-
-  @@index([leadId])
-}
-
-model ReorderCallAbort {
-  id        Int         @id @default(autoincrement())
-  lead      ReorderLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  leadId    Int
-  userId    Int
-  abortedAt DateTime    @default(now())
-
-  @@index([leadId])
-}
-
-model RetailFollowupLog {
-  id         Int      @id @default(autoincrement())
-  phone      String
-  status     String
-  note       String?
-  calledAt   DateTime @default(now())
-  calledBy   User     @relation("RetailFollowupLogCalledBy", fields: [calledById], references: [id])
-  calledById Int
-}
-
-model Complaint {
-  id              Int      @id @default(autoincrement())
-  complaintType   String   @default("INTERNAL")  // INTERNAL | CUSTOMER
-  priority        String   @default("MEDIUM")    // LOW | MEDIUM | HIGH | URGENT
-  title           String
-  description     String   @db.Text
-  category        String   @default("GENERAL")
-  status          String   @default("OPEN")
-  adminNote       String?  @db.Text
-  metadata        Json?
-  // customer complaint fields
-  customerName    String?
-  customerPhone   String?
-  orderId         String?
-  submittedBy     User?    @relation(fields: [submittedById], references: [id])
-  submittedById   Int?
-  createdAt       DateTime @default(now())
-
-  messages       ComplaintMessage[]
-
-  @@index([submittedById])
-  @@index([status])
-  @@index([complaintType])
-  @@index([priority])
-}
-
-model ComplaintMessage {
-  id          Int      @id @default(autoincrement())
-  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
-  complaintId Int
-  user        User     @relation(fields: [userId], references: [id])
-  userId      Int
-  message     String   @db.Text
-  createdAt   DateTime @default(now())
-
-  @@index([complaintId])
-}
-
-model PhoneCallLog {
-  id           Int      @id @default(autoincrement())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       Int
-  phoneNumber  String
-  contactName  String?
-  duration     Int      // seconds — talk time, only set when the call connected
-  ringDuration Int      @default(0) // seconds — how long it rang before a non-connected call ended
-  callType     String   // INCOMING | OUTGOING | MISSED
-  calledAt     DateTime
-  synced       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-
-  @@unique([userId, phoneNumber, calledAt])
-  @@index([userId])
-  @@index([userId, calledAt])
-}
-
-model PushSubscription {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  endpoint  String   @unique
-  p256dh    String
-  auth      String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-// ── Employee Work System ───────────────────────────────────────────────────
-
-model EmployeeShift {
-  id        Int       @id @default(autoincrement())
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  startedAt DateTime  @default(now())
-  endedAt   DateTime?
-
-  @@index([userId])
-  @@index([userId, startedAt])
-}
-
-model EmployeeTask {
+model ShopifyConnection {
   id          Int       @id @default(autoincrement())
-  assignedTo  User      @relation("TaskAssignee", fields: [assignedToId], references: [id], onDelete: Cascade)
-  assignedToId Int
-  assignedBy  User      @relation("TaskAssigner", fields: [assignedById], references: [id])
-  assignedById Int
-  title       String
-  description String?
-  targetValue Int
-  unit        String    // e.g. "calls", "leads", "orders"
-  progress    Int       @default(0)
-  metric      String?   // REORDER_CALLS | RETAIL_ORDERS | null = manual
-  date        DateTime  // which day this task is for
-  completedAt DateTime?
-  createdAt   DateTime  @default(now())
-
-  @@index([assignedToId])
-  @@index([assignedToId, date])
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId    Int       @unique
+  shopDomain  String    @unique
+  // Encrypted with APP_SECRET (src/lib/crypto.ts)
+  accessToken String
+  scope       String?
+  method      String    @default("OAUTH")
+  connectedAt DateTime  @default(now())
+  lastSyncAt  DateTime?
+  syncError   String?
 }
 
-// A recurring per-employee task definition. Every day, the first load of
-// /work for that employee instantiates one EmployeeTask per active template
-// for that day (if one doesn't already exist) — so an admin sets this up
-// once per employee instead of re-assigning the same task every morning.
-model TaskTemplate {
-  id           Int      @id @default(autoincrement())
-  assignedTo   User     @relation("TaskTemplateAssignee", fields: [assignedToId], references: [id], onDelete: Cascade)
-  assignedToId Int
-  title        String
-  description  String?
-  targetValue  Int
-  unit         String
-  metric       String?  // REORDER_CALLS | RETAIL_FOLLOWUP | RETAIL_ORDERS | LEAD_CALLS | SHOPIFY_CONFIRMATIONS | WHATSAPP_REPLIES | null = manual
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-
-  @@index([assignedToId])
-}
-
-// A lightweight log an employee taps to record "I just handled a WhatsApp
-// conversation" — there's no separate WhatsApp inbox in this app, so this is
-// the only way to make WhatsApp handling countable as a task metric.
-model WhatsappReplyLog {
+model CourierAccount {
   id          Int      @id @default(autoincrement())
-  repliedBy   User     @relation("WhatsappReplyLogRepliedBy", fields: [repliedById], references: [id], onDelete: Cascade)
-  repliedById Int
-  note        String?
-  repliedAt   DateTime @default(now())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId    Int
+  courier     Courier
+  // Encrypted JSON of the courier's credentials and pickup settings
+  credentials String
+  label       String?
+  createdAt   DateTime @default(now())
 
-  @@index([repliedById])
-  @@index([repliedAt])
+  @@unique([tenantId, courier])
 }
 
-// ── Calling Module ─────────────────────────────────────────────────────────
+model Product {
+  id               Int      @id @default(autoincrement())
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId         Int
+  shopifyVariantId String?
+  shopifyProductId String?
+  title            String
+  variantTitle     String?
+  sku              String?
+  price            Float    @default(0)
+  cost             Float?
+  stock            Int      @default(0)
+  lowStockAt       Int      @default(10)
+  imageUrl         String?
+  updatedAt        DateTime @updatedAt
+  createdAt        DateTime @default(now())
 
+  items OrderItem[]
 
-model RetailExportLog {
-  id         Int      @id @default(autoincrement())
-  date       String
-  exportedAt DateTime @default(now())
-
-  @@index([date])
+  @@unique([tenantId, shopifyVariantId])
+  @@index([tenantId])
 }
 
-model WebsiteVisit {
+model Customer {
+  id                Int      @id @default(autoincrement())
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId          Int
+  shopifyCustomerId String?
+  name              String
+  phone             String?
+  email             String?
+  city              String?
+  createdAt         DateTime @default(now())
+
+  orders Order[]
+
+  @@unique([tenantId, shopifyCustomerId])
+  @@index([tenantId, phone])
+}
+
+model Order {
+  id             Int           @id @default(autoincrement())
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId       Int
+  source         OrderSource   @default(MANUAL)
+  shopifyOrderId String?
+  number         String
+  customer       Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerId     Int?
+  customerName   String
+  phone          String?
+  email          String?
+  address        String?
+  city           String?
+  subtotal       Float         @default(0)
+  discount       Float         @default(0)
+  shippingFee    Float         @default(0)
+  total          Float         @default(0)
+  paymentMethod  PaymentMethod @default(COD)
+  status         OrderStatus   @default(NEW)
+  notes          String?
+  placedAt       DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  items    OrderItem[]
+  shipment Shipment?
+  activity Activity[]
+
+  @@unique([tenantId, shopifyOrderId])
+  @@index([tenantId, status])
+  @@index([tenantId, placedAt])
+}
+
+model OrderItem {
   id        Int      @id @default(autoincrement())
-  visitorId String
-  path      String?
-  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   Int
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productId Int?
+  title     String
+  sku       String?
+  qty       Int
+  price     Float
 
-  @@index([createdAt])
-  @@index([visitorId])
+  @@index([orderId])
 }
 
-model WeightVerification {
-  id             Int      @id @default(autoincrement())
+model Shipment {
+  id             Int            @id @default(autoincrement())
+  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId       Int
+  order          Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId        Int            @unique
+  courier        Courier
   trackingNumber String
-  photo          String   @db.Text
-  weight         Float
-  verifiedBy     User?    @relation(fields: [verifiedById], references: [id])
-  verifiedById   Int?
-  createdAt      DateTime @default(now())
+  status         ShipmentStatus @default(BOOKED)
+  courierStatus  String?
+  codAmount      Float          @default(0)
+  courierCharge  Float          @default(0)
+  weightKg       Float          @default(0.5)
+  slipUrl        String?
+  bookedAt       DateTime       @default(now())
+  deliveredAt    DateTime?
+  returnedAt     DateTime?
+  lastCheckedAt  DateTime?
+  codRemitted    Boolean        @default(false)
+  remittedAt     DateTime?
 
-  @@index([trackingNumber])
-  @@index([createdAt])
+  @@index([tenantId, status])
+  @@index([tenantId, courier])
 }
 
-// A saved, printable-anytime snapshot of a day's gate-verification dispatch
-// list — generated once from a set of packed orders, then reprintable later
-// without needing to reselect anything.
-model DispatchSheet {
-  id            Int       @id @default(autoincrement())
-  date          DateTime
-  orderIds      Int[]
-  totalParcels  Int
-  totalValue    Float
-  totalWeight   Float
-  snapshot      Json
-  createdBy     User?     @relation("DispatchSheetCreatedBy", fields: [createdById], references: [id])
-  createdById   Int?
-  createdAt     DateTime  @default(now())
-
-  // Gate verification: the whole sheet is QR-scanned and the combined
-  // parcel weight re-scanned at dispatch time, recorded here.
-  finalWeight   Float?
-  photo         String?   @db.Text
-  dispatchedAt  DateTime?
-  dispatchedBy  User?     @relation("DispatchSheetDispatchedBy", fields: [dispatchedById], references: [id])
-  dispatchedById Int?
-
-  @@index([date])
-}
-
-// System-wide activity trail: every login and every create/update/delete
-// across the app, captured automatically (see lib/prisma.ts's query
-// extension and lib/auditContext.ts) rather than logged by hand in each
-// action. userId/userName are plain fields, not a relation, so deleting a
-// user never cascades into (or is blocked by) their audit history.
-model AuditLog {
+model Activity {
   id        Int      @id @default(autoincrement())
-  userId    Int?
-  userName  String?
-  ip        String?
-  action    String   // LOGIN, LOGIN_FAILED, LOGOUT, CREATE, UPDATE, DELETE
-  model     String   // Prisma model name, or "Auth" for login/logout events
-  recordId  String?
-  summary   String?
-  changes   Json?
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId  Int
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   Int?
+  message   String
+  by        String?
   createdAt DateTime @default(now())
 
-  @@index([model, recordId])
-  @@index([userId])
-  @@index([createdAt])
-  @@index([action])
+  @@index([orderId])
+  @@index([tenantId, createdAt])
 }

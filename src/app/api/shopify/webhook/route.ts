@@ -1,94 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createHmac } from "crypto";
-import { prisma } from "@/lib/prisma";
-import { sendPushToAll } from "@/lib/push";
+import { NextResponse, type NextRequest } from "next/server";
+import { db } from "@/lib/db";
+import { upsertShopifyOrder, verifyWebhook } from "@/lib/shopify";
 
-const SECRET = process.env.SHOPIFY_WEBHOOK_SECRET ?? "";
-
-function verify(body: string, hmacHeader: string): boolean {
-  if (!SECRET) return false;
-  const digest = createHmac("sha256", SECRET).update(body, "utf8").digest("base64");
-  return digest === hmacHeader;
-}
-
+// Shopify pushes new and changed orders here (registered on OAuth connect).
 export async function POST(req: NextRequest) {
-  const rawBody = await req.text();
-  const hmac = req.headers.get("x-shopify-hmac-sha256") ?? "";
-
-  if (!verify(rawBody, hmac)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const raw = await req.text();
+  if (!verifyWebhook(raw, req.headers.get("x-shopify-hmac-sha256"))) return new NextResponse("Unauthorized", { status: 401 });
 
   const topic = req.headers.get("x-shopify-topic") ?? "";
-  if (topic !== "orders/create") {
-    return NextResponse.json({ ok: true });
+  const shop = req.headers.get("x-shopify-shop-domain") ?? "";
+  const conn = await db.shopifyConnection.findUnique({ where: { shopDomain: shop } });
+  if (!conn) return NextResponse.json({ ok: true });
+
+  const body = JSON.parse(raw);
+  if (topic === "orders/create" || topic === "orders/updated") {
+    await upsertShopifyOrder(conn.tenantId, body);
+  } else if (topic === "products/update") {
+    for (const v of body.variants ?? []) {
+      await db.product.updateMany({
+        where: { tenantId: conn.tenantId, shopifyVariantId: String(v.id) },
+        data: { title: body.title, price: parseFloat(v.price) || 0, stock: v.inventory_quantity ?? 0 },
+      });
+    }
+  } else if (topic === "app/uninstalled") {
+    await db.shopifyConnection.delete({ where: { id: conn.id } });
   }
-
-  let data: Record<string, unknown>;
-  try {
-    data = JSON.parse(rawBody);
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  const shopifyOrderId = String(data.id ?? "");
-  const existing = await prisma.ecomOrder.findFirst({ where: { shopifyOrderId } });
-  if (existing) return NextResponse.json({ ok: true, duplicate: true });
-
-  const customer = (data.customer as Record<string, unknown>) ?? {};
-  const billingAddress = (data.billing_address as Record<string, unknown>) ?? {};
-  const shippingAddress = (data.shipping_address as Record<string, unknown>) ?? {};
-  const lineItems = (data.line_items as unknown[]) ?? [];
-
-  const customerName = [customer.first_name, customer.last_name].filter(Boolean).join(" ")
-    || String(data.contact_email ?? "Unknown");
-
-  const phone = String(customer.phone ?? billingAddress.phone ?? shippingAddress.phone ?? "").replace(/\s/g, "") || null;
-
-  const city = String(shippingAddress.city ?? billingAddress.city ?? "").trim() || null;
-  const address = String(shippingAddress.address1 ?? billingAddress.address1 ?? "").trim() || null;
-
-  const totalAmount = parseFloat(String(data.total_price ?? "0")) || 0;
-
-  const order = await prisma.ecomOrder.create({
-    data: {
-      shopifyOrderId,
-      draft: true,
-      customerName,
-      phone,
-      city,
-      address,
-      totalAmount,
-      status: "PENDING",
-      date: data.created_at ? new Date(String(data.created_at)) : new Date(),
-      notes: `Shopify Order #${data.order_number ?? shopifyOrderId}`,
-      items: {
-        create: lineItems.map((item) => {
-          const i = item as Record<string, unknown>;
-          // Shopify's line item "name" is "{title} - {variant_title}" (e.g.
-          // "Cancon Pro 72 - Pack of 3") — "title" alone is just the product
-          // name with no pack-size info, which made Finance's "pack of N"
-          // detection always miss and fall back to a wrong hardcoded size.
-          const description = String(i.name ?? i.title ?? "Product");
-          return {
-            description,
-            quantity: Number(i.quantity ?? 1),
-            // Only a fallback for the rare item whose name doesn't carry a
-            // parseable "pack of N" — Finance's getPackSize() re-derives the
-            // real pack size from the description text whenever it can.
-            packSize: 1,
-            rate: parseFloat(String(i.price ?? "0")) || 0,
-          };
-        }),
-      },
-    },
-  });
-
-  sendPushToAll({
-    title: "New Retail COD draft order",
-    body: `${customerName}${city ? ` · ${city}` : ""} — Rs ${totalAmount.toLocaleString("en-PK", { maximumFractionDigits: 0 })}`,
-    url: "/ecommerce/shopify-orders",
-  }).catch(() => {});
-
-  return NextResponse.json({ ok: true, orderId: order.id });
+  return NextResponse.json({ ok: true });
 }

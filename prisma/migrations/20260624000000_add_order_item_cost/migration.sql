@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "OrderItem" ADD COLUMN "cost" DOUBLE PRECISION;

@@ -1,1 +1,0 @@
-ALTER TABLE "EcomOrder" ADD COLUMN IF NOT EXISTS "address" TEXT;

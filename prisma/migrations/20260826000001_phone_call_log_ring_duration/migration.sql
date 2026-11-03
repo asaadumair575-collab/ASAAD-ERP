@@ -1,1 +1,0 @@
-ALTER TABLE "PhoneCallLog" ADD COLUMN "ringDuration" INTEGER NOT NULL DEFAULT 0;

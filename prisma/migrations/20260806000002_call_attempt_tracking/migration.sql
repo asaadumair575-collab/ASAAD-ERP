@@ -1,2 +1,0 @@
-ALTER TABLE "ReorderLead" ADD COLUMN IF NOT EXISTS "pendingAttemptAt" TIMESTAMP(3);
-ALTER TABLE "ReorderCallLog" ADD COLUMN IF NOT EXISTS "attemptedAt" TIMESTAMP(3);

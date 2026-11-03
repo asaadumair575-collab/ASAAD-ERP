@@ -1,1 +1,0 @@
-ALTER TABLE "RetailPayment" ADD COLUMN "channel" TEXT NOT NULL DEFAULT 'BANK';

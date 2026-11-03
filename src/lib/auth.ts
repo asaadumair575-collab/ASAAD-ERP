@@ -1,126 +1,69 @@
-import { randomBytes, scryptSync, createHmac, timingSafeEqual } from "crypto";
-import { cookies, headers } from "next/headers";
-import { setCurrentActor } from "@/lib/auditContext";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { cache } from "react";
+import { db } from "./db";
+import { ADMIN_COOKIE, SESSION_DAYS, USER_COOKIE, createToken, readToken } from "./session";
 
-const SESSION_COOKIE = "session";
-const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 365; // 1 year
+const cookieOptions = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+  path: "/",
+  maxAge: SESSION_DAYS * 86400,
+};
 
-function getSecret() {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) {
-    throw new Error(
-      "SESSION_SECRET is not set. Add a strong random value to .env.local."
-    );
-  }
-  return secret;
+export async function startUserSession(user: { id: number; sessionVersion: number }) {
+  (await cookies()).set(USER_COOKIE, createToken({ id: user.id, v: user.sessionVersion }), cookieOptions);
 }
 
-export function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const hash = scryptSync(password, salt, 64).toString("hex");
-  return `${salt}:${hash}`;
+export async function startAdminSession(admin: { id: number }) {
+  (await cookies()).set(ADMIN_COOKIE, createToken({ id: admin.id, v: 0 }), cookieOptions);
 }
 
-export function verifyPassword(password: string, stored: string) {
-  const [salt, hash] = stored.split(":");
-  if (!salt || !hash) return false;
-  const candidate = scryptSync(password, salt, 64);
-  const expected = Buffer.from(hash, "hex");
-  if (candidate.length !== expected.length) return false;
-  return timingSafeEqual(candidate, expected);
+export async function endSession(cookie: typeof USER_COOKIE | typeof ADMIN_COOKIE) {
+  (await cookies()).delete(cookie);
 }
 
-function sign(value: string) {
-  return createHmac("sha256", getSecret()).update(value).digest("hex");
+export type AccessProblem = "expired" | "suspended" | null;
+
+export function accessProblem(tenant: { status: string; expiresAt: Date | null }): AccessProblem {
+  if (tenant.status === "SUSPENDED") return "suspended";
+  if (tenant.expiresAt && tenant.expiresAt.getTime() < Date.now()) return "expired";
+  return null;
 }
 
-// The session-version is baked into the signed token itself — there's no
-// server-side session store, so this is how a forced logout (an admin
-// kicking a specific user) works: bump the user's sessionVersion in the
-// DB and every cookie issued before that no longer matches, everywhere,
-// on the very next request that resolves the user.
-export function createSessionToken(username: string, sessionVersion = 0) {
-  const expires = Date.now() + SESSION_MAX_AGE_SECONDS * 1000;
-  const payload = `${username}:${sessionVersion}:${expires}`;
-  const signature = sign(payload);
-  return Buffer.from(`${payload}:${signature}`).toString("base64url");
-}
+// The signed-in store user, with their tenant — null if not signed in.
+export const currentUser = cache(async () => {
+  const p = readToken((await cookies()).get(USER_COOKIE)?.value);
+  if (!p) return null;
+  const user = await db.user.findUnique({ where: { id: p.id }, include: { tenant: true } });
+  if (!user || user.sessionVersion !== p.v) return null;
+  return user;
+});
 
-export function verifySessionToken(token: string): { username: string; sessionVersion: number } | null {
-  try {
-    const decoded = Buffer.from(token, "base64url").toString("utf8");
-    const parts = decoded.split(":");
-    // Tokens issued before sessionVersion existed have 3 parts instead of 4;
-    // treat those as version 0 so existing logged-in sessions keep working.
-    const [username, versionOrExpires, expiresOrSig, maybeSig] = parts;
-    const hasVersion = parts.length === 4;
-    const sessionVersion = hasVersion ? parseInt(versionOrExpires, 10) : 0;
-    const expiresRaw = hasVersion ? expiresOrSig : versionOrExpires;
-    const signature = hasVersion ? maybeSig : expiresOrSig;
-    if (!username || !expiresRaw || !signature) return null;
-    const payload = hasVersion ? `${username}:${sessionVersion}:${expiresRaw}` : `${username}:${expiresRaw}`;
-    const expected = sign(payload);
-    if (signature !== expected) return null;
-    if (Date.now() > parseInt(expiresRaw, 10)) return null;
-    return { username, sessionVersion };
-  } catch {
-    return null;
-  }
-}
-
-export async function setSessionCookie(username: string, sessionVersion = 0) {
-  const store = await cookies();
-  store.set(SESSION_COOKIE, createSessionToken(username, sessionVersion), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: SESSION_MAX_AGE_SECONDS,
-    path: "/",
-  });
-}
-
-export async function clearSessionCookie() {
-  const store = await cookies();
-  store.delete(SESSION_COOKIE);
-}
-
-export async function getSessionUsername(): Promise<string | null> {
-  const store = await cookies();
-  const token = store.get(SESSION_COOKIE)?.value;
-  if (!token) return null;
-  return verifySessionToken(token)?.username ?? null;
-}
-
-export async function getSessionUser() {
-  const store = await cookies();
-  const token = store.get(SESSION_COOKIE)?.value;
-  if (!token) return null;
-  const verified = verifySessionToken(token);
-  if (!verified) return null;
-
-  const { prisma } = await import("@/lib/prisma");
-  const user = await prisma.user.findUnique({ where: { username: verified.username } });
-  if (!user) return null;
-
-  // An admin force-logged this user out after this cookie was issued.
-  if (user.sessionVersion !== verified.sessionVersion) return null;
-
-  let ip: string | null = null;
-  try {
-    const h = await headers();
-    ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || null;
-  } catch {
-    // headers() is unavailable in some non-request contexts; audit
-    // entries just won't have an IP for those calls.
-  }
-  setCurrentActor({ userId: user.id, userName: user.displayName ?? user.username, ip });
+// For pages and actions inside /app: signed in, account active and not expired.
+export async function requireUser() {
+  const user = await currentUser();
+  if (!user) redirect("/login");
+  const problem = accessProblem(user.tenant);
+  if (problem) redirect(`/login?reason=${problem}`);
   return user;
 }
 
-// Used by the Employee Call mobile app instead of a username/password login —
-// an admin generates one of these per employee from the Users settings page.
-export function generateApiToken() {
-  return randomBytes(24).toString("base64url");
+export async function requireOwner() {
+  const user = await requireUser();
+  if (user.role !== "OWNER") throw new Error("Only the account owner can do this.");
+  return user;
 }
 
-export const SESSION_COOKIE_NAME = SESSION_COOKIE;
+export const currentAdmin = cache(async () => {
+  const p = readToken((await cookies()).get(ADMIN_COOKIE)?.value);
+  if (!p) return null;
+  return db.admin.findUnique({ where: { id: p.id } });
+});
+
+export async function requireAdmin() {
+  const admin = await currentAdmin();
+  if (!admin) redirect("/admin/login");
+  return admin;
+}

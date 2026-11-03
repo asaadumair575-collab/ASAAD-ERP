@@ -1,1 +1,0 @@
-ALTER TABLE "Order" ADD COLUMN "packing" TEXT;

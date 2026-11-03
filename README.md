@@ -1,37 +1,30 @@
-# Trader CRM
+# Store operations app
 
-A simple web app to manage your client list (grouped by city) and track order
-history, amounts spent, and profit per order, client, and city.
+Multi-store SaaS for online sellers: Shopify orders, courier booking and tracking
+(PostEx, Leopards, TCS), inventory, customers, COD reconciliation and profit.
 
-## Features
+- `/login` — store owners and their team.
+- `/admin` — you: create store accounts, give demo access for N days, extend, pause or delete.
 
-- Add/edit/delete clients with name, city, phone, address, notes
-- Filter and search clients by city or name
-- Record orders per client with purchase amount, sale amount, and date
-- Automatic profit calculation (sale amount - purchase amount) per order, client, and city
-- Dashboard with totals: clients, orders, total sales, total profit, breakdown by city
+## Setup
 
-## Getting Started
+1. Copy `.env.example` to `.env` and fill it in (Vercel: Project → Settings → Environment Variables).
+2. `npm install` then `npm run build` — runs database migrations (into the `saas` schema) and builds.
+3. Open `/admin/login` and sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` (creates the first admin).
 
-```bash
-npm install
-# create a .env.local with your own Postgres connection string, e.g.:
-# DATABASE_URL="postgres://user:password@host/db?sslmode=require"
-npx prisma migrate deploy
-npm run dev
-```
+## Shopify
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+One-click connect needs a Shopify app (Shopify Dev Dashboard): set its redirect URL to
+`$APP_URL/api/shopify/callback` and put its client ID / secret in `SHOPIFY_API_KEY` / `SHOPIFY_API_SECRET`.
+Without it, stores can still connect by pasting an Admin API access token.
 
-## Data storage
+## Couriers
 
-Data is stored in a Postgres database. In production (Vercel), this is
-provisioned via the Neon Postgres storage integration, which sets the
-`DATABASE_URL` environment variable automatically. For local development,
-point `DATABASE_URL` at your own Postgres database (the same Neon database
-works fine too).
+Each store connects its own courier accounts on the Integrations page:
 
-## Tech stack
+- **PostEx** — API token + pickup address code.
+- **Leopards** — API key + API password.
+- **TCS** — API client ID, username, password, cost center, pickup city. Verify against a real TCS
+  account before going live; TCS does not publish its API documentation.
 
-- Next.js (App Router) + TypeScript + Tailwind CSS
-- Prisma ORM with Postgres (node-postgres driver adapter)
+Demo accounts (created with sample data) use a simulated **Demo Courier**.

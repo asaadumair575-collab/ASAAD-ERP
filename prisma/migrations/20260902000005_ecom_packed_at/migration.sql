@@ -1,1 +1,0 @@
-ALTER TABLE "EcomOrder" ADD COLUMN "packedAt" TIMESTAMP(3);
