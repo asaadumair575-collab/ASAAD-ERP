@@ -13,7 +13,7 @@ export default function ResetPasswordButton({ action }: { action: () => Promise<
         onClick={() => {
           if (confirm("Generate a new password? The owner will be signed out everywhere.")) start(async () => setPassword(await action()));
         }}
-        className="h-8 px-3 rounded-md border border-gray-300 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+        className="h-8 px-3 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
       >
         {pending ? "Resetting…" : "Reset password"}
       </button>

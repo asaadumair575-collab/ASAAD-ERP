@@ -42,6 +42,8 @@ CREATE TABLE "Tenant" (
     "expiresAt" TIMESTAMP(3),
     "isDemo" BOOLEAN NOT NULL DEFAULT false,
     "notes" TEXT,
+    "phone" TEXT,
+    "address" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Tenant_pkey" PRIMARY KEY ("id")
@@ -68,6 +70,8 @@ CREATE TABLE "ShopifyConnection" (
     "tenantId" INTEGER NOT NULL,
     "shopDomain" TEXT NOT NULL,
     "accessToken" TEXT NOT NULL,
+    "clientCreds" TEXT,
+    "tokenExpiresAt" TIMESTAMP(3),
     "scope" TEXT,
     "method" TEXT NOT NULL DEFAULT 'OAUTH',
     "connectedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -198,6 +202,32 @@ CREATE TABLE "Activity" (
     CONSTRAINT "Activity_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "BlockedPhone" (
+    "id" SERIAL NOT NULL,
+    "tenantId" INTEGER NOT NULL,
+    "phone" TEXT NOT NULL,
+    "reason" TEXT,
+    "by" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "BlockedPhone_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Expense" (
+    "id" SERIAL NOT NULL,
+    "tenantId" INTEGER NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
+    "category" TEXT NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "note" TEXT,
+    "by" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Expense_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Admin_email_key" ON "Admin"("email");
 
@@ -255,6 +285,12 @@ CREATE INDEX "Activity_orderId_idx" ON "Activity"("orderId");
 -- CreateIndex
 CREATE INDEX "Activity_tenantId_createdAt_idx" ON "Activity"("tenantId", "createdAt");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "BlockedPhone_tenantId_phone_key" ON "BlockedPhone"("tenantId", "phone");
+
+-- CreateIndex
+CREATE INDEX "Expense_tenantId_date_idx" ON "Expense"("tenantId", "date");
+
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -293,3 +329,10 @@ ALTER TABLE "Activity" ADD CONSTRAINT "Activity_tenantId_fkey" FOREIGN KEY ("ten
 
 -- AddForeignKey
 ALTER TABLE "Activity" ADD CONSTRAINT "Activity_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BlockedPhone" ADD CONSTRAINT "BlockedPhone_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Expense" ADD CONSTRAINT "Expense_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+

@@ -29,7 +29,7 @@ export default function ResultForm({ action, submitLabel, pendingLabel, children
     >
       {children}
       <div className="flex flex-wrap items-center gap-3">
-        <button type="submit" disabled={pending} className="h-9 px-4 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-60">
+        <button type="submit" disabled={pending} className="h-10 px-4 rounded-xl bg-gray-950 text-white text-sm font-semibold hover:bg-gray-800 disabled:opacity-60">
           {pending ? pendingLabel ?? "Saving…" : submitLabel}
         </button>
         {state && <span className={`text-sm ${state.ok ? "text-green-700" : "text-red-600"}`}>{state.message}</span>}

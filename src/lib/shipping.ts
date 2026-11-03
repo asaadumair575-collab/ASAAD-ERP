@@ -25,6 +25,8 @@ export async function bookOrder(tenantId: number, orderId: number, courier: Cour
   if (order.shipment) throw new Error(`${order.number} is already booked (${order.shipment.trackingNumber}).`);
   if (order.status !== "NEW" && order.status !== "CONFIRMED") throw new Error(`${order.number} can't be booked while ${order.status.toLowerCase()}.`);
   if (!order.phone || !order.city || !order.address) throw new Error(`${order.number} is missing phone, city or address.`);
+  const blocked = await db.blockedPhone.findUnique({ where: { tenantId_phone: { tenantId, phone: order.phone } } });
+  if (blocked) throw new Error(`${order.number}: ${order.phone} is on your blocked list.`);
 
   const creds = await credsFor(tenantId, courier);
   const cod = order.paymentMethod === "COD" ? order.total : 0;

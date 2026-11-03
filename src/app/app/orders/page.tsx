@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import OrdersTable from "@/components/OrdersTable";
-import { Card, Empty, LinkButton, PageHeader, Tabs, inputCls } from "@/components/ui";
+import { Download, Plus, Upload } from "lucide-react";
+import { Card, Empty, LinkButton, PageHeader, Tabs, btn, inputCls } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { courierName } from "@/lib/couriers";
 import { db } from "@/lib/db";
@@ -52,6 +53,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     ? await db.order.groupBy({ by: ["phone"], where: { tenantId: user.tenantId, phone: { in: phones }, status: "RETURNED" }, _count: true })
     : [];
   const returnsBy = new Map(returns.map((r) => [r.phone, r._count]));
+  const blocked = new Set(
+    phones.length ? (await db.blockedPhone.findMany({ where: { tenantId: user.tenantId, phone: { in: phones } }, select: { phone: true } })).map((b) => b.phone) : [],
+  );
 
   const countOf = (s: string) => (s === "ALL" ? counts.reduce((a, c) => a + c._count, 0) : counts.find((c) => c.status === s)?._count ?? 0);
   const link = (patch: Record<string, string | undefined>) => {
@@ -64,16 +68,22 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
   return (
     <div>
-      <PageHeader title="Orders" description="Orders from Shopify arrive here automatically." actions={<LinkButton href="/app/orders/new" variant="secondary">New order</LinkButton>} />
+      <PageHeader title="Orders" description="Shopify orders arrive automatically. Select orders to confirm, book with a courier or print slips." actions={
+          <>
+            <a href={`/app/orders/export${status !== "ALL" ? `?status=${status}` : ""}`} className={btn("secondary")}><Download className="w-4 h-4" />Export</a>
+            <LinkButton href="/app/orders/import" variant="secondary"><Upload className="w-4 h-4" />Import CSV</LinkButton>
+            <LinkButton href="/app/orders/new"><Plus className="w-4 h-4" />New order</LinkButton>
+          </>
+        } />
       <Tabs
         active={status}
         tabs={TABS.map((s) => ({ key: s, label: s === "ALL" ? "All" : ORDER_STATUS[s].label, count: countOf(s), href: link({ status: s === "ALL" ? undefined : s, page: undefined }) }))}
       />
       <Card>
-        <form className="p-3 border-b border-gray-200 flex gap-2">
+        <form className="p-4 flex gap-2">
           {status !== "ALL" && <input type="hidden" name="status" value={status} />}
           <input name="q" defaultValue={q} placeholder="Search order #, name, phone, city or tracking" className={`${inputCls} max-w-md`} />
-          <button className="h-9 px-3 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Search</button>
+          <button className="h-10 px-4 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-800 hover:bg-gray-50">Search</button>
         </form>
         <OrdersTable
           empty={<Empty title="No orders here">{q ? "Try a different search." : "New Shopify orders will show up automatically."}</Empty>}
@@ -94,6 +104,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
             courier: o.shipment ? courierName(o.shipment.courier) : null,
             tracking: o.shipment?.trackingNumber ?? null,
             returns: o.phone ? returnsBy.get(o.phone) ?? 0 : 0,
+            blocked: o.phone ? blocked.has(o.phone) : false,
           }))}
         />
         {pages > 1 && (

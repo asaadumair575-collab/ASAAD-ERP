@@ -1,10 +1,10 @@
 import ConfirmButton from "@/components/ConfirmButton";
 import ResultForm from "@/components/ResultForm";
-import { Card, CardHeader, PageHeader, Table, Td, Th, btn, inputCls } from "@/components/ui";
+import { Card, CardHeader, Field, PageHeader, Table, Td, Th, btn, inputCls } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { daysLeft, fmtDate } from "@/lib/format";
-import { addStaff, changePassword, removeStaff, updateStoreName } from "../actions";
+import { addStaff, changePassword, removeStaff, updateStoreDetails } from "../actions";
 
 const PLAN: Record<string, string> = { TRIAL: "Trial", STARTER: "Starter", GROWTH: "Growth", PRO: "Pro" };
 
@@ -16,10 +16,10 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <PageHeader title="Settings" />
+      <PageHeader title="Settings" description="Your plan, store details, team and password." />
       <Card>
         <CardHeader title="Subscription" />
-        <div className="p-4 text-sm grid sm:grid-cols-3 gap-3">
+        <div className="px-5 pb-5 text-sm grid sm:grid-cols-3 gap-3">
           <div><p className="text-gray-500">Plan</p><p className="font-medium">{PLAN[user.tenant.plan]}</p></div>
           <div><p className="text-gray-500">Access until</p><p className="font-medium">{user.tenant.expiresAt ? fmtDate(user.tenant.expiresAt) : "No end date"}</p></div>
           <div><p className="text-gray-500">Remaining</p><p className="font-medium">{left === null ? "—" : `${Math.max(0, left)} day${left === 1 ? "" : "s"}`}</p></div>
@@ -28,11 +28,15 @@ export default async function SettingsPage() {
 
       {owner && (
         <Card>
-          <CardHeader title="Store" />
-          <form action={updateStoreName} className="p-4 flex gap-2">
-            <input name="name" defaultValue={user.tenant.name} className={`${inputCls} max-w-sm`} aria-label="Store name" />
-            <button className={btn("secondary")}>Save</button>
-          </form>
+          <CardHeader title="Store details" />
+          <div className="px-5 pb-5">
+            <p className="text-sm text-gray-500 mb-4">Printed on packing slips and used in WhatsApp messages to customers.</p>
+            <ResultForm action={updateStoreDetails} submitLabel="Save details" className="grid sm:grid-cols-2 gap-3">
+              <Field label="Store name"><input name="name" required defaultValue={user.tenant.name} className={inputCls} /></Field>
+              <Field label="Store phone / WhatsApp"><input name="phone" defaultValue={user.tenant.phone ?? ""} placeholder="0300 1234567" className={inputCls} /></Field>
+              <div className="sm:col-span-2"><Field label="Return / pickup address"><input name="address" defaultValue={user.tenant.address ?? ""} placeholder="Shop 4, Main Market, Lahore" className={inputCls} /></Field></div>
+            </ResultForm>
+          </div>
         </Card>
       )}
 
@@ -59,7 +63,7 @@ export default async function SettingsPage() {
           </tbody>
         </Table>
         {owner && (
-          <div className="p-4 border-t border-gray-100">
+          <div className="p-5 border-t border-gray-100">
             <p className="text-sm font-medium text-gray-700 mb-2">Add a team member</p>
             <ResultForm action={addStaff} submitLabel="Add member" className="grid sm:grid-cols-3 gap-2 items-start">
               <input name="name" required placeholder="Name" className={inputCls} />
@@ -73,7 +77,7 @@ export default async function SettingsPage() {
 
       <Card>
         <CardHeader title="Change password" />
-        <div className="p-4">
+        <div className="px-5 pb-5">
           <ResultForm action={changePassword} submitLabel="Change password" className="grid sm:grid-cols-2 gap-2 items-start">
             <input name="current" type="password" required placeholder="Current password" className={inputCls} autoComplete="current-password" />
             <input name="next" type="password" required minLength={8} placeholder="New password" className={inputCls} autoComplete="new-password" />

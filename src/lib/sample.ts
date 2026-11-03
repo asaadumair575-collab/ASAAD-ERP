@@ -160,4 +160,21 @@ export async function loadSampleData(tenantId: number) {
       ...(o.status === "CANCELLED" ? [{ tenantId, orderId: savedOrders[i].id, message: "Cancelled — customer not reachable", createdAt: new Date(o.placedAt.getTime() + 6 * 3600000) }] : []),
     ]),
   });
+
+  // Running costs so net profit and cost-per-order look real.
+  const expenses: { tenantId: number; date: Date; category: string; amount: number; note?: string }[] = [];
+  for (let day = 44; day >= 0; day--) {
+    const date = new Date(now - day * 86400000);
+    expenses.push({ tenantId, date, category: "Facebook / Instagram ads", amount: Math.round(3500 + r() * 2500) });
+    if (day % 7 === 3) expenses.push({ tenantId, date, category: "Packaging", amount: Math.round(4000 + r() * 2000), note: "Flyers & boxes" });
+    if (day % 10 === 5) expenses.push({ tenantId, date, category: "TikTok ads", amount: Math.round(5000 + r() * 4000) });
+  }
+  expenses.push({ tenantId, date: new Date(now - 33 * 86400000), category: "Salaries", amount: 85000, note: "2 packers + 1 confirmation agent" });
+  expenses.push({ tenantId, date: new Date(now - 3 * 86400000), category: "Salaries", amount: 85000, note: "2 packers + 1 confirmation agent" });
+  await db.expense.createMany({ data: expenses });
+
+  // Block a couple of customers whose parcels kept coming back.
+  const refusers = customers.filter((_, i) => orders.some((o) => o.customer === i && o.status === "RETURNED")).slice(0, 2);
+  await db.blockedPhone.createMany({ data: refusers.map((c) => ({ tenantId, phone: c.phone, reason: "Refused parcel", by: "Sample data" })), skipDuplicates: true });
+  await db.tenant.update({ where: { id: tenantId }, data: { phone: "0300 1234567", address: "Shop 4, Main Boulevard, Gulberg, Lahore" } });
 }

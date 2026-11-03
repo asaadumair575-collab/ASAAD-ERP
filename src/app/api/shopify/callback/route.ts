@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   const conn = { shopDomain: shop, accessToken: encrypt(access_token), scope, method: "OAUTH" };
   await db.shopifyConnection.upsert({
     where: { tenantId: user.tenantId },
-    update: { ...conn, connectedAt: new Date(), lastSyncAt: null, syncError: null },
+    update: { ...conn, method: "OAUTH", clientCreds: null, tokenExpiresAt: null, connectedAt: new Date(), lastSyncAt: null, syncError: null },
     create: { tenantId: user.tenantId, ...conn },
   });
 

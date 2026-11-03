@@ -1,3 +1,4 @@
+import { Building2, CheckCircle2, Clock, FlaskConical } from "lucide-react";
 import Link from "next/link";
 import CreateAccountForm from "@/components/CreateAccountForm";
 import { Badge, Card, CardHeader, PageHeader, Stat, Table, Td, Th } from "@/components/ui";
@@ -27,10 +28,10 @@ export default async function AdminHome() {
       <PageHeader title="Accounts" description="Create store accounts, give demo access for a few days, and manage subscriptions." />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat label="Total accounts" value={tenants.length} />
-        <Stat label="Active" value={active} />
-        <Stat label="Demo accounts" value={tenants.filter((t) => t.isDemo).length} />
-        <Stat label="Ending in 2 days" value={expiringSoon} tone={expiringSoon ? "warn" : undefined} hint={expiringSoon ? "Follow up with these" : undefined} />
+        <Stat icon={Building2} label="Total accounts" value={tenants.length} />
+        <Stat icon={CheckCircle2} chip="green" label="Active" value={active} />
+        <Stat icon={FlaskConical} chip="violet" label="Demo accounts" value={tenants.filter((t) => t.isDemo).length} />
+        <Stat icon={Clock} chip="amber" label="Ending in 2 days" value={expiringSoon} tone={expiringSoon ? "warn" : undefined} hint={expiringSoon ? "Follow up with these" : undefined} />
       </div>
 
       <Card>

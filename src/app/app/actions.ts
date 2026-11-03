@@ -8,7 +8,8 @@ import { adapters, COURIER_INFO } from "@/lib/couriers";
 import { encrypt, hashPassword, verifyPassword } from "@/lib/crypto";
 import { db } from "@/lib/db";
 import { bookOrder, refreshTracking } from "@/lib/shipping";
-import { normalizeShop, shopInfo, syncStore } from "@/lib/shopify";
+import { clientCredentialsToken, normalizeShop, registerWebhooks, shopInfo, syncStore } from "@/lib/shopify";
+import { IMPORT_COLUMNS, parseCsv } from "@/lib/csv";
 
 export type Result = { ok: boolean; message: string };
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -45,7 +46,9 @@ export async function bookOrders(ids: number[], courier: Courier): Promise<Resul
   const user = await requireUser();
   let booked = 0;
   const errors: string[] = [];
-  for (const id of ids) {
+  const open = await db.order.findMany({ where: { tenantId: user.tenantId, id: { in: ids }, status: { in: ["NEW", "CONFIRMED"] } }, select: { id: true } });
+  if (!open.length) return { ok: false, message: "Nothing to book — the selected orders are already booked or closed." };
+  for (const { id } of open) {
     try {
       await bookOrder(user.tenantId, id, courier, user.name, user.tenant.isDemo);
       booked++;
@@ -206,13 +209,50 @@ export async function connectShopifyWithToken(_: Result | undefined, form: FormD
   }
   await db.shopifyConnection.upsert({
     where: { tenantId: user.tenantId },
-    update: { ...conn, method: "TOKEN", connectedAt: new Date(), lastSyncAt: null, syncError: null },
+    update: { ...conn, method: "TOKEN", clientCreds: null, tokenExpiresAt: null, connectedAt: new Date(), lastSyncAt: null, syncError: null },
     create: { tenantId: user.tenantId, ...conn, method: "TOKEN" },
   });
   try {
     const r = await syncStore(user.tenantId);
     refresh();
     return { ok: true, message: `Connected ${shop} — imported ${r.created} orders and ${r.products} products.` };
+  } catch (e) {
+    refresh();
+    return { ok: false, message: `Connected, but the first sync failed: ${errMsg(e)}` };
+  }
+}
+
+export async function connectShopifyWithClient(_: Result | undefined, form: FormData): Promise<Result> {
+  const user = await requireOwner();
+  const shop = normalizeShop(String(form.get("shop") ?? ""));
+  const clientId = String(form.get("clientId") ?? "").trim();
+  const clientSecret = String(form.get("clientSecret") ?? "").trim();
+  if (!shop) return { ok: false, message: "Enter your store address, e.g. yourstore.myshopify.com" };
+  if (!clientId || !clientSecret) return { ok: false, message: "Paste both the Client ID and the Client secret." };
+  const taken = await db.shopifyConnection.findUnique({ where: { shopDomain: shop } });
+  if (taken && taken.tenantId !== user.tenantId) return { ok: false, message: "This store is already connected to another account." };
+  let t;
+  try {
+    t = await clientCredentialsToken(shop, clientId, clientSecret);
+  } catch (e) {
+    return { ok: false, message: errMsg(e) };
+  }
+  const conn = { shopDomain: shop, accessToken: encrypt(t.token), clientCreds: encrypt(JSON.stringify({ clientId, clientSecret })), tokenExpiresAt: t.expiresAt, scope: t.scope };
+  try {
+    await shopInfo(conn);
+  } catch (e) {
+    return { ok: false, message: errMsg(e) };
+  }
+  const saved = await db.shopifyConnection.upsert({
+    where: { tenantId: user.tenantId },
+    update: { ...conn, method: "CLIENT", connectedAt: new Date(), lastSyncAt: null, syncError: null },
+    create: { tenantId: user.tenantId, ...conn, method: "CLIENT" },
+  });
+  await registerWebhooks(saved).catch(() => null);
+  try {
+    const r = await syncStore(user.tenantId);
+    refresh();
+    return { ok: true, message: `Connected ${shop} — imported ${r.created} orders and ${r.products} products. New orders now arrive automatically.` };
   } catch (e) {
     refresh();
     return { ok: false, message: `Connected, but the first sync failed: ${errMsg(e)}` };
@@ -292,4 +332,138 @@ export async function removeStaff(userId: number) {
   const user = await requireOwner();
   await db.user.deleteMany({ where: { id: userId, tenantId: user.tenantId, role: "STAFF" } });
   refresh();
+}
+
+// ── Blocked numbers ───────────────────────────────────────────────────────
+
+export async function blockPhone(phone: string, reason: string): Promise<Result> {
+  const user = await requireUser();
+  const p = phone.trim();
+  if (!p) return { ok: false, message: "Enter a phone number." };
+  await db.blockedPhone.upsert({
+    where: { tenantId_phone: { tenantId: user.tenantId, phone: p } },
+    update: { reason: reason || null },
+    create: { tenantId: user.tenantId, phone: p, reason: reason || null, by: user.name },
+  });
+  refresh();
+  return { ok: true, message: `${p} blocked — orders from this number can't be booked.` };
+}
+
+export async function unblockPhone(phone: string): Promise<Result> {
+  const user = await requireUser();
+  await db.blockedPhone.deleteMany({ where: { tenantId: user.tenantId, phone } });
+  refresh();
+  return { ok: true, message: `${phone} unblocked.` };
+}
+
+export async function blockPhoneForm(_: Result | undefined, form: FormData): Promise<Result> {
+  return blockPhone(String(form.get("phone") ?? ""), String(form.get("reason") ?? "").trim());
+}
+
+// ── Expenses ──────────────────────────────────────────────────────────────
+
+export async function addExpense(_: Result | undefined, form: FormData): Promise<Result> {
+  const user = await requireUser();
+  const amount = Number(form.get("amount"));
+  const category = String(form.get("category") ?? "").trim() || "Other";
+  const date = new Date(String(form.get("date") ?? "") || Date.now());
+  if (!(amount > 0)) return { ok: false, message: "Enter an amount above zero." };
+  if (Number.isNaN(date.getTime())) return { ok: false, message: "Enter a valid date." };
+  await db.expense.create({ data: { tenantId: user.tenantId, amount, category, date, note: String(form.get("note") ?? "").trim() || null, by: user.name } });
+  refresh();
+  return { ok: true, message: `Added Rs ${Math.round(amount).toLocaleString("en-PK")} for ${category}.` };
+}
+
+export async function deleteExpense(id: number) {
+  const user = await requireUser();
+  await db.expense.deleteMany({ where: { id, tenantId: user.tenantId } });
+  refresh();
+}
+
+// ── Store details (slips & messages) ──────────────────────────────────────
+
+export async function updateStoreDetails(_: Result | undefined, form: FormData): Promise<Result> {
+  const user = await requireOwner();
+  const get = (k: string) => String(form.get(k) ?? "").trim();
+  if (!get("name")) return { ok: false, message: "Store name can't be empty." };
+  await db.tenant.update({ where: { id: user.tenantId }, data: { name: get("name"), phone: get("phone") || null, address: get("address") || null } });
+  refresh();
+  return { ok: true, message: "Store details saved." };
+}
+
+// ── CSV import ────────────────────────────────────────────────────────────
+
+export type ImportResult = Result & { errors?: string[] };
+
+export async function importOrders(_: ImportResult | undefined, form: FormData): Promise<ImportResult> {
+  const user = await requireUser();
+  const file = form.get("file");
+  if (!(file instanceof File) || !file.size) return { ok: false, message: "Choose a CSV file first." };
+  if (file.size > 5 * 1024 * 1024) return { ok: false, message: "File is too large (max 5 MB)." };
+  const rows = parseCsv(await file.text());
+  if (rows.length < 2) return { ok: false, message: "The file has no orders — keep the header row and add one order per row." };
+
+  const header = rows[0].map((h) => h.trim().toLowerCase().replace(/\s+/g, "_"));
+  const missing = IMPORT_COLUMNS.filter((c) => c.required && !header.includes(c.key)).map((c) => c.key);
+  if (missing.length) return { ok: false, message: `Missing column${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}. Download the template to see the exact headings.` };
+  if (rows.length > 2001) return { ok: false, message: "Import up to 2,000 rows at a time." };
+
+  const products = await db.product.findMany({ where: { tenantId: user.tenantId }, select: { id: true, title: true, sku: true } });
+  const bySku = new Map(products.filter((p) => p.sku).map((p) => [p.sku!.toLowerCase(), p]));
+  const byTitle = new Map(products.map((p) => [p.title.toLowerCase(), p]));
+
+  type Draft = { number: string | null; name: string; phone: string; city: string; address: string; ship: number; payment: "COD" | "PREPAID"; notes: string; items: { title: string; sku: string | null; qty: number; price: number; productId: number | null }[] };
+  const drafts = new Map<string, Draft>();
+  const errors: string[] = [];
+  rows.slice(1).forEach((r, i) => {
+    const line = i + 2;
+    const v = (k: string) => (r[header.indexOf(k)] ?? "").trim();
+    const need = ["customer_name", "phone", "city", "address", "product", "price"].filter((k) => !v(k));
+    if (need.length) { errors.push(`Row ${line}: ${need.join(", ")} empty`); return; }
+    const price = Number(v("price").replace(/[^\d.]/g, ""));
+    const qty = v("qty") ? Number(v("qty")) : 1;
+    if (!(price >= 0) || !Number.isFinite(price)) { errors.push(`Row ${line}: price "${v("price")}" is not a number`); return; }
+    if (!Number.isInteger(qty) || qty < 1) { errors.push(`Row ${line}: qty "${v("qty")}" must be a whole number`); return; }
+    const pay = v("payment").toUpperCase();
+    if (pay && pay !== "COD" && pay !== "PREPAID") { errors.push(`Row ${line}: payment must be COD or PREPAID`); return; }
+    const product = (v("sku") && bySku.get(v("sku").toLowerCase())) || byTitle.get(v("product").toLowerCase()) || null;
+    const key = v("order_number") || `row-${line}`;
+    const d = drafts.get(key) ?? {
+      number: v("order_number") || null, name: v("customer_name"), phone: v("phone"), city: v("city"), address: v("address"),
+      ship: Number(v("shipping_fee").replace(/[^\d.]/g, "")) || 0, payment: pay === "PREPAID" ? "PREPAID" : "COD", notes: v("notes"), items: [],
+    };
+    d.items.push({ title: product?.title ?? v("product"), sku: product?.sku ?? (v("sku") || null), qty, price, productId: product?.id ?? null });
+    drafts.set(key, d);
+  });
+
+  if (!drafts.size) return { ok: false, message: "No valid rows to import.", errors: errors.slice(0, 20) };
+
+  const existing = new Set(
+    (await db.order.findMany({ where: { tenantId: user.tenantId, number: { in: [...drafts.values()].map((d) => d.number).filter((n): n is string => Boolean(n)) } }, select: { number: true } })).map((o) => o.number),
+  );
+  let seq = await db.order.count({ where: { tenantId: user.tenantId, number: { startsWith: "I-" } } });
+  let created = 0;
+  for (const d of drafts.values()) {
+    if (d.number && existing.has(d.number)) { errors.push(`Order ${d.number} already exists — skipped`); continue; }
+    const subtotal = d.items.reduce((s, i) => s + i.qty * i.price, 0);
+    await db.order.create({
+      data: {
+        tenantId: user.tenantId, source: "MANUAL", number: d.number ?? `I-${1001 + seq++}`,
+        customerName: d.name, phone: d.phone, city: d.city, address: d.address,
+        subtotal, shippingFee: d.ship, total: subtotal + d.ship, paymentMethod: d.payment, status: "CONFIRMED",
+        items: { create: d.items },
+        activity: { create: [
+          { tenantId: user.tenantId, by: user.name, message: `Imported from ${file.name}` },
+          ...(d.notes ? [{ tenantId: user.tenantId, by: user.name, message: `Note: ${d.notes}` }] : []),
+        ] },
+      },
+    });
+    created++;
+  }
+  refresh();
+  return {
+    ok: created > 0,
+    message: `${created} order${created === 1 ? "" : "s"} imported as Confirmed — ready to book.${errors.length ? ` ${errors.length} row${errors.length === 1 ? "" : "s"} skipped.` : ""}`,
+    errors: errors.slice(0, 20),
+  };
 }

@@ -1,3 +1,4 @@
+import { AlertTriangle, PackageCheck, Truck, Undo2 } from "lucide-react";
 import Link from "next/link";
 import type { Prisma } from "@/generated/prisma/client";
 import ActionButton from "@/components/ActionButton";
@@ -56,10 +57,10 @@ export default async function ShipmentsPage({ searchParams }: { searchParams: Pr
         actions={<ActionButton action={refreshShipments.bind(null, undefined)} label="Refresh tracking" pendingLabel="Checking couriers…" />}
       />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Stat label="In transit" value={n(OPEN)} hint={`${money(codOpen)} COD on the way`} />
-        <Stat label="Delivered" value={delivered} />
-        <Stat label="Returned" value={returned} hint={delivered + returned ? `${((returned / (delivered + returned)) * 100).toFixed(1)}% return rate` : undefined} tone={returned ? "bad" : undefined} />
-        <Stat label="Stuck 5+ days" value={stuck} tone={stuck ? "warn" : undefined} hint={stuck ? "Follow up with the courier" : "All moving"} />
+        <Stat icon={Truck} chip="blue" label="In transit" value={n(OPEN)} hint={`${money(codOpen)} COD on the way`} />
+        <Stat icon={PackageCheck} chip="green" label="Delivered" value={delivered} />
+        <Stat icon={Undo2} chip="red" label="Returned" value={returned} hint={delivered + returned ? `${((returned / (delivered + returned)) * 100).toFixed(1)}% return rate` : undefined} tone={returned ? "bad" : undefined} />
+        <Stat icon={AlertTriangle} chip="amber" label="Stuck 5+ days" value={stuck} tone={stuck ? "warn" : undefined} hint={stuck ? "Follow up with the courier" : "All moving"} />
       </div>
 
       <Tabs active={filter} tabs={(Object.keys(TABS) as (keyof typeof TABS)[]).map((k) => ({ key: k, label: TABS[k], href: link({ filter: k }) }))} />
@@ -71,7 +72,7 @@ export default async function ShipmentsPage({ searchParams }: { searchParams: Pr
             {couriers.map((c) => <option key={c.courier} value={c.courier}>{courierName(c.courier)}</option>)}
           </select>
           <input name="q" defaultValue={q} placeholder="Tracking number, order # or name" className={`${inputCls} max-w-xs`} />
-          <button className="h-9 px-3 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Filter</button>
+          <button className="h-10 px-4 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-800 hover:bg-gray-50">Filter</button>
         </form>
         {rows.length === 0 ? (
           <Empty title="No parcels here" />

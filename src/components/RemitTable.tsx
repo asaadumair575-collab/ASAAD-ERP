@@ -31,7 +31,7 @@ export default function RemitTable({ rows }: { rows: RemitRow[] }) {
           <thead>
             <tr>
               <th className="w-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200">
-                <input type="checkbox" aria-label="Select all" className="accent-gray-900" checked={rows.length > 0 && selected.length === rows.length} onChange={(e) => setSelected(e.target.checked ? rows.map((r) => r.id) : [])} />
+                <input type="checkbox" aria-label="Select all" className="accent-gray-950" checked={rows.length > 0 && selected.length === rows.length} onChange={(e) => setSelected(e.target.checked ? rows.map((r) => r.id) : [])} />
               </th>
               {["Tracking", "Order", "Customer", "Courier", "Delivered", "COD", "Payment"].map((h, i) => (
                 <th key={h} className={`px-4 py-2.5 text-xs font-medium text-gray-500 bg-gray-50 border-b border-gray-200 ${i === 5 ? "text-right" : "text-left"}`}>{h}</th>
@@ -42,7 +42,7 @@ export default function RemitTable({ rows }: { rows: RemitRow[] }) {
             {rows.map((r) => (
               <tr key={r.id}>
                 <td className="px-4 py-3 border-b border-gray-100">
-                  <input type="checkbox" aria-label={`Select ${r.tracking}`} className="accent-gray-900" checked={selected.includes(r.id)} onChange={(e) => setSelected((s) => (e.target.checked ? [...s, r.id] : s.filter((x) => x !== r.id)))} />
+                  <input type="checkbox" aria-label={`Select ${r.tracking}`} className="accent-gray-950" checked={selected.includes(r.id)} onChange={(e) => setSelected((s) => (e.target.checked ? [...s, r.id] : s.filter((x) => x !== r.id)))} />
                 </td>
                 <td className="px-4 py-3 border-b border-gray-100 font-mono text-xs">{r.tracking}</td>
                 <td className="px-4 py-3 border-b border-gray-100">{r.order}</td>

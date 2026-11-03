@@ -1,8 +1,8 @@
 import { after } from "next/server";
-import AppNav from "@/components/AppNav";
+import AppShell from "@/components/AppNav";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { daysLeft, msSince } from "@/lib/format";
+import { APP_NAME, daysLeft, fmtDate, msSince, timeAgo } from "@/lib/format";
 import { refreshTracking } from "@/lib/shipping";
 import { syncStore } from "@/lib/shopify";
 import { logout } from "../login/actions";
@@ -15,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const user = await requireUser();
   const [newOrders, shopify] = await Promise.all([
     db.order.count({ where: { tenantId: user.tenantId, status: "NEW" } }),
-    db.shopifyConnection.findUnique({ where: { tenantId: user.tenantId }, select: { lastSyncAt: true } }),
+    db.shopifyConnection.findUnique({ where: { tenantId: user.tenantId }, select: { lastSyncAt: true, syncError: true } }),
   ]);
 
   // Keep data fresh while people use the app: pull new Shopify orders and
@@ -28,23 +28,28 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   });
 
   const left = daysLeft(user.tenant.expiresAt);
+  const planName = user.tenant.isDemo ? "Demo account" : `${user.tenant.plan.charAt(0)}${user.tenant.plan.slice(1).toLowerCase()} plan`;
+  const info = {
+    appName: APP_NAME,
+    storeName: user.tenant.name,
+    userName: user.name,
+    role: user.role === "OWNER" ? "Owner" : "Staff",
+    newOrders,
+    shopify: !shopify && user.tenant.isDemo ? "demo store data" : shopify ? (shopify.syncError ? "sync error" : shopify.lastSyncAt ? `synced ${timeAgo(shopify.lastSyncAt)}` : "connected") : null,
+    plan: {
+      label: `${planName} · Active`,
+      note: left === null ? "No end date" : left <= 0 ? "Ends today" : `${left} day${left === 1 ? "" : "s"} left · ends ${fmtDate(user.tenant.expiresAt!)}`,
+      warn: left !== null && left <= 3,
+    },
+  };
   return (
-    <div className="flex h-dvh overflow-hidden">
-      <AppNav newOrders={newOrders} storeName={user.tenant.name} />
-      <div className="flex-1 flex flex-col min-w-0">
-        {left !== null && left <= 7 && (
-          <div className="bg-amber-50 border-b border-amber-200 text-amber-900 text-sm px-4 py-2 text-center">
-            {user.tenant.isDemo ? "Demo account" : "Your plan"} — {left <= 0 ? "ends today" : `${left} day${left === 1 ? "" : "s"} left`}. Contact us to continue.
-          </div>
-        )}
-        <header className="h-14 shrink-0 flex items-center justify-end gap-4 px-4 sm:px-6 bg-white border-b border-gray-200">
-          <span className="text-sm text-gray-600 hidden sm:inline">{user.name}</span>
-          <form action={logout}><button className="text-sm text-gray-500 hover:text-gray-900">Sign out</button></form>
-        </header>
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">{children}</div>
-        </main>
-      </div>
-    </div>
+    <AppShell info={info} logout={logout}>
+      {left !== null && left <= 3 && (
+        <div className="mb-6 rounded-2xl bg-gray-950 text-white px-5 py-4 flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span><b>{planName}</b> — {left <= 0 ? "ends today" : `${left} day${left === 1 ? "" : "s"} left`}. Your data stays safe; contact us to continue without a break.</span>
+        </div>
+      )}
+      {children}
+    </AppShell>
   );
 }

@@ -26,7 +26,7 @@ export default function CreateAccountForm({ action, loginUrl, appName }: { actio
   return (
     <div className="space-y-4">
       {c && (
-        <div className="rounded-md border border-green-200 bg-green-50 p-4">
+        <div className="rounded-xl border border-green-200 bg-green-50 p-4">
           <p className="text-sm font-medium text-green-800">Account created for {c.store}. Share these details:</p>
           <pre className="mt-2 text-sm text-gray-800 whitespace-pre-wrap font-mono bg-white border border-green-200 rounded p-3">{message}</pre>
           <button
@@ -36,7 +36,7 @@ export default function CreateAccountForm({ action, loginUrl, appName }: { actio
               setCopied(true);
               setTimeout(() => setCopied(false), 1500);
             }}
-            className="mt-2 h-8 px-3 rounded-md bg-gray-900 text-white text-xs font-medium"
+            className="mt-2 h-8 px-3 rounded-xl bg-gray-950 text-white text-xs font-medium"
           >
             {copied ? "Copied" : "Copy message"}
           </button>
@@ -92,7 +92,7 @@ export default function CreateAccountForm({ action, loginUrl, appName }: { actio
           </select>
         </label>
         <label className="sm:col-span-2 flex items-start gap-2 text-sm text-gray-700">
-          <input name="sample" type="checkbox" defaultChecked className="mt-0.5 accent-gray-900" />
+          <input name="sample" type="checkbox" defaultChecked className="mt-0.5 accent-gray-950" />
           <span>
             Fill with sample data (demo store)
             <span className="block text-xs text-gray-500">Adds products and 6 weeks of orders with a simulated courier, so the account looks live right away. Leave off for a real customer who will connect their own Shopify.</span>
@@ -100,7 +100,7 @@ export default function CreateAccountForm({ action, loginUrl, appName }: { actio
         </label>
         {state?.error && <p className="sm:col-span-2 text-sm text-red-600">{state.error}</p>}
         <div className="sm:col-span-2">
-          <button type="submit" disabled={pending} className="h-9 px-4 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-60">
+          <button type="submit" disabled={pending} className="h-10 px-4 rounded-xl bg-gray-950 text-white text-sm font-semibold hover:bg-gray-800 disabled:opacity-60">
             {pending ? "Creating…" : "Create account"}
           </button>
         </div>

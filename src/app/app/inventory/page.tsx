@@ -1,3 +1,4 @@
+import { AlertTriangle, Boxes, Layers, Wallet } from "lucide-react";
 import { Badge, Card, CardHeader, Empty, PageHeader, Stat, Table, Tabs, Td, Th, btn, inputCls } from "@/components/ui";
 
 const numCls = inputCls.replace("w-full ", "");
@@ -39,10 +40,10 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     <div className="space-y-6">
       <PageHeader title="Inventory" description={hasShopify ? "Products and stock sync from Shopify. Add your cost price to see real profit." : "Add your products to track stock and profit."} />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat label="Products" value={products.length} />
-        <Stat label="Units in stock" value={products.reduce((s, p) => s + p.stock, 0).toLocaleString()} />
-        <Stat label="Low or out of stock" value={low} tone={low ? "warn" : undefined} />
-        <Stat label="Stock value (at cost)" value={money(stockValue)} hint={products.some((p) => p.cost == null) ? "Some products have no cost" : undefined} />
+        <Stat icon={Boxes} chip="blue" label="Products" value={products.length} />
+        <Stat icon={Layers} chip="green" label="Units in stock" value={products.reduce((s, p) => s + p.stock, 0).toLocaleString()} />
+        <Stat icon={AlertTriangle} chip="amber" label="Low or out of stock" value={low} tone={low ? "warn" : undefined} />
+        <Stat icon={Wallet} label="Stock value (at cost)" value={money(stockValue)} hint={products.some((p) => p.cost == null) ? "Some products have no cost" : undefined} />
       </div>
 
       <div>
@@ -51,7 +52,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           <form className="p-3 border-b border-gray-200 flex gap-2">
             {filter === "low" && <input type="hidden" name="filter" value="low" />}
             <input name="q" defaultValue={sp.q ?? ""} placeholder="Search product or SKU" className={`${inputCls} max-w-xs`} />
-            <button className="h-9 px-3 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Search</button>
+            <button className="h-10 px-4 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-800 hover:bg-gray-50">Search</button>
           </form>
           {rows.length === 0 ? (
             <Empty title="No products">{hasShopify ? "Products appear after the next Shopify sync." : "Connect Shopify or add a product below."}</Empty>

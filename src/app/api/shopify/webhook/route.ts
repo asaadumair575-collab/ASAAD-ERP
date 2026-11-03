@@ -1,15 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { upsertShopifyOrder, verifyWebhook } from "@/lib/shopify";
+import { upsertShopifyOrder, verifyWebhook, webhookSecretFor } from "@/lib/shopify";
 
-// Shopify pushes new and changed orders here (registered on OAuth connect).
+// Shopify pushes new and changed orders here (registered when a store
+// connects through OAuth or with its own app's Client ID + secret).
 export async function POST(req: NextRequest) {
   const raw = await req.text();
-  if (!verifyWebhook(raw, req.headers.get("x-shopify-hmac-sha256"))) return new NextResponse("Unauthorized", { status: 401 });
-
   const topic = req.headers.get("x-shopify-topic") ?? "";
   const shop = req.headers.get("x-shopify-shop-domain") ?? "";
-  const conn = await db.shopifyConnection.findUnique({ where: { shopDomain: shop } });
+  const conn = shop ? await db.shopifyConnection.findUnique({ where: { shopDomain: shop } }) : null;
+  const secret = conn ? webhookSecretFor(conn) : process.env.SHOPIFY_API_SECRET;
+  if (!verifyWebhook(raw, req.headers.get("x-shopify-hmac-sha256"), secret)) return new NextResponse("Unauthorized", { status: 401 });
   if (!conn) return NextResponse.json({ ok: true });
 
   const body = JSON.parse(raw);

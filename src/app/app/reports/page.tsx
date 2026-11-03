@@ -53,7 +53,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         actions={
           <div className="flex gap-1">
             {(Object.keys(RANGES) as (keyof typeof RANGES)[]).map((k) => (
-              <a key={k} href={`/app/reports?days=${k}`} className={`h-8 px-3 inline-flex items-center rounded-md text-xs font-medium ${range === k ? "bg-gray-900 text-white" : "border border-gray-300 text-gray-700 hover:bg-gray-50"}`}>{RANGES[k]}</a>
+              <a key={k} href={`/app/reports?days=${k}`} className={`h-8 px-3 inline-flex items-center rounded-xl text-xs font-medium ${range === k ? "bg-gray-950 text-white" : "border border-gray-200 text-gray-700 hover:bg-gray-50"}`}>{RANGES[k]}</a>
             ))}
           </div>
         }

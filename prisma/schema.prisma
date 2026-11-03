@@ -82,9 +82,14 @@ model Tenant {
   expiresAt DateTime?
   isDemo    Boolean      @default(false)
   notes     String?
+  // Shown on packing slips and in WhatsApp messages
+  phone     String?
+  address   String?
   createdAt DateTime     @default(now())
 
   users     User[]
+  blocked   BlockedPhone[]
+  expenses  Expense[]
   shopify   ShopifyConnection?
   couriers  CourierAccount[]
   products  Product[]
@@ -116,6 +121,10 @@ model ShopifyConnection {
   shopDomain  String    @unique
   // Encrypted with APP_SECRET (src/lib/crypto.ts)
   accessToken String
+  // Dev Dashboard apps: encrypted {clientId, clientSecret}; the access token
+  // is fetched with the client credentials grant and refreshed every 24 h.
+  clientCreds    String?
+  tokenExpiresAt DateTime?
   scope       String?
   method      String    @default("OAUTH")
   connectedAt DateTime  @default(now())
@@ -261,4 +270,32 @@ model Activity {
 
   @@index([orderId])
   @@index([tenantId, createdAt])
+}
+
+// Phone numbers the store refuses to ship to (fake orders, repeat returns).
+model BlockedPhone {
+  id        Int      @id @default(autoincrement())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId  Int
+  phone     String
+  reason    String?
+  by        String?
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, phone])
+}
+
+// Running costs (ads, packaging, salaries…) used for net profit.
+model Expense {
+  id        Int      @id @default(autoincrement())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId  Int
+  date      DateTime
+  category  String
+  amount    Float
+  note      String?
+  by        String?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, date])
 }

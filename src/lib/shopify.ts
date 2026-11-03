@@ -1,11 +1,12 @@
 import { createHmac } from "crypto";
 import type { Prisma } from "@/generated/prisma/client";
-import { decrypt, safeEqual } from "./crypto";
+import { decrypt, encrypt, safeEqual } from "./crypto";
 import { db } from "./db";
 
-// Shopify Admin REST API. Stores connect either through our Shopify app
-// (OAuth — needs SHOPIFY_API_KEY / SHOPIFY_API_SECRET) or by pasting an
-// Admin API access token from an existing custom app.
+// Shopify Admin REST API. Stores connect through our Shopify app (OAuth —
+// needs SHOPIFY_API_KEY / SHOPIFY_API_SECRET), with the Client ID + secret of
+// their own Dev Dashboard app (client credentials grant), or by pasting an
+// Admin API access token (shpat_…) from an older custom app.
 
 export const SHOPIFY_API_VERSION = "2026-07";
 export const SHOPIFY_SCOPES = "read_orders,read_products,read_customers,read_inventory,read_merchant_managed_fulfillment_orders,write_merchant_managed_fulfillment_orders";
@@ -35,19 +36,51 @@ export function verifyOAuthQuery(params: URLSearchParams) {
   return safeEqual(digest, hmac);
 }
 
-export function verifyWebhook(rawBody: string, hmacHeader: string | null) {
-  if (!hmacHeader || !process.env.SHOPIFY_API_SECRET) return false;
-  const digest = createHmac("sha256", process.env.SHOPIFY_API_SECRET).update(rawBody, "utf8").digest("base64");
+export function verifyWebhook(rawBody: string, hmacHeader: string | null, secret = process.env.SHOPIFY_API_SECRET) {
+  if (!hmacHeader || !secret) return false;
+  const digest = createHmac("sha256", secret).update(rawBody, "utf8").digest("base64");
   return safeEqual(digest, hmacHeader);
 }
 
-type Conn = { shopDomain: string; accessToken: string };
+type Conn = { id?: number; shopDomain: string; accessToken: string; clientCreds?: string | null; tokenExpiresAt?: Date | null };
+
+// Client credentials grant (Dev Dashboard app installed on the merchant's own
+// store): exchanges the app's client ID + secret for a 24-hour Admin API token.
+export async function clientCredentialsToken(shop: string, clientId: string, clientSecret: string) {
+  const res = await fetch(`https://${shop}/admin/oauth/access_token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "client_credentials", client_id: clientId, client_secret: clientSecret }),
+    cache: "no-store",
+    signal: AbortSignal.timeout(20000),
+  });
+  const text = await res.text();
+  let body: { access_token?: string; expires_in?: number; scope?: string; error?: string; error_description?: string } = {};
+  try { body = JSON.parse(text); } catch { /* not JSON */ }
+  if (!res.ok || !body.access_token) {
+    const why = body.error_description || body.error || text.slice(0, 160) || `HTTP ${res.status}`;
+    if (/shop_not_permitted/.test(why)) throw new Error("Shopify says this app isn't allowed on this store — create the app from the same Shopify account that owns the store, then install it on the store (see Help → Connect Shopify).");
+    throw new Error(`Shopify didn't accept the Client ID / secret: ${why}`);
+  }
+  return { token: body.access_token, expiresAt: new Date(Date.now() + ((body.expires_in ?? 86399) - 300) * 1000), scope: body.scope ?? null };
+}
+
+async function tokenFor(conn: Conn) {
+  if (conn.clientCreds && (!conn.tokenExpiresAt || conn.tokenExpiresAt.getTime() < Date.now() + 60_000)) {
+    const { clientId, clientSecret } = JSON.parse(decrypt(conn.clientCreds)) as { clientId: string; clientSecret: string };
+    const t = await clientCredentialsToken(conn.shopDomain, clientId, clientSecret);
+    conn.accessToken = encrypt(t.token);
+    conn.tokenExpiresAt = t.expiresAt;
+    if (conn.id) await db.shopifyConnection.update({ where: { id: conn.id }, data: { accessToken: conn.accessToken, tokenExpiresAt: t.expiresAt } }).catch(() => null);
+  }
+  return decrypt(conn.accessToken);
+}
 
 async function api(conn: Conn, path: string, init?: RequestInit) {
   const url = path.startsWith("https://") ? path : `https://${conn.shopDomain}/admin/api/${SHOPIFY_API_VERSION}/${path}`;
   const res = await fetch(url, {
     ...init,
-    headers: { "X-Shopify-Access-Token": decrypt(conn.accessToken), "Content-Type": "application/json", ...(init?.headers ?? {}) },
+    headers: { "X-Shopify-Access-Token": await tokenFor(conn), "Content-Type": "application/json", ...(init?.headers ?? {}) },
     cache: "no-store",
     signal: AbortSignal.timeout(25000),
   });
@@ -224,6 +257,13 @@ export async function syncStore(tenantId: number) {
     await db.shopifyConnection.update({ where: { tenantId }, data: { syncError: msg } });
     throw e;
   }
+}
+
+// Secret Shopify signs a store's webhooks with: the merchant's own app secret
+// for client-credential connections, otherwise ours.
+export function webhookSecretFor(conn: { clientCreds?: string | null }) {
+  if (conn.clientCreds) return (JSON.parse(decrypt(conn.clientCreds)) as { clientSecret: string }).clientSecret;
+  return process.env.SHOPIFY_API_SECRET;
 }
 
 export async function registerWebhooks(conn: Conn) {

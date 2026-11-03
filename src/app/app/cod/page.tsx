@@ -4,6 +4,9 @@ import { requireUser } from "@/lib/auth";
 import { courierName } from "@/lib/couriers";
 import { db } from "@/lib/db";
 import { fmtDate, money, daysAgo } from "@/lib/format";
+import { profitSummary } from "@/lib/profit";
+import { Banknote, Clock, Truck, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
 export default async function CodPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const user = await requireUser();
@@ -11,7 +14,7 @@ export default async function CodPage({ searchParams }: { searchParams: Promise<
   const t = user.tenantId;
   const since = daysAgo(30);
 
-  const [byCourier, list, delivered30, returned30] = await Promise.all([
+  const [byCourier, list, p] = await Promise.all([
     db.shipment.groupBy({ by: ["courier", "status", "codRemitted"], where: { tenantId: t, codAmount: { gt: 0 } }, _sum: { codAmount: true }, _count: true }),
     db.shipment.findMany({
       where: { tenantId: t, status: "DELIVERED", codAmount: { gt: 0 }, codRemitted: view === "received" },
@@ -19,11 +22,7 @@ export default async function CodPage({ searchParams }: { searchParams: Promise<
       take: 200,
       include: { order: { select: { number: true, customerName: true } } },
     }),
-    db.order.findMany({
-      where: { tenantId: t, status: "DELIVERED", placedAt: { gte: since } },
-      select: { total: true, shipment: { select: { courierCharge: true } }, items: { select: { qty: true, product: { select: { cost: true } } } } },
-    }),
-    db.shipment.aggregate({ where: { tenantId: t, status: "RETURNED", bookedAt: { gte: since } }, _sum: { courierCharge: true }, _count: true }),
+    profitSummary(t, since),
   ]);
 
   const sum = (f: (r: (typeof byCourier)[number]) => boolean) => byCourier.filter(f).reduce((a, r) => a + (r._sum.codAmount ?? 0), 0);
@@ -32,21 +31,14 @@ export default async function CodPage({ searchParams }: { searchParams: Promise<
   const transit = sum((r) => ["BOOKED", "IN_TRANSIT", "OUT_FOR_DELIVERY"].includes(r.status));
   const couriers = [...new Set(byCourier.map((r) => r.courier))];
 
-  const revenue = delivered30.reduce((a, o) => a + o.total, 0);
-  const productCost = delivered30.reduce((a, o) => a + o.items.reduce((s, i) => s + i.qty * (i.product?.cost ?? 0), 0), 0);
-  const missingCost = delivered30.some((o) => o.items.some((i) => i.product?.cost == null));
-  const shipping = delivered30.reduce((a, o) => a + (o.shipment?.courierCharge ?? 0), 0);
-  const returnLoss = returned30._sum.courierCharge ?? 0;
-  const profit = revenue - productCost - shipping - returnLoss;
-
   return (
     <div className="space-y-6">
       <PageHeader title="COD & Profit" description="Track cash collected by couriers and what you actually earn." />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat label="COD received" value={money(received)} tone="good" hint="Paid into your account" />
-        <Stat label="Delivered, payment pending" value={money(pending)} tone={pending ? "warn" : undefined} hint="Couriers still owe you" />
-        <Stat label="COD in transit" value={money(transit)} hint="Parcels not delivered yet" />
-        <Stat label="Profit (30 days)" value={money(profit)} tone={profit >= 0 ? "good" : "bad"} hint={revenue ? `${((profit / revenue) * 100).toFixed(1)}% of delivered sales` : undefined} />
+        <Stat icon={Banknote} chip="green" label="COD received" value={money(received)} tone="good" hint="In your account" />
+        <Stat icon={Clock} chip="amber" label="Delivered, payment pending" value={money(pending)} tone={pending ? "warn" : undefined} hint="Couriers owe you" />
+        <Stat icon={Truck} chip="blue" label="COD in transit" value={money(transit)} hint="Not delivered yet" />
+        <Stat icon={TrendingUp} label="Net profit (30 days)" value={money(p.net)} tone={p.net >= 0 ? "good" : "bad"} hint={p.revenue ? `${((p.net / p.revenue) * 100).toFixed(1)}% margin` : undefined} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -69,14 +61,16 @@ export default async function CodPage({ searchParams }: { searchParams: Promise<
           ) : <p className="p-4 text-sm text-gray-500">No COD parcels yet.</p>}
         </Card>
         <Card>
-          <CardHeader title="Profit — last 30 days" />
-          <div className="p-4 text-sm space-y-2">
-            <div className="flex justify-between"><span className="text-gray-600">Delivered sales</span><span className="tabular-nums">{money(revenue)}</span></div>
-            <div className="flex justify-between"><span className="text-gray-600">Product cost</span><span className="tabular-nums">− {money(productCost)}</span></div>
-            <div className="flex justify-between"><span className="text-gray-600">Courier charges</span><span className="tabular-nums">− {money(shipping)}</span></div>
-            <div className="flex justify-between"><span className="text-gray-600">Returns ({returned30._count} parcels)</span><span className="tabular-nums">− {money(returnLoss)}</span></div>
-            <div className="flex justify-between font-semibold pt-2 border-t border-gray-100"><span>Profit</span><span className="tabular-nums">{money(profit)}</span></div>
-            {missingCost && <p className="text-xs text-amber-700 pt-1">Some products have no cost set — add costs in Inventory for an exact profit.</p>}
+          <CardHeader title="Profit — last 30 days" action={<Link href="/app/help#profit" className="text-xs text-gray-500 hover:text-gray-950">How is this worked out?</Link>} />
+          <div className="px-5 pb-5 text-sm space-y-2.5">
+            <div className="flex justify-between"><span className="text-gray-600">Delivered sales ({p.deliveredCount} orders)</span><span className="tabular-nums font-medium">{money(p.revenue)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-600">Product cost</span><span className="tabular-nums">− {money(p.productCost)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-600">Courier charges</span><span className="tabular-nums">− {money(p.shipping)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-600">Returns ({p.returnedCount} parcels)</span><span className="tabular-nums">− {money(p.returnLoss)}</span></div>
+            <div className="flex justify-between pt-2.5 border-t border-gray-100"><span className="text-gray-900 font-medium">Gross profit</span><span className="tabular-nums font-medium">{money(p.gross)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-600">Expenses (ads, packaging…) <Link href="/app/expenses" className="text-gray-950 underline">edit</Link></span><span className="tabular-nums">− {money(p.expenses)}</span></div>
+            <div className="flex justify-between items-center rounded-xl bg-gray-950 text-white px-4 py-3 mt-2"><span className="font-semibold">Net profit</span><span className="tabular-nums text-lg font-bold">{money(p.net)}</span></div>
+            {p.missingCost && <p className="text-xs text-amber-700 pt-1">Some products have no cost set — add costs in <Link href="/app/inventory" className="underline">Inventory</Link> for an exact profit.</p>}
           </div>
         </Card>
       </div>
