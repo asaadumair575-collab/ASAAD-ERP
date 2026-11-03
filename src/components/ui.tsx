@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
+import ResponsiveTable from "./ResponsiveTable";
 
 // Small, plain building blocks shared by every page.
 
@@ -17,7 +18,7 @@ export function PageHeader({ title, description, actions }: { title: string; des
 }
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`bg-white border border-gray-200/70 rounded-2xl shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${className}`}>{children}</div>;
+  return <div className={`min-w-0 bg-white border border-gray-200/70 rounded-2xl shadow-[0_1px_2px_rgba(16,24,40,0.04)] ${className}`}>{children}</div>;
 }
 
 export function CardHeader({ title, action }: { title: ReactNode; action?: ReactNode }) {
@@ -52,13 +53,14 @@ export function Stat({ label, value, hint, tone, icon, chip = "dark" }: {
 }) {
   const toneCls = tone === "good" ? "text-emerald-600" : tone === "bad" ? "text-red-500" : tone === "warn" ? "text-amber-600" : "text-gray-500";
   return (
-    <Card className="p-5">
+    <Card className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-2">
         {icon ? <IconChip icon={icon} tone={chip} /> : <p className="text-sm text-gray-500">{label}</p>}
-        {hint && icon && <span className={`text-xs font-medium text-right ${toneCls}`}>{hint}</span>}
+        {hint && icon && <span className={`hidden sm:block text-xs font-medium text-right ${toneCls}`}>{hint}</span>}
       </div>
-      <p className={`text-xl sm:text-2xl font-bold tracking-tight text-gray-950 tabular-nums ${icon ? "mt-4" : "mt-1"}`}>{value}</p>
+      <p className={`text-lg sm:text-2xl font-bold tracking-tight text-gray-950 tabular-nums break-words ${icon ? "mt-3 sm:mt-4" : "mt-1"}`}>{value}</p>
       {icon && <p className="text-sm text-gray-500 mt-0.5">{label}</p>}
+      {hint && icon && <p className={`sm:hidden text-xs font-medium mt-1 ${toneCls}`}>{hint}</p>}
       {hint && !icon && <p className={`text-xs mt-1 ${toneCls}`}>{hint}</p>}
     </Card>
   );
@@ -104,11 +106,7 @@ export function Field({ label, hint, children }: { label: string; hint?: ReactNo
 }
 
 export function Table({ children }: { children: ReactNode }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">{children}</table>
-    </div>
-  );
+  return <ResponsiveTable>{children}</ResponsiveTable>;
 }
 
 export function Th({ children, right, className = "" }: { children?: ReactNode; right?: boolean; className?: string }) {

@@ -61,8 +61,8 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         <OrderActions orderId={order.id} status={order.status} shipmentId={s?.id ?? null} couriers={couriers.map((c) => ({ value: c, label: courierName(c) }))} />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6 items-start">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid lg:grid-cols-3 lg:grid-rows-[auto_1fr] gap-6 items-start">
+        <div className="lg:col-span-2 min-w-0">
           <Card>
             <CardHeader title="Items" />
             <Table>
@@ -86,25 +86,8 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
               <div className="flex justify-between font-semibold pt-1 border-t border-gray-100"><span>Total</span><span className="tabular-nums">{money(order.total)}</span></div>
             </div>
           </Card>
-
-          <Card>
-            <CardHeader title="Activity" />
-            <form action={addOrderNote.bind(null, order.id)} className="p-4 flex gap-2 border-b border-gray-100">
-              <input name="note" placeholder="Add a note (e.g. customer asked for evening delivery)" className={inputCls} />
-              <button className={btn("secondary")}>Add</button>
-            </form>
-            <ol className="p-4 space-y-3">
-              {order.activity.map((a) => (
-                <li key={a.id} className="text-sm">
-                  <p className="text-gray-900">{a.message}</p>
-                  <p className="text-xs text-gray-500">{fmtDateTime(a.createdAt)}{a.by ? ` · ${a.by}` : ""}</p>
-                </li>
-              ))}
-            </ol>
-          </Card>
         </div>
-
-        <div className="space-y-6">
+        <div className="space-y-6 lg:row-span-2 min-w-0">
           {order.phone && (
             <Card>
               <CardHeader title={<span className="inline-flex items-center gap-2"><MessageCircle className="w-4 h-4 text-emerald-600" />WhatsApp the customer</span>} />
@@ -165,6 +148,23 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
                 {(order.status === "NEW" || order.status === "CONFIRMED") && <button className={btn("secondary", "sm")}>Save details</button>}
               </form>
             </div>
+          </Card>
+        </div>
+        <div className="lg:col-span-2 min-w-0">
+          <Card>
+            <CardHeader title="Activity" />
+            <form action={addOrderNote.bind(null, order.id)} className="p-4 flex gap-2 border-b border-gray-100">
+              <input name="note" placeholder="Add a note (e.g. customer asked for evening delivery)" className={inputCls} />
+              <button className={btn("secondary")}>Add</button>
+            </form>
+            <ol className="p-4 space-y-3">
+              {order.activity.map((a) => (
+                <li key={a.id} className="text-sm">
+                  <p className="text-gray-900">{a.message}</p>
+                  <p className="text-xs text-gray-500">{fmtDateTime(a.createdAt)}{a.by ? ` · ${a.by}` : ""}</p>
+                </li>
+              ))}
+            </ol>
           </Card>
         </div>
       </div>
