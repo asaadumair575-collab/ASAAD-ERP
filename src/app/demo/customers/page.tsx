@@ -1,134 +1,90 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
-import { useDemo, useInvoiceRows } from "@/lib/demo/store";
-import { Button, Card, Field, Modal, PageHeader, Td, Th, inputCls, money } from "../_components/ui";
+import { useMemo, useState } from "react";
+import { useOrderRows } from "@/lib/demo/store";
+import { Card, Kpi, PageHeader, Td, Th, fmtDate, inputCls, money } from "../_components/ui";
+
+const SEGMENTS = ["All", "Repeat", "New", "High return"] as const;
 
 export default function CustomersPage() {
-  return (
-    <Suspense>
-      <Customers />
-    </Suspense>
-  );
-}
+  const rows = useOrderRows();
+  const [q, setQ] = useState("");
+  const [seg, setSeg] = useState<(typeof SEGMENTS)[number]>("All");
 
-function Customers() {
-  const params = useSearchParams();
-  const router = useRouter();
-  const customers = useDemo((s) => s.customers);
-  const addCustomer = useDemo((s) => s.addCustomer);
-  const rows = useInvoiceRows();
-  const [q, setQ] = useState(params.get("q") ?? "");
-  const [city, setCity] = useState("");
-  const [adding, setAdding] = useState(false);
-
-  const list = useMemo(() => {
-    const totals = new Map<number, { sales: number; balance: number; count: number; last: string }>();
+  const customers = useMemo(() => {
+    const map = new Map<number, { id: number; name: string; phone: string; city: string; orders: number; spent: number; returned: number; last: string; lastOrderId: number }>();
     for (const r of rows) {
-      const t = totals.get(r.customerId) ?? { sales: 0, balance: 0, count: 0, last: "" };
-      t.sales += r.total;
-      t.balance += r.balance;
-      t.count++;
-      if (r.date > t.last) t.last = r.date;
-      totals.set(r.customerId, t);
+      if (!r.customer) continue;
+      const c = map.get(r.customerId) ?? { id: r.customerId, name: r.customer.name, phone: r.customer.phone, city: r.customer.city, orders: 0, spent: 0, returned: 0, last: "", lastOrderId: r.id };
+      c.orders++;
+      if (r.status === "Delivered") c.spent += r.total;
+      if (r.status === "Returned") c.returned++;
+      if (r.createdAt > c.last) {
+        c.last = r.createdAt;
+        c.lastOrderId = r.id;
+      }
+      map.set(r.customerId, c);
     }
-    const qq = q.trim().toLowerCase();
-    return customers
-      .filter((c) => !city || c.city === city)
-      .filter((c) => !qq || [c.name, c.company, c.phone, c.code].some((v) => v.toLowerCase().includes(qq)))
-      .map((c) => ({ ...c, ...(totals.get(c.id) ?? { sales: 0, balance: 0, count: 0, last: "" }) }))
-      .sort((a, b) => b.sales - a.sales);
-  }, [customers, rows, q, city]);
+    return [...map.values()].sort((a, b) => b.spent - a.spent);
+  }, [rows]);
 
-  const cities = [...new Set(customers.map((c) => c.city))].sort();
-  const totalBalance = list.reduce((s, c) => s + c.balance, 0);
+  const repeat = customers.filter((c) => c.orders > 1).length;
+  const qq = q.trim().toLowerCase();
+  const list = customers.filter(
+    (c) =>
+      (seg === "All" || (seg === "Repeat" && c.orders > 1) || (seg === "New" && c.orders === 1) || (seg === "High return" && c.returned > 0 && c.returned / c.orders >= 0.5)) &&
+      (!qq || `${c.name} ${c.phone} ${c.city}`.toLowerCase().includes(qq)),
+  );
+  const totalSpent = customers.reduce((s, c) => s + c.spent, 0);
 
   return (
     <div>
-      <PageHeader
-        title="Customers"
-        subtitle={`${list.length} customers · ${money(totalBalance)} receivable`}
-        actions={<Button onClick={() => setAdding(true)}>+ Add Customer</Button>}
-      />
-
-      <Card className="p-2.5 mb-4 flex flex-wrap gap-2">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, company, phone…" className={`${inputCls} flex-1 min-w-[180px] bg-gray-50`} />
-        <select value={city} onChange={(e) => setCity(e.target.value)} className={`${inputCls} w-auto bg-gray-50`}>
-          <option value="">All cities</option>
-          {cities.map((c) => (
-            <option key={c}>{c}</option>
-          ))}
-        </select>
-      </Card>
+      <PageHeader title="Customers" subtitle="Everyone who ordered from your store, synced from Shopify." />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Kpi tone="blue" icon={<path d="M7 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM1.5 17a5.5 5.5 0 0 1 11 0" />} label="Total customers" value={customers.length.toLocaleString()} />
+        <Kpi tone="green" icon={<path d="M3 10a7 7 0 0 1 12-4.9L17 7M17 3v4h-4" />} label="Repeat customers" value={repeat.toLocaleString()} note={`${customers.length ? ((repeat / customers.length) * 100).toFixed(0) : 0}% repeat`} />
+        <Kpi tone="violet" icon={<path d="M2 5h16v10H2zM2 8h16" />} label="Avg. customer value" value={money(customers.length ? totalSpent / customers.length : 0)} />
+        <Kpi tone="red" icon={<path d="M10 3l8 14H2L10 3zM10 8v4" />} label="High-return customers" value={customers.filter((c) => c.returned > 0 && c.returned / c.orders >= 0.5).length} />
+      </div>
 
       <Card className="overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 border-b border-gray-100">
+          <div className="flex flex-wrap gap-1">
+            {SEGMENTS.map((s) => (
+              <button key={s} type="button" onClick={() => setSeg(s)} className={`text-sm font-medium px-3 py-1.5 rounded-lg ${seg === s ? "bg-[#F15A24] text-white" : "text-gray-600 hover:bg-gray-50"}`}>{s}</button>
+            ))}
+          </div>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, phone, city…" className={`${inputCls} sm:w-64 bg-gray-50`} />
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-[#FAFBFC] border-b border-gray-100">
-              <tr>
-                <Th>Customer</Th>
-                <Th>City</Th>
-                <Th>Phone</Th>
-                <Th right>Invoices</Th>
-                <Th right>Total Sales</Th>
-                <Th right>Balance</Th>
-              </tr>
+              <tr><Th>Customer</Th><Th>City</Th><Th right>Orders</Th><Th right>Returned</Th><Th right>Total spent</Th><Th>Last order</Th></tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {list.map((c) => (
-                <tr key={c.id} className="hover:bg-gray-50/60 cursor-pointer" onClick={() => router.push(`/demo/customers/${c.id}`)}>
+              {list.slice(0, 100).map((c) => (
+                <tr key={c.id} className="hover:bg-gray-50/60">
                   <Td>
                     <div className="flex items-center gap-3">
-                      <span className="w-9 h-9 rounded-full bg-[#FFF1EA] text-[#D9480F] text-xs font-semibold flex items-center justify-center shrink-0">
-                        {c.name.split(" ").map((w) => w[0]).join("")}
-                      </span>
+                      <span className="w-9 h-9 rounded-full bg-[#FFF1EA] text-[#D9480F] text-xs font-semibold flex items-center justify-center shrink-0">{c.name.split(" ").map((w) => w[0]).join("")}</span>
                       <div>
-                        <Link href={`/demo/customers/${c.id}`} className="font-medium text-gray-900 hover:text-[#F15A24]">{c.name}</Link>
-                        <div className="text-xs text-gray-400">{c.company} · {c.code}</div>
+                        <p className="font-medium text-gray-900">{c.name} {c.orders > 1 && <span className="ml-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">REPEAT</span>}</p>
+                        <p className="text-xs text-gray-400">{c.phone}</p>
                       </div>
                     </div>
                   </Td>
                   <Td className="text-gray-600">{c.city}</Td>
-                  <Td className="text-gray-600 whitespace-nowrap">{c.phone}</Td>
-                  <Td right>{c.count}</Td>
-                  <Td right className="font-semibold">{money(c.sales)}</Td>
-                  <Td right className={c.balance > 0 ? "text-[#D9480F] font-semibold" : "text-emerald-600"}>{c.balance > 0 ? money(c.balance) : "Clear"}</Td>
+                  <Td right>{c.orders}</Td>
+                  <Td right className={c.returned ? "text-red-500" : "text-gray-400"}>{c.returned}</Td>
+                  <Td right className="font-semibold">{money(c.spent)}</Td>
+                  <Td><Link href={`/demo/orders/${c.lastOrderId}`} className="text-gray-500 hover:text-[#F15A24]">{fmtDate(c.last)}</Link></Td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </Card>
-
-      {adding && (
-        <Modal title="Add Customer" onClose={() => setAdding(false)}>
-          <form
-            className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const f = new FormData(e.currentTarget);
-              const get = (k: string) => String(f.get(k) ?? "").trim();
-              const id = addCustomer({ name: get("name"), company: get("company"), city: get("city"), phone: get("phone"), email: get("email") });
-              setAdding(false);
-              router.push(`/demo/customers/${id}`);
-            }}
-          >
-            <Field label="Full name"><input name="name" required className={inputCls} placeholder="e.g. Ahmed Khan" /></Field>
-            <Field label="Company"><input name="company" className={inputCls} placeholder="e.g. Khan Traders" /></Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="City"><input name="city" required className={inputCls} placeholder="Lahore" /></Field>
-              <Field label="Phone"><input name="phone" className={inputCls} placeholder="0300-1234567" /></Field>
-            </div>
-            <Field label="Email"><input name="email" type="email" className={inputCls} placeholder="name@company.com" /></Field>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="secondary" onClick={() => setAdding(false)}>Cancel</Button>
-              <Button type="submit">Save Customer</Button>
-            </div>
-          </form>
-        </Modal>
-      )}
     </div>
   );
 }

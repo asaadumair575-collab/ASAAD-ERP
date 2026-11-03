@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import type { InvoiceStatus } from "@/lib/demo/data";
+import type { Courier, OrderStatus } from "@/lib/demo/data";
 
 export const money = (n: number) => `Rs ${Math.round(n).toLocaleString("en-PK")}`;
 export const compact = (n: number) =>
   n >= 10_000_000 ? `${+(n / 10_000_000).toFixed(1)}Cr` : n >= 100_000 ? `${+(n / 100_000).toFixed(1)}L` : n >= 1000 ? `${Math.round(n / 1000)}k` : String(n);
 export const fmtDate = (d: string) =>
-  new Date(`${d}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  new Date(d.length === 10 ? `${d}T12:00:00` : d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: React.ReactNode }) {
   return (
@@ -80,16 +80,56 @@ export function Kpi({
   );
 }
 
-const STATUS_STYLE: Record<InvoiceStatus, string> = {
-  Paid: "bg-emerald-50 text-emerald-700",
-  Partial: "bg-amber-50 text-amber-700",
-  Unpaid: "bg-gray-100 text-gray-600",
-  Overdue: "bg-red-50 text-red-600",
+const STATUS_STYLE: Record<OrderStatus, string> = {
+  New: "bg-sky-50 text-sky-700",
+  Confirmed: "bg-violet-50 text-violet-700",
+  Shipped: "bg-amber-50 text-amber-700",
+  Delivered: "bg-emerald-50 text-emerald-700",
+  Returned: "bg-red-50 text-red-600",
+  Cancelled: "bg-gray-100 text-gray-500",
 };
 
-export function StatusBadge({ status }: { status: InvoiceStatus }) {
-  return <span className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_STYLE[status]}`}>{status}</span>;
+export function StatusBadge({ status }: { status: OrderStatus }) {
+  return <span className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${STATUS_STYLE[status]}`}>{status}</span>;
 }
+
+const COURIER_STYLE: Record<Courier, string> = {
+  PostEx: "bg-[#FFF1EA] text-[#D9480F]",
+  TCS: "bg-red-50 text-red-600",
+  Leopards: "bg-yellow-50 text-yellow-700",
+};
+
+export function CourierBadge({ courier }: { courier?: Courier }) {
+  if (!courier) return <span className="text-gray-300">—</span>;
+  return <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-md ${COURIER_STYLE[courier]}`}>{courier}</span>;
+}
+
+export function ShopifyBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#5E8E3E] bg-[#F1F8EC] px-1.5 py-0.5 rounded-md">
+      <svg viewBox="0 0 20 20" className="w-3 h-3" fill="currentColor"><path d="M14.5 4.5 13 4.2c-.2-1-.8-2.2-2-2.2h-.1C10.5 1.4 10 1 9.5 1 6.8 1 5.5 4.4 5.1 6.1l-1.9.6c-.6.2-.6.2-.7.8L1 18.2 12.6 20 19 18.6 15.4 4.9c-.1-.2-.5-.4-.9-.4ZM10.8 3.6l-1.4.4c.3-1.1.8-2.1 1.5-2.4.1.5.1 1.2-.1 2Zm-1.3-1.8c.2 0 .3.1.5.2-.9.4-1.8 1.4-2.1 3.3L6.5 5.6c.4-1.3 1.3-3.8 3-3.8Z" /></svg>
+      Shopify
+    </span>
+  );
+}
+
+// Time helpers live at module level so pages don't read the clock directly
+// while rendering.
+export const isoDaysAgo = (days: number) => new Date(Date.now() - days * 86400000).toISOString();
+export const daysSince = (iso: string) => Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 86400000));
+
+export const timeAgo = (iso: string) => {
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} hr ago`;
+  const d = Math.round(h / 24);
+  return `${d} day${d === 1 ? "" : "s"} ago`;
+};
+
+export const fmtDateTime = (iso: string) =>
+  new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true });
 
 export function Button({
   children,

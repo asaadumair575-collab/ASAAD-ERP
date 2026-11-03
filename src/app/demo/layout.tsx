@@ -3,7 +3,7 @@ import DemoShell from "./_components/DemoShell";
 
 export const metadata: Metadata = {
   title: "Your Company ERP",
-  description: "Sales, customers, finance and reports in one place.",
+  description: "Shopify orders, courier booking, tracking and COD in one place.",
 };
 
 // Public demo with dummy data only — rendered outside the real app shell

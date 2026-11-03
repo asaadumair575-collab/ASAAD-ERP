@@ -4,57 +4,133 @@ import { useEffect, useMemo, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
+  COURIER_CHARGE,
   generateDemoData,
-  invoiceStatus,
-  invoiceTotal,
+  makeIncomingOrders,
+  orderTotal,
+  trackingFor,
+  type Courier,
   type Customer,
   type DemoData,
-  type Expense,
-  type Invoice,
-  type InvoiceStatus,
-  type Payment,
+  type Order,
 } from "./data";
 
-// The demo's whole "database" lives in the viewer's browser (localStorage),
-// so anything created while recording a video stays on that machine and
-// never reaches the real ERP data.
+// The demo's whole "database" lives in the viewer's browser (localStorage):
+// whatever a prospect does in it stays on their machine and never reaches
+// the real ERP data.
+
+// Demo login — shared with prospects along with the link.
+export const DEMO_LOGIN = { email: "demo@yourcompany.com", password: "demo123" };
+
+export type Toast = { id: number; text: string };
 
 type DemoState = DemoData & {
-  addCustomer: (c: Omit<Customer, "id" | "code" | "createdAt">) => number;
-  addInvoice: (inv: Omit<Invoice, "id" | "number">) => number;
-  addPayment: (p: Omit<Payment, "id">) => void;
-  addExpense: (e: Omit<Expense, "id">) => void;
+  loggedIn: boolean;
+  unread: number;
+  toasts: Toast[];
+  login: (email: string, password: string) => boolean;
+  logout: () => void;
+  syncShopify: (count?: number) => number;
+  confirmOrder: (id: number) => void;
+  cancelOrder: (id: number) => void;
+  bookOrders: (ids: number[], courier: Courier) => void;
+  markDelivered: (id: number) => void;
+  markReturned: (id: number) => void;
+  setCourierConnected: (c: Courier, on: boolean) => void;
+  setShopifyConnected: (on: boolean) => void;
+  clearUnread: () => void;
+  toast: (text: string) => void;
+  dismissToast: (id: number) => void;
   reset: () => void;
 };
 
-const nextId = (rows: { id: number }[]) => rows.reduce((m, r) => Math.max(m, r.id), 0) + 1;
+const nowISO = () => new Date().toISOString();
 
 export const useDemo = create<DemoState>()(
   persist(
-    (set, get) => ({
-      ...generateDemoData(),
-      addCustomer: (c) => {
-        const id = nextId(get().customers);
-        set((s) => ({
-          customers: [...s.customers, { ...c, id, code: `CUS-${String(id).padStart(4, "0")}`, createdAt: new Date().toISOString().slice(0, 10) }],
-        }));
-        return id;
-      },
-      addInvoice: (inv) => {
-        const id = nextId(get().invoices);
-        set((s) => ({ invoices: [...s.invoices, { ...inv, id, number: `INV-${1000 + id}` }] }));
-        return id;
-      },
-      addPayment: (p) => set((s) => ({ payments: [...s.payments, { ...p, id: nextId(s.payments) }] })),
-      addExpense: (e) => set((s) => ({ expenses: [...s.expenses, { ...e, id: nextId(s.expenses) }] })),
-      reset: () => set(generateDemoData()),
-    }),
-    { name: "demo-erp-v1", skipHydration: true },
+    (set, get) => {
+      const updateOrder = (id: number, fn: (o: Order) => Order) =>
+        set((s) => ({ orders: s.orders.map((o) => (o.id === id ? fn(o) : o)) }));
+      return {
+        ...generateDemoData(),
+        loggedIn: false,
+        unread: 0,
+        toasts: [],
+        login: (email, password) => {
+          const ok = email.trim().toLowerCase() === DEMO_LOGIN.email && password === DEMO_LOGIN.password;
+          if (ok) set({ loggedIn: true });
+          return ok;
+        },
+        logout: () => set({ loggedIn: false }),
+        syncShopify: (count) => {
+          const s = get();
+          if (!s.integrations.shopify.connected) return 0;
+          const n = count ?? 1 + Math.floor(Math.random() * 3);
+          const incoming = makeIncomingOrders(s, n);
+          set((st) => ({
+            orders: [...st.orders, ...incoming.orders],
+            customers: [...st.customers, ...incoming.customers],
+            unread: st.unread + n,
+            integrations: { ...st.integrations, shopify: { ...st.integrations.shopify, lastSync: nowISO() } },
+            products: st.products.map((p) => {
+              const sold = incoming.orders.reduce((q, o) => q + o.items.filter((i) => i.productId === p.id).reduce((a, i) => a + i.qty, 0), 0);
+              return sold ? { ...p, stock: Math.max(0, p.stock - sold) } : p;
+            }),
+          }));
+          return n;
+        },
+        confirmOrder: (id) =>
+          updateOrder(id, (o) => (o.status === "New" ? { ...o, status: "Confirmed", timeline: [...o.timeline, { status: "Confirmed by call", at: nowISO() }] } : o)),
+        cancelOrder: (id) =>
+          updateOrder(id, (o) =>
+            o.status === "New" || o.status === "Confirmed" ? { ...o, status: "Cancelled", timeline: [...o.timeline, { status: "Cancelled", at: nowISO() }] } : o,
+          ),
+        bookOrders: (ids, courier) => {
+          const r = Math.random;
+          set((s) => ({
+            orders: s.orders.map((o) =>
+              ids.includes(o.id) && (o.status === "Confirmed" || o.status === "New")
+                ? {
+                    ...o,
+                    status: "Shipped",
+                    courier,
+                    tracking: trackingFor(courier, r),
+                    courierCharge: COURIER_CHARGE[courier],
+                    timeline: [
+                      ...o.timeline,
+                      ...(o.status === "New" ? [{ status: "Confirmed by call", at: nowISO() }] : []),
+                      { status: `Booked with ${courier}`, at: nowISO() },
+                    ],
+                  }
+                : o,
+            ),
+          }));
+        },
+        markDelivered: (id) =>
+          updateOrder(id, (o) => (o.status === "Shipped" ? { ...o, status: "Delivered", timeline: [...o.timeline, { status: "Delivered", at: nowISO() }] } : o)),
+        markReturned: (id) =>
+          updateOrder(id, (o) => (o.status === "Shipped" ? { ...o, status: "Returned", timeline: [...o.timeline, { status: "Returned to origin", at: nowISO() }] } : o)),
+        setCourierConnected: (c, on) => set((s) => ({ integrations: { ...s.integrations, couriers: { ...s.integrations.couriers, [c]: on } } })),
+        setShopifyConnected: (on) =>
+          set((s) => ({ integrations: { ...s.integrations, shopify: { ...s.integrations.shopify, connected: on, lastSync: on ? nowISO() : s.integrations.shopify.lastSync } } })),
+        clearUnread: () => set({ unread: 0 }),
+        toast: (text) => {
+          const id = Date.now() + Math.random();
+          set((s) => ({ toasts: [...s.toasts, { id, text }] }));
+          setTimeout(() => get().dismissToast(id), 4500);
+        },
+        dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+        reset: () => set({ ...generateDemoData(), unread: 0 }),
+      };
+    },
+    {
+      name: "ecom-demo-v1",
+      skipHydration: true,
+      partialize: (s) => ({ products: s.products, customers: s.customers, orders: s.orders, integrations: s.integrations, loggedIn: s.loggedIn }),
+    },
   ),
 );
 
-// Rehydrate from localStorage on the client only, and tell pages when it's
-// safe to render (avoids a server/client mismatch flash).
 export function useDemoReady() {
   const [ready, setReady] = useState(false);
   useEffect(() => {
@@ -63,28 +139,15 @@ export function useDemoReady() {
   return ready;
 }
 
-export type InvoiceRow = Invoice & {
-  customer: Customer | undefined;
-  total: number;
-  paid: number;
-  balance: number;
-  status: InvoiceStatus;
-};
+export type OrderRow = Order & { customer: Customer | undefined; total: number };
 
-export function useInvoiceRows(): InvoiceRow[] {
-  const invoices = useDemo((s) => s.invoices);
-  const payments = useDemo((s) => s.payments);
+export function useOrderRows(): OrderRow[] {
+  const orders = useDemo((s) => s.orders);
   const customers = useDemo((s) => s.customers);
   return useMemo(() => {
-    const paidBy = new Map<number, number>();
-    for (const p of payments) paidBy.set(p.invoiceId, (paidBy.get(p.invoiceId) ?? 0) + p.amount);
     const byId = new Map(customers.map((c) => [c.id, c]));
-    return invoices
-      .map((inv) => {
-        const total = invoiceTotal(inv);
-        const paid = paidBy.get(inv.id) ?? 0;
-        return { ...inv, customer: byId.get(inv.customerId), total, paid, balance: Math.max(0, total - paid), status: invoiceStatus(total, paid, inv.dueDate) };
-      })
-      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id));
-  }, [invoices, payments, customers]);
+    return orders
+      .map((o) => ({ ...o, customer: byId.get(o.customerId), total: orderTotal(o) }))
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  }, [orders, customers]);
 }
